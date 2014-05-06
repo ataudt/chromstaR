@@ -1,0 +1,50 @@
+useDynLib(chromstar)
+
+# Export all names
+# exportPattern(".")
+export(
+bed2bin,
+bam2bin,
+bedGraph2bin,
+
+univariate.from.binned.data,
+
+plot.distribution,
+plot.distribution.normal,
+plot.boxplot,
+
+prepare.multivariate,
+multivariate.from.univariate.results,
+
+univariate2bed,
+make.ucsc.file.combinatorial,
+make.ucsc.file.multivariate,
+bin2wiggle,
+multivariate2bed,
+
+get.states,
+combinatorial.states,
+collapse.bins,
+dec2bin,
+bin2dec,
+mixedsort,
+
+bin.annotation,
+enrichment.analysis,
+
+dzinbinom,
+pzinbinom,
+qzinbinom,
+rzinbinom,
+
+simulate.univariate,
+simulate.multivariate,
+find.optimal.binsize,
+bernoulli.from.univariate.results,
+rescale.univariate.model
+)
+
+# Import all packages listed as Imports or Depends
+import(
+	ggplot2, GenomicRanges, IRanges
+)
