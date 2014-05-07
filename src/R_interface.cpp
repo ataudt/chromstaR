@@ -1,13 +1,15 @@
 #include "loghmm.h"
 #include "scalehmm.h"
-
+#include <vector> // storing density functions in multivariate
+using std::vector;
+#include "utility.h"
 
 // ---------------------------------------------------------------
 // void R_univariate_hmm()
 // This function takes parameters from R, creates a univariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // ---------------------------------------------------------------
 extern "C" {
-void R_univariate_hmm(int* O, int* T, int* N, int* densityNames, double* r, double* p, int* maxiter, int* maxtime, double* eps, double* post, double* A, double* proba, double* loglik, double* softweights, double* initial_r, double* initial_p, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads) {
+void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter, int* maxtime, double* eps, double* post, double* A, double* proba, double* loglik, double* softweights, double* initial_r, double* initial_p, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads) {
 
 	// Define logging level
 // 	FILE* pFile = fopen("chromStar.log", "w");
@@ -118,13 +120,13 @@ void R_univariate_hmm(int* O, int* T, int* N, int* densityNames, double* r, doub
 			initial_p[i_state] = imean/ivariance;
 		}
 
-		if (densityNames[i_state] == NB)
+		if (i_state >= 1)
 		{
 			FILE_LOG(logDEBUG1) << "Using negative binomial for state " << i_state;
 			NegativeBinomial *d = new NegativeBinomial(O, model->T, initial_r[i_state], initial_p[i_state]); // delete is done inside ~LogHMM()
 			model->densityFunctions.push_back(d);
 		}
-		else if (densityNames[i_state] == ZI)
+		else if (i_state == 0)
 		{
 			FILE_LOG(logDEBUG1) << "Using only zeros for state " << i_state;
 			OnlyZeros *d = new OnlyZeros(O, model->T); // delete is done inside ~LogHMM()

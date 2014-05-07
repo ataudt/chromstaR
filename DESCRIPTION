@@ -1,6 +1,6 @@
 Package: chromstar
 Type: Package
-Title: Analysis of Chip-Seq data for single and multiple histone modifications
+Title: Analysis of ChIP-Seq data for single and multiple histone modifications
 Version: 0.8
 Date: 2014-05-03
 Author: Maria Colome Tatche, Aaron Taudt, Matthias Heinig 

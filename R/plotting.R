@@ -48,10 +48,10 @@ plot.distribution <- function(model, state=NULL, chr=NULL, start=NULL, end=NULL)
 	if (length(which(selectmask)) != length(model$reads)) {
 		reads <- model$reads[selectmask]
 		posteriors <- model$posteriors[selectmask,]
-		softweights <- apply(posteriors,2,mean)
+		weights <- apply(posteriors,2,mean)
 	} else {
 		reads <- model$reads
-		softweights <- model$softweights
+		weights <- model$weights
 	}
 
 	# Find the x limits
@@ -64,14 +64,14 @@ plot.distribution <- function(model, state=NULL, chr=NULL, start=NULL, end=NULL)
 	ggplt <- ggplot(data.frame(reads)) + geom_histogram(aes(x=reads, y=..density..), binwidth=1, color='black', fill='white') + xlim(0,rightxlim) + theme_bw() + xlab("read count")
 
 	### Add fits to the histogram
-	numstates <- length(softweights)
+	numstates <- length(weights)
 	x <- 0:rightxlim
 	distributions <- data.frame(x)
 
 	# Unmodified
-	distributions$unmodified <- (1-softweights[3]) * dzinbinom(x, softweights[1], model$distributions[2,'r'], model$distributions[2,'p'])
+	distributions$unmodified <- (1-weights[3]) * dzinbinom(x, weights[1], model$distributions[2,'r'], model$distributions[2,'p'])
 	# Modified
-	distributions$modified <- softweights[3] * dnbinom(x, model$distributions[3,'r'], model$distributions[3,'p'])
+	distributions$modified <- weights[3] * dnbinom(x, model$distributions[3,'r'], model$distributions[3,'p'])
 	# Total
 	distributions$total <- distributions$unmodified + distributions$modified
 
@@ -110,7 +110,7 @@ plot.distribution.normal <- function(model, state=0) {
 	states <- get.states(model)
 	df <- data.frame(bin=1:length(model$reads), reads=model$reads, state=as.factor(states))
 	# Transform to uniform space
-	df$ureads[df$state==0] <- pzinbinom(df$reads[df$state==0], model$softweights[1], model$distributions[2,'r'], model$distributions[2,'p'])
+	df$ureads[df$state==0] <- pzinbinom(df$reads[df$state==0], model$weights[1], model$distributions[2,'r'], model$distributions[2,'p'])
 	df$ureads[df$state==1] <- pnbinom(df$reads[df$state==1], model$distributions[3,'r'], model$distributions[3,'p'])
 	# Transform to normal space
 	df$nreads <- qnorm(df$ureads)

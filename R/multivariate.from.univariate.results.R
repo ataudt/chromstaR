@@ -27,7 +27,7 @@ multivariate.from.univariate.results = function(modellist, use.states=NULL, num.
 	nummod = params$nummod
 	comb.states2use = params$comb.states
 	distributions = params$distributions
-	softweights = params$softweights
+	weights = params$weights
 	correlationMatrix2use = params$correlationMatrix
 	correlationMatrixInverse2use = params$correlationMatrixInverse
 	determinant2use = params$determinant
@@ -50,7 +50,7 @@ multivariate.from.univariate.results = function(modellist, use.states=NULL, num.
 	# Prepare input for C function
 	rs = unlist(lapply(distributions,"[",2:3,'r'))
 	ps = unlist(lapply(distributions,"[",2:3,'p'))
-	ws = unlist(lapply(softweights,"[",1))
+	ws = unlist(lapply(weights,"[",1))
 
 	# Load checkpoint file if it exists and if desired
 	if (file.exists(checkpoint.file) & checkpoint.use.existing) {
@@ -134,7 +134,7 @@ multivariate.from.univariate.results = function(modellist, use.states=NULL, num.
 		colnames(model$A) = comb.states2use
 		rownames(model$A) = comb.states2use
 		model$distributions.univariate = distributions
-		model$softweights.univariate = softweights
+		model$weights.univariate = weights
 		model$proba.initial = z[[19]]
 		model$A.initial = matrix(z[[18]], ncol=numstates2use, byrow=TRUE)
 		colnames(model$A.initial) = comb.states2use

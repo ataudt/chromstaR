@@ -26,7 +26,7 @@ bernoulli.from.univariate.results = function(modellist, use.states=NULL, num.sta
 	nummod = params$nummod
 	comb.states2use = params$comb.states
 	distributions = params$distributions
-	softweights = params$softweights
+	weights = params$weights
 	usestateTF = params$usestateTF
 	numstates2use = params$numstates2use
 	# Clean up to reduce memory usage
@@ -111,7 +111,7 @@ bernoulli.from.univariate.results = function(modellist, use.states=NULL, num.sta
 		colnames(model$A) = comb.states2use
 		rownames(model$A) = comb.states2use
 		model$distributions.univariate = distributions
-		model$softweights.univariate = softweights
+		model$weights.univariate = weights
 		model$proba.initial = z[[14]]
 		model$A.initial = matrix(z[[13]], ncol=numstates2use, byrow=TRUE)
 		colnames(model$A.initial) = comb.states2use

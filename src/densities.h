@@ -1,32 +1,8 @@
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <math.h>
-// #include <float.h>
-// #include <time.h>
-// #include <string.h>
-// #include <iostream>
-// using std::cerr;
-// using std::cout;
-// using std::endl;
-// #include <cstdlib> 
-// #include <R.h>
-// #include <R_ext/BLAS.h>
-// #include <R_ext/Lapack.h>
-// #include <R_ext/Applic.h>
-// #include <Rinternals.h>
-// #include <map>
-// using namespace std;
-// #include <fstream>
-// using std::ifstream;
-
-#include <vector> // needed for storing the density functions
-using std::vector;
-#include <R.h> // M_PI and srand()
 #include <Rmath.h> // digamma() and qnorm()
 #include <gsl/gsl_sf_hyperg.h> //needed for the hypergeometric function
-#include "logging.h" // FILE_LOG() capability
-
-// const double pi = M_PI;
+#include <vector> // storing density functions in MVCopula
+using std::vector;
+#include "utility.h" // FILE_LOG(), intMax(), allocDoubleMatrix()
 
 #ifndef DENSITIES_H
 #define DENSITIES_H
@@ -110,7 +86,7 @@ class NegativeBinomial : public Density {
 		double r;
 		int max_O;	// maximum number of reads
 		double* lxfactorials;	//precomputed factorials
-		vector<double>* cdf;
+// 		vector<double>* cdf;
 };
 
 

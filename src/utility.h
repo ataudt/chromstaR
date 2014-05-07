@@ -5,39 +5,9 @@
 using std::cerr;
 using std::cout;
 using std::endl;
-// #include <fstream>
 #include <cstdlib> // calloc() etc.
 #include <cstring> // for memcpy() in printDoubleAsBinary()
-
-// using namespace std;
-// #include <string>
-// #include <string.h>
-// using std::ifstream;
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <math.h>
-// #include <float.h>
-// #include <time.h>
-// #include <vector>
-// using std::vector;
-//MA
-// #include <exception>
-// #include <ctime>
-// #include <cassert>
-// #include <algorithm>
-// #include <map>
-// #include <sstream>
-
-// #include <Rmath.h>
-// #include <R_ext/BLAS.h>
-// #include <gsl/gsl_sf_hyperg.h> //needed for the hypergeometric function
-// #include <R.h> // M_PI and srand()
-// #include <R_ext/Lapack.h>
-// #include <R_ext/Applic.h>
-// #include <Rinternals.h>
-// #include <R_ext/Utils.h> //from Matthias's hmm.h
-
-// const double pi = M_PI;
+#include "logging.h" // FILE_LOG() capability
 
 /* helpers for memory management */
 double** allocDoubleMatrix(int rows, int cols);

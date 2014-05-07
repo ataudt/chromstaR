@@ -41,7 +41,7 @@ rescale.univariate.model = function(model, reference.model) {
 		rle = rle(states[mask])
 		for (i1 in 1:length(rle$values)) {
 			if (rle$values[i1]==0) {
-				reads.new = c(reads.new, rzinbinom(rle$lengths[i1]*rescalef, w=model$softweights[1], size=model$distributions[2,'r'], prob=model$distributions[2,'p']))
+				reads.new = c(reads.new, rzinbinom(rle$lengths[i1]*rescalef, w=model$weights[1], size=model$distributions[2,'r'], prob=model$distributions[2,'p']))
 			} else {
 				reads.new = c(reads.new, rnbinom(rle$lengths[i1]*rescalef, size=model$distributions[3,'r'], prob=model$distributions[3,'p']))
 			}

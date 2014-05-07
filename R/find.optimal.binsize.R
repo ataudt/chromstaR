@@ -87,7 +87,7 @@ find.optimal.binsize = function(bedfile, reference.genome.file, outputfolder, bi
 			cat("Calculating performance...")
 			mask = sim.states.list[[i1]] != uni.states.list[[i1]]
 			miscalls = length(which(mask)) / length(sim.states.list[[i1]])
-			performance = rbind(performance, data.frame(binsize=as.factor(binsizes[i1]), miscalls, state1weight=unimodel$softweights[3]))
+			performance = rbind(performance, data.frame(binsize=as.factor(binsizes[i1]), miscalls, state1weight=unimodel$weights[3]))
 			cat(" done\n")
 
 			## Plot miscalls

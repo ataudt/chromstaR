@@ -40,7 +40,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, ber
 	# Extract coordinates and other stuff
 	coordinates = modellist[[1]]$coordinates
 	distributions = lapply(modellist,"[[","distributions")
-	softweights = lapply(modellist,"[[","softweights")
+	weights = lapply(modellist,"[[","weights")
 
 	# Get the combinatorial states
 	cat("Getting combinatorial states...")
@@ -99,7 +99,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, ber
 
 			if (i1 == 2) {
 				# Unmodified with zero inflation
-				w = softweights[[imod]][1]
+				w = weights[[imod]][1]
 				u = pzinbinom(xreads, w, r, p)
 # 				u = 1 - exp( log(1-w) + lppowerr + lppowert + lGamma1plusRplusX + lHyper - lGammaR - lGamma2plusX )
 			} else if (i1 == 3) {
@@ -234,7 +234,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, ber
 				comb.states = comb.states2use,
 				comb.states.table = comb.states.table2use,
 				distributions = distributions,
-				softweights = softweights,
+				weights = weights,
 				covarianceMatrix = covarianceMatrix2use,
 				correlationMatrix = correlationMatrix2use,
 				correlationMatrixInverse = correlationMatrixInverse2use,

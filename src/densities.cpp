@@ -1,5 +1,4 @@
 #include "densities.h"
-#include "utility.h"
 
 // ------------------------------------------------------------
 // Zero inflated negative binomial

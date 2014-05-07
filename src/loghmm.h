@@ -1,10 +1,12 @@
 #ifndef LOGHMM_H
 #define LOGHMM_H
 
+#include <omp.h> // #pragma omp parallel
+#include <R.h> // R_CheckUserInterrupt()
+#include <vector> // storing density functions
+using std::vector;
 #include "utility.h"
 #include "densities.h"
-#include "logging.h"
-#include <omp.h>
 
 class LogHMM
 {
