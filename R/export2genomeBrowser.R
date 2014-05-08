@@ -1,15 +1,15 @@
-# ----------------------------------------------------------------
-# Write univariate states to file
-# ----------------------------------------------------------------
-univariate2bed <- function(modellist, file="view_me_in_genome_browser", threshold=0.5, separate.zeroinflation=FALSE, chrom.length.file=NULL) {
+# ===============================================
+# Write color-coded tracks with univariate states
+# ===============================================
+univariate2bed <- function(uni.hmm.list, file="view_me_in_genome_browser", threshold=0.5, separate.zeroinflation=FALSE, chrom.length.file=NULL) {
 
 	# Check user input
-	if (is.null(names(modellist))) {
+	if (is.null(names(uni.hmm.list))) {
 		stop("Please name the list entries. The names will be used as track name for the Genome Browser file.")
 	}
 
 	# Variables
-	nummod <- length(modellist)
+	nummod <- length(uni.hmm.list)
 	file <- paste(file,"bed", sep=".")
 
 	# Generate the colors
@@ -21,16 +21,16 @@ univariate2bed <- function(modellist, file="view_me_in_genome_browser", threshol
 	cat("browser hide all\n", file=file)
 	
 	for (imod in 1:nummod) {
-		model <- modellist[[imod]]
+		uni.hmm <- uni.hmm.list[[imod]]
 		priority <- 50 + imod
-		cat(paste("track name=",names(modellist)[imod]," description=\"univariate calls for ",names(modellist)[imod],", threshold = ",threshold,"\" visibility=1 itemRgb=On priority=",priority,"\n", sep=""), file=file, append=TRUE)
+		cat(paste("track name=",names(uni.hmm.list)[imod]," description=\"univariate calls for ",names(uni.hmm.list)[imod],", threshold = ",threshold,"\" visibility=1 itemRgb=On priority=",priority,"\n", sep=""), file=file, append=TRUE)
 
 		# Collapse the calls
 		if (separate.zeroinflation) {
-			calls <- cbind(model$coordinates, name=model$states.with.zeroinflation)
+			calls <- cbind(uni.hmm$coordinates, name=uni.hmm$states.with.zeroinflation)
 			collapsed.calls <- collapse.bins(calls, column2collapseBy=4)
 		} else {
-			calls <- cbind(model$coordinates, name=model$states)
+			calls <- cbind(uni.hmm$coordinates, name=uni.hmm$states)
 			collapsed.calls <- collapse.bins(calls, column2collapseBy=4)
 			collapsed.calls <- collapsed.calls[collapsed.calls$name=="modified",]
 		}
@@ -61,23 +61,23 @@ univariate2bed <- function(modellist, file="view_me_in_genome_browser", threshol
 # ----------------------------------------------------------------
 # 
 # ----------------------------------------------------------------
-make.ucsc.file.combinatorial <- function(modellist, numstates=NULL, file="combinatorial-states-ucsc", threshold=0.5, chrom.length.file=NULL) {
+make.ucsc.file.combinatorial <- function(hmm.list, numstates=NULL, file="combinatorial-states-ucsc", threshold=0.5, chrom.length.file=NULL) {
 	
 	# Define variables
-	nummod <- length(modellist)
+	nummod <- length(hmm.list)
 	file <- paste(file,".BED", sep="")
-	coordinates <- modellist[[1]]$coordinates
+	coordinates <- hmm.list[[1]]$coordinates
 	
 	# Write first line to file
 	cat("browser position chr1:1-100000\n", file=file)
 
 	# Get the combinatorial states
 	cat("Getting the combinatorial states ...\n")
-	combstates <- combinatorial.states(modellist)
+	combstates <- combinatorial.states(hmm.list)
 	states <- as.numeric(names(sort(table(combstates), decreasing=TRUE)))
 
 	# Clean up to reduce memory usage
-	remove(modellist)
+	remove(hmm.list)
 
 	if (is.null(numstates)) {
 		numstates <- length(states)
@@ -125,11 +125,11 @@ make.ucsc.file.combinatorial <- function(modellist, numstates=NULL, file="combin
 # ----------------------------------------------------------------
 # 
 # ----------------------------------------------------------------
-make.ucsc.file.multivariate <- function(model, numstates=NULL, file="multivariate-states-ucsc", chrom.length.file=NULL) {
+make.ucsc.file.multivariate <- function(hmm, numstates=NULL, file="multivariate-states-ucsc", chrom.length.file=NULL) {
 
 	# Variable assignments
-	states <- model$stateorder
-	coordinates <- model$coordinates
+	states <- hmm$stateorder
+	coordinates <- hmm$coordinates
 	file <- paste(file,".BED", sep="")
 
 	# Write first line to file
@@ -137,7 +137,7 @@ make.ucsc.file.multivariate <- function(model, numstates=NULL, file="multivariat
 
 	# Determine state of bin
 	cat("Determining state of bins ...\n")
-	combstates <- apply(model$posteriors,1,which.max)
+	combstates <- apply(hmm$posteriors,1,which.max)
 	combstates <- states[combstates]
 
 	if (is.null(numstates)) {
@@ -183,10 +183,10 @@ make.ucsc.file.multivariate <- function(model, numstates=NULL, file="multivariat
 }
 
 
-# ----------------------------------------------------------------
+# ====================================
 # Write signal tracks from binned data
-# ----------------------------------------------------------------
-bin2wiggle <- function(binned.data.list, file="view_me_in_genome_browser") {
+# ====================================
+binned2wiggle <- function(binned.data.list, file="view_me_in_genome_browser") {
 	
 	# Check user input
 	if (is.null(names(binned.data.list))) {
@@ -202,7 +202,7 @@ bin2wiggle <- function(binned.data.list, file="view_me_in_genome_browser") {
 	# Go through binned.data.list
 	for (i1 in 1:length(binned.data.list)) {
 		binned.data <- binned.data.list[[i1]]
-		names(binned.data) <- c("chrom","start","end","reads")
+		names(binned.data) <- binned.data.names
 		
 		# Write track information
 		name <- names(binned.data.list)[i1]
@@ -219,14 +219,14 @@ bin2wiggle <- function(binned.data.list, file="view_me_in_genome_browser") {
 }
 
 
-# ----------------------------------------------------------------
-# Write color-coded (multivariate) combinatorial states to file
-# ----------------------------------------------------------------
-multivariate2bed <- function(model, separate.tracks=FALSE, exclude.state.zero=TRUE, numstates=NULL, file="view_me_in_genome_browser", chrom.length.file=NULL) {
+# ===============================================================
+# Write color-coded tracks with multivariate combinatorial states
+# ===============================================================
+multivariate2bed <- function(multi.hmm, separate.tracks=FALSE, exclude.state.zero=TRUE, numstates=NULL, file="view_me_in_genome_browser", chrom.length.file=NULL) {
 
 	# Variables
 	file <- paste(file,".bed", sep="")
-	combstates <- model$stateorder
+	combstates <- multi.hmm$comb.states
 	if (is.null(numstates)) {
 		numstates <- length(combstates)
 	} else if (numstates > length(combstates)) {
@@ -240,7 +240,7 @@ multivariate2bed <- function(model, separate.tracks=FALSE, exclude.state.zero=TR
 	}
 
 	# Collapse the calls
-	calls <- cbind(model$coordinates, name=model$states)
+	calls <- cbind(multi.hmm$coordinates, name=multi.hmm$states)
 	collapsed.calls <- collapse.bins(calls, column2collapseBy=4)
 	# Select only desired states
 	mask <- rep(FALSE,nrow(collapsed.calls))

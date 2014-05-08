@@ -1,18 +1,17 @@
-\name{chromStar-package}
-\alias{chromStar-package}
-\alias{chromStar}
+\name{chromstar}
+\alias{chromstar-package}
+\alias{chromstar}
 \docType{package}
 \title{
-Analysis of epigenetic modification data using a Hidden Markov Model
-~~ package title ~~
+Combinatorial analysis of ChIP-seq histone modification data using Hidden Markov Models
 }
 \description{
-not yet
-~~ A concise (1-5 lines) description of the package ~~
+\strong{chromstar} is an R package for analysis of histone modification data (ChIP-seq). Both univariate and multivariate analysis of multiple histone modifications are possible. A Hidden Markov Model with a mixture of Negative Binomials as emission densities is used to classify the data. Please read our publication for a detailed description of the method.
+TODO: insert publication
 }
 \details{
 \tabular{ll}{
-Package: \tab chromStar\cr
+Package: \tab chromstar\cr
 Type: \tab Package\cr
 Version: \tab 0.8\cr
 Date: \tab 2014-01-23\cr
@@ -24,11 +23,11 @@ LazyLoad: \tab yes\cr
 Packaged: \tab 2013-06-20 14:51:55 UTC; heinig\cr
 Built: \tab R 3.0.2; x86_64-pc-linux-gnu; 2014-01-31 10:10:41 UTC; unix\cr
 }
-
-Index:
+}
+\section{Index}{
 \preformatted{
 binned.data.example.1   Example datasets for demonstrating the workflow
-                        of a 'chromStar' script
+                        of a \strong{chromstar} script
 collapse.bins           Collapse consecutive bins
 combinatorial.states    Get the (decimal) combinatorial states of a
                         list of HMM models

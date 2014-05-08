@@ -4,12 +4,11 @@
 using std::vector;
 #include "utility.h"
 
-// ---------------------------------------------------------------
-// void R_univariate_hmm()
+// ===================================================================================================================================================
 // This function takes parameters from R, creates a univariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
-// ---------------------------------------------------------------
+// ===================================================================================================================================================
 extern "C" {
-void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter, int* maxtime, double* eps, double* post, double* A, double* proba, double* loglik, double* softweights, double* initial_r, double* initial_p, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads) {
+void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter, int* maxtime, double* eps, double* posteriors, double* A, double* proba, double* loglik, double* weights, double* initial_r, double* initial_p, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads) {
 
 	// Define logging level
 // 	FILE* pFile = fopen("chromStar.log", "w");
@@ -145,18 +144,18 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 	model->baumWelch(maxiter, maxtime, eps);
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
 	// Compute the posteriors and save results directly to the R pointer
-	double** posteriors = allocDoubleMatrix(model->N, model->T);
-	model->get_posteriors(posteriors);
+	double** post = allocDoubleMatrix(model->N, model->T);
+	model->get_posteriors(post);
 	FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
 	#pragma omp parallel for
 	for (int iN=0; iN<model->N; iN++)
 	{
 		for (int t=0; t<model->T; t++)
 		{
-			post[t + iN * model->T] = posteriors[iN][t];
+			posteriors[t + iN * model->T] = post[iN][t];
 		}
 	}
-	freeDoubleMatrix(posteriors, model->N);
+	freeDoubleMatrix(post, model->N);
 
 	FILE_LOG(logDEBUG1) << "Return parameters";
 	// also return the estimated transition matrix and the initial probs
@@ -180,19 +179,18 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 			}
 	}
 	*loglik = model->logP;
-	model->calc_weights(softweights);
+	model->calc_weights(weights);
 	
 	FILE_LOG(logDEBUG1) << "Deleting the model";
 	delete model;
 }
 } // extern C
 
-// ---------------------------------------------------------------
-// void R_multivariate_hmm()
+// =====================================================================================================================================================
 // This function takes parameters from R, creates a multivariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
-// ---------------------------------------------------------------
+// =====================================================================================================================================================
 extern "C" {
-void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* r, double* p, double* w, double* cor_matrix_inv, double* det, int* maxiter, int* maxtime, double* eps, double* post, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads){
+void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* r, double* p, double* w, double* cor_matrix_inv, double* det, int* maxiter, int* maxtime, double* eps, double* posteriors, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads){
 
 	// Define logging level {"ERROR", "WARNING", "INFO", "ITERATION", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4"}
 // 	FILE* pFile = fopen("chromStar.log", "w");
@@ -295,17 +293,17 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
 	
 	// Compute the posteriors and save results directly to the R pointer
-	double** posteriors = allocDoubleMatrix(model->N, model->T);
-	model->get_posteriors(posteriors);
+	double** post = allocDoubleMatrix(model->N, model->T);
+	model->get_posteriors(post);
 	FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
 	for (int iN=0; iN<model->N; iN++)
 	{
 		for (int t=0; t<model->T; t++)
 		{
-			post[t + iN * model->T] = posteriors[iN][t];
+			posteriors[t + iN * model->T] = post[iN][t];
 		}
 	}
-	freeDoubleMatrix(posteriors, model->N);
+	freeDoubleMatrix(post, model->N);
 	
 	FILE_LOG(logDEBUG1) << "Return parameters";
 	// also return the estimated transition matrix and the initial probs

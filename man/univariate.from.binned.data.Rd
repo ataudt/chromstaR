@@ -1,54 +1,38 @@
 \name{univariate.from.binned.data}
 \alias{univariate.from.binned.data}
 \title{
-Perform the univariate HMM with binned data
+Run an HMM for a single histone mark
 }
 \description{
-Use previously binned data to estimate a Hidden Markov Model (HMM). Output is a model which contains the posterior probabilities for each bin.
+Run an HMM for a single histone mark to determine regions which are either 'unmodified' or 'modified'. Input is a data.frame with \code{\link{binned.data}} and output is an \code{\link{uni.hmm}} list object.
 }
 \usage{
-univariate.from.binned.data(binned.data, eps=0.001, max.time=-1, max.it=-1, num.trials=1, eps.try=NULL, num.threads=2, output.if.not.converged=FALSE)
+univariate.from.binned.data(binned.data, eps=0.001, max.time=-1, max.it=-1, num.trials=1, eps.try=NULL, num.threads=1, output.if.not.converged=FALSE, filter.reads=TRUE)
 }
 \arguments{
-\item{binned.data}{
-A data frame with 4 columns: 'chromosome', 'start', 'end', 'reads'. The columns 'chromosome', 'start' and 'end' contain the coordinates for consecutive bins on the genome. Column 'reads' contains the number of aligned reads in that bin.
-
-\tabular{rrrr}{
-chromosome \tab start \tab end \tab reads\cr
-chr1 \tab 0 \tab 199 \tab 0\cr
-chr1 \tab 200 \tab 399 \tab 10\cr
-chr1 \tab 400 \tab 599 \tab 9\cr
-... \tab ... \tab ... \tab ...\cr
-}
-}
-\item{eps}{
-Convergence threshold for the Baum-Welch algorithm.
-}
-\item{max.time}{
-The maximum running time for the Baum-Welch algorithm. If this time is reached, the Baum-Welch will terminate after the current iteration finishes. Negative numbers are interpreted as no limit.
-}
-\item{max.it}{
-The maximum number of iterations for the Baum-Welch algorithm. Negative numbers are interpreted as no limit.
-}
-\item{num.trials}{
-The number of trials to run the HMM. Each time, the HMM is seeded with different random initial values. The HMM with the best likelihood is given as output.
-}
-\item{eps.try}{
-If option num.trials is set to greater than 1, 'eps.try' is used for the trial runs. If unset, 'eps' is used.
-}
-\item{num.threads}{
-Number of threads to use. The default of 2 threads yields the best performance, given there are at least two cores on your machine.
-}
+\item{binned.data}{A data.frame containing genomic coordinates and read counts (see \code{\link{binned.data}} for a more detailed description).}
+\item{eps}{Convergence threshold for the Baum-Welch algorithm.}
+\item{max.time}{The maximum running time for the Baum-Welch algorithm. If this time is reached, the Baum-Welch will terminate after the current iteration finishes. The default -1 is no limit.}
+\item{max.it}{The maximum number of iterations for the Baum-Welch algorithm. The default -1 is no limit.}
+\item{num.trials}{The number of trials to run the HMM. Each time, the HMM is seeded with different random initial values. The HMM with the best likelihood is given as output. TODO: starting values are not random at the moment}
+\item{eps.try}{If option num.trials is set to greater than 1, \emph{eps.try} is used for the trial runs. If unset, \emph{eps} is used.}
+\item{num.threads}{Number of threads to use. Setting this to >1 may give increased performance.}
 \item{output.if.not.converged}{
-If set to 'FALSE', no output will be given in the case that the Baum-Welch did not converge to the desired 'eps'. If set to 'TRUE', a model will be returned even if the Baum-Welch did not converge to the desired 'eps'.
+If set to FALSE, no output will be given in the case that the Baum-Welch did not converge to the desired \emph{eps}. If set to TRUE, a model will be returned even if the Baum-Welch did not converge to the desired \emph{eps}.
+}
+\item{filter.reads}{
+If set to TRUE, then read counts which are higher than 10 times the variance of the data are set to this value. A warning is issued in this case. This filtering is necessary because if the read counts are too high, the density becomes (numerically) zero for all states and the HMM crashes. It should not affect the results, though.
 }
 }
 
 \details{
+The Hidden Markov Model which is used to classify the bins uses 3 states: state 'zero-inflation' with a delta function as emission densitiy (only zero read counts), 'unmodified' and 'modified' with Negative Binomials as emission densities. A Baum-Welch algorithm is employed to estimate the parameters of the distributions. See our paper for a detailed description of the method.
+TODO: insert paper
 The function expects a data.frame with 4 columns (see arguments). Output of the function is a list object which contains the posteriors of the Baum-Welch likelihood maximization and the parameters for the Negative Binomial distributions. It also contains miscellaneous other attributes. All attributes can be accessed with the '$' or '[[ ]]' operator. To see which attributes are available, type "names(output)" (without quotation marks).
 }
 \value{
-The output is a list object with various entries:
+The output is an \code{\link{uni.hmm}} list object.
+TODO: move these entries to the uni.hmm man page
 \item{coordinates}{A data.frame with genomic coordinates. These are the same as in the input.}
 \item{reads}{Number of aligned reads in the bins. Same as in input.}
 \item{posteriors}{Posterior probabilities of the Baum-Welch estimation.}

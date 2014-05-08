@@ -15,12 +15,11 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 	war <- NULL
 	if (is.null(eps.try)) eps.try <- eps
 
-	coordinatenames <- c("chrom","start","end","reads")
-	names(binned.data) <- coordinatenames
+	names(binned.data) <- binned.data.names # defined globally outside this function
 
 	## Assign variables
-	statelabels <- c("zero-inflation","unmodified","modified")
-	numstates <- length(statelabels)
+# 	state.labels # assigned globally outside this function
+	numstates <- length(state.labels)
 	numbins <- length(binned.data$reads)
 
 	# Check if there are reads in the data, otherwise HMM will blow up
@@ -68,15 +67,15 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 
 		hmm$eps <- eps.try
 		hmm$A <- matrix(hmm$A, ncol=hmm$num.states, byrow=TRUE)
-		rownames(hmm$A) <- statelabels
-		colnames(hmm$A) <- statelabels
+		rownames(hmm$A) <- state.labels
+		colnames(hmm$A) <- state.labels
 		hmm$distributions <- cbind(r=hmm$r, p=hmm$p, mean=fmean(hmm$r,hmm$p), variance=fvariance(hmm$r,hmm$p))
-		rownames(hmm$distributions) <- statelabels
+		rownames(hmm$distributions) <- state.labels
 		hmm$A.initial <- matrix(hmm$A.initial, ncol=hmm$num.states, byrow=TRUE)
-		rownames(hmm$A.initial) <- statelabels
-		colnames(hmm$A.initial) <- statelabels
+		rownames(hmm$A.initial) <- state.labels
+		colnames(hmm$A.initial) <- state.labels
 		hmm$distributions.initial <- cbind(r=hmm$r.initial, p=hmm$p.initial, mean=fmean(hmm$r.initial,hmm$p.initial), variance=fvariance(hmm$r.initial,hmm$p.initial))
-		rownames(hmm$distributions.initial) <- statelabels
+		rownames(hmm$distributions.initial) <- state.labels
 		if (num.trials > 1) {
 			if (hmm$loglik.delta > hmm$eps) {
 				warning("HMM did not converge in trial run ",i_try,"!\n")
@@ -120,28 +119,29 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 	}
 
 	# Add useful entries
-	hmm$coordinates <- binned.data[,coordinatenames[1:3]]
+	hmm$coordinates <- binned.data[,coordinate.names]
 	hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
-	colnames(hmm$posteriors) <- paste("P(",statelabels,")", sep="")
+	colnames(hmm$posteriors) <- paste("P(",state.labels,")", sep="")
 	class(hmm) <- "chromstar.univariate.model"
 	hmm$states <- get.states(hmm)
 	hmm$eps <- eps
 	hmm$A <- matrix(hmm$A, ncol=hmm$num.states, byrow=TRUE)
-	rownames(hmm$A) <- statelabels
-	colnames(hmm$A) <- statelabels
+	rownames(hmm$A) <- state.labels
+	colnames(hmm$A) <- state.labels
 	hmm$distributions <- cbind(r=hmm$r, p=hmm$p, mean=fmean(hmm$r,hmm$p), variance=fvariance(hmm$r,hmm$p))
-	rownames(hmm$distributions) <- statelabels
+	rownames(hmm$distributions) <- state.labels
 	hmm$A.initial <- matrix(hmm$A.initial, ncol=hmm$num.states, byrow=TRUE)
-	rownames(hmm$A.initial) <- statelabels
-	colnames(hmm$A.initial) <- statelabels
+	rownames(hmm$A.initial) <- state.labels
+	colnames(hmm$A.initial) <- state.labels
 	hmm$distributions.initial <- cbind(r=hmm$r.initial, p=hmm$p.initial, mean=fmean(hmm$r.initial,hmm$p.initial), variance=fvariance(hmm$r.initial,hmm$p.initial))
-	rownames(hmm$distributions.initial) <- statelabels
+	rownames(hmm$distributions.initial) <- state.labels
 
 	# Delete redundant entries
 	hmm$r <- NULL
 	hmm$p <- NULL
 	hmm$r.initial <- NULL
 	hmm$p.initial <- NULL
+	hmm$use.initial.params <- NULL
 
 	# Issue warnings
 	if (num.trials == 1) {

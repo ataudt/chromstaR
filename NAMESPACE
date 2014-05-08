@@ -3,9 +3,9 @@ useDynLib(chromstar)
 # Export all names
 # exportPattern(".")
 export(
-bed2bin,
-bam2bin,
-bedGraph2bin,
+bed2binned,
+bam2binned,
+bedGraph2binned,
 
 univariate.from.binned.data,
 
@@ -19,7 +19,7 @@ multivariate.from.univariate.results,
 univariate2bed,
 make.ucsc.file.combinatorial,
 make.ucsc.file.multivariate,
-bin2wiggle,
+binned2wiggle,
 multivariate2bed,
 
 get.states,

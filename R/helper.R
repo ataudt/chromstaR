@@ -1,3 +1,10 @@
+# =======================================================
+# Some global variables that can be used in all functions
+# =======================================================
+state.labels <- c("zero-inflation","unmodified","modified")
+coordinate.names <- c("chrom","start","end")
+binned.data.names <- c(coordinate.names,"reads")
+ 
 # ============================================================================
 # Functions for a Negative Binomial to transform (mean,variance)<->(size,prob)
 # ============================================================================
