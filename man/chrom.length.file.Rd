@@ -3,7 +3,7 @@
 
 \title{Format of the chrom.length.file}
 \description{
-The chrom.length.file can or must be used in the following \code{\link{chromstar}} functions: \code{\link{bed2binned}}, \code{\link{bedGraph2binned}}, \code{\link{univariate2bed}}, \code{\link{multivariate2bed}}}
+The chrom.length.file can or must be used in the following \code{\link{chromstar}} functions: \code{\link{bed2binned}}, \code{\link{bedGraph2binned}}, \code{\link{univariate2bed}}, \code{\link{multivariate2bed}}
 }
 \section{Format}{
 In the first column, it contains the chromosome names and in the second column, it contains the chromosome lengths in basepairs. The file has no header. Example:
