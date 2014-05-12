@@ -15,28 +15,37 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 // 	FILE* pFile = fopen("chromStar.log", "w");
 // 	Output2FILE::Stream() = pFile;
 //  	FILELog::ReportingLevel() = FILELog::FromString("INFO");
- 	FILELog::ReportingLevel() = FILELog::FromString("ITERATION");
+//  	FILELog::ReportingLevel() = FILELog::FromString("ITERATION");
 //  	FILELog::ReportingLevel() = FILELog::FromString("DEBUG1");
+ 	FILELog::ReportingLevel() = FILELog::FromString("ERROR");
 
 	// Parallelization settings
 // 	omp_set_num_threads(*num_threads);
 
 	// Print some information
 	FILE_LOG(logINFO) << "number of states = " << *N;
+	Rprintf("number of states = %d\n", *N);
 	FILE_LOG(logINFO) << "number of bins = " << *T;
+	Rprintf("number of bins = %d\n", *T);
 	if (*maxiter < 0)
 	{
 		FILE_LOG(logINFO) << "maximum number of iterations = none";
+		Rprintf("maximum number of iterations = none\n");
 	} else {
 		FILE_LOG(logINFO) << "maximum number of iterations = " << *maxiter;
+		Rprintf("maximum number of iterations = %d\n", *maxiter);
 	}
 	if (*maxtime < 0)
 	{
 		FILE_LOG(logINFO) << "maximum running time = none";
+		Rprintf("maximum running time = none\n");
 	} else {
 		FILE_LOG(logINFO) << "maximum running time = " << *maxtime << " sec";
+		Rprintf("maximum running time = %d sec\n", *maxtime);
 	}
 	FILE_LOG(logINFO) << "epsilon = " << *eps;
+	Rprintf("epsilon = %g\n", *eps);
+
 	FILE_LOG(logDEBUG3) << "observation vector";
 	for (int t=0; t<50; t++) {
 		FILE_LOG(logDEBUG3) << "O["<<t<<"] = " << O[t];
@@ -63,6 +72,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 	}
 	variance = variance / *T;
 	FILE_LOG(logINFO) << "data mean = " << mean << ", data variance = " << variance;		
+	Rprintf("data mean = %g, data variance = %g\n", mean, variance);		
 	
 	// Go through all states of the model and assign the density functions
 // 	srand (clock());
@@ -74,6 +84,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 
 		if (*use_initial_params) {
 			FILE_LOG(logINFO) << "Using given parameters for r and p";
+			Rprintf("Using given parameters for r and p\n");
 			imean = (1-initial_p[i_state])*initial_r[i_state] / initial_p[i_state];
 			ivariance = imean / initial_p[i_state];
 			FILE_LOG(logDEBUG3) << "imean = " << imean;
@@ -82,6 +93,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 
 // 			// Disturb mean and variance for use as randomized initial parameters
 // 			FILE_LOG(logINFO) << "Using random initialization for r and p";
+// 			Rprintf("Using random initialization for r and p\n");
 // 			rand1 = rand();
 // 			rand2 = rand();
 // 			imean = (double)rand1/(double)RAND_MAX * 10*mean;
@@ -96,21 +108,23 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 // 	 		// Empirical initialization
 // 	 		if (i_state == 1) {
 // 				FILE_LOG(logINFO) << "Initializing r and p empirically for state 1";
+// 				Rprintf("Initializing r and p empirically for state 1\n");
 // 	 			imean = mean/2;
 // 	 			ivariance = imean*2;
 // 	 		} else if (i_state == 2) {
 // 				FILE_LOG(logINFO) << "Initializing r and p empirically for state 2";
+// 				Rprintf("Initializing r and p empirically for state 2\n");
 // 	 			imean = mean*2;
 // 	 			ivariance = imean*2;
 // 	 		} 
 
 			// Simple initialization, seems to give the fastest convergence
 	 		if (i_state == 1) {
-				FILE_LOG(logINFO) << "Initializing r and p for state 1";
+				FILE_LOG(logDEBUG) << "Initializing r and p for state 1";
 	 			imean = mean;
 	 			ivariance = variance;
 	 		} else if (i_state == 2) {
-				FILE_LOG(logINFO) << "Initializing r and p for state 2";
+				FILE_LOG(logDEBUG) << "Initializing r and p for state 2";
 	 			imean = mean+1;
 	 			ivariance = variance;
 	 		} 
@@ -205,29 +219,38 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 	// Define logging level {"ERROR", "WARNING", "INFO", "ITERATION", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4"}
 // 	FILE* pFile = fopen("chromStar.log", "w");
 // 	Output2FILE::Stream() = pFile;
- 	FILELog::ReportingLevel() = FILELog::FromString("ITERATION");
+//  	FILELog::ReportingLevel() = FILELog::FromString("ITERATION");
 //  	FILELog::ReportingLevel() = FILELog::FromString("DEBUG");
+ 	FILELog::ReportingLevel() = FILELog::FromString("ERROR");
 
 	// Parallelization settings
 // 	omp_set_num_threads(*num_threads);
 
 	// Print some information
 	FILE_LOG(logINFO) << "number of states = " << *N;
+	Rprintf("number of states = %d\n", *N);
 	FILE_LOG(logINFO) << "number of bins = " << *T;
+	Rprintf("number of bins = %d\n", *T);
 	if (*maxiter < 0)
 	{
 		FILE_LOG(logINFO) << "maximum number of iterations = none";
+		Rprintf("maximum number of iterations = none\n");
 	} else {
 		FILE_LOG(logINFO) << "maximum number of iterations = " << *maxiter;
+		Rprintf("maximum number of iterations = %d\n", *maxiter);
 	}
 	if (*maxtime < 0)
 	{
 		FILE_LOG(logINFO) << "maximum running time = none";
+		Rprintf("maximum running time = none\n");
 	} else {
 		FILE_LOG(logINFO) << "maximum running time = " << *maxtime << " sec";
+		Rprintf("maximum running time = %d sec\n", *maxtime);
 	}
 	FILE_LOG(logINFO) << "epsilon = " << *eps;
+	Rprintf("epsilon = %g\n", *eps);
 	FILE_LOG(logINFO) << "number of modifications = " << *Nmod;
+	Rprintf("number of modifications = %d\n", *Nmod);
 
 	// Recode the observation vector to matrix representation
 // 	clock_t clocktime = clock(), dtime;
@@ -253,10 +276,10 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 	// Print logproba and A
 // 	for (int iN=0; iN<*N; iN++)
 // 	{
-// 		FILE_LOG(logINFO) << "proba["<<iN<<"] = " <<exp(model->logproba[iN]);
+// 		FILE_LOG(logDEBUG) << "proba["<<iN<<"] = " <<exp(model->logproba[iN]);
 // 		for (int jN=0; jN<*N; jN++)
 // 		{
-// 			FILE_LOG(logINFO) << "A["<<iN<<"]["<<jN<<"] = " << model->A[iN][jN];
+// 			FILE_LOG(logDEBUG) << "A["<<iN<<"]["<<jN<<"] = " << model->A[iN][jN];
 // 		}
 // 	}
 

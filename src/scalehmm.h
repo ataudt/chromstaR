@@ -4,7 +4,7 @@
 // #include <omp.h> // #pragma omp parallel
 #include <R.h> // R_CheckUserInterrupt()
 #include <vector> // storing density functions
-#include <time.h> // time(), difftime()s
+#include <time.h> // time(), difftime()
 // using std::vector;
 #include "utility.h"
 #include "densities.h"

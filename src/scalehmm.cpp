@@ -545,7 +545,9 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 	if (this->xvariate == UNIVARIATE)
 	{
 		FILE_LOG(logINFO) << "";
+		Rprintf("\n");
 		FILE_LOG(logINFO) << "INITIAL PARAMETERS";
+		Rprintf("INITIAL PARAMETERS\n");
 		this->print_uni_params();
 		this->print_uni_iteration(0);
 	}
@@ -554,6 +556,7 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 		this->print_multi_iteration(0);
 		FILE_LOG(logDEBUG2) << "Calling computeDensities() from baumWelch()";
 		FILE_LOG(logINFO) << "Precomputing densities ...";
+		Rprintf("Precomputing densities ...\n");
 		this->computeDensities();
 		this->print_multi_iteration(0);
 		// Print densities
@@ -568,7 +571,7 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 // 			{
 // 				cx += snprintf(buffer+cx, bs-cx, "%.6f\t", this->densities[iN][t]);
 // 			}
-// 			FILE_LOG(logINFO) << buffer;
+// 			FILE_LOG(logDEBUG) << buffer;
 // 		}
 				
 	}
@@ -673,6 +676,7 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 		if(fabs(this->dlogP) < *eps) //it has converged
 		{
 			FILE_LOG(logINFO) << "\nConvergence reached!\n";
+			Rprintf("\nConvergence reached!\n\n");
 			if (this->xvariate == UNIVARIATE) this->check_for_state_swap();
 			break;
 		} else {// not converged
@@ -680,11 +684,13 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 			if (iteration == *maxiter)
 			{
 				FILE_LOG(logINFO) << "Maximum number of iterations reached!";
+				Rprintf("Maximum number of iterations reached!\n");
 				if (this->xvariate == UNIVARIATE) this->check_for_state_swap();
 			}
 			else if ((this->baumWelchTime_real >= *maxtime) and (*maxtime >= 0))
 			{
 				FILE_LOG(logINFO) << "Exceeded maximum time!";
+				Rprintf("Exceeded maximum time!\n");
 				if (this->xvariate == UNIVARIATE) this->check_for_state_swap();
 			}
 			logPold = logPnew;
@@ -710,6 +716,7 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 			if (this->sumgamma[iN] == 0)
 			{
 				FILE_LOG(logINFO) << "Not reestimating A["<<iN<<"][x] because sumgamma["<<iN<<"] = 0";
+				Rprintf("Not reestimating A[%d][x] because sumgamma[%d] = 0\n", iN, iN);
 			}
 			else
 			{
@@ -775,7 +782,9 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 	if (this->xvariate == UNIVARIATE)
 	{
 		FILE_LOG(logINFO) << "";
+		Rprintf("\n");
 		FILE_LOG(logINFO) << "FINAL ESTIMATION RESULTS";
+		Rprintf("FINAL ESTIMATION RESULTS\n");
 		this->print_uni_params();
 	}
 
@@ -799,8 +808,11 @@ void ScaleHMM::check_for_state_swap()
 	maxdens[2] = weights[2] + Max(this->densities[2], this->T);
 
 	FILE_LOG(logINFO) << "mean(0) = "<<this->densityFunctions[0]->getMean() << ", mean(1) = "<<this->densityFunctions[1]->getMean() << ", mean(2) = "<<this->densityFunctions[2]->getMean();
+	Rprintf("mean(0) = %g, mean(1) = %g, mean(2) = %g\n", this->densityFunctions[0]->getMean(), this->densityFunctions[1]->getMean(), this->densityFunctions[2]->getMean());
 	FILE_LOG(logINFO) << "weight(0) = "<<weights[0] << ", weight(1) = "<<weights[1] << ", weight(2) = "<<weights[2];
+	Rprintf("weight(0) = %g, weight(1) = %g, weight(2) = %g\n", weights[0], weights[1], weights[2]);
 	FILE_LOG(logINFO) << "maxdens(0) = "<<maxdens[0] << ", maxdens(1) = "<<maxdens[1] << ", maxdens(2) = "<<maxdens[2];
+	Rprintf("maxdens(0) = %g, maxdens(1) = %g, maxdens(2) = %g\n", maxdens[0], maxdens[1], maxdens[2]);
 	// Different methods for state swapping detection
 	// 1) Compare means. Does not work for all datasets.
 // 	if (this->densityFunctions[1]->getMean() > this->densityFunctions[2]->getMean()) //states 1 and 2 need to be exchanged
@@ -810,6 +822,7 @@ void ScaleHMM::check_for_state_swap()
 // 	if (maxdens[1] < maxdens[2])
 	{
 		FILE_LOG(logINFO) << "...swapping states";
+		Rprintf("...swapping states\n");
 		NegativeBinomial *tempDens = new NegativeBinomial();
 		tempDens->copy(this->densityFunctions[2]); // tempDens is densifunc[2]
 		this->densityFunctions[2]->copy(this->densityFunctions[1]); 
@@ -848,8 +861,11 @@ void ScaleHMM::check_for_state_swap()
 		maxdens[2] = weights[2] + Max(this->densities[2], this->T);
 
 		FILE_LOG(logINFO) << "mean(0) = "<<this->densityFunctions[0]->getMean() << ", mean(1) = "<<this->densityFunctions[1]->getMean() << ", mean(2) = "<<this->densityFunctions[2]->getMean();
+		Rprintf("mean(0) = %g, mean(1) = %g, mean(2) = %g\n", this->densityFunctions[0]->getMean(), this->densityFunctions[1]->getMean(), this->densityFunctions[2]->getMean());
 		FILE_LOG(logINFO) << "weight(0) = "<<weights[0] << ", weight(1) = "<<weights[1] << ", weight(2) = "<<weights[2];
+		Rprintf("weight(0) = %g, weight(1) = %g, weight(2) = %g\n", weights[0], weights[1], weights[2]);
 		FILE_LOG(logINFO) << "maxdens(0) = "<<maxdens[0] << ", maxdens(1) = "<<maxdens[1] << ", maxdens(2) = "<<maxdens[2];
+		Rprintf("maxdens(0) = %g, maxdens(1) = %g, maxdens(2) = %g\n", maxdens[0], maxdens[1], maxdens[2]);
 	}
 }
 
@@ -863,6 +879,7 @@ void ScaleHMM::print_uni_iteration(int iteration)
 	{
 		snprintf(buffer, bs, "%10s%20s%20s%20s%20s%15s\n", "Iteration", "log(P)", "dlog(P)", "Diff in state 1", "Diff in posterior", "Time in sec");
 		FILE_LOG(logITERATION) << buffer;
+		Rprintf("%s\n", buffer);
 	}
 	if (iteration == 0)
 	{
@@ -873,6 +890,7 @@ void ScaleHMM::print_uni_iteration(int iteration)
 		snprintf(buffer, bs, "%*d%*f%*f%*d%*f%*d\n", 10, iteration, 20, this->logP, 20, this->dlogP, 20, this->sumdiff_state1, 20, this->sumdiff_posterior, 15, this->baumWelchTime_real);
 	}
 	FILE_LOG(logITERATION) << buffer;
+	Rprintf("%s\n", buffer);
 }
 
 void ScaleHMM::print_multi_iteration(int iteration)
@@ -885,9 +903,11 @@ void ScaleHMM::print_multi_iteration(int iteration)
 	{
 		snprintf(buffer, bs, "%10s%20s%20s%20s%15s\n", "Iteration", "log(P)", "dlog(P)", "Diff in posterior", "Time in sec");
 		FILE_LOG(logITERATION) << buffer;
+		Rprintf("%s\n", buffer);
 	}
 	snprintf(buffer, bs, "%*d%*f%*f%*f%*d\n", 10, iteration, 20, this->logP, 20, this->dlogP, 20, this->sumdiff_posterior, 15, this->baumWelchTime_real);
 	FILE_LOG(logITERATION) << buffer;
+	Rprintf("%s\n", buffer);
 }
 
 void ScaleHMM::print_uni_params()
@@ -898,13 +918,17 @@ void ScaleHMM::print_uni_params()
 	int cx;
 	snprintf(buffer, bs, " -------------------------------------------------------------------------------");
 	FILE_LOG(logINFO) << buffer;
+	Rprintf("%s\n", buffer);
 	snprintf(buffer, bs, "|%80s", "|");
 	FILE_LOG(logINFO) << buffer;
+	Rprintf("%s\n", buffer);
 	// print loglik
 	snprintf(buffer, bs, "| log(P) = %*.6f%54s", 16, this->logP, "|");
 	FILE_LOG(logINFO) << buffer;
+	Rprintf("%s\n", buffer);
 	snprintf(buffer, bs, "|%80s", "|");
 	FILE_LOG(logINFO) << buffer;
+	Rprintf("%s\n", buffer);
 	// print initial probabilities
 	cx = snprintf(buffer, bs, "|%7s", "");
 	for (int iN=0; iN<this->N; iN++)
@@ -913,8 +937,10 @@ void ScaleHMM::print_uni_params()
 	}
 	cx += snprintf(buffer+cx, bs-cx, "   |");
 	FILE_LOG(logINFO) << buffer;
+	Rprintf("%s\n", buffer);
 	snprintf(buffer, bs, "|%80s", "|");
 	FILE_LOG(logINFO) << buffer;
+	Rprintf("%s\n", buffer);
 	// print transition probabilities
 	for (int iN=0; iN<this->N; iN++)
 	{
@@ -925,21 +951,25 @@ void ScaleHMM::print_uni_params()
 		}
 		cx += snprintf(buffer+cx, bs-cx, "      |");
 		FILE_LOG(logINFO) << buffer;
+		Rprintf("%s\n", buffer);
 	}
 	// print emission parameters
 	snprintf(buffer, bs, "|%80s", "|");
 	FILE_LOG(logINFO) << buffer;
+	Rprintf("%s\n", buffer);
 	for (int iN=0; iN<this->N; iN++)
 	{
 		if (iN == 1)
 		{
 			snprintf(buffer, bs, "| unmodified component%59s", "|");
 			FILE_LOG(logINFO) << buffer;
+			Rprintf("%s\n", buffer);
 		}
 		if (iN == 2)
 		{
 			snprintf(buffer, bs, "| modified component%61s", "|");
 			FILE_LOG(logINFO) << buffer;
+			Rprintf("%s\n", buffer);
 		}
 		if (this->densityFunctions[iN]->getType() == NB)
 		{
@@ -950,14 +980,18 @@ void ScaleHMM::print_uni_params()
 			double curVar = temp->getVariance();
 			snprintf(buffer, bs, "| r = %*.6f, p = %*.6f, mean = %*.2f, var = %*.2f%20s", 9, curR, 9, curP, 6, curMean, 8, curVar, "|");
 			FILE_LOG(logINFO) << buffer;
+			Rprintf("%s\n", buffer);
 		}
 	}
 	
 	snprintf(buffer, bs, "|%80s", "|");
 	FILE_LOG(logINFO) << buffer;
+	Rprintf("%s\n", buffer);
 	snprintf(buffer, bs, " -------------------------------------------------------------------------------");
 	FILE_LOG(logINFO) << buffer;
+	Rprintf("%s\n", buffer);
 	FILE_LOG(logINFO) << "";
+	Rprintf("\n");
 }
 
 double ScaleHMM::get_proba(int i)
