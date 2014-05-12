@@ -148,7 +148,7 @@ void ScaleHMM::initialize_proba(double* initial_proba, bool use_initial_params)
 void ScaleHMM::calc_sumgamma()
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	clock_t time = clock(), dtime;
+// 	clock_t time = clock(), dtime;
 
 	// Initialize the sumgamma
 	for (int iN=0; iN<this->N; iN++)
@@ -170,14 +170,14 @@ void ScaleHMM::calc_sumgamma()
 		this->sumgamma[iN] -= this->gamma[iN][T-1];
 	}
 
-	dtime = clock() - time;
-	FILE_LOG(logDEBUG) << "calc_sumgamma(): " << dtime << " clicks";
+// 	dtime = clock() - time;
+// 	FILE_LOG(logDEBUG) << "calc_sumgamma(): " << dtime << " clicks";
 }
 
 void ScaleHMM::calc_sumxi()
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	clock_t time = clock(), dtime;
+// 	clock_t time = clock(), dtime;
 
 	double xi;
 	// Initialize the sumxi
@@ -226,14 +226,14 @@ void ScaleHMM::calc_sumxi()
 
 	}
 
-	dtime = clock() - time;
-	FILE_LOG(logDEBUG) << "calc_sumxi(): " << dtime << " clicks";
+// 	dtime = clock() - time;
+// 	FILE_LOG(logDEBUG) << "calc_sumxi(): " << dtime << " clicks";
 }
 
 void ScaleHMM::forward()
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	clock_t time = clock(), dtime;
+// 	clock_t time = clock(), dtime;
 
 	if (this->xvariate==UNIVARIATE)
 	{
@@ -275,15 +275,15 @@ void ScaleHMM::forward()
 				FILE_LOG(logDEBUG4) << "scalealpha["<<t<<"]["<<iN<<"] = " << scalealpha[t][iN];
 				if(isnan(this->scalealpha[t][iN]))
 				{
-					FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
+					FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 					for (int jN=0; jN<this->N; jN++)
 					{
-						FILE_LOG(logWARNING) << "scalealpha["<<t-1<<"]["<<jN<<"] = " << scalealpha[t-1][jN];
-						FILE_LOG(logWARNING) << "A["<<iN<<"]["<<jN<<"] = " << A[iN][jN];
+						FILE_LOG(logERROR) << "scalealpha["<<t-1<<"]["<<jN<<"] = " << scalealpha[t-1][jN];
+						FILE_LOG(logERROR) << "A["<<iN<<"]["<<jN<<"] = " << A[iN][jN];
 					}
-					FILE_LOG(logWARNING) << "scalefactoralpha["<<t<<"] = "<<scalefactoralpha[t] << ", densities = "<<densities[iN][t];
-					FILE_LOG(logWARNING) << "scalealpha["<<t<<"]["<<iN<<"] = " << scalealpha[t][iN];
-					exit(1);
+					FILE_LOG(logERROR) << "scalefactoralpha["<<t<<"] = "<<scalefactoralpha[t] << ", densities = "<<densities[iN][t];
+					FILE_LOG(logERROR) << "scalealpha["<<t<<"]["<<iN<<"] = " << scalealpha[t][iN];
+					throw nan_detected;
 				}
 			}
 		}
@@ -329,29 +329,29 @@ void ScaleHMM::forward()
 				FILE_LOG(logDEBUG4) << "scalealpha["<<t<<"]["<<iN<<"] = " << scalealpha[t][iN];
 				if(isnan(this->scalealpha[t][iN]))
 				{
-					FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
+					FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 					for (int jN=0; jN<this->N; jN++)
 					{
-						FILE_LOG(logWARNING) << "scalealpha["<<t-1<<"]["<<jN<<"] = " << scalealpha[t-1][jN];
-						FILE_LOG(logWARNING) << "A["<<iN<<"]["<<jN<<"] = " << A[iN][jN];
+						FILE_LOG(logERROR) << "scalealpha["<<t-1<<"]["<<jN<<"] = " << scalealpha[t-1][jN];
+						FILE_LOG(logERROR) << "A["<<iN<<"]["<<jN<<"] = " << A[iN][jN];
 					}
-					FILE_LOG(logWARNING) << "scalefactoralpha["<<t<<"] = "<<scalefactoralpha[t] << ", tdensities = "<<tdensities[t][iN];
-					FILE_LOG(logWARNING) << "scalealpha["<<t<<"]["<<iN<<"] = " << scalealpha[t][iN];
-					exit(1);
+					FILE_LOG(logERROR) << "scalefactoralpha["<<t<<"] = "<<scalefactoralpha[t] << ", tdensities = "<<tdensities[t][iN];
+					FILE_LOG(logERROR) << "scalealpha["<<t<<"]["<<iN<<"] = " << scalealpha[t][iN];
+					throw nan_detected;
 				}
 			}
 		}
 
 	}
 
-	dtime = clock() - time;
-	FILE_LOG(logDEBUG) << "forward(): " << dtime << " clicks";
+// 	dtime = clock() - time;
+// 	FILE_LOG(logDEBUG) << "forward(): " << dtime << " clicks";
 }
 
 void ScaleHMM::backward()
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	clock_t time = clock(), dtime;
+// 	clock_t time = clock(), dtime;
 
 	if (this->xvariate==UNIVARIATE)
 	{
@@ -388,16 +388,16 @@ void ScaleHMM::backward()
 				FILE_LOG(logDEBUG4) << "scalebeta["<<t<<"]["<<iN<<"] = " << scalebeta[t][iN];
 				if (isnan(this->scalebeta[t][iN]))
 				{
-					FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
+					FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 					for (int jN=0; jN<this->N; jN++)
 					{
-						FILE_LOG(logWARNING) << "scalebeta["<<jN<<"]["<<t+1<<"] = " << scalebeta[t+1][jN];
-						FILE_LOG(logWARNING) << "A["<<iN<<"]["<<jN<<"] = " << A[iN][jN];
-						FILE_LOG(logWARNING) << "densities["<<jN<<"]["<<t+1<<"] = " << densities[jN][t+1];
+						FILE_LOG(logERROR) << "scalebeta["<<jN<<"]["<<t+1<<"] = " << scalebeta[t+1][jN];
+						FILE_LOG(logERROR) << "A["<<iN<<"]["<<jN<<"] = " << A[iN][jN];
+						FILE_LOG(logERROR) << "densities["<<jN<<"]["<<t+1<<"] = " << densities[jN][t+1];
 					}
-					FILE_LOG(logWARNING) << "this->scalefactoralpha[t]["<<t<<"] = "<<this->scalefactoralpha[t] << ", densities = "<<densities[iN][t];
-					FILE_LOG(logWARNING) << "scalebeta["<<iN<<"]["<<t<<"] = " << scalebeta[t][iN];
-					exit(1);
+					FILE_LOG(logERROR) << "this->scalefactoralpha[t]["<<t<<"] = "<<this->scalefactoralpha[t] << ", densities = "<<densities[iN][t];
+					FILE_LOG(logERROR) << "scalebeta["<<iN<<"]["<<t<<"] = " << scalebeta[t][iN];
+					throw nan_detected;
 				}
 			}
 		}
@@ -438,30 +438,30 @@ void ScaleHMM::backward()
 				FILE_LOG(logDEBUG4) << "scalebeta["<<t<<"]["<<iN<<"] = " << scalebeta[t][iN];
 				if (isnan(this->scalebeta[t][iN]))
 				{
-					FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
+					FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 					for (int jN=0; jN<this->N; jN++)
 					{
-						FILE_LOG(logWARNING) << "scalebeta["<<jN<<"]["<<t+1<<"] = " << scalebeta[t+1][jN];
-						FILE_LOG(logWARNING) << "A["<<iN<<"]["<<jN<<"] = " << A[iN][jN];
-						FILE_LOG(logWARNING) << "tdensities["<<t+1<<"]["<<jN<<"] = " << tdensities[t+1][jN];
+						FILE_LOG(logERROR) << "scalebeta["<<jN<<"]["<<t+1<<"] = " << scalebeta[t+1][jN];
+						FILE_LOG(logERROR) << "A["<<iN<<"]["<<jN<<"] = " << A[iN][jN];
+						FILE_LOG(logERROR) << "tdensities["<<t+1<<"]["<<jN<<"] = " << tdensities[t+1][jN];
 					}
-					FILE_LOG(logWARNING) << "this->scalefactoralpha[t]["<<t<<"] = "<<this->scalefactoralpha[t] << ", tdensities = "<<densities[t][iN];
-					FILE_LOG(logWARNING) << "scalebeta["<<iN<<"]["<<t<<"] = " << scalebeta[t][iN];
-					exit(1);
+					FILE_LOG(logERROR) << "this->scalefactoralpha[t]["<<t<<"] = "<<this->scalefactoralpha[t] << ", tdensities = "<<densities[t][iN];
+					FILE_LOG(logERROR) << "scalebeta["<<iN<<"]["<<t<<"] = " << scalebeta[t][iN];
+					throw nan_detected;
 				}
 			}
 		}
 
 	}
 
-	dtime = clock() - time;
-	FILE_LOG(logDEBUG) << "backward(): " << dtime << " clicks";
+// 	dtime = clock() - time;
+// 	FILE_LOG(logDEBUG) << "backward(): " << dtime << " clicks";
 }
 
 void ScaleHMM::calc_loglikelihood()
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	clock_t time = clock(), dtime;
+// 	clock_t time = clock(), dtime;
 
 	this->logP = 0.0;
 	for (int t=0; t<this->T; t++)
@@ -469,14 +469,14 @@ void ScaleHMM::calc_loglikelihood()
 		this->logP += log(this->scalefactoralpha[t]);
 	}
 
-	dtime = clock() - time;
-	FILE_LOG(logDEBUG) << "calc_loglikelihood(): " << dtime << " clicks";
+// 	dtime = clock() - time;
+// 	FILE_LOG(logDEBUG) << "calc_loglikelihood(): " << dtime << " clicks";
 }
 
 void ScaleHMM::computeDensities()
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	clock_t time = clock(), dtime;
+// 	clock_t time = clock(), dtime;
 	#pragma omp parallel for
 	for (int iN=0; iN<this->N; iN++)
 	{
@@ -497,8 +497,8 @@ void ScaleHMM::computeDensities()
 
 	}
 
-	dtime = clock() - time;
-	FILE_LOG(logDEBUG) << "computeDensities(): " << dtime << " clicks";
+// 	dtime = clock() - time;
+// 	FILE_LOG(logDEBUG) << "computeDensities(): " << dtime << " clicks";
 }
 
 void ScaleHMM::get_posteriors(double** post)
@@ -531,25 +531,13 @@ void ScaleHMM::calc_weights(double* weights)
 void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	switch(this->xvariate)
-	{
-		case UNIVARIATE:
-			FILE_LOG(logDEBUG1) << "Starting univariate Baum-Welch";
-			break;
-		case MULTIVARIATE:
-			FILE_LOG(logDEBUG1) << "Starting multivariate Baum-Welch";
-			break;
-		default:
-			FILE_LOG(logERROR) << "Specifiy either UNIVARIATE or MULTIVARIATE for baumWelch() call!";
-			exit(1);
-	}
 
 	double logPold = -INFINITY;
-	double logPnew, dP;
+	double logPnew;
 	double** gammaold = allocDoubleMatrix(this->N, this->T);
 
 	// Parallelization settings
-	omp_set_nested(1);
+// 	omp_set_nested(1);
 	
 	// measuring the time
 	this->baumWelchStartTime_sec = time(NULL);
@@ -596,16 +584,16 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 		if (this->xvariate == UNIVARIATE)
 		{
 			FILE_LOG(logDEBUG1) << "Calling computeDensities() from baumWelch()";
-			this->computeDensities();
+			try { this->computeDensities(); } catch(...) { throw; }
 			R_CheckUserInterrupt();
 		}
 
 		FILE_LOG(logDEBUG1) << "Calling forward() from baumWelch()";
-		this->forward();
+		try { this->forward(); } catch(...) { throw; }
 		R_CheckUserInterrupt();
 
 		FILE_LOG(logDEBUG1) << "Calling backward() from baumWelch()";
-		this->backward();
+		try { this->backward(); } catch(...) { throw; }
 		R_CheckUserInterrupt();
 
 		FILE_LOG(logDEBUG1) << "Calling calc_loglikelihood() from baumWelch()";
@@ -613,8 +601,8 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 		logPnew = this->logP;
 		if(isnan(logPnew))
 		{
-			FILE_LOG(logWARNING) << "logPnew = " << logPnew;
-			break;
+			FILE_LOG(logERROR) << "logPnew = " << logPnew;
+			throw nan_detected;
 		}
 		this->dlogP = logPnew - logPold;
 
@@ -628,7 +616,7 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 
 		if (this->xvariate == UNIVARIATE)
 		{
-			clock_t clocktime = clock(), dtime;
+// 			clock_t clocktime = clock(), dtime;
 			// difference in state assignments
 			FILE_LOG(logDEBUG1) << "Calculating differences in state assignments in baumWelch()";
 			int state1 = 0;
@@ -649,11 +637,11 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 				state1old = 0;
 			}
 			this->sumdiff_state1 = statesum;
-			dtime = clock() - clocktime;
-			FILE_LOG(logDEBUG) << "differences in state assignments: " << dtime << " clicks";
+// 			dtime = clock() - clocktime;
+// 			FILE_LOG(logDEBUG) << "differences in state assignments: " << dtime << " clicks";
 		}
 
-		clock_t clocktime = clock(), dtime;
+// 		clock_t clocktime = clock(), dtime;
 		// difference in posterior
 		FILE_LOG(logDEBUG1) << "Calculating differences in posterior in baumWelch()";
 		double postsum = 0.0;
@@ -666,8 +654,8 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 			}
 		}
 		this->sumdiff_posterior = postsum;
-		dtime = clock() - clocktime;
-		FILE_LOG(logDEBUG) << "differences in posterior: " << dtime << " clicks";
+// 		dtime = clock() - clocktime;
+// 		FILE_LOG(logDEBUG) << "differences in posterior: " << dtime << " clicks";
 
 		R_CheckUserInterrupt();
 
@@ -744,10 +732,10 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 // 					}
 					if (isnan(this->A[iN][jN]))
 					{
-						FILE_LOG(logWARNING) << "A["<<iN<<"]["<<jN<<"] = " << A[iN][jN];
-						FILE_LOG(logWARNING) << "sumxi["<<iN<<"]["<<jN<<"] = " << sumxi[iN][jN];
-						FILE_LOG(logWARNING) << "sumgamma["<<iN<<"] = " << sumgamma[iN];
-						exit(1);
+						FILE_LOG(logERROR) << "A["<<iN<<"]["<<jN<<"] = " << A[iN][jN];
+						FILE_LOG(logERROR) << "sumxi["<<iN<<"]["<<jN<<"] = " << sumxi[iN][jN];
+						FILE_LOG(logERROR) << "sumgamma["<<iN<<"] = " << sumgamma[iN];
+						throw nan_detected;
 					}
 				}
 			}
@@ -769,14 +757,14 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 		if (this->xvariate == UNIVARIATE)
 		{
 			// Update the parameters of the distribution
-			clock_t clocktime = clock(), dtime;
+// 			clock_t clocktime = clock(), dtime;
 			#pragma omp parallel for
 			for (int iN=0; iN<this->N; iN++)
 			{
 				this->densityFunctions[iN]->update(this->gamma[iN]);
 			}
-			dtime = clock() - clocktime;
-			FILE_LOG(logDEBUG) << "updating distributions: " << dtime << " clicks";
+// 			dtime = clock() - clocktime;
+// 			FILE_LOG(logDEBUG) << "updating distributions: " << dtime << " clicks";
 			R_CheckUserInterrupt();
 		}
 

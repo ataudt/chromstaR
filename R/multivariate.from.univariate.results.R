@@ -115,7 +115,8 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 			A.initial = as.double(A.initial), # double* initial A
 			proba.initial = as.double(proba.initial), # double* initial proba
 			use.initial.params = as.logical(use.initial), # bool* use_initial_params
-			num.threads = as.integer(num.threads) # int* num_threads
+			num.threads = as.integer(num.threads), # int* num_threads
+			error = as.integer(0) # error handling
 			)
 			
 		# Add useful entries

@@ -1,14 +1,15 @@
-#include "loghmm.h"
+#include "utility.h"
+// #include "loghmm.h"
 #include "scalehmm.h"
 #include <vector> // storing density functions in multivariate
-using std::vector;
-#include "utility.h"
+// using std::vector;
 
 // ===================================================================================================================================================
 // This function takes parameters from R, creates a univariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // ===================================================================================================================================================
 extern "C" {
-void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter, int* maxtime, double* eps, double* posteriors, double* A, double* proba, double* loglik, double* weights, double* initial_r, double* initial_p, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads) {
+void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter, int* maxtime, double* eps, double* posteriors, double* A, double* proba, double* loglik, double* weights, double* initial_r, double* initial_p, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error)
+{
 
 	// Define logging level
 // 	FILE* pFile = fopen("chromStar.log", "w");
@@ -18,7 +19,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 //  	FILELog::ReportingLevel() = FILELog::FromString("DEBUG1");
 
 	// Parallelization settings
-	omp_set_num_threads(*num_threads);
+// 	omp_set_num_threads(*num_threads);
 
 	// Print some information
 	FILE_LOG(logINFO) << "number of states = " << *N;
@@ -64,8 +65,8 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 	FILE_LOG(logINFO) << "data mean = " << mean << ", data variance = " << variance;		
 	
 	// Go through all states of the model and assign the density functions
-	srand (clock());
-	int rand1, rand2;
+// 	srand (clock());
+// 	int rand1, rand2;
 	double imean, ivariance;
 	//int i_count = 0;
 	for (int i_state=0; i_state<model->N; i_state++)
@@ -141,7 +142,15 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 
 	// Do the Baum-Welch to estimate the parameters
 	FILE_LOG(logDEBUG1) << "Starting Baum-Welch estimation";
-	model->baumWelch(maxiter, maxtime, eps);
+	try
+	{
+		model->baumWelch(maxiter, maxtime, eps);
+	}
+	catch (std::exception& e)
+	{
+		FILE_LOG(logERROR) << "Error in Baum-Welch: " << e.what();
+		*error = -1;
+	}
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
 	// Compute the posteriors and save results directly to the R pointer
 	double** post = allocDoubleMatrix(model->N, model->T);
@@ -190,7 +199,8 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 // This function takes parameters from R, creates a multivariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // =====================================================================================================================================================
 extern "C" {
-void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* r, double* p, double* w, double* cor_matrix_inv, double* det, int* maxiter, int* maxtime, double* eps, double* posteriors, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads){
+void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* r, double* p, double* w, double* cor_matrix_inv, double* det, int* maxiter, int* maxtime, double* eps, double* posteriors, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error)
+{
 
 	// Define logging level {"ERROR", "WARNING", "INFO", "ITERATION", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4"}
 // 	FILE* pFile = fopen("chromStar.log", "w");
@@ -199,7 +209,7 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 //  	FILELog::ReportingLevel() = FILELog::FromString("DEBUG");
 
 	// Parallelization settings
-	omp_set_num_threads(*num_threads);
+// 	omp_set_num_threads(*num_threads);
 
 	// Print some information
 	FILE_LOG(logINFO) << "number of states = " << *N;
@@ -220,7 +230,7 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 	FILE_LOG(logINFO) << "number of modifications = " << *Nmod;
 
 	// Recode the observation vector to matrix representation
-	clock_t clocktime = clock(), dtime;
+// 	clock_t clocktime = clock(), dtime;
 	int** multiO = allocIntMatrix(*Nmod, *T);
 	for (int imod=0; imod<*Nmod; imod++)
 	{
@@ -229,8 +239,8 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 			multiO[imod][t] = O[imod*(*T)+t];
 		}
 	}
-	dtime = clock() - clocktime;
-	FILE_LOG(logDEBUG1) << "recoding observation vector to matrix representation: " << dtime << " clicks";
+// 	dtime = clock() - clocktime;
+// 	FILE_LOG(logDEBUG1) << "recoding observation vector to matrix representation: " << dtime << " clicks";
 
 	// Create the HMM
 	FILE_LOG(logDEBUG1) << "Creating the multivariate HMM";
@@ -267,7 +277,7 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 	FILE_LOG(logDEBUG1) << "Initializing the distributions";
 	for (int iN=0; iN<model->N; iN++) //for each combinatorial state
 	{
-		vector <Density*> tempMarginals;            
+		std::vector <Density*> tempMarginals;            
 		for (int imod=0; imod < model->Nmod; imod++) //for each modification
 		{
 			Density *d;
@@ -289,7 +299,15 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 	
 	// Estimate the parameters
 	FILE_LOG(logDEBUG1) << "Starting Baum-Welch estimation";
-	model->baumWelch(maxiter, maxtime, eps);
+	try
+	{
+		model->baumWelch(maxiter, maxtime, eps);
+	}
+	catch (std::exception& e)
+	{
+		FILE_LOG(logERROR) << "Error in Baum-Welch: " << e.what();
+		*error = -1;
+	}
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
 	
 	// Compute the posteriors and save results directly to the R pointer
@@ -329,14 +347,15 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 // This function takes parameters from R, creates a multivariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // ---------------------------------------------------------------
 extern "C" {//observation is now the posterior for being UNMODIFIED
-void R_multivariate_hmm_productBernoulli(double* O, int* T, int* N, int *Nmod, int* states, int* maxiter, int* maxtime, double* eps, double* post, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads){
+void R_multivariate_hmm_productBernoulli(double* O, int* T, int* N, int *Nmod, int* states, int* maxiter, int* maxtime, double* eps, double* post, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error)
+{
 
 	// Define logging level
 // 	FILELog::ReportingLevel() = FILELog::FromString("DEBUG3");
 	FILELog::ReportingLevel() = FILELog::FromString("ITERATION");
 
 	// Parallelization settings
-	omp_set_num_threads(*num_threads);
+// 	omp_set_num_threads(*num_threads);
 
 	// Print some information
 	FILE_LOG(logINFO) << "number of states = " << *N;
@@ -357,7 +376,7 @@ void R_multivariate_hmm_productBernoulli(double* O, int* T, int* N, int *Nmod, i
 	FILE_LOG(logINFO) << "number of modifications = " << *Nmod;
 
 	// Recode the observation vector to matrix representation
-	clock_t clocktime = clock(), dtime;
+// 	clock_t clocktime = clock(), dtime;
 	double** multiO = allocDoubleMatrix(*Nmod, *T);
 	for (int imod=0; imod<*Nmod; imod++)
 	{
@@ -366,12 +385,13 @@ void R_multivariate_hmm_productBernoulli(double* O, int* T, int* N, int *Nmod, i
 			multiO[imod][t] = O[imod*(*T)+t];
 		}
 	}
-	dtime = clock() - clocktime;
-	FILE_LOG(logDEBUG1) << "recoding observation and probability vectors to matrix representation: " << dtime << " clicks";
+// 	dtime = clock() - clocktime;
+// 	FILE_LOG(logDEBUG1) << "recoding observation and probability vectors to matrix representation: " << dtime << " clicks";
 
 	// Create the HMM
 	FILE_LOG(logDEBUG1) << "Creating the multivariate HMM";
-	LogHMM* model = new LogHMM(*T, *N, *Nmod);
+// 	LogHMM* model = new LogHMM(*T, *N, *Nmod);
+	ScaleHMM* model = new ScaleHMM(*T, *N, *Nmod);
 
 	// Initialize the transition probabilities and proba
 	model->initialize_transition_probs(initial_A, *use_initial_params);
@@ -411,12 +431,20 @@ void R_multivariate_hmm_productBernoulli(double* O, int* T, int* N, int *Nmod, i
 
 	// Estimate the parameters
 	FILE_LOG(logDEBUG1) << "Starting Baum-Welch estimation";
-	model->baumWelch(maxiter, maxtime, eps);
+	try
+	{
+		model->baumWelch(maxiter, maxtime, eps);
+	}
+	catch (std::exception& e)
+	{
+		FILE_LOG(logERROR) << "Error in Baum-Welch: " << e.what();
+		*error = -1;
+	}
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
 	
-    // Compute the posteriors and save results directly to the R pointer
-    double** posteriors = allocDoubleMatrix(model->N, model->T);
-    model->get_posteriors(posteriors);
+	// Compute the posteriors and save results directly to the R pointer
+	double** posteriors = allocDoubleMatrix(model->N, model->T);
+	model->get_posteriors(posteriors);
 	FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
 	for (int iN=0; iN<model->N; iN++)
 	{
@@ -425,7 +453,7 @@ void R_multivariate_hmm_productBernoulli(double* O, int* T, int* N, int *Nmod, i
 			post[t + iN * model->T] = posteriors[iN][t];
 		}
 	}
-    freeDoubleMatrix(posteriors, model->N);
+	freeDoubleMatrix(posteriors, model->N);
 	
 	FILE_LOG(logDEBUG1) << "Return parameters";
 	// also return the estimated transition matrix and the initial probs

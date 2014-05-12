@@ -1,7 +1,7 @@
 #include <Rmath.h> // digamma() and qnorm()
 #include <gsl/gsl_sf_hyperg.h> //needed for the hypergeometric function
 #include <vector> // storing density functions in MVCopula
-using std::vector;
+// using std::vector;
 #include "utility.h" // FILE_LOG(), intMax(), allocDoubleMatrix()
 
 #ifndef DENSITIES_H
@@ -19,10 +19,10 @@ class Density {
 		virtual void calc_CDFs(double* CDF) {};
 		virtual void update(double* weight) {}; 
 		virtual void copy(Density* other) {};
-		virtual DensityName getType() {};
-		virtual double getMean() {};
-		virtual double getVariance() {};
-		virtual double getLogDensityAt10Variance() {};
+		virtual DensityName getType() { return(Other); };
+		virtual double getMean() { return(0); };
+		virtual double getVariance() { return(0); };
+		virtual double getLogDensityAt10Variance() { return(0); };
 
 };  
 
@@ -112,7 +112,7 @@ class OnlyZeros : public Density {
 
 class MVCopulaApproximation : public Density {
 	public:
-		MVCopulaApproximation(int** multiobservations, int T, vector<Density*> marginals, double* cor_matrix_inv, double cor_matrix_determinant);
+		MVCopulaApproximation(int** multiobservations, int T, std::vector<Density*> marginals, double* cor_matrix_inv, double cor_matrix_determinant);
 		~MVCopulaApproximation();
 		void calc_logdensities(double* logdensity);
 		void calc_densities(double* density);
@@ -120,7 +120,7 @@ class MVCopulaApproximation : public Density {
 	private:
 		int** multiO;
 		int T;
-		vector<Density*> marginals;
+		std::vector<Density*> marginals;
 		double* cor_matrix_inv;
 		double cor_matrix_determinant;
 		int Nmod;

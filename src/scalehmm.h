@@ -1,10 +1,10 @@
 #ifndef SCALEHMM_H
 #define SCALEHMM_H
 
-#include <omp.h> // #pragma omp parallel
+// #include <omp.h> // #pragma omp parallel
 #include <R.h> // R_CheckUserInterrupt()
 #include <vector> // storing density functions
-using std::vector;
+// using std::vector;
 #include "utility.h"
 #include "densities.h"
 
@@ -19,7 +19,7 @@ class ScaleHMM  {
 		double logP; ///< loglikelihood
 		int* O; ///< vector [T] of observations
 		int** multiO; ///< matrix [Nmod x T] of observations
-		vector<Density*> densityFunctions; ///< density functions for each state
+		std::vector<Density*> densityFunctions; ///< density functions for each state
 		
 		ScaleHMM();
 		ScaleHMM(int T, int N);

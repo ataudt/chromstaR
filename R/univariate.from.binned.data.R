@@ -62,7 +62,8 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 			A.initial = double(length=numstates*numstates), # double* initial_A
 			proba.initial = double(length=numstates), # double* initial_proba
 			use.initial.params = as.logical(0), # bool* use_initial_params
-			num.threads = as.integer(num.threads) # int* num_threads
+			num.threads = as.integer(num.threads), # int* num_threads
+			error = as.integer(0) # error handling
 		)
 
 		hmm$eps <- eps.try
@@ -114,7 +115,8 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 			A.initial <- as.vector(hmm$A), # double* initial_A
 			proba.initial <- as.vector(hmm$proba), # double* initial_proba
 			use.initial.params <- as.logical(1), # bool* use_initial_params
-			num.threads <- as.integer(num.threads) # int* num_threads
+			num.threads <- as.integer(num.threads), # int* num_threads
+			error = as.integer(0) # error handling
 		)
 	}
 
@@ -148,6 +150,9 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 		if (hmm$loglik.delta > hmm$eps) {
 			war <- warning("HMM did not converge!\n")
 		}
+	}
+	if (hmm$error == -1) {
+		war <- warning("A 'nan' occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
 	}
 
 	# Return results

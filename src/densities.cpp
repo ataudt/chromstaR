@@ -69,9 +69,9 @@ void ZiNB::calc_logdensities(double* logdens)
 			}
 			if (isnan(logdens[t]))
 			{
-				FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-				FILE_LOG(logWARNING) << "logdens["<<t<<"] = "<< logdens[t];
-				exit(1);
+				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+				FILE_LOG(logERROR) << "logdens["<<t<<"] = "<< logdens[t];
+				throw nan_detected;
 			}
 		}
 	}
@@ -92,9 +92,9 @@ void ZiNB::calc_logdensities(double* logdens)
 			}
 			if (isnan(logdens[t]))
 			{
-				FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-				FILE_LOG(logWARNING) << "logdens["<<t<<"] = "<< logdens[t];
-				exit(1);
+				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+				FILE_LOG(logERROR) << "logdens["<<t<<"] = "<< logdens[t];
+				throw nan_detected;
 			}
 		}
 	}
@@ -129,9 +129,9 @@ void ZiNB::calc_densities(double* dens)
 			}
 			if (isnan(dens[t]))
 			{
-				FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-				FILE_LOG(logWARNING) << "dens["<<t<<"] = "<< dens[t];
-				exit(1);
+				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+				FILE_LOG(logERROR) << "dens["<<t<<"] = "<< dens[t];
+				throw nan_detected;
 			}
 		}
 	}
@@ -152,9 +152,9 @@ void ZiNB::calc_densities(double* dens)
 			}
 			if (isnan(dens[t]))
 			{
-				FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-				FILE_LOG(logWARNING) << "dens["<<t<<"] = "<< dens[t];
-				exit(1);
+				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+				FILE_LOG(logERROR) << "dens["<<t<<"] = "<< dens[t];
+				throw nan_detected;
 			}
 		}
 	}
@@ -191,9 +191,9 @@ void ZiNB::calc_CDFs(double* CDF)
 			CDF[t] = precomputed_CDF[(int)O[t]];
 			if (isnan(CDF[t]))
 			{
-				FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-				FILE_LOG(logWARNING) << "CDF["<<t<<"] = "<< CDF[t];
-				exit(1);
+				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+				FILE_LOG(logERROR) << "CDF["<<t<<"] = "<< CDF[t];
+				throw nan_detected;
 			}
 		}
 // 	}
@@ -210,14 +210,14 @@ void ZiNB::calc_CDFs(double* CDF)
 // 			CDF[t] = 1 - exp( log(1-this->w) + lppowerr + lppowert + lGamma1plusRplusX + lHyper - lGammaR - lGamma2plusX ); //TODO: Check formula for log
 // 			if(CDF[t] == 0)
 // 			{
-// 				FILE_LOG(logWARNING) << "CDF["<<t<<"] = "<< CDF[t]; //TODO: Check if this works
+// 				FILE_LOG(logERROR) << "CDF["<<t<<"] = "<< CDF[t]; //TODO: Check if this works
 // // 				cout<<"CAUTION!!!! current ="<<current<<endl; current = this->cdf->at(i-1);
 // 			}
 // 			if (isnan(CDF[t]))
 // 			{
-// 				FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-// 				FILE_LOG(logWARNING) << "CDF["<<t<<"] = "<< CDF[t];
-// 				exit(1);
+// 				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+// 				FILE_LOG(logERROR) << "CDF["<<t<<"] = "<< CDF[t];
+// 				throw nan_detected;
 // 			}
 // 		}
 // 	}
@@ -252,9 +252,9 @@ void ZiNB::calc_logCDFs(double* logCDF)
 			}
 			if (isnan(logCDF[t]))
 			{
-				FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-				FILE_LOG(logWARNING) << "logCDF["<<t<<"] = "<< logCDF[t];
-				exit(1);
+				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+				FILE_LOG(logERROR) << "logCDF["<<t<<"] = "<< logCDF[t];
+				throw nan_detected;
 			}
 		}
 	}
@@ -275,9 +275,9 @@ void ZiNB::calc_logCDFs(double* logCDF)
 			}
 			if (isnan(logCDF[t]))
 			{
-				FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-				FILE_LOG(logWARNING) << "logCDF["<<t<<"] = "<< logCDF[t];
-				exit(1);
+				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+				FILE_LOG(logERROR) << "logCDF["<<t<<"] = "<< logCDF[t];
+				throw nan_detected;
 			}
 		}
 	}
@@ -381,9 +381,9 @@ double ZiNB::getLogDensityAt10Variance()
 	}
 	if (isnan(logdens))
 	{
-		FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-		FILE_LOG(logWARNING) << "logdens = "<< logdens;
-		exit(1);
+		FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+		FILE_LOG(logERROR) << "logdens = "<< logdens;
+		throw nan_detected;
 	}
 	
 	return(logdens);
@@ -452,9 +452,9 @@ void NegativeBinomial::calc_logdensities(double* logdens)
 			FILE_LOG(logDEBUG4) << "logdens["<<t<<"] = " << logdens[t];
 			if (isnan(logdens[t]))
 			{
-				FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-				FILE_LOG(logWARNING) << "logdens["<<t<<"] = "<< logdens[t];
-				exit(1);
+				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+				FILE_LOG(logERROR) << "logdens["<<t<<"] = "<< logdens[t];
+				throw nan_detected;
 			}
 		}
 	}
@@ -469,9 +469,9 @@ void NegativeBinomial::calc_logdensities(double* logdens)
 			FILE_LOG(logDEBUG4) << "logdens["<<t<<"] = " << logdens[t];
 			if (isnan(logdens[t]))
 			{
-				FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-				FILE_LOG(logWARNING) << "logdens["<<t<<"] = "<< logdens[t];
-				exit(1);
+				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+				FILE_LOG(logERROR) << "logdens["<<t<<"] = "<< logdens[t];
+				throw nan_detected;
 			}
 		}
 	}
@@ -499,9 +499,9 @@ void NegativeBinomial::calc_densities(double* dens)
 			FILE_LOG(logDEBUG4) << "dens["<<t<<"] = " << dens[t];
 			if (isnan(dens[t]))
 			{
-				FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-				FILE_LOG(logWARNING) << "dens["<<t<<"] = "<< dens[t];
-				exit(1);
+				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+				FILE_LOG(logERROR) << "dens["<<t<<"] = "<< dens[t];
+				throw nan_detected;
 			}
 		}
 	}
@@ -516,9 +516,9 @@ void NegativeBinomial::calc_densities(double* dens)
 			FILE_LOG(logDEBUG4) << "dens["<<t<<"] = " << dens[t];
 			if (isnan(dens[t]))
 			{
-							FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-				FILE_LOG(logWARNING) << "dens["<<t<<"] = "<< dens[t];
-				exit(1);
+				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+				FILE_LOG(logERROR) << "dens["<<t<<"] = "<< dens[t];
+				throw nan_detected;
 			}
 		}
 	}
@@ -555,9 +555,9 @@ void NegativeBinomial::calc_CDFs(double* CDF)
 			CDF[t] = precomputed_CDF[(int)O[t]];
 			if (isnan(CDF[t]))
 			{
-				FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-				FILE_LOG(logWARNING) << "CDF["<<t<<"] = "<< CDF[t];
-				exit(1);
+				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+				FILE_LOG(logERROR) << "CDF["<<t<<"] = "<< CDF[t];
+				throw nan_detected;
 			}
 		}
 // 	}
@@ -574,14 +574,14 @@ void NegativeBinomial::calc_CDFs(double* CDF)
 // 			CDF[t] = 1 - exp( lppowerr + lppowert + lGamma1plusRplusX + lHyper - lGammaR - lGamma2plusX ); //TODO: Check formula for log
 // 			if(CDF[t] == 1)
 // 			{
-// 				FILE_LOG(logWARNING) << "CDF["<<t<<"] = "<< CDF[t]; //TODO: Check if this works
+// 				FILE_LOG(logERROR) << "CDF["<<t<<"] = "<< CDF[t]; //TODO: Check if this works
 // // 				cout<<"CAUTION!!!! current ="<<current<<endl; current = this->cdf->at(i-1);
 // 			}
 // 			if (isnan(CDF[t]))
 // 			{
-// 				FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-// 				FILE_LOG(logWARNING) << "CDF["<<t<<"] = "<< CDF[t];
-// 				exit(1);
+// 				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+// 				FILE_LOG(logERROR) << "CDF["<<t<<"] = "<< CDF[t];
+// 				throw nan_detected;
 // 			}
 // 		}
 // 	}
@@ -616,9 +616,9 @@ void NegativeBinomial::calc_logCDFs(double* logCDF)
 			}
 			if (isnan(logCDF[t]))
 			{
-				FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-				FILE_LOG(logWARNING) << "logCDF["<<t<<"] = "<< logCDF[t];
-				exit(1);
+				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+				FILE_LOG(logERROR) << "logCDF["<<t<<"] = "<< logCDF[t];
+				throw nan_detected;
 			}
 		}
 	}
@@ -639,9 +639,9 @@ void NegativeBinomial::calc_logCDFs(double* logCDF)
 			}
 			if (isnan(logCDF[t]))
 			{
-				FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-				FILE_LOG(logWARNING) << "logCDF["<<t<<"] = "<< logCDF[t];
-				exit(1);
+				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+				FILE_LOG(logERROR) << "logCDF["<<t<<"] = "<< logCDF[t];
+				throw nan_detected;
 			}
 		}
 	}
@@ -654,8 +654,8 @@ void NegativeBinomial::update(double* weight)
 	double numerator, denominator, rhere, dr, Fr, dFrdr, DigammaR, DigammaRplusDR;
 	// Update p
 	numerator=denominator=0.0;
-	clock_t time, dtime;
-	time = clock();
+// 	clock_t time, dtime;
+// 	time = clock();
 	for (int t=0; t<this->T; t++)
 	{
 		numerator+=weight[t]*this->r;
@@ -663,13 +663,13 @@ void NegativeBinomial::update(double* weight)
 	}
 	this->p = numerator/denominator; // Update of r is now done with updated p
 	double logp = log(this->p);
-	dtime = clock() - time;
-	FILE_LOG(logDEBUG1) << "updateP(): "<<dtime<< " clicks";
+// 	dtime = clock() - time;
+// 	FILE_LOG(logDEBUG1) << "updateP(): "<<dtime<< " clicks";
 	// Update of r with Newton Method
 	rhere = this->r;
 	dr = 0.00001;
 	kmax = 20;
-	time = clock();
+// 	time = clock();
 	// Select strategy for computing digammas
 	if (this->max_O <= this->T)
 	{
@@ -742,8 +742,8 @@ void NegativeBinomial::update(double* weight)
 	this->r = rhere;
 	FILE_LOG(logDEBUG1) << "r = "<<this->r << ", p = "<<this->p;
 
-	dtime = clock() - time;
-	FILE_LOG(logDEBUG1) << "updateR(): "<<dtime<< " clicks";
+// 	dtime = clock() - time;
+// 	FILE_LOG(logDEBUG1) << "updateR(): "<<dtime<< " clicks";
 
 }
 
@@ -825,9 +825,9 @@ double NegativeBinomial::getLogDensityAt10Variance()
 	logdens = lGammaRplusX - lGammaR - lxfactorial + this->r * logp + x * log1minusp;
 	if (isnan(logdens))
 	{
-		FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-		FILE_LOG(logWARNING) << "logdens = "<< logdens;
-		exit(1);
+		FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+		FILE_LOG(logERROR) << "logdens = "<< logdens;
+		throw nan_detected;
 	}
 	
 	return(logdens);
@@ -946,7 +946,7 @@ double OnlyZeros::getLogDensityAt10Variance()
 // Multivariate Copula Approximation
 // ------------------------------------------------------------
 
-MVCopulaApproximation::MVCopulaApproximation(int** multiobservations, int T, vector<Density*> marginals, double* cor_matrix_inv, double cor_matrix_determinant)
+MVCopulaApproximation::MVCopulaApproximation(int** multiobservations, int T, std::vector<Density*> marginals, double* cor_matrix_inv, double cor_matrix_determinant)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	this->multiO = multiobservations;
@@ -993,9 +993,9 @@ void MVCopulaApproximation::calc_logdensities(double* logdens)
 			z[imod] = qnorm(uniform, 0, 1, 1, 0);
 			if (isnan(z[imod]))
 			{
-				FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-				FILE_LOG(logWARNING) << "uniform = "<< uniform;
-				FILE_LOG(logWARNING) << "z[imod] = "<< z[imod];
+				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+				FILE_LOG(logERROR) << "uniform = "<< uniform;
+				FILE_LOG(logERROR) << "z[imod] = "<< z[imod];
 			}
 		}
 		exponent = 0.0;
@@ -1014,33 +1014,33 @@ void MVCopulaApproximation::calc_logdensities(double* logdens)
 				}
 				if (isnan(exponentTemp))
 				{
-					FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-					FILE_LOG(logWARNING) << "exponentTemp = "<< exponentTemp;
-					FILE_LOG(logWARNING) << "cor_matrix_inv = "<< cor_matrix_inv[imod * Nmod + jmod];
-					FILE_LOG(logWARNING) << "z["<<jmod<<"] = "<< z[jmod];
-					exit(1);
+					FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+					FILE_LOG(logERROR) << "exponentTemp = "<< exponentTemp;
+					FILE_LOG(logERROR) << "cor_matrix_inv = "<< cor_matrix_inv[imod * Nmod + jmod];
+					FILE_LOG(logERROR) << "z["<<jmod<<"] = "<< z[jmod];
+					throw nan_detected;
 				}
 			}
 			exponent += exponentTemp * z[imod];
 			if (isnan(exponent))
 			{
-				FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-				FILE_LOG(logWARNING) << "exponentTemp = "<< exponentTemp;
-				FILE_LOG(logWARNING) << "z["<<imod<<"] = "<< z[imod];
-				FILE_LOG(logWARNING) << "exponent = "<< exponent;
-				exit(1);
+				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+				FILE_LOG(logERROR) << "exponentTemp = "<< exponentTemp;
+				FILE_LOG(logERROR) << "z["<<imod<<"] = "<< z[imod];
+				FILE_LOG(logERROR) << "exponent = "<< exponent;
+				throw nan_detected;
 			}
 		}
 		logdens[t] = log(1/sqrt(this->cor_matrix_determinant)) - 0.5 * exponent + sum;
 		if (isnan(logdens[t]))
 		{
-			FILE_LOG(logWARNING) << __PRETTY_FUNCTION__;
-			FILE_LOG(logWARNING) << "cor_matrix_determinant = " << this->cor_matrix_determinant;
-			FILE_LOG(logWARNING) << "sum = " << sum;
-			FILE_LOG(logWARNING) << "exponentTemp = " << exponentTemp;
-			FILE_LOG(logWARNING) << "exponent = " << exponent;
-			FILE_LOG(logWARNING) << "logdens["<<t<<"] = " << logdens[t];
-			exit(1);
+			FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+			FILE_LOG(logERROR) << "cor_matrix_determinant = " << this->cor_matrix_determinant;
+			FILE_LOG(logERROR) << "sum = " << sum;
+			FILE_LOG(logERROR) << "exponentTemp = " << exponentTemp;
+			FILE_LOG(logERROR) << "exponent = " << exponent;
+			FILE_LOG(logERROR) << "logdens["<<t<<"] = " << logdens[t];
+			throw nan_detected;
 		}		
 	}
 

@@ -1,2 +1,2 @@
-PKG_LIBS = `gsl-config --libs`
-PKG_CPPFLAGS = `gsl-config --cflags` -fopenmp
+PKG_LIBS = -lgsl -lgslcblas
+PKG_CPPFLAGS = -I./external-header

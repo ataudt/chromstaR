@@ -92,7 +92,8 @@ bernoulli.from.univariate.results = function(modellist, use.states=NULL, num.sta
 			as.double(A.initial), # double* initial A
 			as.double(proba.initial), # double* initial proba
 			as.logical(use.initial), # bool* use_initial_params
-			as.integer(num.threads) # int* num_threads
+			as.integer(num.threads), # int* num_threads
+			as.integer(0)
 			)
 			
 		# Assign the parameters

@@ -68,5 +68,4 @@ Maintainer: Aaron Taudt <a.s.taudt@umcg.nl>
 ~~ \code{\link[<pkg>:<pkg>-package]{<pkg>}} ~~
 }
 \examples{
-~~ simple examples of the most important functions ~~
 }
