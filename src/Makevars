@@ -1,2 +1,2 @@
-PKG_LIBS = -lgsl -lgslcblas
+PKG_LIBS = -L./ -lgsl -lgslcblas
 PKG_CPPFLAGS = -I./external-header
