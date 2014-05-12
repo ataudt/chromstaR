@@ -877,20 +877,27 @@ void ScaleHMM::print_uni_iteration(int iteration)
 	char buffer [bs];
 	if (iteration % 20 == 0)
 	{
-		snprintf(buffer, bs, "%10s%20s%20s%20s%20s%15s\n", "Iteration", "log(P)", "dlog(P)", "Diff in state 1", "Diff in posterior", "Time in sec");
+		snprintf(buffer, bs, "%10s%20s%20s%20s%20s%15s", "Iteration", "log(P)", "dlog(P)", "Diff in state 1", "Diff in posterior", "Time in sec");
 		FILE_LOG(logITERATION) << buffer;
 		Rprintf("%s\n", buffer);
 	}
 	if (iteration == 0)
 	{
-		snprintf(buffer, bs, "%10s%20s%20s%20s%20s%15s\n", "0", "-inf", "-", "-", "-", "0");
+		snprintf(buffer, bs, "%10s%20s%20s%20s%20s%15s", "0", "-inf", "-", "-", "-", "0");
+	}
+	else if (iteration == 1)
+	{
+		snprintf(buffer, bs, "%*d%*f%20s%*d%*f%*d", 10, iteration, 20, this->logP, "inf", 20, this->sumdiff_state1, 20, this->sumdiff_posterior, 15, this->baumWelchTime_real);
 	}
 	else
 	{
-		snprintf(buffer, bs, "%*d%*f%*f%*d%*f%*d\n", 10, iteration, 20, this->logP, 20, this->dlogP, 20, this->sumdiff_state1, 20, this->sumdiff_posterior, 15, this->baumWelchTime_real);
+		snprintf(buffer, bs, "%*d%*f%*f%*d%*f%*d", 10, iteration, 20, this->logP, 20, this->dlogP, 20, this->sumdiff_state1, 20, this->sumdiff_posterior, 15, this->baumWelchTime_real);
 	}
 	FILE_LOG(logITERATION) << buffer;
 	Rprintf("%s\n", buffer);
+
+	// Flush Rprintf statements to R console
+	R_FlushConsole();
 }
 
 void ScaleHMM::print_multi_iteration(int iteration)
@@ -901,13 +908,27 @@ void ScaleHMM::print_multi_iteration(int iteration)
 	char buffer [bs];
 	if (iteration % 20 == 0)
 	{
-		snprintf(buffer, bs, "%10s%20s%20s%20s%15s\n", "Iteration", "log(P)", "dlog(P)", "Diff in posterior", "Time in sec");
+		snprintf(buffer, bs, "%10s%20s%20s%20s%15s", "Iteration", "log(P)", "dlog(P)", "Diff in posterior", "Time in sec");
 		FILE_LOG(logITERATION) << buffer;
 		Rprintf("%s\n", buffer);
 	}
-	snprintf(buffer, bs, "%*d%*f%*f%*f%*d\n", 10, iteration, 20, this->logP, 20, this->dlogP, 20, this->sumdiff_posterior, 15, this->baumWelchTime_real);
+	if (iteration == 0)
+	{
+		snprintf(buffer, bs, "%10s%20s%20s%20s%15s", "0", "-inf", "-", "-", "0");
+	}
+	else if (iteration == 1)
+	{
+		snprintf(buffer, bs, "%*d%*f%20s%*f%*d", 10, iteration, 20, this->logP, "inf", 20, this->sumdiff_posterior, 15, this->baumWelchTime_real);
+	}
+	else
+	{
+		snprintf(buffer, bs, "%*d%*f%*f%*f%*d", 10, iteration, 20, this->logP, 20, this->dlogP, 20, this->sumdiff_posterior, 15, this->baumWelchTime_real);
+	}
 	FILE_LOG(logITERATION) << buffer;
 	Rprintf("%s\n", buffer);
+
+	// Flush Rprintf statements to R console
+	R_FlushConsole();
 }
 
 void ScaleHMM::print_uni_params()
@@ -992,6 +1013,9 @@ void ScaleHMM::print_uni_params()
 	Rprintf("%s\n", buffer);
 	FILE_LOG(logINFO) << "";
 	Rprintf("\n");
+
+	// Flush Rprintf statements to R console
+	R_FlushConsole();
 }
 
 double ScaleHMM::get_proba(int i)

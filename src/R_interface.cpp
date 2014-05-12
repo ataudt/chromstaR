@@ -51,6 +51,9 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 		FILE_LOG(logDEBUG3) << "O["<<t<<"] = " << O[t];
 	}
 
+	// Flush Rprintf statements to console
+	R_FlushConsole();
+
 	// Create the HMM
 	FILE_LOG(logDEBUG1) << "Creating a univariate HMM";
 // 	LogHMM* model = new LogHMM(*T, *N);
@@ -154,6 +157,9 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 		}
 	}
 
+	// Flush Rprintf statements to console
+	R_FlushConsole();
+
 	// Do the Baum-Welch to estimate the parameters
 	FILE_LOG(logDEBUG1) << "Starting Baum-Welch estimation";
 	try
@@ -163,6 +169,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 	catch (std::exception& e)
 	{
 		FILE_LOG(logERROR) << "Error in Baum-Welch: " << e.what();
+		Rprintf("Error in Baum-Welch: %s\n", e.what());
 		*error = -1;
 	}
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
@@ -252,6 +259,9 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 	FILE_LOG(logINFO) << "number of modifications = " << *Nmod;
 	Rprintf("number of modifications = %d\n", *Nmod);
 
+	// Flush Rprintf statements to console
+	R_FlushConsole();
+
 	// Recode the observation vector to matrix representation
 // 	clock_t clocktime = clock(), dtime;
 	int** multiO = allocIntMatrix(*Nmod, *T);
@@ -329,6 +339,7 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 	catch (std::exception& e)
 	{
 		FILE_LOG(logERROR) << "Error in Baum-Welch: " << e.what();
+		Rprintf("Error in Baum-Welch: %s", e.what());
 		*error = -1;
 	}
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
