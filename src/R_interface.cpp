@@ -339,7 +339,7 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 	catch (std::exception& e)
 	{
 		FILE_LOG(logERROR) << "Error in Baum-Welch: " << e.what();
-		Rprintf("Error in Baum-Welch: %s", e.what());
+		Rprintf("Error in Baum-Welch: %s\n", e.what());
 		*error = -1;
 	}
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";

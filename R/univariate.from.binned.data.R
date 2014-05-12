@@ -152,7 +152,7 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 		}
 	}
 	if (hmm$error == -1) {
-		war <- warning("A 'nan' occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
+		stop("An error occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
 	}
 
 	# Return results

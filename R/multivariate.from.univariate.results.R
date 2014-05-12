@@ -120,6 +120,7 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 			)
 			
 		# Add useful entries
+		class(hmm) <- "chromstar.multivariate.hmm"
 		hmm$coordinates <- coordinates
 		hmm$reads <- reads # reassign because of matrix layout
 		hmm$posteriors <- matrix(hmm$posteriors, ncol=numstates2use)
@@ -174,7 +175,9 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 	if (hmm$loglik.delta > hmm$eps) {
 		war <- warning("HMM did not converge!\n")
 	}
-	class(hmm) <- "chromstar.multivariate.hmm"
+	if (hmm$error == -1) {
+		stop("An error occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
+	}
 
 	if (!is.null(war)) {
 		if (output.if.not.converged == TRUE) {
