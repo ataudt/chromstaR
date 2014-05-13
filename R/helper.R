@@ -4,6 +4,8 @@
 state.labels <- c("zero-inflation","unmodified","modified")
 coordinate.names <- c("chrom","start","end")
 binned.data.names <- c(coordinate.names,"reads")
+class.chromstar.univariate <- "chromstar.univariate.hmm"
+class.chromstar.multivariate <- "chromstar.multivariate.hmm"
  
 # ============================================================================
 # Functions for a Negative Binomial to transform (mean,variance)<->(size,prob)

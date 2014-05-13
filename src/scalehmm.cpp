@@ -883,7 +883,7 @@ void ScaleHMM::print_uni_iteration(int iteration)
 	}
 	if (iteration == 0)
 	{
-		snprintf(buffer, bs, "%10s%20s%20s%20s%20s%15s", "0", "-inf", "-", "-", "-", "0");
+		snprintf(buffer, bs, "%10s%20s%20s%20s%20s%*d", "0", "-inf", "-", "-", "-", 15, this->baumWelchTime_real);
 	}
 	else if (iteration == 1)
 	{
@@ -914,7 +914,7 @@ void ScaleHMM::print_multi_iteration(int iteration)
 	}
 	if (iteration == 0)
 	{
-		snprintf(buffer, bs, "%10s%20s%20s%20s%15s", "0", "-inf", "-", "-", "0");
+		snprintf(buffer, bs, "%10s%20s%20s%20s%*d", "0", "-inf", "-", "-", 15, this->baumWelchTime_real);
 	}
 	else if (iteration == 1)
 	{

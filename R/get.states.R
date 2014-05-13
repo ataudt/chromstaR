@@ -1,7 +1,7 @@
 get.states <- function(model, threshold=0.5, separate.zeroinflation=FALSE) {
 	numbins <- nrow(model$posteriors)
 	states <- rep(NA,numbins)
-	if (is(model,"chromstar.univariate.model")) {
+	if (is(model,class.chromstar.univariate)) {
 		if (separate.zeroinflation) {
 			states[ model$posteriors[,3]<=threshold & model$posteriors[,2]<=model$posteriors[,1] ] <- 1
 			states[ model$posteriors[,3]<=threshold & model$posteriors[,2]>=model$posteriors[,1] ] <- 2
@@ -12,7 +12,7 @@ get.states <- function(model, threshold=0.5, separate.zeroinflation=FALSE) {
 			states <- as.factor(state.labels[2:3])[states]
 		}
 		return(states)
-	} else if (is(model,"chromstar.multivariate.model")) {
+	} else if (is(model,class.chromstar.multivariate)) {
 		states <- model$states.order[apply(model$posteriors, 1, which.max)]
 		return(states)
 	} else {

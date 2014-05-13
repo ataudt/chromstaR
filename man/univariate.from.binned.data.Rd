@@ -4,7 +4,7 @@
 Run an HMM for a single histone mark
 }
 \description{
-Run an HMM for a single histone mark to determine regions which are either 'unmodified' or 'modified'. Input is a data.frame with \code{\link{binned.data}} and output is an \code{\link{uni.hmm}} list object.
+Run an HMM for a single histone mark to determine regions which are either 'unmodified' or 'modified'. Input is a data.frame with \code{\link{binned.data}} and output is an \code{\link{chromstar.univariate.hmm}} list object.
 }
 \usage{
 univariate.from.binned.data(binned.data, eps=0.001, max.time=-1, max.it=-1, num.trials=1, eps.try=NULL, num.threads=1, output.if.not.converged=FALSE, filter.reads=TRUE)
@@ -31,24 +31,7 @@ TODO: insert paper
 The function expects a data.frame with 4 columns (see arguments). Output of the function is a list object which contains the posteriors of the Baum-Welch likelihood maximization and the parameters for the Negative Binomial distributions. It also contains miscellaneous other attributes. All attributes can be accessed with the '$' or '[[ ]]' operator. To see which attributes are available, type "names(output)" (without quotation marks).
 }
 \value{
-The output is an \code{\link{uni.hmm}} list object.
-TODO: move these entries to the uni.hmm man page
-\item{coordinates}{A data.frame with genomic coordinates. These are the same as in the input.}
-\item{reads}{Number of aligned reads in the bins. Same as in input.}
-\item{posteriors}{Posterior probabilities of the Baum-Welch estimation.}
-\item{loglik}{Logarithm of the likelihood estimator (goodness of the fit).}
-\item{iteration}{Number of iterations performed by the Baum-Welch.}
-\item{time.in.sec}{Time in seconds spent in the Baum-Welch.}
-\item{delta.loglik}{Change of the log(likelihood) in the last step. This should be smaller than the 'epsilon' in case of convergence.}
-\item{epsilon}{Convergence threshold used for the Baum-Welch.}
-\item{proba}{Estimated posteriors of the first bin.}
-\item{A}{Estimated transition matrix.}
-\item{distributions}{Estimated distribution parameters.}
-\item{softweights}{Weights of the states. 'Soft' means that only posteriors where used to calculate the weights, as opposed to 'hard' assignments, where each bin is assigned to a state by using a threshold.}
-\item{proba.initial}{Initial probabilities of the first bin.}
-\item{A.initial}{Initial transition matrix.}
-\item{distributions.initial}{Initial distribution parameters.}
-\item{num.threads}{Number of threads used for the computations.}
+The output is a \code{\link{chromstar.univariate.hmm}} list object.
 }
 \keyword{Hidden Markov Model}
 \keyword{Baum-Welch}

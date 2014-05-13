@@ -120,7 +120,7 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 			)
 			
 		# Add useful entries
-		class(hmm) <- "chromstar.multivariate.hmm"
+		class(hmm) <- class.chromstar.multivariate
 		hmm$coordinates <- coordinates
 		hmm$reads <- reads # reassign because of matrix layout
 		hmm$posteriors <- matrix(hmm$posteriors, ncol=numstates2use)
