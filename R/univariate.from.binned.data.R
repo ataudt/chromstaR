@@ -66,7 +66,7 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 			error = as.integer(0) # error handling
 		)
 
-		names(weights) <- state.labels
+		names(hmm$weights) <- state.labels
 		hmm$eps <- eps.try
 		hmm$A <- matrix(hmm$A, ncol=hmm$num.states, byrow=TRUE)
 		rownames(hmm$A) <- state.labels
@@ -122,7 +122,7 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 	}
 
 	# Add useful entries
-	names(weights) <- state.labels
+	names(hmm$weights) <- state.labels
 	hmm$coordinates <- binned.data[,coordinate.names]
 	hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
 	colnames(hmm$posteriors) <- paste("P(",state.labels,")", sep="")
