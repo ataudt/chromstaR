@@ -48,8 +48,8 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 	cat("Using the following states: ",paste(comb.states2use, collapse=" "),"\n")
 
 	# Prepare input for C function
-	rs <- unlist(lapply(distributions,"[",2:3,'r'))
-	ps <- unlist(lapply(distributions,"[",2:3,'p'))
+	rs <- unlist(lapply(distributions,"[",2:3,'size'))
+	ps <- unlist(lapply(distributions,"[",2:3,'prob'))
 	ws <- unlist(lapply(weights,"[",1))
 
 	# Load checkpoint file if it exists and if desired
@@ -175,8 +175,10 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 	if (hmm$loglik.delta > hmm$eps) {
 		war <- warning("HMM did not converge!\n")
 	}
-	if (hmm$error == -1) {
-		stop("An error occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
+	if (hmm$error == 1) {
+		stop("A nan occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
+	} else if (hmm$error == 2) {
+		stop("An error occurred during the Baum-Welch! Parameter estimation terminated prematurely.")
 	}
 
 	if (!is.null(war)) {

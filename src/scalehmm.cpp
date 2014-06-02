@@ -19,7 +19,7 @@ ScaleHMM::ScaleHMM(int T, int N)
 	this->sumxi = allocDoubleMatrix(N, N);
 	this->logP = -INFINITY;
 	this->dlogP = INFINITY;
-	this->sumdiff_state1 = 0;
+	this->sumdiff_state_last = 0;
 	this->sumdiff_posterior = 0.0;
 // 	this->num_nonzero_A_into_state = (int*) calloc(N, sizeof(int));
 // 	this->index_nonzero_A_into_state = allocIntMatrix(N, N);
@@ -47,7 +47,7 @@ ScaleHMM::ScaleHMM(int T, int N, int Nmod)
 	this->sumxi = allocDoubleMatrix(N, N);
 	this->logP = -INFINITY;
 	this->dlogP = INFINITY;
-	this->sumdiff_state1 = 0;
+	this->sumdiff_state_last = 0;
 	this->sumdiff_posterior = 0.0;
 	this->Nmod = Nmod;
 // 	this->num_nonzero_A_into_state = (int*) calloc(N, sizeof(int));
@@ -557,7 +557,7 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 		FILE_LOG(logDEBUG2) << "Calling computeDensities() from baumWelch()";
 		FILE_LOG(logINFO) << "Precomputing densities ...";
 		Rprintf("Precomputing densities ...\n");
-		this->computeDensities();
+		try { this->computeDensities(); } catch(...) { throw; }
 		this->print_multi_iteration(0);
 		// Print densities
 // 		int bs = 100;
@@ -622,24 +622,24 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 // 			clock_t clocktime = clock(), dtime;
 			// difference in state assignments
 			FILE_LOG(logDEBUG1) << "Calculating differences in state assignments in baumWelch()";
-			int state1 = 0;
-			int state1old = 0;
+			int state_last = 0;
+			int state_last_old = 0;
 			int statesum = 0;
 			for (int t=0; t<this->T; t++)
 			{
-				if (this->gamma[2][t]>0.5)
+				if (this->gamma[this->N-1][t]>0.5)
 				{
-					state1 = 1;
+					state_last = 1;
 				}
-				if (gammaold[2][t]>0.5)
+				if (gammaold[this->N-1][t]>0.5)
 				{
-					state1old = 1;
+					state_last_old = 1;
 				}
-				statesum += fabs(state1-state1old);
-				state1 = 0;
-				state1old = 0;
+				statesum += fabs(state_last-state_last_old);
+				state_last = 0;
+				state_last_old = 0;
 			}
-			this->sumdiff_state1 = statesum;
+			this->sumdiff_state_last = statesum;
 // 			dtime = clock() - clocktime;
 // 			FILE_LOG(logDEBUG) << "differences in state assignments: " << dtime << " clicks";
 		}
@@ -800,65 +800,22 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 
 void ScaleHMM::check_for_state_swap()
 {
-	double weights [this->N];
-	double maxdens [this->N];
-	this->calc_weights(weights);
-	maxdens[0] = weights[0];
-	maxdens[1] = weights[1] + Max(this->densities[1], this->T);
-	maxdens[2] = weights[2] + Max(this->densities[2], this->T);
-
-	FILE_LOG(logINFO) << "mean(0) = "<<this->densityFunctions[0]->getMean() << ", mean(1) = "<<this->densityFunctions[1]->getMean() << ", mean(2) = "<<this->densityFunctions[2]->getMean();
-	Rprintf("mean(0) = %g, mean(1) = %g, mean(2) = %g\n", this->densityFunctions[0]->getMean(), this->densityFunctions[1]->getMean(), this->densityFunctions[2]->getMean());
-	FILE_LOG(logINFO) << "weight(0) = "<<weights[0] << ", weight(1) = "<<weights[1] << ", weight(2) = "<<weights[2];
-	Rprintf("weight(0) = %g, weight(1) = %g, weight(2) = %g\n", weights[0], weights[1], weights[2]);
-	FILE_LOG(logINFO) << "maxdens(0) = "<<maxdens[0] << ", maxdens(1) = "<<maxdens[1] << ", maxdens(2) = "<<maxdens[2];
-	Rprintf("maxdens(0) = %g, maxdens(1) = %g, maxdens(2) = %g\n", maxdens[0], maxdens[1], maxdens[2]);
-	// Different methods for state swapping detection
-	// 1) Compare means. Does not work for all datasets.
-// 	if (this->densityFunctions[1]->getMean() > this->densityFunctions[2]->getMean()) //states 1 and 2 need to be exchanged
-	// 2) Compare density values at 10*variance. Does it work for all datasets?
-	if (log(weights[1]) + this->densityFunctions[1]->getLogDensityAt10Variance() > log(weights[2]) + this->densityFunctions[2]->getLogDensityAt10Variance()) //states 1 and 2 need to be exchanged
-	// 3) Compare max(density values). Does not work for all datasets.
-// 	if (maxdens[1] < maxdens[2])
+	// only check for state swap if we have 3 states
+	if (this->N == 3)
 	{
-		FILE_LOG(logINFO) << "...swapping states";
-		Rprintf("...swapping states\n");
-		NegativeBinomial *tempDens = new NegativeBinomial();
-		tempDens->copy(this->densityFunctions[2]); // tempDens is densifunc[2]
-		this->densityFunctions[2]->copy(this->densityFunctions[1]); 
-		this->densityFunctions[1]->copy(tempDens); 
-		delete tempDens;
-		// swap proba
-		double temp;
-		temp=this->proba[1];
-		this->proba[1]=this->proba[2];
-		this->proba[2]=temp;
-		// swap transition matrix
-		temp = this->A[0][2];
-		this->A[0][2] = this->A[0][1];
-		A[0][1] = temp;
-		temp = this->A[1][0];
-		this->A[1][0] = this->A[2][0];
-		A[2][0] = temp;
-		temp = this->A[1][1];
-		this->A[1][1] = this->A[2][2];
-		A[2][2] = temp;
-		temp = this->A[1][2];
-		this->A[1][2] = this->A[2][1];
-		A[2][1] = temp;
-		// swap dens and gamma
-		double * tempp;
-		tempp = this->densities[1];
-		this->densities[1] = this->densities[2];
-		this->densities[2] = tempp;
-		tempp = this->gamma[1];
-		this->gamma[1] = this->gamma[2];
-		this->gamma[2] = tempp;
-		// recalculate weight and maxdens
+
+		double weights [this->N];
+		double maxdens [this->N];
+		double cutoff_logdens [this->N];
+
+		// calculate weights, maxdens and logdens at cutoff
 		this->calc_weights(weights);
 		maxdens[0] = weights[0];
-		maxdens[1] = weights[1] + Max(this->densities[1], this->T);
-		maxdens[2] = weights[2] + Max(this->densities[2], this->T);
+		maxdens[1] = weights[1] * Max(this->densities[1], this->T);
+		maxdens[2] = weights[2] * Max(this->densities[2], this->T);
+		cutoff_logdens[0] = log(weights[0]) + this->densityFunctions[0]->getLogDensityAt(this->cutoff);
+		cutoff_logdens[1] = log(weights[1]) + this->densityFunctions[1]->getLogDensityAt(this->cutoff);
+		cutoff_logdens[2] = log(weights[2]) + this->densityFunctions[2]->getLogDensityAt(this->cutoff);
 
 		FILE_LOG(logINFO) << "mean(0) = "<<this->densityFunctions[0]->getMean() << ", mean(1) = "<<this->densityFunctions[1]->getMean() << ", mean(2) = "<<this->densityFunctions[2]->getMean();
 		Rprintf("mean(0) = %g, mean(1) = %g, mean(2) = %g\n", this->densityFunctions[0]->getMean(), this->densityFunctions[1]->getMean(), this->densityFunctions[2]->getMean());
@@ -866,6 +823,67 @@ void ScaleHMM::check_for_state_swap()
 		Rprintf("weight(0) = %g, weight(1) = %g, weight(2) = %g\n", weights[0], weights[1], weights[2]);
 		FILE_LOG(logINFO) << "maxdens(0) = "<<maxdens[0] << ", maxdens(1) = "<<maxdens[1] << ", maxdens(2) = "<<maxdens[2];
 		Rprintf("maxdens(0) = %g, maxdens(1) = %g, maxdens(2) = %g\n", maxdens[0], maxdens[1], maxdens[2]);
+		FILE_LOG(logINFO) << "logdensity at x = "<<this->cutoff <<": logdens(0) = "<<cutoff_logdens[0] << ", logdens(1) = "<<cutoff_logdens[1] << ", logdens(2) = "<<cutoff_logdens[2];
+		Rprintf("logdensity at x = %d: logdens(0) = %g, logdens(1) = %g, logdens(2) = %g\n", this->cutoff, cutoff_logdens[0], cutoff_logdens[1], cutoff_logdens[2]);
+		// Different methods for state swapping detection
+		// 1) Compare means. Does not work for all datasets.
+	// 	if (this->densityFunctions[1]->getMean() > this->densityFunctions[2]->getMean()) //states 1 and 2 need to be exchanged
+		// 2) Compare density values at 10*variance. Does it work for all datasets?
+		if (cutoff_logdens[1] > cutoff_logdens[2]) //states 1 and 2 need to be exchanged
+		// 3) Compare max(density values). Does not work for all datasets.
+	// 	if (maxdens[1] < maxdens[2])
+		{
+			FILE_LOG(logINFO) << "...swapping states";
+			Rprintf("...swapping states\n");
+			NegativeBinomial *tempDens = new NegativeBinomial();
+			tempDens->copy(this->densityFunctions[2]); // tempDens is densifunc[2]
+			this->densityFunctions[2]->copy(this->densityFunctions[1]); 
+			this->densityFunctions[1]->copy(tempDens); 
+			delete tempDens;
+			// swap proba
+			double temp;
+			temp=this->proba[1];
+			this->proba[1]=this->proba[2];
+			this->proba[2]=temp;
+			// swap transition matrix
+			temp = this->A[0][2];
+			this->A[0][2] = this->A[0][1];
+			A[0][1] = temp;
+			temp = this->A[1][0];
+			this->A[1][0] = this->A[2][0];
+			A[2][0] = temp;
+			temp = this->A[1][1];
+			this->A[1][1] = this->A[2][2];
+			A[2][2] = temp;
+			temp = this->A[1][2];
+			this->A[1][2] = this->A[2][1];
+			A[2][1] = temp;
+			// swap dens and gamma
+			double * tempp;
+			tempp = this->densities[1];
+			this->densities[1] = this->densities[2];
+			this->densities[2] = tempp;
+			tempp = this->gamma[1];
+			this->gamma[1] = this->gamma[2];
+			this->gamma[2] = tempp;
+			// recalculate weight, maxdens and logdens at cutoff
+			this->calc_weights(weights);
+			maxdens[0] = weights[0];
+			maxdens[1] = weights[1] * Max(this->densities[1], this->T);
+			maxdens[2] = weights[2] * Max(this->densities[2], this->T);
+			cutoff_logdens[0] = log(weights[0]) + this->densityFunctions[0]->getLogDensityAt(this->cutoff);
+			cutoff_logdens[1] = log(weights[1]) + this->densityFunctions[1]->getLogDensityAt(this->cutoff);
+			cutoff_logdens[2] = log(weights[2]) + this->densityFunctions[2]->getLogDensityAt(this->cutoff);
+
+			FILE_LOG(logINFO) << "mean(0) = "<<this->densityFunctions[0]->getMean() << ", mean(1) = "<<this->densityFunctions[1]->getMean() << ", mean(2) = "<<this->densityFunctions[2]->getMean();
+			Rprintf("mean(0) = %g, mean(1) = %g, mean(2) = %g\n", this->densityFunctions[0]->getMean(), this->densityFunctions[1]->getMean(), this->densityFunctions[2]->getMean());
+			FILE_LOG(logINFO) << "weight(0) = "<<weights[0] << ", weight(1) = "<<weights[1] << ", weight(2) = "<<weights[2];
+			Rprintf("weight(0) = %g, weight(1) = %g, weight(2) = %g\n", weights[0], weights[1], weights[2]);
+			FILE_LOG(logINFO) << "maxdens(0) = "<<maxdens[0] << ", maxdens(1) = "<<maxdens[1] << ", maxdens(2) = "<<maxdens[2];
+			Rprintf("maxdens(0) = %g, maxdens(1) = %g, maxdens(2) = %g\n", maxdens[0], maxdens[1], maxdens[2]);
+			FILE_LOG(logINFO) << "logdensity at x = "<<this->cutoff <<": logdens(0) = "<<cutoff_logdens[0] << ", logdens(1) = "<<cutoff_logdens[1] << ", logdens(2) = "<<cutoff_logdens[2];
+			Rprintf("logdensity at x = %d: logdens(0) = %g, logdens(1) = %g, logdens(2) = %g\n", this->cutoff, cutoff_logdens[0], cutoff_logdens[1], cutoff_logdens[2]);
+		}
 	}
 }
 
@@ -877,7 +895,7 @@ void ScaleHMM::print_uni_iteration(int iteration)
 	char buffer [bs];
 	if (iteration % 20 == 0)
 	{
-		snprintf(buffer, bs, "%10s%20s%20s%20s%20s%15s", "Iteration", "log(P)", "dlog(P)", "Diff in state 1", "Diff in posterior", "Time in sec");
+		snprintf(buffer, bs, "%10s%20s%20s%19s%d%20s%15s", "Iteration", "log(P)", "dlog(P)", "Diff in state ",this->N-1, "Diff in posterior", "Time in sec");
 		FILE_LOG(logITERATION) << buffer;
 		Rprintf("%s\n", buffer);
 	}
@@ -887,11 +905,11 @@ void ScaleHMM::print_uni_iteration(int iteration)
 	}
 	else if (iteration == 1)
 	{
-		snprintf(buffer, bs, "%*d%*f%20s%*d%*f%*d", 10, iteration, 20, this->logP, "inf", 20, this->sumdiff_state1, 20, this->sumdiff_posterior, 15, this->baumWelchTime_real);
+		snprintf(buffer, bs, "%*d%*f%20s%*d%*f%*d", 10, iteration, 20, this->logP, "inf", 20, this->sumdiff_state_last, 20, this->sumdiff_posterior, 15, this->baumWelchTime_real);
 	}
 	else
 	{
-		snprintf(buffer, bs, "%*d%*f%*f%*d%*f%*d", 10, iteration, 20, this->logP, 20, this->dlogP, 20, this->sumdiff_state1, 20, this->sumdiff_posterior, 15, this->baumWelchTime_real);
+		snprintf(buffer, bs, "%*d%*f%*f%*d%*f%*d", 10, iteration, 20, this->logP, 20, this->dlogP, 20, this->sumdiff_state_last, 20, this->sumdiff_posterior, 15, this->baumWelchTime_real);
 	}
 	FILE_LOG(logITERATION) << buffer;
 	Rprintf("%s\n", buffer);
@@ -1022,3 +1040,9 @@ double ScaleHMM::get_proba(int i)
 {
 	return( this->proba[i] );
 }
+
+void ScaleHMM::set_cutoff(int cutoff)
+{
+	this->cutoff = cutoff;
+}
+

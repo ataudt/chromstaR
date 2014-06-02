@@ -13,7 +13,7 @@ univariate2bed <- function(uni.hmm.list, file="view_me_in_genome_browser", thres
 	file <- paste(file,"bed", sep=".")
 
 	# Generate the colors
-	colors <- c("zeroinflation"="black", "unmodified"="gray48","modified"="orangered3")
+	colors <- gcolors[c("zero-inflation","unmodified","modified")]
 	RGBs <- t(col2rgb(colors))
 	RGBs <- apply(RGBs,1,paste,collapse=",")
 
@@ -54,130 +54,6 @@ univariate2bed <- function(uni.hmm.list, file="view_me_in_genome_browser", thres
 		numsegments <- nrow(collapsed.calls)
 		df <- cbind(collapsed.calls, score=rep(0,numsegments), strand=rep(".",numsegments), thickStart=collapsed.calls$start, thickEnd=collapsed.calls$end, itemRgb=itemRgb)
 		write.table(format(df, scientific=FALSE), file=file, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
-	}
-
-}
-
-# ----------------------------------------------------------------
-# 
-# ----------------------------------------------------------------
-make.ucsc.file.combinatorial <- function(hmm.list, numstates=NULL, file="combinatorial-states-ucsc", threshold=0.5, chrom.length.file=NULL) {
-	
-	# Define variables
-	nummod <- length(hmm.list)
-	file <- paste(file,".BED", sep="")
-	coordinates <- hmm.list[[1]]$coordinates
-	
-	# Write first line to file
-	cat("browser position chr1:1-100000\n", file=file)
-
-	# Get the combinatorial states
-	cat("Getting the combinatorial states ...\n")
-	combstates <- combinatorial.states(hmm.list)
-	states <- as.numeric(names(sort(table(combstates), decreasing=TRUE)))
-
-	# Clean up to reduce memory usage
-	remove(hmm.list)
-
-	if (is.null(numstates)) {
-		numstates <- length(states)
-	} else if (numstates > length(states)) {
-		numstates <- length(states)
-	}
-	# Go through each state and write to file
-	for (istate in states[1:numstates]) {
-		cat("\nAnalyzing state",istate,"\n")
-		cat(paste("track name=\"combinatorial state ",istate,"\" description=\"univariate calls for state ",istate,", threshold = ",threshold,"\" visibility=1\n", sep=""), file=file, append=TRUE)
-
-		calls <- coordinates[ combstates == istate , ]
-		if (length(calls$start) >= 1) {
-			# Collapse the bins
-			cat("collapsing the calls\n")
-			collapsed_calls <- collapse.bins(calls)
-		} else {
-			cat("no bins in state",istate,"\n")
-			collapsed_calls <- NULL
-		}
-
-		if (!is.null(collapsed_calls)) {
-			# Check length of chromosomes if chrom.length.file was given
-			if (!is.null(chrom.length.file)) {
-				chrom.lengths.df <- read.table(chrom.length.file)
-				chrom.lengths <- chrom.lengths.df[,2]
-				names(chrom.lengths) <- chrom.lengths.df[,1]
-				for (chrom in levels(as.factor(collapsed_calls$chrom))) {
-					index <- which(collapsed_calls$chrom == chrom & collapsed_calls$end > chrom.lengths[chrom])
-					collapsed_calls$end[index] <- chrom.lengths[chrom]
-					if (length(index) >= 1) {
-						warning("Adjusted entry in chromosome ",chrom,", because it was longer than the length of the chromosome")
-					}
-				}
-			}
-
-			cat("appending to file ...\n")
-			write.table(format(as.data.frame(collapsed_calls)[,1:3], scientific=FALSE), file=file, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
-		}
-	}
-
-}
-
-
-# ----------------------------------------------------------------
-# 
-# ----------------------------------------------------------------
-make.ucsc.file.multivariate <- function(hmm, numstates=NULL, file="multivariate-states-ucsc", chrom.length.file=NULL) {
-
-	# Variable assignments
-	states <- hmm$stateorder
-	coordinates <- hmm$coordinates
-	file <- paste(file,".BED", sep="")
-
-	# Write first line to file
-	cat("browser position chr1:1-100000\n", file=file)
-
-	# Determine state of bin
-	cat("Determining state of bins ...\n")
-	combstates <- apply(hmm$posteriors,1,which.max)
-	combstates <- states[combstates]
-
-	if (is.null(numstates)) {
-		numstates <- length(states)
-	} else if (numstates > length(states)) {
-		numstates <- length(states)
-	}
-	# Go through each state and write to file
-	for (istate in states[1:numstates]) {
-		cat("\nAnalyzing state",istate,"\n")
-		cat(paste("track name=\"multivariate state ",istate,"\" description=\"multivariate calls for state ",istate,"\" visibility=1 color=0,0,255\n", sep=""), file=file, append=TRUE)
-
-		calls <- coordinates[ combstates == istate , ]
-		if (length(calls$start) >= 1) {
-			# Collapse the bins
-			cat("collapsing the calls\n")
-			collapsed_calls <- collapse.bins(calls)
-		} else {
-			cat("no bins in state",istate,"\n")
-			collapsed_calls <- NULL
-		}
-
-		if (!is.null(collapsed_calls)) {
-			# Check length of chromosomes if chrom.length.file was given
-			if (!is.null(chrom.length.file)) {
-				chrom.lengths.df <- read.table(chrom.length.file)
-				chrom.lengths <- chrom.lengths.df[,2]
-				names(chrom.lengths) <- chrom.lengths.df[,1]
-				for (chrom in levels(as.factor(collapsed_calls$chrom))) {
-					index <- which(collapsed_calls$chrom == chrom & collapsed_calls$end > chrom.lengths[chrom])
-					collapsed_calls$end[index] <- chrom.lengths[chrom]
-					if (length(index) >= 1) {
-						warning("Adjusted entry in chromosome ",chrom,", because it was longer than the length of the chromosome")
-					}
-				}
-			}
-
-			cat("appending to file ...\n")
-			write.table(format(as.data.frame(collapsed_calls)[,1:3], scientific=FALSE), file=file, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
-		}
 	}
 
 }

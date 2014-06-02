@@ -22,7 +22,7 @@ class Density {
 		virtual DensityName getType() { return(Other); };
 		virtual double getMean() { return(0); };
 		virtual double getVariance() { return(0); };
-		virtual double getLogDensityAt10Variance() { return(0); };
+		virtual double getLogDensityAt(int x) { return(0); };
 
 };  
 
@@ -51,7 +51,7 @@ class ZiNB : public Density {
 		double p;
 		double r;
 		double w;
-		double getLogDensityAt10Variance();
+		double getLogDensityAt(int x);
 	private:
 		int* O; // observations
 		int T;//size of observations
@@ -78,7 +78,7 @@ class NegativeBinomial : public Density {
 		void setP (double newP);
 		double getP();
 		void copy(Density* other);
-		double getLogDensityAt10Variance();
+		double getLogDensityAt(int x);
 	private:
 		int* O; // observations
 		int T;
@@ -103,7 +103,7 @@ class OnlyZeros : public Density {
 		double getVariance();
 		DensityName getType();
 		void copy(Density* other);
-		double getLogDensityAt10Variance();
+		double getLogDensityAt(int x);
 	private:
 		int* O; // observations
 		int T;

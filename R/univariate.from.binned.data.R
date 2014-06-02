@@ -1,4 +1,4 @@
-univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max.it=-1, num.trials=1, eps.try=NULL, num.threads=1, output.if.not.converged=FALSE, filter.reads=TRUE) {
+univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max.it=-1, num.trials=1, eps.try=NULL, num.threads=1, output.if.not.converged=FALSE, filter.reads=TRUE, control=FALSE) {
 
 	## Intercept user input
 	if (check.positive(eps)!=0) stop("argument 'eps' expects a positive numeric")
@@ -19,6 +19,9 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 
 	## Assign variables
 # 	state.labels # assigned globally outside this function
+	if (control) {
+		state.labels <- state.labels[1:2]
+	}
 	numstates <- length(state.labels)
 	numbins <- length(binned.data$reads)
 
@@ -28,13 +31,13 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 	}
 
 	# Filter high reads out, makes HMM faster
+	read.cutoff <- as.integer(quantile(binned.data$reads, 0.9999))
 	if (filter.reads) {
-		limit <- 10*ceiling(var(binned.data$reads))
-		mask <- binned.data$reads > limit
-		binned.data$reads[mask] <- limit
+		mask <- binned.data$reads > read.cutoff
+		binned.data$reads[mask] <- read.cutoff
 		numfiltered <- length(which(mask))
 		if (numfiltered > 0) {
-			warning(paste("There are very high read counts (probably artificial) in your data. Replaced read counts > ",limit," (10*variance) by ",limit," in ",numfiltered," bins. Set option 'filter.reads=FALSE' to disable this filtering.", sep=""))
+			warning(paste("There are very high read counts in your data (probably artificial). Replaced read counts > ",read.cutoff," (99.99% quantile) by ",read.cutoff," in ",numfiltered," bins. Set option 'filter.reads=FALSE' to disable this filtering.", sep=""))
 		}
 	}
 	
@@ -47,8 +50,8 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 			reads = as.integer(binned.data$reads), # double* O
 			num.bins = as.integer(numbins), # int* T
 			num.states = as.integer(numstates), # int* N
-			r = double(length=numstates), # double* r
-			p = double(length=numstates), # double* p
+			size = double(length=numstates), # double* r
+			prob = double(length=numstates), # double* p
 			num.iterations = as.integer(max.it), #  int* maxiter
 			time.sec = as.integer(max.time), # double* maxtime
 			loglik.delta = as.double(eps.try), # double* eps
@@ -57,13 +60,14 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 			proba = double(length=numstates), # double* proba
 			loglik = double(length=1), # double* loglik
 			weights = double(length=numstates), # double* weights
-			r.initial = double(length=numstates), # double* initial_r
-			p.initial = double(length=numstates), # double* initial_p
+			size.initial = double(length=numstates), # double* initial_r
+			prob.initial = double(length=numstates), # double* initial_p
 			A.initial = double(length=numstates*numstates), # double* initial_A
 			proba.initial = double(length=numstates), # double* initial_proba
 			use.initial.params = as.logical(0), # bool* use_initial_params
 			num.threads = as.integer(num.threads), # int* num_threads
-			error = as.integer(0) # error handling
+			error = as.integer(0), # int* error (error handling)
+			read.cutoff = as.integer(read.cutoff) # int* read_cutoff
 		)
 
 		names(hmm$weights) <- state.labels
@@ -71,12 +75,12 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 		hmm$A <- matrix(hmm$A, ncol=hmm$num.states, byrow=TRUE)
 		rownames(hmm$A) <- state.labels
 		colnames(hmm$A) <- state.labels
-		hmm$distributions <- cbind(r=hmm$r, p=hmm$p, mean=fmean(hmm$r,hmm$p), variance=fvariance(hmm$r,hmm$p))
+		hmm$distributions <- cbind(size=hmm$size, prob=hmm$prob, mu=fmean(hmm$size,hmm$prob), variance=fvariance(hmm$size,hmm$prob))
 		rownames(hmm$distributions) <- state.labels
 		hmm$A.initial <- matrix(hmm$A.initial, ncol=hmm$num.states, byrow=TRUE)
 		rownames(hmm$A.initial) <- state.labels
 		colnames(hmm$A.initial) <- state.labels
-		hmm$distributions.initial <- cbind(r=hmm$r.initial, p=hmm$p.initial, mean=fmean(hmm$r.initial,hmm$p.initial), variance=fvariance(hmm$r.initial,hmm$p.initial))
+		hmm$distributions.initial <- cbind(size=hmm$size.initial, prob=hmm$prob.initial, mu=fmean(hmm$size.initial,hmm$prob.initial), variance=fvariance(hmm$size.initial,hmm$prob.initial))
 		rownames(hmm$distributions.initial) <- state.labels
 		if (num.trials > 1) {
 			if (hmm$loglik.delta > hmm$eps) {
@@ -101,8 +105,8 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 			reads <- as.integer(binned.data$reads), # double* O
 			num.bins <- as.integer(numbins), # int* T
 			num.states <- as.integer(numstates), # int* N
-			r <- double(length=numstates), # double* r
-			p <- double(length=numstates), # double* p
+			size <- double(length=numstates), # double* r
+			prob <- double(length=numstates), # double* p
 			num.iterations <- as.integer(max.it), #  int* maxiter
 			time.sec <- as.integer(max.time), # double* maxtime
 			loglik.delta <- as.double(eps), # double* eps
@@ -111,13 +115,14 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 			proba <- double(length=numstates), # double* proba
 			loglik <- double(length=1), # double* loglik
 			weights <- double(length=numstates), # double* weights
-			r.initial <- as.vector(hmm$distributions[,'r']), # double* initial_r
-			p.initial <- as.vector(hmm$distributions[,'p']), # double* initial_p
+			size.initial <- as.vector(hmm$distributions[,'size']), # double* initial_r
+			prob.initial <- as.vector(hmm$distributions[,'prob']), # double* initial_p
 			A.initial <- as.vector(hmm$A), # double* initial_A
 			proba.initial <- as.vector(hmm$proba), # double* initial_proba
 			use.initial.params <- as.logical(1), # bool* use_initial_params
 			num.threads <- as.integer(num.threads), # int* num_threads
-			error = as.integer(0) # error handling
+			error = as.integer(0), # int* error (error handling)
+			read.cutoff = as.integer(read.cutoff) # int* read_cutoff
 		)
 	}
 
@@ -128,25 +133,28 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 	colnames(hmm$posteriors) <- paste("P(",state.labels,")", sep="")
 	class(hmm) <- class.chromstar.univariate
 	class(hmm) <- class.chromstar.univariate
-	hmm$states <- get.states(hmm)
+	hmm$states <- get.states(hmm, separate.zeroinflation=TRUE, control=control)
 	hmm$eps <- eps
 	hmm$A <- matrix(hmm$A, ncol=hmm$num.states, byrow=TRUE)
 	rownames(hmm$A) <- state.labels
 	colnames(hmm$A) <- state.labels
-	hmm$distributions <- cbind(r=hmm$r, p=hmm$p, mean=fmean(hmm$r,hmm$p), variance=fvariance(hmm$r,hmm$p))
+	hmm$distributions <- cbind(size=hmm$size, prob=hmm$prob, mu=fmean(hmm$size,hmm$prob), variance=fvariance(hmm$size,hmm$prob))
 	rownames(hmm$distributions) <- state.labels
 	hmm$A.initial <- matrix(hmm$A.initial, ncol=hmm$num.states, byrow=TRUE)
 	rownames(hmm$A.initial) <- state.labels
 	colnames(hmm$A.initial) <- state.labels
-	hmm$distributions.initial <- cbind(r=hmm$r.initial, p=hmm$p.initial, mean=fmean(hmm$r.initial,hmm$p.initial), variance=fvariance(hmm$r.initial,hmm$p.initial))
+	hmm$distributions.initial <- cbind(size=hmm$size.initial, prob=hmm$prob.initial, mu=fmean(hmm$size.initial,hmm$prob.initial), variance=fvariance(hmm$size.initial,hmm$prob.initial))
 	rownames(hmm$distributions.initial) <- state.labels
+	hmm$filter.reads <- filter.reads
+	hmm$control <- control
 
 	# Delete redundant entries
-	hmm$r <- NULL
-	hmm$p <- NULL
-	hmm$r.initial <- NULL
-	hmm$p.initial <- NULL
+	hmm$size <- NULL
+	hmm$prob <- NULL
+	hmm$size.initial <- NULL
+	hmm$prob.initial <- NULL
 	hmm$use.initial.params <- NULL
+	hmm$read.cutoff <- NULL
 
 	# Issue warnings
 	if (num.trials == 1) {
@@ -154,8 +162,10 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 			war <- warning("HMM did not converge!\n")
 		}
 	}
-	if (hmm$error == -1) {
-		stop("An error occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
+	if (hmm$error == 1) {
+		stop("A nan occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
+	} else if (hmm$error == 2) {
+		stop("An error occurred during the Baum-Welch! Parameter estimation terminated prematurely.")
 	}
 
 	# Return results

@@ -1,8 +1,10 @@
-get.states <- function(model, threshold=0.5, separate.zeroinflation=FALSE) {
-	numbins <- nrow(model$posteriors)
-	states <- rep(NA,numbins)
+get.states <- function(model, threshold=0.5, separate.zeroinflation=FALSE, control=FALSE) {
+	states <- rep(NA,model$num.bins)
 	if (is(model,class.chromstar.univariate)) {
-		if (separate.zeroinflation) {
+		if (control) {
+			states <- ifelse(model$posteriors[,2]>threshold, 2, 1)
+			states <- as.factor(state.labels[1:2])[states]
+		} else if (separate.zeroinflation) {
 			states[ model$posteriors[,3]<=threshold & model$posteriors[,2]<=model$posteriors[,1] ] <- 1
 			states[ model$posteriors[,3]<=threshold & model$posteriors[,2]>=model$posteriors[,1] ] <- 2
 			states[ model$posteriors[,3]>threshold ] <- 3

@@ -4,7 +4,7 @@
 plot.distribution <- function(model, state=NULL, chr=NULL, start=NULL, end=NULL) {
 
 	## Load libraries
-# 	library(ggplot2)
+	library(ggplot2)
 
 	# -----------------------------------------
 	# Get right x limit
@@ -18,7 +18,15 @@ plot.distribution <- function(model, state=NULL, chr=NULL, start=NULL, end=NULL)
 	}
 
 	## Plot settings
-	cols <- c("unmodified"="gray48","modified"="orangered3", "total"="black")
+	cols <- gcolors[c("unmodified","modified","total")]
+
+	# Add artificial entries to deal with control experiments
+	if (model$control) {
+		model$weights[3] = 0
+		names(model$weights)[3] <- state.labels[3]
+		model$distributions <- rbind(model$distributions, c(NA,NA,NA,NA))
+		row.names(model$distributions)[3] <- state.labels[3]
+	}
 
 	# Select the rows to plot
 	selectmask <- rep(TRUE,length(model$reads))
@@ -42,13 +50,18 @@ plot.distribution <- function(model, state=NULL, chr=NULL, start=NULL, end=NULL)
 		}
 	}
 	if (!is.null(state)) {
-		states <- get.states(model)
-		selectmask <- selectmask & states==state
+		selectmask <- selectmask & model$states==state
 	}
 	if (length(which(selectmask)) != length(model$reads)) {
 		reads <- model$reads[selectmask]
-		posteriors <- model$posteriors[selectmask,]
-		weights <- apply(posteriors,2,mean)
+# 		posteriors <- model$posteriors[selectmask,]
+# 		weights <- apply(posteriors,2,mean)
+		states <- model$states[selectmask]
+		weights <- rep(NA, 3)
+		weights[1] <- length(which(states=="zero-inflation"))
+		weights[2] <- length(which(states=="unmodified"))
+		weights[3] <- length(which(states=="modified"))
+		weights <- weights / length(states)
 	} else {
 		reads <- model$reads
 		weights <- model$weights
@@ -57,6 +70,7 @@ plot.distribution <- function(model, state=NULL, chr=NULL, start=NULL, end=NULL)
 	# Find the x limits
 	breaks <- max(reads)
 	if (max(reads)==0) { breaks <- 1 }
+# 	rightxlim <- quantile(reads,0.98)
 	histdata <- hist(reads, right=FALSE, breaks=breaks, plot=FALSE)
 	rightxlim <- get_rightxlim(histdata, reads)
 
@@ -69,24 +83,34 @@ plot.distribution <- function(model, state=NULL, chr=NULL, start=NULL, end=NULL)
 	distributions <- data.frame(x)
 
 	# Unmodified
-	distributions$unmodified <- (1-weights[3]) * dzinbinom(x, weights[1], model$distributions[2,'r'], model$distributions[2,'p'])
+	distributions$unmodified <- (1-weights[3]) * dzinbinom(x, weights[1]/(weights[2]+weights[1]), model$distributions[2,'size'], model$distributions[2,'prob'])
 	# Modified
-	distributions$modified <- weights[3] * dnbinom(x, model$distributions[3,'r'], model$distributions[3,'p'])
+	distributions$modified <- weights[3] * dnbinom(x, model$distributions[3,'size'], model$distributions[3,'prob'])
 	# Total
 	distributions$total <- distributions$unmodified + distributions$modified
 
 	### Plot the distributions
-	if (is.null(state)) {
-		ggplt <- ggplt + geom_line(aes(x=x, y=unmodified, color="unmodified", group=1), data=distributions, size=1)
-		ggplt <- ggplt + geom_line(aes(x=x, y=modified, color="modified", group=1), data=distributions, size=1)
-		ggplt <- ggplt + geom_line(aes(x=x, y=total, color="total", group=1), data=distributions, size=1)
+	if (model$control) {
+
+		ggplt <- ggplt + geom_line(aes(x=x, y=unmodified, color="unmodified"), data=distributions, size=1)
+		# Make legend and colors correct
+		ggplt <- ggplt + scale_color_manual(name="components", values=cols['unmodified'])
+
 	} else {
-		if (state==0) ggplt <- ggplt + geom_line(aes(x=x, y=unmodified, color="unmodified", group=1), data=distributions, size=1)
-		if (state==1) ggplt <- ggplt + geom_line(aes(x=x, y=modified, color="modified", group=1), data=distributions, size=1)
+
+		if (is.null(state)) {
+			ggplt <- ggplt + geom_line(aes(x=x, y=unmodified, color="unmodified", group=1), data=distributions, size=1)
+			ggplt <- ggplt + geom_line(aes(x=x, y=modified, color="modified", group=1), data=distributions, size=1)
+			ggplt <- ggplt + geom_line(aes(x=x, y=total, color="total", group=1), data=distributions, size=1)
+		} else {
+			if (state=="unmodified") ggplt <- ggplt + geom_line(aes(x=x, y=unmodified, color="unmodified", group=1), data=distributions, size=1)
+			if (state=="modified") ggplt <- ggplt + geom_line(aes(x=x, y=modified, color="modified", group=1), data=distributions, size=1)
+		}
+		
+		# Make legend and colors correct
+		ggplt <- ggplt + scale_color_manual(name="components", values=cols)
+
 	}
-	
-	# Make legend and colors correct
-	ggplt <- ggplt + scale_color_manual(name="components", values=cols)
 
 	return(ggplt)
 
@@ -98,20 +122,20 @@ plot.distribution <- function(model, state=NULL, chr=NULL, start=NULL, end=NULL)
 plot.distribution.normal <- function(model, state=0) {
 
 	## Load libraries
-# 	library(ggplot2)
+	library(ggplot2)
 
 	## Intercept user input
 	if (state!=0 & state!=1) { stop("state has to be either 0 or 1") }
 
 	## Plot settings
-	cols <- c("unmodified"="gray48","modified"="orangered3")
+	cols <- gcolors[c("unmodified","modified")]
 
 	## Transform the reads
 	states <- get.states(model)
 	df <- data.frame(bin=1:length(model$reads), reads=model$reads, state=as.factor(states))
 	# Transform to uniform space
-	df$ureads[df$state==0] <- pzinbinom(df$reads[df$state==0], model$weights[1], model$distributions[2,'r'], model$distributions[2,'p'])
-	df$ureads[df$state==1] <- pnbinom(df$reads[df$state==1], model$distributions[3,'r'], model$distributions[3,'p'])
+	df$ureads[df$state==0] <- pzinbinom(df$reads[df$state==0], model$weights[1], model$distributions[2,'size'], model$distributions[2,'prob'])
+	df$ureads[df$state==1] <- pnbinom(df$reads[df$state==1], model$distributions[3,'size'], model$distributions[3,'prob'])
 	# Transform to normal space
 	df$nreads <- qnorm(df$ureads)
 
@@ -131,10 +155,10 @@ plot.distribution.normal <- function(model, state=0) {
 plot.boxplot <- function(model) {
 
 	## Load libraries
-# 	library(ggplot2)
+	library(ggplot2)
 
 	## Plot settings
-	cols <- c("unmodified"="gray48","modified"="orangered3")
+	cols <- gcolors[c("unmodified","modified")]
 
 	## Boxplot
 	components <- c("unmodified","modified")[as.factor(get.states(model))]

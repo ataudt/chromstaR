@@ -5,7 +5,6 @@
 #include <R.h> // R_CheckUserInterrupt()
 #include <vector> // storing density functions
 #include <time.h> // time(), difftime()
-// using std::vector;
 #include "utility.h"
 #include "densities.h"
 
@@ -14,6 +13,7 @@ class ScaleHMM  {
 	public:
 		int T; ///< length of observed sequence
 		int N; ///< number of states
+		int cutoff; ///< a cutoff for observations
 		int Nmod; ///< number of modifications / marks
 		double** A; ///< matrix [N x N] of transition probabilities
 		double* proba; ///< initial probabilities (length N)
@@ -32,8 +32,8 @@ class ScaleHMM  {
 		void baumWelch(int* maxiter, int* maxtime, double* eps);
 		void check_for_state_swap();
 		void calc_weights(double* weights);
-// 		void viterbi(int* path, int recompute);
 		double get_proba(int i);
+		void set_cutoff(int cutoff);
 
 	private:
 		void forward();
@@ -57,7 +57,7 @@ class ScaleHMM  {
 		double dlogP; ///< difference in loglikelihood from one iteration to the next
 		time_t baumWelchStartTime_sec; ///< start time of the Baum-Welch in sec
 		int baumWelchTime_real; ///< elapsed time from start of the 0th iteration
-		int sumdiff_state1; ///< sum of the difference in the state 1 assignments from one iteration to the next
+		int sumdiff_state_last; ///< sum of the difference in the state 1 assignments from one iteration to the next
 		double sumdiff_posterior; ///< sum of the difference in posterior (gamma) values from one iteration to the next
 		whichvariate xvariate; ///< enum which stores if UNIVARIATE or MULTIVARIATE
 };

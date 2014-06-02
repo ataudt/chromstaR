@@ -347,7 +347,7 @@ void ZiNB::copy(Density* other)
 	this->w = o->w;
 }
 
-double ZiNB::getLogDensityAt10Variance()
+double ZiNB::getLogDensityAt(int x)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	double logp = log(this->p);
@@ -367,8 +367,7 @@ double ZiNB::getLogDensityAt10Variance()
 	}
 	variance = variance / this->T;
 	// Calculate logdensity
-	int x = 10*((int)variance+1);
-	lGammaR=lgamma(this->r);
+	lGammaR = lgamma(this->r);
 	lGammaRplusX = lgamma(this->r + x);
 	lxfactorial = this->lxfactorials[x];
 	if (x == 0)
@@ -510,7 +509,7 @@ void NegativeBinomial::calc_densities(double* dens)
 		FILE_LOG(logDEBUG2) << "Computing gammas in " << __func__ << " for every t, because max(O)>T";
 		for (int t=0; t<this->T; t++)
 		{
-					lGammaRplusX = lgamma(this->r + this->O[t]);
+			lGammaRplusX = lgamma(this->r + this->O[t]);
 			lxfactorial = this->lxfactorials[(int) this->O[t]];
 			dens[t] = exp( lGammaRplusX - lGammaR - lxfactorial + this->r * logp + this->O[t] * log1minusp );
 			FILE_LOG(logDEBUG4) << "dens["<<t<<"] = " << dens[t];
@@ -798,7 +797,7 @@ void NegativeBinomial::copy(Density* other)
 	this->O = o->O;
 }
 
-double NegativeBinomial::getLogDensityAt10Variance()
+double NegativeBinomial::getLogDensityAt(int x)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	double logp = log(this->p);
@@ -818,8 +817,7 @@ double NegativeBinomial::getLogDensityAt10Variance()
 	}
 	variance = variance / this->T;
 	// Calculate logdensity
-	int x = 10*((int)variance+1);
-	lGammaR=lgamma(this->r);
+	lGammaR = lgamma(this->r);
 	lGammaRplusX = lgamma(this->r + x);
 	lxfactorial = this->lxfactorials[x];
 	logdens = lGammaRplusX - lGammaR - lxfactorial + this->r * logp + x * log1minusp;
@@ -880,7 +878,8 @@ void OnlyZeros::calc_densities(double* dens)
 		}
 		if(O[t]>0)
 		{
-			dens[t] = 0.0;
+			// Assigning a non-zero value prevents nan in case all other states become zero which can be the case for very high observations
+			dens[t] = 0.00000000001; // TODO: find a non arbitrary number
 		}
 		FILE_LOG(logDEBUG4) << "dens["<<t<<"] = " << dens[t];
 	}
@@ -911,7 +910,7 @@ void OnlyZeros::update(double* weight)
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 }
 
-double OnlyZeros::getLogDensityAt10Variance()
+double OnlyZeros::getLogDensityAt(int x)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	double logdens;
@@ -928,7 +927,6 @@ double OnlyZeros::getLogDensityAt10Variance()
 	}
 	variance = variance / this->T;
 	// Calculate logdensity
-	int x = 10*((int)variance+1);
 	if (x == 0)
 	{
 		logdens = 0;

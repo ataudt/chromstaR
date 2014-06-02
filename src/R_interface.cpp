@@ -1,22 +1,17 @@
 #include "utility.h"
-// #include "loghmm.h"
 #include "scalehmm.h"
 #include <vector> // storing density functions in multivariate
-// using std::vector;
 
 // ===================================================================================================================================================
 // This function takes parameters from R, creates a univariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // ===================================================================================================================================================
 extern "C" {
-void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter, int* maxtime, double* eps, double* posteriors, double* A, double* proba, double* loglik, double* weights, double* initial_r, double* initial_p, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error)
+void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter, int* maxtime, double* eps, double* posteriors, double* A, double* proba, double* loglik, double* weights, double* initial_r, double* initial_p, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* read_cutoff)
 {
 
 	// Define logging level
 // 	FILE* pFile = fopen("chromStar.log", "w");
 // 	Output2FILE::Stream() = pFile;
-//  	FILELog::ReportingLevel() = FILELog::FromString("INFO");
-//  	FILELog::ReportingLevel() = FILELog::FromString("ITERATION");
-//  	FILELog::ReportingLevel() = FILELog::FromString("DEBUG1");
  	FILELog::ReportingLevel() = FILELog::FromString("ERROR");
 
 	// Parallelization settings
@@ -56,8 +51,8 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 
 	// Create the HMM
 	FILE_LOG(logDEBUG1) << "Creating a univariate HMM";
-// 	LogHMM* model = new LogHMM(*T, *N);
 	ScaleHMM* model = new ScaleHMM(*T, *N);
+	model->set_cutoff(*read_cutoff);
 	// Initialize the transition probabilities and proba
 	model->initialize_transition_probs(initial_A, *use_initial_params);
 	model->initialize_proba(initial_proba, *use_initial_params);
@@ -84,7 +79,6 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 	//int i_count = 0;
 	for (int i_state=0; i_state<model->N; i_state++)
 	{
-
 		if (*use_initial_params) {
 			FILE_LOG(logINFO) << "Using given parameters for r and p";
 			Rprintf("Using given parameters for r and p\n");
@@ -122,15 +116,23 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 // 	 		} 
 
 			// Simple initialization, seems to give the fastest convergence
-	 		if (i_state == 1) {
+	 		if (i_state == 1)
+			{
 				FILE_LOG(logDEBUG) << "Initializing r and p for state 1";
 	 			imean = mean;
 	 			ivariance = variance;
-	 		} else if (i_state == 2) {
+	 		}
+			else if (i_state == 2)
+			{
 				FILE_LOG(logDEBUG) << "Initializing r and p for state 2";
 	 			imean = mean+1;
 	 			ivariance = variance;
 	 		} 
+			// Make sure variance is greater than mean
+			if (imean >= ivariance)
+			{
+				ivariance = imean + 1;
+			}
 			
 			// Calculate r and p from mean and variance
 			initial_r[i_state] = pow(imean,2)/(ivariance-imean);
@@ -170,8 +172,10 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 	{
 		FILE_LOG(logERROR) << "Error in Baum-Welch: " << e.what();
 		Rprintf("Error in Baum-Welch: %s\n", e.what());
-		*error = -1;
+		if (e.what()=="nan detected") { *error = 1; }
+		else { *error = 2; }
 	}
+		
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
 	// Compute the posteriors and save results directly to the R pointer
 	double** post = allocDoubleMatrix(model->N, model->T);
@@ -201,12 +205,18 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 	// copy the estimated distribution params
 	for (int i=0; i<model->N; i++)
 	{
-			if (model->densityFunctions[i]->getType() == NB) 
-			{
-					NegativeBinomial* d = (NegativeBinomial*)(model->densityFunctions[i]);
-					r[i] = d->getR();
-					p[i] = d->getP();
-			}
+		if (model->densityFunctions[i]->getType() == NB) 
+		{
+			NegativeBinomial* d = (NegativeBinomial*)(model->densityFunctions[i]);
+			r[i] = d->getR();
+			p[i] = d->getP();
+		}
+		else if (model->densityFunctions[i]->getType() == ZI)
+		{
+			// These values for a Negative Binomial define a zero-inflation (delta distribution)
+			r[i] = 0;
+			p[i] = 1;
+		}
 	}
 	*loglik = model->logP;
 	model->calc_weights(weights);
@@ -340,7 +350,8 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 	{
 		FILE_LOG(logERROR) << "Error in Baum-Welch: " << e.what();
 		Rprintf("Error in Baum-Welch: %s\n", e.what());
-		*error = -1;
+		if (e.what()=="nan detected") { *error = 1; }
+		else { *error = 2; }
 	}
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
 	
@@ -472,7 +483,9 @@ void R_multivariate_hmm_productBernoulli(double* O, int* T, int* N, int *Nmod, i
 	catch (std::exception& e)
 	{
 		FILE_LOG(logERROR) << "Error in Baum-Welch: " << e.what();
-		*error = -1;
+		Rprintf("Error in Baum-Welch: %s\n", e.what());
+		if (e.what()=="nan detected") { *error = 1; }
+		else { *error = 2; }
 	}
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
 	

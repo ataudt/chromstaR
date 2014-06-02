@@ -88,8 +88,8 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, ber
 		for (i1 in 2:3) {
 			
 			xreads = 0:maxreads
-			r = distributions[[imod]][i1,'r']
-			p = distributions[[imod]][i1,'p']
+			r = distributions[[imod]][i1,'size']
+			p = distributions[[imod]][i1,'prob']
 # 			lGamma1plusRplusX = lgamma(1+r+(0:maxreads))
 # 			lGammaR = lgamma(r)
 # 			lGamma2plusX = lgamma(2+(0:maxreads))
