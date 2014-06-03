@@ -6,7 +6,7 @@
 // This function takes parameters from R, creates a univariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // ===================================================================================================================================================
 extern "C" {
-void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter, int* maxtime, double* eps, double* posteriors, double* A, double* proba, double* loglik, double* weights, double* initial_r, double* initial_p, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* read_cutoff)
+void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter, int* maxtime, double* eps, double* posteriors, double* A, double* proba, double* loglik, double* weights, int* iniproc, double* initial_r, double* initial_p, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* read_cutoff)
 {
 
 	// Define logging level
@@ -73,10 +73,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 	Rprintf("data mean = %g, data variance = %g\n", mean, variance);		
 	
 	// Go through all states of the model and assign the density functions
-// 	srand (clock());
-// 	int rand1, rand2;
 	double imean, ivariance;
-	//int i_count = 0;
 	for (int i_state=0; i_state<model->N; i_state++)
 	{
 		if (*use_initial_params) {
@@ -84,59 +81,71 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 			Rprintf("Using given parameters for r and p\n");
 			imean = (1-initial_p[i_state])*initial_r[i_state] / initial_p[i_state];
 			ivariance = imean / initial_p[i_state];
-			FILE_LOG(logDEBUG3) << "imean = " << imean;
-			FILE_LOG(logDEBUG3) << "ivariance = " << ivariance;
+			FILE_LOG(logDEBUG2) << "imean = " << imean;
+			FILE_LOG(logDEBUG2) << "ivariance = " << ivariance;
 		} else {
 
-// 			// Disturb mean and variance for use as randomized initial parameters
-// 			FILE_LOG(logINFO) << "Using random initialization for r and p";
-// 			Rprintf("Using random initialization for r and p\n");
-// 			rand1 = rand();
-// 			rand2 = rand();
-// 			imean = (double)rand1/(double)RAND_MAX * 10*mean;
-// // 			ivariance = imean + (double)rand2/(double)RAND_MAX * 10*variance; // variance has to be greater than mean, otherwise r will be negative
-// 			ivariance = imean + (double)rand2/(double)RAND_MAX * 20*imean; // variance has to be greater than mean, otherwise r will be negative
-// 			FILE_LOG(logDEBUG3) << "RAND_MAX = " << RAND_MAX;
-// 			FILE_LOG(logDEBUG3) << "rand1 = " << rand1;
-// 			FILE_LOG(logDEBUG3) << "rand2 = " << rand2;
-// 			FILE_LOG(logDEBUG3) << "imean = " << imean;
-// 			FILE_LOG(logDEBUG3) << "ivariance = " << ivariance;
-
-// 	 		// Empirical initialization
-// 	 		if (i_state == 1) {
-// 				FILE_LOG(logINFO) << "Initializing r and p empirically for state 1";
-// 				Rprintf("Initializing r and p empirically for state 1\n");
-// 	 			imean = mean/2;
-// 	 			ivariance = imean*2;
-// 	 		} else if (i_state == 2) {
-// 				FILE_LOG(logINFO) << "Initializing r and p empirically for state 2";
-// 				Rprintf("Initializing r and p empirically for state 2\n");
-// 	 			imean = mean*2;
-// 	 			ivariance = imean*2;
-// 	 		} 
-
-			// Simple initialization, seems to give the fastest convergence
-	 		if (i_state == 1)
+			if (*iniproc == 1)
 			{
-				FILE_LOG(logDEBUG) << "Initializing r and p for state 1";
-	 			imean = mean;
-	 			ivariance = variance;
-	 		}
-			else if (i_state == 2)
-			{
-				FILE_LOG(logDEBUG) << "Initializing r and p for state 2";
-	 			imean = mean+1;
-	 			ivariance = variance;
-	 		} 
-			// Make sure variance is greater than mean
-			if (imean >= ivariance)
-			{
-				ivariance = imean + 1;
+				// Simple initialization, seems to give the fastest convergence
+				if (i_state == 1)
+				{
+					FILE_LOG(logDEBUG) << "Initializing r and p for state 1";
+					imean = mean;
+					ivariance = variance;
+				}
+				else if (i_state == 2)
+				{
+					FILE_LOG(logDEBUG) << "Initializing r and p for state 2";
+					imean = mean+1;
+					ivariance = variance;
+				} 
+				// Make sure variance is greater than mean
+				if (imean >= ivariance)
+				{
+					ivariance = imean + 1;
+				}
 			}
-			
+			else if (*iniproc == 2)
+			{
+				// Disturb mean and variance for use as randomized initial parameters
+				FILE_LOG(logINFO) << "Using random initialization for r and p";
+				Rprintf("Using random initialization for r and p\n");
+				srand (clock());
+				int rand1, rand2;
+				rand1 = rand();
+				rand2 = rand();
+				imean = (double)rand1/(double)RAND_MAX * 10*mean;
+				ivariance = imean + (double)rand2/(double)RAND_MAX * 20*imean; // variance has to be greater than mean, otherwise r will be negative
+				FILE_LOG(logDEBUG2) << "RAND_MAX = " << RAND_MAX;
+				FILE_LOG(logDEBUG2) << "rand1 = " << rand1;
+				FILE_LOG(logDEBUG2) << "rand2 = " << rand2;
+				FILE_LOG(logDEBUG2) << "imean = " << imean;
+				FILE_LOG(logDEBUG2) << "ivariance = " << ivariance;
+			}
+			else if (*iniproc == 3)
+			{
+				// Empirical initialization
+				if (i_state == 1)
+				{
+					FILE_LOG(logINFO) << "Initializing r and p empirically for state 1";
+					Rprintf("Initializing r and p empirically for state 1\n");
+					imean = mean/2;
+					ivariance = imean*2;
+				}
+				else if (i_state == 2)
+				{
+					FILE_LOG(logINFO) << "Initializing r and p empirically for state 2";
+					Rprintf("Initializing r and p empirically for state 2\n");
+					imean = mean*2;
+					ivariance = imean*2;
+				} 
+			}
+
 			// Calculate r and p from mean and variance
 			initial_r[i_state] = pow(imean,2)/(ivariance-imean);
 			initial_p[i_state] = imean/ivariance;
+
 		}
 
 		if (i_state >= 1)

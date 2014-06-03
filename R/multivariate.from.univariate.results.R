@@ -50,7 +50,10 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 	# Prepare input for C function
 	rs <- unlist(lapply(distributions,"[",2:3,'size'))
 	ps <- unlist(lapply(distributions,"[",2:3,'prob'))
-	ws <- unlist(lapply(weights,"[",1))
+	ws1 <- unlist(lapply(weights,"[",1))
+	ws2 <- unlist(lapply(weights,"[",2))
+	ws3 <- unlist(lapply(weights,"[",3))
+	ws <- ws1 / (ws2+ws1)
 
 	# Load checkpoint file if it exists and if desired
 	if (file.exists(checkpoint.file) & checkpoint.use.existing) {

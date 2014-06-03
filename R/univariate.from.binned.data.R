@@ -1,4 +1,4 @@
-univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max.it=-1, num.trials=1, eps.try=NULL, num.threads=1, output.if.not.converged=FALSE, filter.reads=TRUE, control=FALSE) {
+univariate.from.binned.data <- function(binned.data, eps=0.001, init="standard", max.time=-1, max.it=-1, num.trials=1, eps.try=NULL, num.threads=1, output.if.not.converged=FALSE, filter.reads=TRUE, control=FALSE) {
 
 	## Intercept user input
 	if (check.positive(eps)!=0) stop("argument 'eps' expects a positive numeric")
@@ -18,12 +18,12 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 	names(binned.data) <- binned.data.names # defined globally outside this function
 
 	## Assign variables
-# 	state.labels # assigned globally outside this function
 	if (control) {
-		state.labels <- state.labels[1:2]
+		state.labels <- state.labels[1:2] # assigned globally outside this function
 	}
 	numstates <- length(state.labels)
 	numbins <- length(binned.data$reads)
+	iniproc <- which(init==c("standard","random","empiric")) # transform to int
 
 	# Check if there are reads in the data, otherwise HMM will blow up
 	if (!any(binned.data$reads!=0)) {
@@ -60,6 +60,7 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 			proba = double(length=numstates), # double* proba
 			loglik = double(length=1), # double* loglik
 			weights = double(length=numstates), # double* weights
+			ini.proc = as.integer(iniproc), # int* iniproc
 			size.initial = double(length=numstates), # double* initial_r
 			prob.initial = double(length=numstates), # double* initial_p
 			A.initial = double(length=numstates*numstates), # double* initial_A
@@ -115,6 +116,7 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, max.time=-1, max
 			proba <- double(length=numstates), # double* proba
 			loglik <- double(length=1), # double* loglik
 			weights <- double(length=numstates), # double* weights
+			ini.proc = as.integer(iniproc), # int* iniproc
 			size.initial <- as.vector(hmm$distributions[,'size']), # double* initial_r
 			prob.initial <- as.vector(hmm$distributions[,'prob']), # double* initial_p
 			A.initial <- as.vector(hmm$A), # double* initial_A

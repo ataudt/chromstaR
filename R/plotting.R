@@ -1,7 +1,7 @@
 # ------------------------------------------------------------
 # Plot a read histogram with univariate fits
 # ------------------------------------------------------------
-plot.distribution <- function(model, state=NULL, chr=NULL, start=NULL, end=NULL) {
+plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NULL) {
 
 	## Load libraries
 	library(ggplot2)
@@ -31,11 +31,11 @@ plot.distribution <- function(model, state=NULL, chr=NULL, start=NULL, end=NULL)
 	# Select the rows to plot
 	selectmask <- rep(TRUE,length(model$reads))
 	numchrom <- length(table(model$coordinates$chrom))
-	if (!is.null(chr)) {
-		if (! chr %in% levels(model$coordinates$chrom)) {
-			stop(chr," can't be found in the model coordinates.")
+	if (!is.null(chrom)) {
+		if (! chrom %in% levels(model$coordinates$chrom)) {
+			stop(chrom," can't be found in the model coordinates.")
 		}
-		selectchrom <- model$coordinates$chrom == chr
+		selectchrom <- model$coordinates$chrom == chrom
 		selectmask <- selectmask & selectchrom
 		numchrom <- 1
 	}

@@ -99,7 +99,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, ber
 
 			if (i1 == 2) {
 				# Unmodified with zero inflation
-				w = weights[[imod]][1]
+				w = weights[[imod]][1] / (weights[[imod]][2] + weights[[imod]][1])
 				u = pzinbinom(xreads, w, r, p)
 # 				u = 1 - exp( log(1-w) + lppowerr + lppowert + lGamma1plusRplusX + lHyper - lGammaR - lGamma2plusX )
 			} else if (i1 == 3) {
