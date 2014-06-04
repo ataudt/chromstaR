@@ -103,26 +103,26 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, init="standard",
 		# Rerun the HMM with different epsilon and initial parameters from trial run
 		cat("\n\nRerunning try ",indexmax," with eps =",eps,"--------------------\n")
 		hmm <- .C("R_univariate_hmm",
-			reads <- as.integer(binned.data$reads), # double* O
-			num.bins <- as.integer(numbins), # int* T
-			num.states <- as.integer(numstates), # int* N
-			size <- double(length=numstates), # double* r
-			prob <- double(length=numstates), # double* p
-			num.iterations <- as.integer(max.it), #  int* maxiter
-			time.sec <- as.integer(max.time), # double* maxtime
-			loglik.delta <- as.double(eps), # double* eps
-			posteriors <- double(length=numbins * numstates), # double* posteriors
-			A <- double(length=numstates*numstates), # double* A
-			proba <- double(length=numstates), # double* proba
-			loglik <- double(length=1), # double* loglik
-			weights <- double(length=numstates), # double* weights
+			reads = as.integer(binned.data$reads), # double* O
+			num.bins = as.integer(numbins), # int* T
+			num.states = as.integer(numstates), # int* N
+			size = double(length=numstates), # double* r
+			prob = double(length=numstates), # double* p
+			num.iterations = as.integer(max.it), #  int* maxiter
+			time.sec = as.integer(max.time), # double* maxtime
+			loglik.delta = as.double(eps), # double* eps
+			posteriors = double(length=numbins * numstates), # double* posteriors
+			A = double(length=numstates*numstates), # double* A
+			proba = double(length=numstates), # double* proba
+			loglik = double(length=1), # double* loglik
+			weights = double(length=numstates), # double* weights
 			ini.proc = as.integer(iniproc), # int* iniproc
-			size.initial <- as.vector(hmm$distributions[,'size']), # double* initial_r
-			prob.initial <- as.vector(hmm$distributions[,'prob']), # double* initial_p
-			A.initial <- as.vector(hmm$A), # double* initial_A
-			proba.initial <- as.vector(hmm$proba), # double* initial_proba
-			use.initial.params <- as.logical(1), # bool* use_initial_params
-			num.threads <- as.integer(num.threads), # int* num_threads
+			size.initial = as.vector(hmm$distributions[,'size']), # double* initial_r
+			prob.initial = as.vector(hmm$distributions[,'prob']), # double* initial_p
+			A.initial = as.vector(hmm$A), # double* initial_A
+			proba.initial = as.vector(hmm$proba), # double* initial_proba
+			use.initial.params = as.logical(1), # bool* use_initial_params
+			num.threads = as.integer(num.threads), # int* num_threads
 			error = as.integer(0), # int* error (error handling)
 			read.cutoff = as.integer(read.cutoff) # int* read_cutoff
 		)

@@ -26,6 +26,7 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 	numbins <- params$numbins
 	nummod <- params$nummod
 	comb.states2use <- params$comb.states
+	comb.states.per.bin <- params$comb.states.per.bin
 	distributions <- params$distributions
 	weights <- params$weights
 	correlationMatrix2use <- params$correlationMatrix
@@ -45,7 +46,7 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 
 	## Starting multivariate HMM
 	cat("\nStarting multivariate HMM\n")
-	cat("Using the following states: ",paste(comb.states2use, collapse=" "),"\n")
+	cat("Using the following combinatorial states, covering", mean(comb.states.per.bin %in% comb.states2use)*100, "% of the bins:\n", paste(comb.states2use, collapse=" "),"\n")
 
 	# Prepare input for C function
 	rs <- unlist(lapply(distributions,"[",2:3,'size'))

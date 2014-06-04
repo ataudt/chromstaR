@@ -110,7 +110,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, ber
 
 			# Check for infinities in u and set them to max value which is not infinity
 			qnorm_u = qnorm(u)
-			if (NaN %in% qnorm_u) { print("NA detected") }
+			if (NaN %in% qnorm_u) { print("NaN detected") }
 			testvec = qnorm_u!=Inf
 			z_per_read[1:(maxreads+1),(imod - 1) * 2 + (i1-1)] = ifelse(testvec, qnorm_u, max(qnorm_u[testvec]))
 

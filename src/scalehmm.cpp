@@ -155,7 +155,7 @@ void ScaleHMM::calc_sumgamma()
 	{
 		this->sumgamma[iN] = 0.0;
 	}
-	#pragma omp parallel for // of no use here (at least in univariate)
+	#pragma omp parallel for
 	for (int iN=0; iN<this->N; iN++)
 	{
 		for (int t=0; t<this->T; t++)

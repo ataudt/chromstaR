@@ -1,14 +1,14 @@
-combinatorial.states = function(modellist, threshold=0.5, binary=FALSE) {
+combinatorial.states = function(modellist, binary=FALSE) {
 	
 # 	# Combine the input
 # 	models = c(list(...), modellist) # This will result in excessive memory usage if the list elements are large, because they will be copied to a new location
 	nummod = length(modellist)
-	numbins = nrow(modellist[[1]]$posteriors)
+	numbins = modellist[[1]]$num.bins
 
 	# Get the univariate states (zero inflation = 0, unmodified = 0, modified = 1) from the modellist
 	binary_statesmatrix = matrix(rep(NA,numbins*nummod), ncol=nummod)
 	for (imod in 1:nummod) {
-		binary_statesmatrix[,imod] = ifelse(modellist[[imod]]$posteriors[,3] > threshold, 1, 0)
+		binary_statesmatrix[,imod] = c(TRUE,FALSE,FALSE)[modellist[[imod]]$states] # T,F,F corresponds to levels 'modified','unmodified','zero-inflation'
 	}
 
 	if (binary == TRUE) {

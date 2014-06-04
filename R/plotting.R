@@ -83,7 +83,9 @@ plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NUL
 	distributions <- data.frame(x)
 
 	# Unmodified
-	distributions$unmodified <- (1-weights[3]) * dzinbinom(x, weights[1]/(weights[2]+weights[1]), model$distributions[2,'size'], model$distributions[2,'prob'])
+	w <- weights[1]/(weights[2]+weights[1]) # weight for the zero-inflation
+	if (is.nan(w)) { w <- 0 }
+	distributions$unmodified <- (1-weights[3]) * dzinbinom(x, w, model$distributions[2,'size'], model$distributions[2,'prob'])
 	# Modified
 	distributions$modified <- weights[3] * dnbinom(x, model$distributions[3,'size'], model$distributions[3,'prob'])
 	# Total

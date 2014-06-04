@@ -1,6 +1,7 @@
 #include "utility.h"
 #include "scalehmm.h"
 #include <vector> // storing density functions in multivariate
+#include <omp.h> // parallelization options
 
 // ===================================================================================================================================================
 // This function takes parameters from R, creates a univariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
@@ -15,7 +16,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
  	FILELog::ReportingLevel() = FILELog::FromString("ERROR");
 
 	// Parallelization settings
-// 	omp_set_num_threads(*num_threads);
+	omp_set_num_threads(*num_threads);
 
 	// Print some information
 	FILE_LOG(logINFO) << "number of states = " << *N;
