@@ -24,3 +24,4 @@ chr1 \tab 28600 \tab 28799 \tab 0 \cr
 \keyword{binned}
 \keyword{data}
 \keyword{binned.data}
+\seealso{\code{\link{binned2GRanges}}, \code{\link{binned2wiggle}}}

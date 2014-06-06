@@ -24,7 +24,7 @@ Please refer to \code{\link{dnbinom}} for the full list of arguments. The only a
 TODO: write down formula
 }
 \value{
-\option{dnbinom} gives the density, \option{pnbinom} gives the distribution function, \option{qnbinom} gives the quantile function, and \option{rnbinom} generates random deviates.
+\option{dzinbinom} gives the density, \option{pzinbinom} gives the distribution function, \option{qzinbinom} gives the quantile function, and \option{rzinbinom} generates random deviates.
 }
 \source{}
 \seealso{\code{\link{dnbinom}}}

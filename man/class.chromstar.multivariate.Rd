@@ -1,5 +1,6 @@
 \name{chromstar multivariate object}
 \alias{chromstar.multivariate.hmm}
+\alias{multi.hmm}
 
 \title{Multivariate HMM object}
 \description{
@@ -34,6 +35,6 @@ The multivariate HMM object is output of the function \code{\link{multivariate.f
 
 \keyword{multivariate}
 \keyword{hmm}
-\seealso{\code{\link{chromstar.univariate.hmm}}}
+\seealso{\code{\link{hmm2GRanges}}, \code{\link{multivariate2bed}}, \code{\link{chromstar.univariate.hmm}}}
 
 
