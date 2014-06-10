@@ -7,10 +7,11 @@ Run an HMM for a single histone mark
 Run an HMM for a single histone mark to determine regions which are either 'unmodified' or 'modified'. Input is a data.frame with \code{\link{binned.data}} and output is an \code{\link{chromstar.univariate.hmm}} list object.
 }
 \usage{
-univariate.from.binned.data(binned.data, eps=0.001, init="standard", max.time=-1, max.it=-1, num.trials=1, eps.try=NULL, num.threads=1, output.if.not.converged=FALSE, filter.reads=TRUE, control=FALSE)
+univariate.from.binned.data(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.it=-1, num.trials=1, eps.try=NULL, num.threads=1, output.if.not.converged=FALSE, filter.reads=TRUE, control=FALSE)
 }
 \arguments{
 \item{binned.data}{A data.frame containing genomic coordinates and read counts (see \code{\link{binned.data}} for a more detailed description).}
+\item{ID}{An identifier for the resulting object. Should be the modification or the filename for example.}
 \item{eps}{Convergence threshold for the Baum-Welch algorithm.}
 \item{init}{
 Initialization procedure for the distributions. Either "standard" or "random". The "standard" procedure initializes the first Negative Binomial with mean and variance of the data and the second Negative Binomial with mean+1 and variance of the data. This initialization usually gives the fastest convergence. The "random" procedure initializes both distributions with random values for mean and variance. The mean will be chosen between 0 and 10 times the data mean. The variance will be chosen between 0 and 20 times the random mean.

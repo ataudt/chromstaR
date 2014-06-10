@@ -133,6 +133,7 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 		hmm$A <- matrix(hmm$A, ncol=numstates2use, byrow=TRUE)
 		colnames(hmm$A) <- comb.states2use
 		rownames(hmm$A) <- comb.states2use
+		hmm$IDs.univariate <- params$IDs
 		hmm$distributions.univariate <- distributions
 		hmm$weights.univariate <- weights
 		hmm$A.initial <- matrix(hmm$A.initial, ncol=numstates2use, byrow=TRUE)

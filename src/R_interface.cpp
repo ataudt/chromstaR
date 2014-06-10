@@ -188,18 +188,19 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 		
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
 	// Compute the posteriors and save results directly to the R pointer
-	double** post = allocDoubleMatrix(model->N, model->T);
-	model->get_posteriors(post);
+// 	double** post = allocDoubleMatrix(model->N, model->T);
+// 	model->get_posteriors(post);
 	FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
 	#pragma omp parallel for
 	for (int iN=0; iN<model->N; iN++)
 	{
 		for (int t=0; t<model->T; t++)
 		{
-			posteriors[t + iN * model->T] = post[iN][t];
+// 			posteriors[t + iN * model->T] = post[iN][t];
+			posteriors[t + iN * model->T] = model->get_posterior(iN, t);
 		}
 	}
-	freeDoubleMatrix(post, model->N);
+// 	freeDoubleMatrix(post, model->N);
 
 	FILE_LOG(logDEBUG1) << "Return parameters";
 	// also return the estimated transition matrix and the initial probs
@@ -251,7 +252,7 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
  	FILELog::ReportingLevel() = FILELog::FromString("ERROR");
 
 	// Parallelization settings
-// 	omp_set_num_threads(*num_threads);
+	omp_set_num_threads(*num_threads);
 
 	// Print some information
 	FILE_LOG(logINFO) << "number of states = " << *N;
@@ -366,17 +367,18 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
 	
 	// Compute the posteriors and save results directly to the R pointer
-	double** post = allocDoubleMatrix(model->N, model->T);
-	model->get_posteriors(post);
+// 	double** post = allocDoubleMatrix(model->N, model->T);
+// 	model->get_posteriors(post);
 	FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
 	for (int iN=0; iN<model->N; iN++)
 	{
 		for (int t=0; t<model->T; t++)
 		{
-			posteriors[t + iN * model->T] = post[iN][t];
+// 			posteriors[t + iN * model->T] = post[iN][t];
+			posteriors[t + iN * model->T] = model->get_posterior(iN, t);
 		}
 	}
-	freeDoubleMatrix(post, model->N);
+// 	freeDoubleMatrix(post, model->N);
 	
 	FILE_LOG(logDEBUG1) << "Return parameters";
 	// also return the estimated transition matrix and the initial probs
@@ -402,7 +404,7 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 // This function takes parameters from R, creates a multivariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // ---------------------------------------------------------------
 extern "C" {//observation is now the posterior for being UNMODIFIED
-void R_multivariate_hmm_productBernoulli(double* O, int* T, int* N, int *Nmod, int* states, int* maxiter, int* maxtime, double* eps, double* post, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error)
+void R_multivariate_hmm_productBernoulli(double* O, int* T, int* N, int *Nmod, int* states, int* maxiter, int* maxtime, double* eps, double* posteriors, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error)
 {
 
 	// Define logging level
@@ -500,17 +502,18 @@ void R_multivariate_hmm_productBernoulli(double* O, int* T, int* N, int *Nmod, i
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
 	
 	// Compute the posteriors and save results directly to the R pointer
-	double** posteriors = allocDoubleMatrix(model->N, model->T);
-	model->get_posteriors(posteriors);
+// 	double** post = allocDoubleMatrix(model->N, model->T);
+// 	model->get_posteriors(post);
 	FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
 	for (int iN=0; iN<model->N; iN++)
 	{
 		for (int t=0; t<model->T; t++)
 		{
-			post[t + iN * model->T] = posteriors[iN][t];
+// 			posteriors[t + iN * model->T] = post[iN][t];
+			posteriors[t + iN * model->T] = model->get_posterior(iN, t);
 		}
 	}
-	freeDoubleMatrix(posteriors, model->N);
+// 	freeDoubleMatrix(post, model->N);
 	
 	FILE_LOG(logDEBUG1) << "Return parameters";
 	// also return the estimated transition matrix and the initial probs

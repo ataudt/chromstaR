@@ -91,7 +91,7 @@ void ScaleHMM::initialize_transition_probs(double* initial_A, bool use_initial_p
 		{
 			for (int jN=0; jN<this->N; jN++)
 			{
-				this->A[iN][jN] = initial_A[iN*this->N + jN];
+				this->A[jN][iN] = initial_A[iN*this->N + jN];
 			}
 		}
 	}
@@ -511,6 +511,12 @@ void ScaleHMM::get_posteriors(double** post)
 			post[iN][t] = this->gamma[iN][t];
 		}
 	}
+}
+
+double ScaleHMM::get_posterior(int iN, int t)
+{
+	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	return(this->gamma[iN][t]);
 }
 
 void ScaleHMM::calc_weights(double* weights)

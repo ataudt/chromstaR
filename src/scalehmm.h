@@ -29,6 +29,7 @@ class ScaleHMM  {
 		void initialize_transition_probs(double* initial_A, bool use_initial_params);
 		void initialize_proba(double* initial_proba, bool use_initial_params);
 		void get_posteriors(double** post);
+		double get_posterior(int iN, int t);
 		void baumWelch(int* maxiter, int* maxtime, double* eps);
 		void check_for_state_swap();
 		void calc_weights(double* weights);

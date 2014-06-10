@@ -1,4 +1,4 @@
-univariate.from.binned.data <- function(binned.data, eps=0.001, init="standard", max.time=-1, max.it=-1, num.trials=1, eps.try=NULL, num.threads=1, output.if.not.converged=FALSE, filter.reads=TRUE, control=FALSE) {
+univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.it=-1, num.trials=1, eps.try=NULL, num.threads=1, output.if.not.converged=FALSE, filter.reads=TRUE, control=FALSE) {
 
 	## Intercept user input
 	if (check.positive(eps)!=0) stop("argument 'eps' expects a positive numeric")
@@ -129,6 +129,7 @@ univariate.from.binned.data <- function(binned.data, eps=0.001, init="standard",
 	}
 
 	# Add useful entries
+	hmm$ID <- ID
 	names(hmm$weights) <- state.labels
 	hmm$coordinates <- binned.data[,coordinate.names]
 	hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)

@@ -27,6 +27,7 @@ The multivariate HMM object is output of the function \code{\link{multivariate.f
 \item{error}{This is 0 unless an error occurred during the Baum-Welch.}
 \item{coordinates}{Genomic coordinates of the bins.}
 \item{eps}{Convergence threshold for the Baum-Welch.}
+\item{IDs.univariate}{IDs of the input univariate HMMs.}
 \item{distributions.univariate}{Parameters of the univariate Negative Binomials.}
 \item{weights.univariate}{Weights of the univariate HMMs.}
 \item{states}{Classification of the bins into combinatorial states.}

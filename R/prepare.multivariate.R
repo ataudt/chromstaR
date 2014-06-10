@@ -15,10 +15,12 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, ber
 
 	nummod = length(modellist)
 	numbins = length(modellist[[1]]$reads)
+	IDs <- unlist(lapply(modellist, "[[", "ID"))
 
 	# Extract the reads
 	cat("Extracting reads from modellist...")
 	reads = matrix(NA, ncol=nummod, nrow=numbins)
+	colnames(reads) <- IDs
 	for (imod in 1:nummod) {
 		reads[,imod] = modellist[[imod]]$reads
 	}
@@ -226,7 +228,8 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, ber
 	A.estimated2use = sweep(A.estimated2use, 1, rowSums(A.estimated2use), "/") # rescale to rowSums = 1 because of the rows and columns taken out
 
 	# Return parameters
-	out = list(coordinates = coordinates,
+	out = list(IDs = IDs,
+				coordinates = coordinates,
 				reads = reads,
 				prob.unmodified = 1-prob.modified,
 				numbins = numbins,

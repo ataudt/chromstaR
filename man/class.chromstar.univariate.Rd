@@ -22,6 +22,7 @@ The univariate HMM object is output of the function \code{\link{univariate.from.
 \item{proba.initial}{Initial \option{proba} at the beginning of the Baum-Welch.}
 \item{num.threads}{Number of threads that were used in the Baum-Welch.}
 \item{error}{This is 0 unless an error occurred during the Baum-Welch.}
+\item{ID}{User specified identifier for this object.}
 \item{eps}{Convergence threshold for the Baum-Welch.}
 \item{distributions}{Estimated parameters of the Negative Binomials.}
 \item{distributions.initial}{Distribution parameters at the beginning of the Baum-Welch.}
