@@ -11,6 +11,34 @@
 class ScaleHMM  {
 
 	public:
+		// Constructor and Destructor
+		ScaleHMM();
+		ScaleHMM(int T, int N);
+		ScaleHMM(int T, int N, int Nmod);
+		~ScaleHMM();
+
+		// Member variables
+		std::vector<Density*> densityFunctions; ///< density functions for each state
+
+		// Methods
+		void initialize_transition_probs(double* initial_A, bool use_initial_params);
+		void initialize_proba(double* initial_proba, bool use_initial_params);
+		void baumWelch(int* maxiter, int* maxtime, double* eps);
+		void check_for_state_swap();
+		void calc_weights(double* weights);
+
+		// Getters and Setters
+		int get_N();
+		int get_T();
+		void get_posteriors(double** post);
+		double get_posterior(int iN, int t);
+		double get_proba(int i);
+		double get_A(int i, int j);
+		double get_logP();
+		void set_cutoff(int cutoff);
+
+	private:
+		// Member variables
 		int T; ///< length of observed sequence
 		int N; ///< number of states
 		int cutoff; ///< a cutoff for observations
@@ -20,33 +48,6 @@ class ScaleHMM  {
 		double logP; ///< loglikelihood
 		int* O; ///< vector [T] of observations
 		int** multiO; ///< matrix [Nmod x T] of observations
-		std::vector<Density*> densityFunctions; ///< density functions for each state
-		
-		ScaleHMM();
-		ScaleHMM(int T, int N);
-		ScaleHMM(int T, int N, int Nmod);
-		~ScaleHMM();
-		void initialize_transition_probs(double* initial_A, bool use_initial_params);
-		void initialize_proba(double* initial_proba, bool use_initial_params);
-		void get_posteriors(double** post);
-		double get_posterior(int iN, int t);
-		void baumWelch(int* maxiter, int* maxtime, double* eps);
-		void check_for_state_swap();
-		void calc_weights(double* weights);
-		double get_proba(int i);
-		void set_cutoff(int cutoff);
-
-	private:
-		void forward();
-		void backward();
-		void calc_sumgamma();
-		void calc_sumxi();
-		void calc_loglikelihood();
-		void computeDensities();
-		void print_uni_params();
-		void print_multi_params();
-		void print_uni_iteration(int iteration);
-		void print_multi_iteration(int iteration);
 		double* scalefactoralpha; ///< vector[T] of scaling factors
 		double** scalealpha; ///< matrix [T x N] of forward probabilities
 		double** scalebeta; ///<  matrix [T x N] of backward probabilities
@@ -61,6 +62,18 @@ class ScaleHMM  {
 		int sumdiff_state_last; ///< sum of the difference in the state 1 assignments from one iteration to the next
 		double sumdiff_posterior; ///< sum of the difference in posterior (gamma) values from one iteration to the next
 		whichvariate xvariate; ///< enum which stores if UNIVARIATE or MULTIVARIATE
+		
+		// Methods
+		void forward();
+		void backward();
+		void calc_sumgamma();
+		void calc_sumxi();
+		void calc_loglikelihood();
+		void calc_densities();
+		void print_uni_iteration(int iteration);
+		void print_uni_params();
+		void print_multi_iteration(int iteration);
+		void print_multi_params();
 };
 
 #endif

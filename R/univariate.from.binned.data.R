@@ -1,6 +1,7 @@
 univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.it=-1, num.trials=1, eps.try=NULL, num.threads=1, output.if.not.converged=FALSE, filter.reads=TRUE, control=FALSE) {
 
 	## Intercept user input
+	IDcheck <- ID  #trigger error if not defined
 	if (check.positive(eps)!=0) stop("argument 'eps' expects a positive numeric")
 	if (check.integer(max.time)!=0) stop("argument 'max.time' expects an integer")
 	if (check.integer(max.it)!=0) stop("argument 'max.it' expects an integer")
@@ -50,8 +51,8 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 			reads = as.integer(binned.data$reads), # double* O
 			num.bins = as.integer(numbins), # int* T
 			num.states = as.integer(numstates), # int* N
-			size = double(length=numstates), # double* r
-			prob = double(length=numstates), # double* p
+			size = double(length=numstates), # double* size
+			prob = double(length=numstates), # double* prob
 			num.iterations = as.integer(max.it), #  int* maxiter
 			time.sec = as.integer(max.time), # double* maxtime
 			loglik.delta = as.double(eps.try), # double* eps
@@ -61,8 +62,8 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 			loglik = double(length=1), # double* loglik
 			weights = double(length=numstates), # double* weights
 			ini.proc = as.integer(iniproc), # int* iniproc
-			size.initial = double(length=numstates), # double* initial_r
-			prob.initial = double(length=numstates), # double* initial_p
+			size.initial = double(length=numstates), # double* initial_size
+			prob.initial = double(length=numstates), # double* initial_prob
 			A.initial = double(length=numstates*numstates), # double* initial_A
 			proba.initial = double(length=numstates), # double* initial_proba
 			use.initial.params = as.logical(0), # bool* use_initial_params
@@ -106,8 +107,8 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 			reads = as.integer(binned.data$reads), # double* O
 			num.bins = as.integer(numbins), # int* T
 			num.states = as.integer(numstates), # int* N
-			size = double(length=numstates), # double* r
-			prob = double(length=numstates), # double* p
+			size = double(length=numstates), # double* size
+			prob = double(length=numstates), # double* prob
 			num.iterations = as.integer(max.it), #  int* maxiter
 			time.sec = as.integer(max.time), # double* maxtime
 			loglik.delta = as.double(eps), # double* eps
@@ -117,8 +118,8 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 			loglik = double(length=1), # double* loglik
 			weights = double(length=numstates), # double* weights
 			ini.proc = as.integer(iniproc), # int* iniproc
-			size.initial = as.vector(hmm$distributions[,'size']), # double* initial_r
-			prob.initial = as.vector(hmm$distributions[,'prob']), # double* initial_p
+			size.initial = as.vector(hmm$distributions[,'size']), # double* initial_size
+			prob.initial = as.vector(hmm$distributions[,'prob']), # double* initial_prob
 			A.initial = as.vector(hmm$A), # double* initial_A
 			proba.initial = as.vector(hmm$proba), # double* initial_proba
 			use.initial.params = as.logical(1), # bool* use_initial_params
@@ -134,7 +135,6 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 	hmm$coordinates <- binned.data[,coordinate.names]
 	hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
 	colnames(hmm$posteriors) <- paste("P(",state.labels,")", sep="")
-	class(hmm) <- class.chromstar.univariate
 	class(hmm) <- class.chromstar.univariate
 	hmm$states <- get.states(hmm, separate.zeroinflation=TRUE, control=control)
 	hmm$eps <- eps

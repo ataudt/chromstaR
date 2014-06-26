@@ -7,7 +7,7 @@
 // This function takes parameters from R, creates a univariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // ===================================================================================================================================================
 extern "C" {
-void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter, int* maxtime, double* eps, double* posteriors, double* A, double* proba, double* loglik, double* weights, int* iniproc, double* initial_r, double* initial_p, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* read_cutoff)
+void R_univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* maxiter, int* maxtime, double* eps, double* posteriors, double* A, double* proba, double* loglik, double* weights, int* iniproc, double* initial_size, double* initial_prob, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* read_cutoff)
 {
 
 	// Define logging level
@@ -52,11 +52,11 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 
 	// Create the HMM
 	FILE_LOG(logDEBUG1) << "Creating a univariate HMM";
-	ScaleHMM* model = new ScaleHMM(*T, *N);
-	model->set_cutoff(*read_cutoff);
+	ScaleHMM* hmm = new ScaleHMM(*T, *N);
+	hmm->set_cutoff(*read_cutoff);
 	// Initialize the transition probabilities and proba
-	model->initialize_transition_probs(initial_A, *use_initial_params);
-	model->initialize_proba(initial_proba, *use_initial_params);
+	hmm->initialize_transition_probs(initial_A, *use_initial_params);
+	hmm->initialize_proba(initial_proba, *use_initial_params);
     
 	// Calculate mean and variance of data
 	double mean = 0, variance = 0;
@@ -73,15 +73,15 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 	FILE_LOG(logINFO) << "data mean = " << mean << ", data variance = " << variance;		
 	Rprintf("data mean = %g, data variance = %g\n", mean, variance);		
 	
-	// Go through all states of the model and assign the density functions
+	// Go through all states of the hmm and assign the density functions
 	double imean, ivariance;
-	for (int i_state=0; i_state<model->N; i_state++)
+	for (int i_state=0; i_state<*N; i_state++)
 	{
 		if (*use_initial_params) {
-			FILE_LOG(logINFO) << "Using given parameters for r and p";
-			Rprintf("Using given parameters for r and p\n");
-			imean = (1-initial_p[i_state])*initial_r[i_state] / initial_p[i_state];
-			ivariance = imean / initial_p[i_state];
+			FILE_LOG(logINFO) << "Using given parameters for size and prob";
+			Rprintf("Using given parameters for size and prob\n");
+			imean = (1-initial_prob[i_state])*initial_size[i_state] / initial_prob[i_state];
+			ivariance = imean / initial_prob[i_state];
 			FILE_LOG(logDEBUG2) << "imean = " << imean;
 			FILE_LOG(logDEBUG2) << "ivariance = " << ivariance;
 		} else {
@@ -91,13 +91,13 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 				// Simple initialization, seems to give the fastest convergence
 				if (i_state == 1)
 				{
-					FILE_LOG(logDEBUG) << "Initializing r and p for state 1";
+					FILE_LOG(logDEBUG) << "Initializing size and prob for state 1";
 					imean = mean;
 					ivariance = variance;
 				}
 				else if (i_state == 2)
 				{
-					FILE_LOG(logDEBUG) << "Initializing r and p for state 2";
+					FILE_LOG(logDEBUG) << "Initializing size and prob for state 2";
 					imean = mean+1;
 					ivariance = variance;
 				} 
@@ -110,8 +110,8 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 			else if (*iniproc == 2)
 			{
 				// Disturb mean and variance for use as randomized initial parameters
-				FILE_LOG(logINFO) << "Using random initialization for r and p";
-				Rprintf("Using random initialization for r and p\n");
+				FILE_LOG(logINFO) << "Using random initialization for size and prob";
+				Rprintf("Using random initialization for size and prob\n");
 				srand (clock());
 				int rand1, rand2;
 				rand1 = rand();
@@ -144,28 +144,28 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 			}
 
 			// Calculate r and p from mean and variance
-			initial_r[i_state] = pow(imean,2)/(ivariance-imean);
-			initial_p[i_state] = imean/ivariance;
+			initial_size[i_state] = pow(imean,2)/(ivariance-imean);
+			initial_prob[i_state] = imean/ivariance;
 
 		}
 
 		if (i_state >= 1)
 		{
 			FILE_LOG(logDEBUG1) << "Using negative binomial for state " << i_state;
-			NegativeBinomial *d = new NegativeBinomial(O, model->T, initial_r[i_state], initial_p[i_state]); // delete is done inside ~LogHMM()
-			model->densityFunctions.push_back(d);
+			NegativeBinomial *d = new NegativeBinomial(O, *T, initial_size[i_state], initial_prob[i_state]); // delete is done inside ~ScaleHMM()
+			hmm->densityFunctions.push_back(d);
 		}
 		else if (i_state == 0)
 		{
 			FILE_LOG(logDEBUG1) << "Using only zeros for state " << i_state;
-			OnlyZeros *d = new OnlyZeros(O, model->T); // delete is done inside ~LogHMM()
-			model->densityFunctions.push_back(d);
+			ZeroInflation *d = new ZeroInflation(O, *T); // delete is done inside ~ScaleHMM()
+			hmm->densityFunctions.push_back(d);
 		}
 		else
 		{
 			FILE_LOG(logWARNING) << "Density not specified, using default negative binomial for state " << i_state;
-			NegativeBinomial *d = new NegativeBinomial(O, model->T, initial_r[i_state], initial_p[i_state]);
-			model->densityFunctions.push_back(d);
+			NegativeBinomial *d = new NegativeBinomial(O, *T, initial_size[i_state], initial_prob[i_state]);
+			hmm->densityFunctions.push_back(d);
 		}
 	}
 
@@ -176,7 +176,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 	FILE_LOG(logDEBUG1) << "Starting Baum-Welch estimation";
 	try
 	{
-		model->baumWelch(maxiter, maxtime, eps);
+		hmm->baumWelch(maxiter, maxtime, eps);
 	}
 	catch (std::exception& e)
 	{
@@ -188,52 +188,48 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 		
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
 	// Compute the posteriors and save results directly to the R pointer
-// 	double** post = allocDoubleMatrix(model->N, model->T);
-// 	model->get_posteriors(post);
 	FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
 	#pragma omp parallel for
-	for (int iN=0; iN<model->N; iN++)
+	for (int iN=0; iN<*N; iN++)
 	{
-		for (int t=0; t<model->T; t++)
+		for (int t=0; t<*T; t++)
 		{
-// 			posteriors[t + iN * model->T] = post[iN][t];
-			posteriors[t + iN * model->T] = model->get_posterior(iN, t);
+			posteriors[t + iN * (*T)] = hmm->get_posterior(iN, t);
 		}
 	}
-// 	freeDoubleMatrix(post, model->N);
 
 	FILE_LOG(logDEBUG1) << "Return parameters";
 	// also return the estimated transition matrix and the initial probs
-	for (int i=0; i<model->N; i++)
+	for (int i=0; i<*N; i++)
 	{
-		proba[i] = model->get_proba(i);
-		for (int j=0; j<model->N; j++)
+		proba[i] = hmm->get_proba(i);
+		for (int j=0; j<*N; j++)
 		{
-          A[i*model->N + j] = model->A[i][j];
+			A[i * (*N) + j] = hmm->get_A(i,j);
 		}
 	}
 
 	// copy the estimated distribution params
-	for (int i=0; i<model->N; i++)
+	for (int i=0; i<*N; i++)
 	{
-		if (model->densityFunctions[i]->getType() == NB) 
+		if (hmm->densityFunctions[i]->get_name() == NEGATIVE_BINOMIAL) 
 		{
-			NegativeBinomial* d = (NegativeBinomial*)(model->densityFunctions[i]);
-			r[i] = d->getR();
-			p[i] = d->getP();
+			NegativeBinomial* d = (NegativeBinomial*)(hmm->densityFunctions[i]);
+			size[i] = d->get_size();
+			prob[i] = d->get_prob();
 		}
-		else if (model->densityFunctions[i]->getType() == ZI)
+		else if (hmm->densityFunctions[i]->get_name() == ZERO_INFLATION)
 		{
 			// These values for a Negative Binomial define a zero-inflation (delta distribution)
-			r[i] = 0;
-			p[i] = 1;
+			size[i] = 0;
+			prob[i] = 1;
 		}
 	}
-	*loglik = model->logP;
-	model->calc_weights(weights);
+	*loglik = hmm->get_logP();
+	hmm->calc_weights(weights);
 	
-	FILE_LOG(logDEBUG1) << "Deleting the model";
-	delete model;
+	FILE_LOG(logDEBUG1) << "Deleting the hmm";
+	delete hmm;
 }
 } // extern C
 
@@ -241,7 +237,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* r, double* p, int* maxiter
 // This function takes parameters from R, creates a multivariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // =====================================================================================================================================================
 extern "C" {
-void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* r, double* p, double* w, double* cor_matrix_inv, double* det, int* maxiter, int* maxtime, double* eps, double* posteriors, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error)
+void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* size, double* prob, double* w, double* cor_matrix_inv, double* det, int* maxiter, int* maxtime, double* eps, double* posteriors, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error)
 {
 
 	// Define logging level {"ERROR", "WARNING", "INFO", "ITERATION", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4"}
@@ -298,30 +294,29 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 
 	// Create the HMM
 	FILE_LOG(logDEBUG1) << "Creating the multivariate HMM";
-// 	LogHMM* model = new LogHMM(*T, *N, *Nmod);
-	ScaleHMM* model = new ScaleHMM(*T, *N, *Nmod);
+	ScaleHMM* hmm = new ScaleHMM(*T, *N, *Nmod);
 	// Initialize the transition probabilities and proba
-	model->initialize_transition_probs(initial_A, *use_initial_params);
-	model->initialize_proba(initial_proba, *use_initial_params);
+	hmm->initialize_transition_probs(initial_A, *use_initial_params);
+	hmm->initialize_proba(initial_proba, *use_initial_params);
 	
 	// Print logproba and A
 // 	for (int iN=0; iN<*N; iN++)
 // 	{
-// 		FILE_LOG(logDEBUG) << "proba["<<iN<<"] = " <<exp(model->logproba[iN]);
+// 		FILE_LOG(logDEBUG) << "proba["<<iN<<"] = " <<exp(hmm->logproba[iN]);
 // 		for (int jN=0; jN<*N; jN++)
 // 		{
-// 			FILE_LOG(logDEBUG) << "A["<<iN<<"]["<<jN<<"] = " << model->A[iN][jN];
+// 			FILE_LOG(logDEBUG) << "A["<<iN<<"]["<<jN<<"] = " << hmm->A[iN][jN];
 // 		}
 // 	}
 
 	// Prepare the binary_states (univariate) vector: binary_states[N][Nmod], e.g., binary_states[iN][imod] tells me at state states[iN], modification imod is non-enriched (0) or enriched (1)
 	FILE_LOG(logDEBUG1) << "Preparing the binary_states vector";
-	bool **binary_states = allocBoolMatrix(model->N, model->Nmod);
-	for(int iN=0; iN < model->N; iN++) //for each comb state considered
+	bool **binary_states = allocBoolMatrix(*N, *Nmod);
+	for(int iN=0; iN < *N; iN++) //for each comb state considered
 	{
-		for(int imod=0; imod < model->Nmod; imod++) //for each modification of this comb state
+		for(int imod=0; imod < *Nmod; imod++) //for each modification of this comb state
 		{
-			binary_states[iN][imod] = states[iN]&(int)pow(2,model->Nmod-imod-1);//if =0->hidden state states[iN] has modification imod non enriched; if !=0->enriched
+			binary_states[iN][imod] = states[iN]&(int)pow(2,*Nmod-imod-1);//if =0->hidden state states[iN] has modification imod non enriched; if !=0->enriched
 			if (binary_states[iN][imod] != 0 )
 				binary_states[iN][imod] = 1;
 		}
@@ -329,33 +324,33 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 
 	/* initialize the distributions */
 	FILE_LOG(logDEBUG1) << "Initializing the distributions";
-	for (int iN=0; iN<model->N; iN++) //for each combinatorial state
+	for (int iN=0; iN<*N; iN++) //for each combinatorial state
 	{
 		std::vector <Density*> tempMarginals;            
-		for (int imod=0; imod < model->Nmod; imod++) //for each modification
+		for (int imod=0; imod < *Nmod; imod++) //for each modification
 		{
 			Density *d;
 			if (binary_states[iN][imod]) //construct the marginal density function for modification imod being enriched
 			{
-				d = new NegativeBinomial(multiO[imod], model->T, r[2*imod+1], p[2*imod+1]); // delete is done inside ~MVCopulaApproximation()
+				d = new NegativeBinomial(multiO[imod], *T, size[2*imod+1], prob[2*imod+1]); // delete is done inside ~MVCopulaApproximation()
 			}
 			else //construct the density function for modification imod being non-enriched
 			{
-				d = new ZiNB(multiO[imod], model->T, r[2*imod], p[2*imod], w[imod]); // delete is done inside ~MVCopulaApproximation()
+				d = new ZiNB(multiO[imod], *T, size[2*imod], prob[2*imod], w[imod]); // delete is done inside ~MVCopulaApproximation()
 			}
 			tempMarginals.push_back(d);
 		}
 		//MVCopulaApproximation *tempMVdens = new MVCopulaApproximation(O, tempMarginals, &(cor_matrix_inv[iN*Nmod*Nmod]), det[iN]);
 		FILE_LOG(logDEBUG1) << "Calling MVCopulaApproximation for state " << iN;
-		MVCopulaApproximation *tempMVdens = new MVCopulaApproximation(multiO, model->T, tempMarginals, &(cor_matrix_inv[iN*model->Nmod*model->Nmod]), det[iN]); // delete is done inside ~LogHMM()
-		model->densityFunctions.push_back(tempMVdens);
+		MVCopulaApproximation *tempMVdens = new MVCopulaApproximation(multiO, *T, tempMarginals, &(cor_matrix_inv[iN**Nmod**Nmod]), det[iN]); // delete is done inside ~ScaleHMM()
+		hmm->densityFunctions.push_back(tempMVdens);
 	}
 	
 	// Estimate the parameters
 	FILE_LOG(logDEBUG1) << "Starting Baum-Welch estimation";
 	try
 	{
-		model->baumWelch(maxiter, maxtime, eps);
+		hmm->baumWelch(maxiter, maxtime, eps);
 	}
 	catch (std::exception& e)
 	{
@@ -367,33 +362,29 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
 	
 	// Compute the posteriors and save results directly to the R pointer
-// 	double** post = allocDoubleMatrix(model->N, model->T);
-// 	model->get_posteriors(post);
 	FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
-	for (int iN=0; iN<model->N; iN++)
+	for (int iN=0; iN<*N; iN++)
 	{
-		for (int t=0; t<model->T; t++)
+		for (int t=0; t<*T; t++)
 		{
-// 			posteriors[t + iN * model->T] = post[iN][t];
-			posteriors[t + iN * model->T] = model->get_posterior(iN, t);
+			posteriors[t + iN * (*T)] = hmm->get_posterior(iN, t);
 		}
 	}
-// 	freeDoubleMatrix(post, model->N);
 	
 	FILE_LOG(logDEBUG1) << "Return parameters";
 	// also return the estimated transition matrix and the initial probs
-	for (int i=0; i<model->N; i++)
+	for (int i=0; i<*N; i++)
 	{
-		proba[i] = model->get_proba(i);
-		for (int j=0; j<model->N; j++)
+		proba[i] = hmm->get_proba(i);
+		for (int j=0; j<*N; j++)
 		{
-				A[i*model->N + j] = model->A[i][j];
+				A[i * (*N) + j] = hmm->get_A(i,j);
 		}
 	}
-	*loglik = model->logP;
+	*loglik = hmm->get_logP();
 
-	FILE_LOG(logDEBUG1) << "Deleting the model";
-	delete model;
+	FILE_LOG(logDEBUG1) << "Deleting the hmm";
+	delete hmm;
 	freeIntMatrix(multiO, *Nmod);
 	freeBoolMatrix(binary_states, *N);
 }
@@ -447,31 +438,30 @@ void R_multivariate_hmm_productBernoulli(double* O, int* T, int* N, int *Nmod, i
 
 	// Create the HMM
 	FILE_LOG(logDEBUG1) << "Creating the multivariate HMM";
-// 	LogHMM* model = new LogHMM(*T, *N, *Nmod);
-	ScaleHMM* model = new ScaleHMM(*T, *N, *Nmod);
+	ScaleHMM* hmm = new ScaleHMM(*T, *N, *Nmod);
 
 	// Initialize the transition probabilities and proba
-	model->initialize_transition_probs(initial_A, *use_initial_params);
-	model->initialize_proba(initial_proba, *use_initial_params);
+	hmm->initialize_transition_probs(initial_A, *use_initial_params);
+	hmm->initialize_proba(initial_proba, *use_initial_params);
 	
 	// Print logproba and A
 // 	for (int iN=0; iN<*N; iN++)
 // 	{
-// 		FILE_LOG(logINFO) << "proba["<<iN<<"] = " <<exp(model->logproba[iN]);
+// 		FILE_LOG(logINFO) << "proba["<<iN<<"] = " <<exp(hmm->logproba[iN]);
 // 		for (int jN=0; jN<*N; jN++)
 // 		{
-// 			FILE_LOG(logINFO) << "A["<<iN<<"]["<<jN<<"] = " << model->A[iN][jN];
+// 			FILE_LOG(logINFO) << "A["<<iN<<"]["<<jN<<"] = " << hmm->A[iN][jN];
 // 		}
 // 	}
 
 	// Prepare the binary_states (univariate) vector: binary_states[N][Nmod], e.g., binary_states[iN][imod] tells me at state states[iN], modification imod is non-enriched (0) or enriched (1)
 	FILE_LOG(logDEBUG1) << "Preparing the binary_states vector";
-	bool **binary_states = allocBoolMatrix(model->N, model->Nmod);
-	for(int iN=0; iN < model->N; iN++) //for each comb state considered
+	bool **binary_states = allocBoolMatrix(*N, *Nmod);
+	for(int iN=0; iN < *N; iN++) //for each comb state considered
 	{
-		for(int imod=0; imod < model->Nmod; imod++) //for each modification of this comb state
+		for(int imod=0; imod < *Nmod; imod++) //for each modification of this comb state
 		{
-			binary_states[iN][imod] = states[iN]&(int)pow(2,model->Nmod-imod-1);//if =0->hidden state states[iN] has modification imod non enriched; if !=0->enriched
+			binary_states[iN][imod] = states[iN]&(int)pow(2,*Nmod-imod-1);//if =0->hidden state states[iN] has modification imod non enriched; if !=0->enriched
 			if (binary_states[iN][imod] != 0 )
 				binary_states[iN][imod] = 1;
 		}
@@ -479,18 +469,18 @@ void R_multivariate_hmm_productBernoulli(double* O, int* T, int* N, int *Nmod, i
 
 	/* initialize the distributions */
 	FILE_LOG(logDEBUG1) << "Initializing the distributions";
-	for (int iN=0; iN<model->N; iN++) //for each combinatorial state
+	for (int iN=0; iN<*N; iN++) //for each combinatorial state
 	{
 		FILE_LOG(logDEBUG1) << "Calling BernoulliProduct";
-		BernoulliProduct *tempBP = new BernoulliProduct(multiO, binary_states[iN], *T, *Nmod); // delete is done inside ~LogHMM()
-		model->densityFunctions.push_back(tempBP);
+		BernoulliProduct *tempBP = new BernoulliProduct(multiO, binary_states[iN], *T, *Nmod); // delete is done inside ~ScaleHMM()
+		hmm->densityFunctions.push_back(tempBP);
 	}
 
 	// Estimate the parameters
 	FILE_LOG(logDEBUG1) << "Starting Baum-Welch estimation";
 	try
 	{
-		model->baumWelch(maxiter, maxtime, eps);
+		hmm->baumWelch(maxiter, maxtime, eps);
 	}
 	catch (std::exception& e)
 	{
@@ -502,33 +492,29 @@ void R_multivariate_hmm_productBernoulli(double* O, int* T, int* N, int *Nmod, i
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
 	
 	// Compute the posteriors and save results directly to the R pointer
-// 	double** post = allocDoubleMatrix(model->N, model->T);
-// 	model->get_posteriors(post);
 	FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
-	for (int iN=0; iN<model->N; iN++)
+	for (int iN=0; iN<*N; iN++)
 	{
-		for (int t=0; t<model->T; t++)
+		for (int t=0; t<*T; t++)
 		{
-// 			posteriors[t + iN * model->T] = post[iN][t];
-			posteriors[t + iN * model->T] = model->get_posterior(iN, t);
+			posteriors[t + iN * (*T)] = hmm->get_posterior(iN, t);
 		}
 	}
-// 	freeDoubleMatrix(post, model->N);
 	
 	FILE_LOG(logDEBUG1) << "Return parameters";
 	// also return the estimated transition matrix and the initial probs
-	for (int i=0; i<model->N; i++)
+	for (int i=0; i<*N; i++)
 	{
-		proba[i] = model->get_proba(i);
-		for (int j=0; j<model->N; j++)
+		proba[i] = hmm->get_proba(i);
+		for (int j=0; j<*N; j++)
 		{
-				A[i*model->N + j] = model->A[i][j];
+				A[i * (*N) + j] = hmm->get_A(i,j);
 		}
 	}
-	*loglik = model->logP;
+	*loglik = hmm->get_logP();
 
-	FILE_LOG(logDEBUG1) << "Deleting the model";
-	delete model;
+	FILE_LOG(logDEBUG1) << "Deleting the hmm";
+	delete hmm;
 	freeDoubleMatrix(multiO, *Nmod);
 	freeBoolMatrix(binary_states, *N);
 }

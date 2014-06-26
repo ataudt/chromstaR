@@ -9,9 +9,9 @@ class.chromstar.multivariate <- "chromstar.multivariate.hmm"
 gcolors <- c("zero-inflation"="gray30","unmodified"="gray48","modified"="orangered3", "total"="black")
  
 # ============================================================================
-# Functions for a Negative Binomial to transform (mean,variance)<->(r,prob)
+# Functions for a Negative Binomial to transform (mean,variance)<->(size,prob)
 # ============================================================================
-fr <- function(mean, variance) {
+fsize <- function(mean, variance) {
 	return(mean^2 / (variance - mean))
 }
 
@@ -19,10 +19,10 @@ fprob <- function(mean, variance) {
 	return(mean/variance)
 }
 
-fmean <- function(r, prob) {
-	return(r/prob - r)
+fmean <- function(size, prob) {
+	return(size/prob - size)
 }
 
-fvariance <- function(r, prob) {
-	return( (r - prob*r) / prob^2 )
+fvariance <- function(size, prob) {
+	return( (size - prob*size) / prob^2 )
 }

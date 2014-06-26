@@ -27,7 +27,7 @@ univariate2bed <- function(uni.hmm.list, file="view_me_in_genome_browser", thres
 
 		# Collapse the calls
 		if (separate.zeroinflation) {
-			calls <- cbind(uni.hmm$coordinates, name=uni.hmm$states.with.zeroinflation)
+			calls <- cbind(uni.hmm$coordinates, name=uni.hmm$states)
 			collapsed.calls <- collapse.bins(calls, column2collapseBy=4)
 		} else {
 			calls <- cbind(uni.hmm$coordinates, name=uni.hmm$states)

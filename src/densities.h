@@ -1,140 +1,166 @@
 #include <Rmath.h> // digamma() and qnorm()
 #include <gsl/gsl_sf_hyperg.h> //needed for the hypergeometric function
 #include <vector> // storing density functions in MVCopula
-// using std::vector;
 #include "utility.h" // FILE_LOG(), intMax(), allocDoubleMatrix()
 
 #ifndef DENSITIES_H
 #define DENSITIES_H
 
 enum whichvariate {UNIVARIATE, MULTIVARIATE};
-enum DensityName {ZI, NB, ZINB, Other};
+enum DensityName {ZERO_INFLATION, NEGATIVE_BINOMIAL, ZERO_INFLATED_NEGATIVE_BINOMIAL, OTHER};
 
 class Density {
 	public:
+		// Constructor and Destructor
 		virtual ~Density() {};
+		// Methods
 		virtual void calc_logdensities(double* logdensity) {};
 		virtual void calc_densities(double* density) {};
 		virtual void calc_logCDFs(double* logCDF) {};
 		virtual void calc_CDFs(double* CDF) {};
 		virtual void update(double* weight) {}; 
 		virtual void copy(Density* other) {};
-		virtual DensityName getType() { return(Other); };
-		virtual double getMean() { return(0); };
-		virtual double getVariance() { return(0); };
 		virtual double getLogDensityAt(int x) { return(0); };
+		// Getter and Setter
+		virtual DensityName get_name() { return(OTHER); };
+		virtual double get_mean() { return(0); };
+		virtual double get_variance() { return(0); };
 
 };  
 
 
-// Maria's univariate densities
 class ZiNB : public Density {
 	public:
+		// Constructor and Destructor
 		ZiNB();
-		ZiNB(int* observations, int T, double r, double p, double w);
+		ZiNB(int* observations, int T, double size, double prob, double w);
 		~ZiNB();
+	
+		// Methods
 		void calc_logdensities(double* logdensity);
 		void calc_densities(double* logdensity);
 		void calc_logCDFs(double* logCDF);
 		void calc_CDFs(double* CDF);
-		double getMean();
-		double getVariance();
-		double logLikelihood();
-		DensityName getType();
-		void setR (double newR);
-		double getR();
-		void setP (double newP);
-		double getP();
-		void setW (double newW);
-		double getW();
 		void copy(Density* other);
-		double p;
-		double r;
-		double w;
 		double getLogDensityAt(int x);
+	
+		// Getter and Setter
+		double get_mean();
+		double get_variance();
+		DensityName get_name();
+		double get_size();
+		double get_prob();
+		double get_w();
+
 	private:
-		int* O; // observations
-		int T;//size of observations
-		double* weight; // temp storage for weights in update
-		int max_O;
-		double* lxfactorials;	//precomputed factorials
+		// Member variables
+		double size; ///< parameter of the distribution
+		double prob; ///< parameter of the distribution
+		double w; ///< parameter of the distribution
+		int* obs; ///< vector [T] of observations
+		int T; ///< length of observation vector
+		double* weight; ///< temporary storage for weights in update()
+		int max_obs; ///< maximum value in *obs
+		double* lxfactorials; ///< vector [max_obs] of precomputed factorials (x!)
 };
 
 class NegativeBinomial : public Density {
 	public:
+		// Constructor and Destructor
 		NegativeBinomial();
-		NegativeBinomial(int* observations, int T, double r, double p);
+		NegativeBinomial(int* observations, int T, double size, double prob);
 		~NegativeBinomial();
+
+		// Methods
 		void calc_logdensities(double* logdensity);
 		void calc_densities(double* density);
 		void calc_logCDFs(double* logCDF);
 		void calc_CDFs(double* CDF);
 		void update(double* weight);
-		double getMean();
-		double getVariance();
-		DensityName getType();
-		void setR (double newR);
-		double getR();
-		void setP (double newP);
-		double getP();
 		void copy(Density* other);
 		double getLogDensityAt(int x);
+
+		// Getter and Setter
+		double get_mean();
+		double get_variance();
+		DensityName get_name();
+		double get_size();
+		double get_prob();
+
 	private:
-		int* O; // observations
-		int T;
-		double p;
-		double r;
-		int max_O;	// maximum number of reads
-		double* lxfactorials;	//precomputed factorials
-// 		vector<double>* cdf;
+		// Member variables
+		double size; ///< parameter of the distribution
+		double prob; ///< parameter of the distribution
+		int* obs; ///< vector [T] of observations
+		int T; ///< length of observation vector
+		int max_obs; ///< maximum value in *obs
+		double* lxfactorials; ///< vector [max_obs] of precomputed factorials (x!)
 };
 
 
-
-class OnlyZeros : public Density {
+class ZeroInflation : public Density {
 	public:
-		OnlyZeros();
-		OnlyZeros(int* observations, int T);
-		~OnlyZeros();
+		// Constructor and Destructor
+		ZeroInflation();
+		ZeroInflation(int* observations, int T);
+		~ZeroInflation();
+
+		// Methods
 		void calc_logdensities(double* logdensity);
 		void calc_densities(double* density);
 		void update(double* weight);
-		double getMean();
-		double getVariance();
-		DensityName getType();
 		void copy(Density* other);
 		double getLogDensityAt(int x);
+
+		// Getters and Setters
+		double get_mean();
+		double get_variance();
+		DensityName get_name();
+
 	private:
-		int* O; // observations
-		int T;
+		// Member variables
+		int* obs; ///< vector [T] of observations
+		int T; ///< length of observation vector
 };
 
 
 class MVCopulaApproximation : public Density {
 	public:
+		// Constructor and Destructor
 		MVCopulaApproximation(int** multiobservations, int T, std::vector<Density*> marginals, double* cor_matrix_inv, double cor_matrix_determinant);
 		~MVCopulaApproximation();
+	
+		// Methods
 		void calc_logdensities(double* logdensity);
 		void calc_densities(double* density);
-		DensityName getType();
+
+		// Getters and Setters
+		DensityName get_name();
+
 	private:
-		int** multiO;
-		int T;
-		std::vector<Density*> marginals;
-		double* cor_matrix_inv;
-		double cor_matrix_determinant;
-		int Nmod;
+		// Member variables
+		int Nmod; ///< number of modifications
+		int** multi_obs; ///< matrix [Nmod x T] of observations
+		int T; ///< length of observation vector
+		std::vector<Density*> marginals; ///< vector [Nmod] of marginal distributions
+		double* cor_matrix_inv; ///< vector with elements of the inverse of the correlation matrix
+		double cor_matrix_determinant; ///< determinant of the correlation matrix
 };
 
 
 class BernoulliProduct : public Density {
 	public:
+		// Constructor and Destructor
 		BernoulliProduct(double** multiobservations, bool* binary_states, int T, int Nmod);
 		~BernoulliProduct();
+		// Methods
 		void calc_logdensities(double* logdens);
-		DensityName getType();
+		// Getters and Setters
+		DensityName get_name();
+
 	private:
-		double** multiO;
+		// Member variables
+		double** multi_obs;
 		bool* binary_states;
 		int T;
 		int Nmod;

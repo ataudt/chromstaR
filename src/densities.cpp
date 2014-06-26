@@ -1,30 +1,31 @@
 #include "densities.h"
 
-// ------------------------------------------------------------
-// Zero inflated negative binomial
-// ------------------------------------------------------------
+// ============================================================
+// Zero-inflated Negative Binomial
+// ============================================================
 
+// Constructor and Destructor ---------------------------------
 ZiNB::ZiNB()
 {
 	this->lxfactorials = NULL;
 }
 
-ZiNB::ZiNB(int* observations, int T, double r, double p, double w)
+ZiNB::ZiNB(int* observations, int T, double size, double prob, double w)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	this->O = observations;
+	this->obs = observations;
 	this->T = T;
-	this->p = p;
-	this->r = r;
+	this->prob = prob;
+	this->size = size;
 	this->w = w;
 	this->lxfactorials = NULL;
-	if (this->O != NULL)
+	if (this->obs != NULL)
 	{
-		this->max_O = intMax(observations, T);
-		this->lxfactorials = (double*) calloc(max_O+1, sizeof(double));
+		this->max_obs = intMax(observations, T);
+		this->lxfactorials = (double*) calloc(max_obs+1, sizeof(double));
 		this->lxfactorials[0] = 0.0;	// Not necessary, already 0 because of calloc
 		this->lxfactorials[1] = 0.0;
-		for (int j=2; j<=max_O; j++)
+		for (int j=2; j<=max_obs; j++)
 		{
 			this->lxfactorials[j] = this->lxfactorials[j-1] + log(j);
 		}
@@ -34,38 +35,39 @@ ZiNB::ZiNB(int* observations, int T, double r, double p, double w)
 ZiNB::~ZiNB()
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	if (this->O != NULL)
+	if (this->obs != NULL)
 	{
 		free(this->lxfactorials);
 	}
 }
 
+// Methods ----------------------------------------------------
 void ZiNB::calc_logdensities(double* logdens)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	double logp = log(this->p);
-	double log1minusp = log(1-this->p);
+	double logp = log(this->prob);
+	double log1minusp = log(1-this->prob);
 	double lGammaR,lGammaRplusX,lxfactorial;
-	lGammaR=lgamma(this->r);
+	lGammaR=lgamma(this->size);
 	// Select strategy for computing gammas
-	if (this->max_O <= this->T)
+	if (this->max_obs <= this->T)
 	{
-		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every O[t], because max(O)<=T";
-		double lGammaRplusX[this->max_O+1];
-		for (int j=0; j<=this->max_O; j++)
+		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+		double lGammaRplusX[this->max_obs+1];
+		for (int j=0; j<=this->max_obs; j++)
 		{
-			lGammaRplusX[j] = lgamma(this->r + j);
+			lGammaRplusX[j] = lgamma(this->size + j);
 		}
 		for (int t=0; t<this->T; t++)
 		{
-			lxfactorial = this->lxfactorials[(int) this->O[t]];
-			if (O[t] == 0)
+			lxfactorial = this->lxfactorials[(int) this->obs[t]];
+			if (obs[t] == 0)
 			{
-				logdens[t] = log( this->w + (1-this->w) * exp( lGammaRplusX[(int) this->O[t]] - lGammaR - lxfactorial + this->r * logp + this->O[t] * log1minusp ) );
+				logdens[t] = log( this->w + (1-this->w) * exp( lGammaRplusX[(int) this->obs[t]] - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp ) );
 			}
 			else
 			{
-				logdens[t] = log(1-this->w) + lGammaRplusX[(int) this->O[t]] - lGammaR - lxfactorial + this->r * logp + this->O[t] * log1minusp;
+				logdens[t] = log(1-this->w) + lGammaRplusX[(int) this->obs[t]] - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp;
 			}
 			if (isnan(logdens[t]))
 			{
@@ -80,15 +82,15 @@ void ZiNB::calc_logdensities(double* logdens)
 		FILE_LOG(logDEBUG2) << "Computing gammas in " << __func__ << " for every t, because max(O)>T";
 		for (int t=0; t<this->T; t++)
 		{
-			lGammaRplusX = lgamma(this->r + this->O[t]);
-			lxfactorial = this->lxfactorials[(int) this->O[t]];
-			if (O[t] == 0)
+			lGammaRplusX = lgamma(this->size + this->obs[t]);
+			lxfactorial = this->lxfactorials[(int) this->obs[t]];
+			if (obs[t] == 0)
 			{
-				logdens[t] = log( this->w + (1-this->w) * exp( lGammaRplusX - lGammaR - lxfactorial + this->r * logp + this->O[t] * log1minusp ) );
+				logdens[t] = log( this->w + (1-this->w) * exp( lGammaRplusX - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp ) );
 			}
 			else
 			{
-				logdens[t] = log(1-this->w) + lGammaRplusX - lGammaR - lxfactorial + this->r * logp + this->O[t] * log1minusp;
+				logdens[t] = log(1-this->w) + lGammaRplusX - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp;
 			}
 			if (isnan(logdens[t]))
 			{
@@ -103,29 +105,29 @@ void ZiNB::calc_logdensities(double* logdens)
 void ZiNB::calc_densities(double* dens)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	double logp = log(this->p);
-	double log1minusp = log(1-this->p);
+	double logp = log(this->prob);
+	double log1minusp = log(1-this->prob);
 	double lGammaR,lGammaRplusX,lxfactorial;
-	lGammaR=lgamma(this->r);
+	lGammaR=lgamma(this->size);
 	// Select strategy for computing gammas
-	if (this->max_O <= this->T)
+	if (this->max_obs <= this->T)
 	{
-		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every O[t], because max(O)<=T";
-		double lGammaRplusX[this->max_O+1];
-		for (int j=0; j<=this->max_O; j++)
+		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+		double lGammaRplusX[this->max_obs+1];
+		for (int j=0; j<=this->max_obs; j++)
 		{
-			lGammaRplusX[j] = lgamma(this->r + j);
+			lGammaRplusX[j] = lgamma(this->size + j);
 		}
 		for (int t=0; t<this->T; t++)
 		{
-			lxfactorial = this->lxfactorials[(int) this->O[t]];
-			if (O[t] == 0)
+			lxfactorial = this->lxfactorials[(int) this->obs[t]];
+			if (obs[t] == 0)
 			{
-				dens[t] = this->w + (1-this->w) * exp( lGammaRplusX[(int) this->O[t]] - lGammaR - lxfactorial + this->r * logp + this->O[t] * log1minusp );
+				dens[t] = this->w + (1-this->w) * exp( lGammaRplusX[(int) this->obs[t]] - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp );
 			}
 			else
 			{
-				dens[t] = (1-this->w) * exp( lGammaRplusX[(int) this->O[t]] - lGammaR - lxfactorial + this->r * logp + this->O[t] * log1minusp );
+				dens[t] = (1-this->w) * exp( lGammaRplusX[(int) this->obs[t]] - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp );
 			}
 			if (isnan(dens[t]))
 			{
@@ -140,15 +142,15 @@ void ZiNB::calc_densities(double* dens)
 		FILE_LOG(logDEBUG2) << "Computing gammas in " << __func__ << " for every t, because max(O)>T";
 		for (int t=0; t<this->T; t++)
 		{
-			lGammaRplusX = lgamma(this->r + this->O[t]);
-			lxfactorial = this->lxfactorials[(int) this->O[t]];
-			if (O[t] == 0)
+			lGammaRplusX = lgamma(this->size + this->obs[t]);
+			lxfactorial = this->lxfactorials[(int) this->obs[t]];
+			if (obs[t] == 0)
 			{
-				dens[t] = this->w + (1-this->w) * exp( lGammaRplusX - lGammaR - lxfactorial + this->r * logp + this->O[t] * log1minusp );
+				dens[t] = this->w + (1-this->w) * exp( lGammaRplusX - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp );
 			}
 			else
 			{
-				dens[t] = (1-this->w) * exp( lGammaRplusX - lGammaR - lxfactorial + this->r * logp + this->O[t] * log1minusp );
+				dens[t] = (1-this->w) * exp( lGammaRplusX - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp );
 			}
 			if (isnan(dens[t]))
 			{
@@ -163,32 +165,32 @@ void ZiNB::calc_densities(double* dens)
 void ZiNB::calc_CDFs(double* CDF)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	double log1minusp = log(1-this->p);
-	double lGammaR = lgamma(this->r);
-	double lppowerr = this->r * log(this->p);
+	double log1minusp = log(1-this->prob);
+	double lGammaR = lgamma(this->size);
+	double lppowerr = this->size * log(this->prob);
 	// No selection strategy here, because we must precompute CDF to deal with 1s by shifting them
 // 	// Select strategy for computing gammas
-// 	if (this->max_O <= this->T)
+// 	if (this->max_obs <= this->T)
 //	{
-		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every O[t], because max(O)<=T";
-		double lGamma1plusRplusX[this->max_O+1], lGamma2plusX[this->max_O+1], lHyper[this->max_O+1], lppowert[this->max_O+1];
-		double precomputed_CDF[this->max_O+1];
-		for (int j=0; j<=this->max_O; j++)
+		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+		double lGamma1plusRplusX[this->max_obs+1], lGamma2plusX[this->max_obs+1], lHyper[this->max_obs+1], lppowert[this->max_obs+1];
+		double precomputed_CDF[this->max_obs+1];
+		for (int j=0; j<=this->max_obs; j++)
 		{
-			lGamma1plusRplusX[j] = lgamma(1 + this->r + j);
+			lGamma1plusRplusX[j] = lgamma(1 + this->size + j);
 			lGamma2plusX[j] = lgamma(2 + j);
-			lHyper[j] = log(gsl_sf_hyperg_2F1(1, 1 + this->r + j, 2 + j, 1-this->p));
+			lHyper[j] = log(gsl_sf_hyperg_2F1(1, 1 + this->size + j, 2 + j, 1-this->prob));
 			lppowert[j] = (1+j) * log1minusp;
 			precomputed_CDF[j] = 1 - exp( log(1-this->w) + lppowerr + lppowert[j] + lGamma1plusRplusX[j] + lHyper[j] - lGammaR - lGamma2plusX[j] );
 			if (precomputed_CDF[j] == 1)
 			{
-				FILE_LOG(logDEBUG4) << "CDF = 1 for O[t] = "<<j<< ", shifting to value of O[t] = "<<j-1;
+				FILE_LOG(logDEBUG4) << "CDF = 1 for obs[t] = "<<j<< ", shifting to value of obs[t] = "<<j-1;
 				precomputed_CDF[j] = precomputed_CDF[j-1]; 
 			}
 		}
 		for (int t=0; t<this->T; t++)
 		{
-			CDF[t] = precomputed_CDF[(int)O[t]];
+			CDF[t] = precomputed_CDF[(int)obs[t]];
 			if (isnan(CDF[t]))
 			{
 				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
@@ -203,10 +205,10 @@ void ZiNB::calc_CDFs(double* CDF)
 // 		double lGamma1plusRplusX, lGamma2plusX, lHyper, lppowert;
 // 		for (int t=0; t<this->T; t++)
 //		{
-// 			lGamma1plusRplusX = lgamma(1 + this->r + this->O[t]);
-// 			lGamma2plusX = lgamma(2 + this->O[t]);
-// 			lHyper = log(gsl_sf_hyperg_2F1(1, 1 + this->r + this->O[t], 2 + this->O[t], 1-this->p));
-// 			lppowert = (1+this->O[t]) * log1minusp;
+// 			lGamma1plusRplusX = lgamma(1 + this->size + this->obs[t]);
+// 			lGamma2plusX = lgamma(2 + this->obs[t]);
+// 			lHyper = log(gsl_sf_hyperg_2F1(1, 1 + this->size + this->obs[t], 2 + this->obs[t], 1-this->prob));
+// 			lppowert = (1+this->obs[t]) * log1minusp;
 // 			CDF[t] = 1 - exp( log(1-this->w) + lppowerr + lppowert + lGamma1plusRplusX + lHyper - lGammaR - lGamma2plusX ); //TODO: Check formula for log
 // 			if(CDF[t] == 0)
 // 			{
@@ -226,25 +228,25 @@ void ZiNB::calc_CDFs(double* CDF)
 void ZiNB::calc_logCDFs(double* logCDF)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	double log1minusp = log(1-this->p);
+	double log1minusp = log(1-this->prob);
 	double lGamma1plusRplusX, lHyper, lGammaR, lGamma2plusX, lppowert, lppowerr;
-	lGammaR = lgamma(this->r);
-	lppowerr = this->r * log(this->p);
+	lGammaR = lgamma(this->size);
+	lppowerr = this->size * log(this->prob);
 	// Select strategy for computing gammas
-	if (this->max_O <= this->T)
+	if (this->max_obs <= this->T)
 	{
-		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every O[t], because max(O)<=T";
-		double lGamma1plusRplusX[this->max_O+1], lGamma2plusX[this->max_O+1], lHyper[this->max_O+1], lppowert[this->max_O+1];
-		for (int j=0; j<=this->max_O; j++)
+		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+		double lGamma1plusRplusX[this->max_obs+1], lGamma2plusX[this->max_obs+1], lHyper[this->max_obs+1], lppowert[this->max_obs+1];
+		for (int j=0; j<=this->max_obs; j++)
 		{
-			lGamma1plusRplusX[j] = lgamma(1 + this->r + j);
+			lGamma1plusRplusX[j] = lgamma(1 + this->size + j);
 			lGamma2plusX[j] = lgamma(2 + j);
-			lHyper[j] = log(gsl_sf_hyperg_2F1(1, 1 + this->r + j, 2 + j, 1-this->p));
+			lHyper[j] = log(gsl_sf_hyperg_2F1(1, 1 + this->size + j, 2 + j, 1-this->prob));
 			lppowert[j] = (1+j) * log1minusp;
 		}
 		for (int t=0; t<this->T; t++)
 		{
-			logCDF[t] = log(1 - exp( log(1-this->w) + lppowerr + lppowert[(int)O[t]] + lGamma1plusRplusX[(int)O[t]] + lHyper[(int)O[t]] - lGammaR - lGamma2plusX[(int)O[t]] ));
+			logCDF[t] = log(1 - exp( log(1-this->w) + lppowerr + lppowert[(int)obs[t]] + lGamma1plusRplusX[(int)obs[t]] + lHyper[(int)obs[t]] - lGammaR - lGamma2plusX[(int)obs[t]] ));
 			if(logCDF[t] == 0)
 			{
 				FILE_LOG(logWARNING) << "logCDF["<<t<<"] = 0";
@@ -263,10 +265,10 @@ void ZiNB::calc_logCDFs(double* logCDF)
 		FILE_LOG(logDEBUG2) << "Computing gammas in " << __func__ << " for every t, because max(O)>T";
 		for (int t=0; t<this->T; t++)
 		{
-			lGamma1plusRplusX = lgamma(1 + this->r + this->O[t]);
-			lGamma2plusX = lgamma(2 + this->O[t]);
-			lHyper = log(gsl_sf_hyperg_2F1(1, 1 + this->r + this->O[t], 2 + this->O[t], 1-this->p));
-			lppowert = (1+this->O[t]) * log1minusp;
+			lGamma1plusRplusX = lgamma(1 + this->size + this->obs[t]);
+			lGamma2plusX = lgamma(2 + this->obs[t]);
+			lHyper = log(gsl_sf_hyperg_2F1(1, 1 + this->size + this->obs[t], 2 + this->obs[t], 1-this->prob));
+			lppowert = (1+this->obs[t]) * log1minusp;
 			logCDF[t] = log(1 - exp( log(1-this->w) + lppowerr + lppowert + lGamma1plusRplusX + lHyper - lGammaR - lGamma2plusX )); //TODO: Check formula for log
 			if(logCDF[t] == 0)
 			{
@@ -283,100 +285,46 @@ void ZiNB::calc_logCDFs(double* logCDF)
 	}
 }
 
-double ZiNB::getMean()
-{
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	return (1-this->w)*this->r*(1-this->p)/this->p;
-}
-
-double ZiNB::getVariance()
-{
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	return (1-this->w)*this->r*(1-this->p)/this->p/this->p; //TODO: Is this correct?
-}
-
-DensityName ZiNB::getType()
-{
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	return(ZINB);
-}
-
-void ZiNB::setR (double newR)
-{
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-  this->r = newR;
-}
-
-double ZiNB::getR()
-{
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-  return(this->r);
-}
-
-void ZiNB::setP (double newP)
-{
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-  this->p = newP;
-}
-
-double ZiNB::getP()
-{
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-  return(this->p);
-}
-
-void ZiNB::setW (double newW)
-{
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-    this->w = newW;
-}
-
-double ZiNB::getW()
-{
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	return(this->w);
-}
-
 void ZiNB::copy(Density* other)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	ZiNB* o = (ZiNB*)other;
-	this->p = o->p;
-	this->r = o->r;
-	this->O = o->O;
+	this->prob = o->prob;
+	this->size = o->size;
+	this->obs = o->obs;
 	this->w = o->w;
 }
 
 double ZiNB::getLogDensityAt(int x)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	double logp = log(this->p);
-	double log1minusp = log(1-this->p);
+	double logp = log(this->prob);
+	double log1minusp = log(1-this->prob);
 	double lGammaR,lGammaRplusX,lxfactorial;
 	double logdens;
 	// Calculate variance
 	double mean = 0, variance = 0;
 	for(int t=0; t<this->T; t++)
 	{
-		mean += O[t];
+		mean += obs[t];
 	}
 	mean = mean / this->T;
 	for(int t=0; t<this->T; t++)
 	{
-		variance += pow(O[t] - mean, 2);
+		variance += pow(obs[t] - mean, 2);
 	}
 	variance = variance / this->T;
 	// Calculate logdensity
-	lGammaR = lgamma(this->r);
-	lGammaRplusX = lgamma(this->r + x);
+	lGammaR = lgamma(this->size);
+	lGammaRplusX = lgamma(this->size + x);
 	lxfactorial = this->lxfactorials[x];
 	if (x == 0)
 	{
-		logdens = log( this->w + (1-this->w) * exp( lGammaRplusX - lGammaR - lxfactorial + this->r * logp + x * log1minusp ) );
+		logdens = log( this->w + (1-this->w) * exp( lGammaRplusX - lGammaR - lxfactorial + this->size * logp + x * log1minusp ) );
 	}
 	else
 	{
-		logdens = log(1-this->w) + lGammaRplusX - lGammaR - lxfactorial + this->r * logp + x * log1minusp;
+		logdens = log(1-this->w) + lGammaRplusX - lGammaR - lxfactorial + this->size * logp + x * log1minusp;
 	}
 	if (isnan(logdens))
 	{
@@ -388,32 +336,70 @@ double ZiNB::getLogDensityAt(int x)
 	return(logdens);
 }
 
+// Getter and Setter ------------------------------------------
+double ZiNB::get_mean()
+{
+	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	return (1-this->w)*this->size*(1-this->prob)/this->prob;
+}
 
-// ------------------------------------------------------------
-// Negative binomial
-// ------------------------------------------------------------
+double ZiNB::get_variance()
+{
+	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	return (1-this->w)*this->size*(1-this->prob)/this->prob/this->prob; //TODO: Is this correct?
+}
 
+DensityName ZiNB::get_name()
+{
+	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	return(ZERO_INFLATED_NEGATIVE_BINOMIAL);
+}
+
+double ZiNB::get_size()
+{
+	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+  return(this->size);
+}
+
+double ZiNB::get_prob()
+{
+	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+  return(this->prob);
+}
+
+double ZiNB::get_w()
+{
+	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	return(this->w);
+}
+
+
+// ============================================================
+// Negative Binomial density
+// ============================================================
+
+// Constructor and Destructor ---------------------------------
 NegativeBinomial::NegativeBinomial()
 {
 	this->lxfactorials = NULL;
 }
 
-NegativeBinomial::NegativeBinomial(int* observations, int T, double r, double p)
+NegativeBinomial::NegativeBinomial(int* observations, int T, double size, double prob)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	this->O = observations;
+	this->obs = observations;
 	this->T = T;
-	this->r = r;
-	this->p = p;
+	this->size = size;
+	this->prob = prob;
 	this->lxfactorials = NULL;
 	// Precompute the lxfactorials that are used in computing the densities
-	if (this->O != NULL)
+	if (this->obs != NULL)
 	{
-		this->max_O = intMax(observations, T);
-		this->lxfactorials = (double*) calloc(max_O+1, sizeof(double));
+		this->max_obs = intMax(observations, T);
+		this->lxfactorials = (double*) calloc(max_obs+1, sizeof(double));
 		this->lxfactorials[0] = 0.0;	// Not necessary, already 0 because of calloc
 		this->lxfactorials[1] = 0.0;
-		for (int j=2; j<=max_O; j++)
+		for (int j=2; j<=max_obs; j++)
 		{
 			this->lxfactorials[j] = this->lxfactorials[j-1] + log(j);
 		}
@@ -429,25 +415,26 @@ NegativeBinomial::~NegativeBinomial()
 	}
 }
 
+// Methods ----------------------------------------------------
 void NegativeBinomial::calc_logdensities(double* logdens)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	double logp = log(this->p);
-	double log1minusp = log(1-this->p);
+	double logp = log(this->prob);
+	double log1minusp = log(1-this->prob);
 	double lGammaR,lGammaRplusX,lxfactorial;
-	lGammaR=lgamma(this->r);
+	lGammaR=lgamma(this->size);
 	// Select strategy for computing gammas
-	if (this->max_O <= this->T)
+	if (this->max_obs <= this->T)
 	{
-		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every O[t], because max(O)<=T";
-		double logdens_per_read [this->max_O+1];
-		for (int j=0; j<=this->max_O; j++)
+		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+		double logdens_per_read [this->max_obs+1];
+		for (int j=0; j<=this->max_obs; j++)
 		{
-			logdens_per_read[j] = lgamma(this->r + j) - lGammaR - lxfactorials[j] + this->r * logp + j * log1minusp;
+			logdens_per_read[j] = lgamma(this->size + j) - lGammaR - lxfactorials[j] + this->size * logp + j * log1minusp;
 		}
 		for (int t=0; t<this->T; t++)
 		{
-			logdens[t] = logdens_per_read[(int) this->O[t]];
+			logdens[t] = logdens_per_read[(int) this->obs[t]];
 			FILE_LOG(logDEBUG4) << "logdens["<<t<<"] = " << logdens[t];
 			if (isnan(logdens[t]))
 			{
@@ -462,9 +449,9 @@ void NegativeBinomial::calc_logdensities(double* logdens)
 		FILE_LOG(logDEBUG2) << "Computing gammas in " << __func__ << " for every t, because max(O)>T";
 		for (int t=0; t<this->T; t++)
 		{
-			lGammaRplusX = lgamma(this->r + this->O[t]);
-			lxfactorial = this->lxfactorials[(int) this->O[t]];
-			logdens[t] = lGammaRplusX - lGammaR - lxfactorial + this->r * logp + this->O[t] * log1minusp;
+			lGammaRplusX = lgamma(this->size + this->obs[t]);
+			lxfactorial = this->lxfactorials[(int) this->obs[t]];
+			logdens[t] = lGammaRplusX - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp;
 			FILE_LOG(logDEBUG4) << "logdens["<<t<<"] = " << logdens[t];
 			if (isnan(logdens[t]))
 			{
@@ -479,22 +466,22 @@ void NegativeBinomial::calc_logdensities(double* logdens)
 void NegativeBinomial::calc_densities(double* dens)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	double logp = log(this->p);
-	double log1minusp = log(1-this->p);
+	double logp = log(this->prob);
+	double log1minusp = log(1-this->prob);
 	double lGammaR,lGammaRplusX,lxfactorial;
-	lGammaR=lgamma(this->r);
+	lGammaR=lgamma(this->size);
 	// Select strategy for computing gammas
-	if (this->max_O <= this->T)
+	if (this->max_obs <= this->T)
 	{
-		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every O[t], because max(O)<=T";
-		double dens_per_read [this->max_O+1];
-		for (int j=0; j<=this->max_O; j++)
+		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+		double dens_per_read [this->max_obs+1];
+		for (int j=0; j<=this->max_obs; j++)
 		{
-			dens_per_read[j] = exp( lgamma(this->r + j) - lGammaR - lxfactorials[j] + this->r * logp + j * log1minusp );
+			dens_per_read[j] = exp( lgamma(this->size + j) - lGammaR - lxfactorials[j] + this->size * logp + j * log1minusp );
 		}
 		for (int t=0; t<this->T; t++)
 		{
-			dens[t] = dens_per_read[(int) this->O[t]];
+			dens[t] = dens_per_read[(int) this->obs[t]];
 			FILE_LOG(logDEBUG4) << "dens["<<t<<"] = " << dens[t];
 			if (isnan(dens[t]))
 			{
@@ -509,9 +496,9 @@ void NegativeBinomial::calc_densities(double* dens)
 		FILE_LOG(logDEBUG2) << "Computing gammas in " << __func__ << " for every t, because max(O)>T";
 		for (int t=0; t<this->T; t++)
 		{
-			lGammaRplusX = lgamma(this->r + this->O[t]);
-			lxfactorial = this->lxfactorials[(int) this->O[t]];
-			dens[t] = exp( lGammaRplusX - lGammaR - lxfactorial + this->r * logp + this->O[t] * log1minusp );
+			lGammaRplusX = lgamma(this->size + this->obs[t]);
+			lxfactorial = this->lxfactorials[(int) this->obs[t]];
+			dens[t] = exp( lGammaRplusX - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp );
 			FILE_LOG(logDEBUG4) << "dens["<<t<<"] = " << dens[t];
 			if (isnan(dens[t]))
 			{
@@ -526,32 +513,32 @@ void NegativeBinomial::calc_densities(double* dens)
 void NegativeBinomial::calc_CDFs(double* CDF)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	double log1minusp = log(1-this->p);
-	double lGammaR = lgamma(this->r);
-	double lppowerr = this->r * log(this->p);
+	double log1minusp = log(1-this->prob);
+	double lGammaR = lgamma(this->size);
+	double lppowerr = this->size * log(this->prob);
 	// No selection strategy here, because we must precompute CDF to deal with 1s by shifting them
 // 	// Select strategy for computing gammas
-// 	if (this->max_O <= this->T)
+// 	if (this->max_obs <= this->T)
 // 	{
-		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every O[t], because max(O)<=T";
-		double lGamma1plusRplusX[this->max_O+1], lGamma2plusX[this->max_O+1], lHyper[this->max_O+1], lppowert[this->max_O+1];
-		double precomputed_CDF[this->max_O+1];
-		for (int j=0; j<=this->max_O; j++)
+		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+		double lGamma1plusRplusX[this->max_obs+1], lGamma2plusX[this->max_obs+1], lHyper[this->max_obs+1], lppowert[this->max_obs+1];
+		double precomputed_CDF[this->max_obs+1];
+		for (int j=0; j<=this->max_obs; j++)
 		{
-			lGamma1plusRplusX[j] = lgamma(1 + this->r + j);
+			lGamma1plusRplusX[j] = lgamma(1 + this->size + j);
 			lGamma2plusX[j] = lgamma(2 + j);
-			lHyper[j] = log(gsl_sf_hyperg_2F1(1, 1 + this->r + j, 2 + j, 1-this->p));
+			lHyper[j] = log(gsl_sf_hyperg_2F1(1, 1 + this->size + j, 2 + j, 1-this->prob));
 			lppowert[j] = (1+j) * log1minusp;
 			precomputed_CDF[j] = 1 - exp( lppowerr + lppowert[j] + lGamma1plusRplusX[j] + lHyper[j] - lGammaR - lGamma2plusX[j] );
 			if (precomputed_CDF[j] == 1)
 			{
-				FILE_LOG(logDEBUG4) << "CDF = 1 for O[t] = "<<j<< ", shifting to value of O[t] = "<<j-1;
+				FILE_LOG(logDEBUG4) << "CDF = 1 for obs[t] = "<<j<< ", shifting to value of obs[t] = "<<j-1;
 				precomputed_CDF[j] = precomputed_CDF[j-1]; 
 			}
 		}
 		for (int t=0; t<this->T; t++)
 		{
-			CDF[t] = precomputed_CDF[(int)O[t]];
+			CDF[t] = precomputed_CDF[(int)obs[t]];
 			if (isnan(CDF[t]))
 			{
 				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
@@ -566,10 +553,10 @@ void NegativeBinomial::calc_CDFs(double* CDF)
 // 		double lGamma1plusRplusX, lGamma2plusX, lHyper, lppowert;
 // 		for (int t=0; t<this->T; t++)
 // 		{
-// 			lGamma1plusRplusX = lgamma(1 + this->r + this->O[t]);
-// 			lGamma2plusX = lgamma(2 + this->O[t]);
-// 			lHyper = log(gsl_sf_hyperg_2F1(1, 1 + this->r + this->O[t], 2 + this->O[t], 1-this->p));
-// 			lppowert = (1+this->O[t]) * log1minusp;
+// 			lGamma1plusRplusX = lgamma(1 + this->size + this->obs[t]);
+// 			lGamma2plusX = lgamma(2 + this->obs[t]);
+// 			lHyper = log(gsl_sf_hyperg_2F1(1, 1 + this->size + this->obs[t], 2 + this->obs[t], 1-this->prob));
+// 			lppowert = (1+this->obs[t]) * log1minusp;
 // 			CDF[t] = 1 - exp( lppowerr + lppowert + lGamma1plusRplusX + lHyper - lGammaR - lGamma2plusX ); //TODO: Check formula for log
 // 			if(CDF[t] == 1)
 // 			{
@@ -589,25 +576,25 @@ void NegativeBinomial::calc_CDFs(double* CDF)
 void NegativeBinomial::calc_logCDFs(double* logCDF)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	double log1minusp = log(1-this->p);
+	double log1minusp = log(1-this->prob);
 	double lGamma1plusRplusX, lHyper, lGammaR, lGamma2plusX, lppowert, lppowerr;
-	lGammaR = lgamma(this->r);
-	lppowerr = this->r * log(this->p);
+	lGammaR = lgamma(this->size);
+	lppowerr = this->size * log(this->prob);
 	// Select strategy for computing gammas
-	if (this->max_O <= this->T)
+	if (this->max_obs <= this->T)
 	{
-		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every O[t], because max(O)<=T";
-		double lGamma1plusRplusX[this->max_O+1], lGamma2plusX[this->max_O+1], lHyper[this->max_O+1], lppowert[this->max_O+1];
-		for (int j=0; j<=this->max_O; j++)
+		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+		double lGamma1plusRplusX[this->max_obs+1], lGamma2plusX[this->max_obs+1], lHyper[this->max_obs+1], lppowert[this->max_obs+1];
+		for (int j=0; j<=this->max_obs; j++)
 		{
-			lGamma1plusRplusX[j] = lgamma(1 + this->r + j);
+			lGamma1plusRplusX[j] = lgamma(1 + this->size + j);
 			lGamma2plusX[j] = lgamma(2 + j);
-			lHyper[j] = log(gsl_sf_hyperg_2F1(1, 1 + this->r + j, 2 + j, 1-this->p));
+			lHyper[j] = log(gsl_sf_hyperg_2F1(1, 1 + this->size + j, 2 + j, 1-this->prob));
 			lppowert[j] = (1+j) * log1minusp;
 		}
 		for (int t=0; t<this->T; t++)
 		{
-			logCDF[t] = log(1 - exp( lppowerr + lppowert[(int)O[t]] + lGamma1plusRplusX[(int)O[t]] + lHyper[(int)O[t]] - lGammaR - lGamma2plusX[(int)O[t]] ));
+			logCDF[t] = log(1 - exp( lppowerr + lppowert[(int)obs[t]] + lGamma1plusRplusX[(int)obs[t]] + lHyper[(int)obs[t]] - lGammaR - lGamma2plusX[(int)obs[t]] ));
 			if(logCDF[t] == 0)
 			{
 				FILE_LOG(logWARNING) << "logCDF["<<t<<"] = 0";
@@ -626,10 +613,10 @@ void NegativeBinomial::calc_logCDFs(double* logCDF)
 		FILE_LOG(logDEBUG2) << "Computing gammas in " << __func__ << " for every t, because max(O)>T";
 		for (int t=0; t<this->T; t++)
 		{
-			lGamma1plusRplusX = lgamma(1 + this->r + this->O[t]);
-			lGamma2plusX = lgamma(2 + this->O[t]);
-			lHyper = log(gsl_sf_hyperg_2F1(1, 1 + this->r + this->O[t], 2 + this->O[t], 1-this->p));
-			lppowert = (1+this->O[t]) * log1minusp;
+			lGamma1plusRplusX = lgamma(1 + this->size + this->obs[t]);
+			lGamma2plusX = lgamma(2 + this->obs[t]);
+			lHyper = log(gsl_sf_hyperg_2F1(1, 1 + this->size + this->obs[t], 2 + this->obs[t], 1-this->prob));
+			lppowert = (1+this->obs[t]) * log1minusp;
 			logCDF[t] = log(1 - exp( lppowerr + lppowert + lGamma1plusRplusX + lHyper - lGammaR - lGamma2plusX )); //TODO: Check formula for log
 			if(logCDF[t] == 0)
 			{
@@ -657,45 +644,45 @@ void NegativeBinomial::update(double* weight)
 // 	time = clock();
 	for (int t=0; t<this->T; t++)
 	{
-		numerator+=weight[t]*this->r;
-		denominator+=weight[t]*(this->r+this->O[t]);
+		numerator+=weight[t]*this->size;
+		denominator+=weight[t]*(this->size+this->obs[t]);
 	}
-	this->p = numerator/denominator; // Update of r is now done with updated p
-	double logp = log(this->p);
+	this->prob = numerator/denominator; // Update of r is now done with updated p
+	double logp = log(this->prob);
 // 	dtime = clock() - time;
 // 	FILE_LOG(logDEBUG1) << "updateP(): "<<dtime<< " clicks";
 	// Update of r with Newton Method
-	rhere = this->r;
+	rhere = this->size;
 	dr = 0.00001;
 	kmax = 20;
 // 	time = clock();
 	// Select strategy for computing digammas
-	if (this->max_O <= this->T)
+	if (this->max_obs <= this->T)
 	{
-		FILE_LOG(logDEBUG2) << "Precomputing digammas in " << __func__ << " for every O[t], because max(O)<=T";
-		double DigammaRplusX[this->max_O+1], DigammaRplusDRplusX[this->max_O+1];
+		FILE_LOG(logDEBUG2) << "Precomputing digammas in " << __func__ << " for every obs[t], because max(O)<=T";
+		double DigammaRplusX[this->max_obs+1], DigammaRplusDRplusX[this->max_obs+1];
 		for (int k=1; k<kmax; k++)
 		{
 			Fr=dFrdr=0.0;
 			DigammaR = digamma(rhere); // boost::math::digamma<>(rhere);
 			DigammaRplusDR = digamma(rhere + dr); // boost::math::digamma<>(rhere+dr);
 			// Precompute the digammas by iterating over all possible values of the observation vector
-			for (int j=0; j<=this->max_O; j++)
+			for (int j=0; j<=this->max_obs; j++)
 			{
 				DigammaRplusX[j] = digamma(rhere+j);
 				DigammaRplusDRplusX[j] = digamma(rhere+dr+j);
 			}
 			for(int t=0; t<this->T; t++)
 			{
-				if(this->O[t]==0)
+				if(this->obs[t]==0)
 				{
 					Fr+=weight[t]*logp;
 					//dFrdr+=0;
 				}
-				if(this->O[t]!=0)
+				if(this->obs[t]!=0)
 				{
-					Fr+=weight[t]*(logp-DigammaR+DigammaRplusX[(int)O[t]]);
-					dFrdr+=weight[t]/dr*(DigammaR-DigammaRplusDR+DigammaRplusDRplusX[(int)O[t]]-DigammaRplusX[(int)O[t]]);
+					Fr+=weight[t]*(logp-DigammaR+DigammaRplusX[(int)obs[t]]);
+					dFrdr+=weight[t]/dr*(DigammaR-DigammaRplusDR+DigammaRplusDRplusX[(int)obs[t]]-DigammaRplusX[(int)obs[t]]);
 				}
 			}
 			if(fabs(Fr)<eps)
@@ -717,14 +704,14 @@ void NegativeBinomial::update(double* weight)
 			DigammaRplusDR = digamma(rhere + dr); // boost::math::digamma<>(rhere+dr);
 			for(int t=0; t<this->T; t++)
 			{
-				DigammaRplusX = digamma(rhere+this->O[t]); //boost::math::digamma<>(rhere+this->O[ti]);
-				DigammaRplusDRplusX = digamma(rhere+dr+this->O[t]); // boost::math::digamma<>(rhere+dr+this->O[ti]);
-				if(this->O[t]==0)
+				DigammaRplusX = digamma(rhere+this->obs[t]); //boost::math::digamma<>(rhere+this->obs[ti]);
+				DigammaRplusDRplusX = digamma(rhere+dr+this->obs[t]); // boost::math::digamma<>(rhere+dr+this->obs[ti]);
+				if(this->obs[t]==0)
 				{
 					Fr+=weight[t]*logp;
 					//dFrdr+=0;
 				}
-				if(this->O[t]!=0)
+				if(this->obs[t]!=0)
 				{
 					Fr+=weight[t]*(logp-DigammaR+DigammaRplusX);
 					dFrdr+=weight[t]/dr*(DigammaR-DigammaRplusDR+DigammaRplusDRplusX-DigammaRplusX);
@@ -738,89 +725,47 @@ void NegativeBinomial::update(double* weight)
 			if(Fr/dFrdr>rhere) rhere=rhere/2.0;
 		}
 	}
-	this->r = rhere;
-	FILE_LOG(logDEBUG1) << "r = "<<this->r << ", p = "<<this->p;
+	this->size = rhere;
+	FILE_LOG(logDEBUG1) << "r = "<<this->size << ", p = "<<this->prob;
 
 // 	dtime = clock() - time;
 // 	FILE_LOG(logDEBUG1) << "updateR(): "<<dtime<< " clicks";
 
 }
 
-double NegativeBinomial::getMean()
-{
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	return this->r*(1-this->p)/this->p;
-}
-
-double NegativeBinomial::getVariance()
-{
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	return this->r*(1-this->p)/this->p/this->p;
-}
-
-DensityName NegativeBinomial::getType()
-{
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	return(NB);
-}
-
-void NegativeBinomial::setR (double newR)
-{
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	this->r = newR;
-}
-
-double NegativeBinomial::getR()
-{
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	return(this->r);
-}
-
-void NegativeBinomial::setP (double newP)
-{
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	this->p = newP;
-}
-
-double NegativeBinomial::getP()
-{
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	return(this->p);
-}
-
 void NegativeBinomial::copy(Density* other)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	NegativeBinomial* o = (NegativeBinomial*)other;
-	this->p = o->p;
-	this->r = o->r;
-	this->O = o->O;
+	this->prob = o->prob;
+	this->size = o->size;
+	this->obs = o->obs;
 }
 
 double NegativeBinomial::getLogDensityAt(int x)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	double logp = log(this->p);
-	double log1minusp = log(1-this->p);
+	double logp = log(this->prob);
+	double log1minusp = log(1-this->prob);
 	double lGammaR,lGammaRplusX,lxfactorial;
 	double logdens;
 	// Calculate variance
 	double mean = 0, variance = 0;
 	for(int t=0; t<this->T; t++)
 	{
-		mean += O[t];
+		mean += obs[t];
 	}
 	mean = mean / this->T;
 	for(int t=0; t<this->T; t++)
 	{
-		variance += pow(O[t] - mean, 2);
+		variance += pow(obs[t] - mean, 2);
 	}
 	variance = variance / this->T;
 	// Calculate logdensity
-	lGammaR = lgamma(this->r);
-	lGammaRplusX = lgamma(this->r + x);
+	lGammaR = lgamma(this->size);
+	lGammaRplusX = lgamma(this->size + x);
 	lxfactorial = this->lxfactorials[x];
-	logdens = lGammaRplusX - lGammaR - lxfactorial + this->r * logp + x * log1minusp;
+	logdens = lGammaRplusX - lGammaR - lxfactorial + this->size * logp + x * log1minusp;
 	if (isnan(logdens))
 	{
 		FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
@@ -831,35 +776,68 @@ double NegativeBinomial::getLogDensityAt(int x)
 	return(logdens);
 }
 
-
-// ------------------------------------------------------------
-// Only zeros
-// ------------------------------------------------------------
-
-OnlyZeros::OnlyZeros() {}
-
-OnlyZeros::OnlyZeros(int* observations, int T)
+// Getter and Setter ------------------------------------------
+double NegativeBinomial::get_mean()
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	this->O = observations;
+	return this->size*(1-this->prob)/this->prob;
+}
+
+double NegativeBinomial::get_variance()
+{
+	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	return this->size*(1-this->prob)/this->prob/this->prob;
+}
+
+DensityName NegativeBinomial::get_name()
+{
+	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	return(NEGATIVE_BINOMIAL);
+}
+
+double NegativeBinomial::get_size()
+{
+	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	return(this->size);
+}
+
+double NegativeBinomial::get_prob()
+{
+	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	return(this->prob);
+}
+
+
+// ============================================================
+// Zero Inflation density
+// ============================================================
+
+// Constructor and Destructor ---------------------------------
+ZeroInflation::ZeroInflation() {}
+
+ZeroInflation::ZeroInflation(int* observations, int T)
+{
+	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	this->obs = observations;
 	this->T = T;
 }
 
-OnlyZeros::~OnlyZeros()
+ZeroInflation::~ZeroInflation()
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 }
 
-void OnlyZeros::calc_logdensities(double* logdens)
+// Methods ----------------------------------------------------
+void ZeroInflation::calc_logdensities(double* logdens)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	for (int t=0; t<this->T; t++)
 	{
-		if(O[t]==0)
+		if(obs[t]==0)
 		{
 			logdens[t] = 0.0;
 		};
-		if(O[t]>0)
+		if(obs[t]>0)
 		{
 			logdens[t] = -100; // -INFINITY gives nan's somewhere downstream
 		}
@@ -867,16 +845,16 @@ void OnlyZeros::calc_logdensities(double* logdens)
 	}
 }
 
-void OnlyZeros::calc_densities(double* dens)
+void ZeroInflation::calc_densities(double* dens)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	for (int t=0; t<this->T; t++)
 	{
-		if(O[t]==0)
+		if(obs[t]==0)
 		{
 			dens[t] = 1.0;
 		}
-		if(O[t]>0)
+		if(obs[t]>0)
 		{
 			// Assigning a non-zero value prevents nan in case all other states become zero which can be the case for very high observations
 			dens[t] = 0.00000000001; // TODO: find a non arbitrary number
@@ -885,32 +863,14 @@ void OnlyZeros::calc_densities(double* dens)
 	}
 }
 
-void OnlyZeros::copy(Density* other) {}
+void ZeroInflation::copy(Density* other) {}
 
-double OnlyZeros::getMean()
-{
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	return 0;
-}
-
-double OnlyZeros::getVariance()
-{
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	return 0;
-}
-
-DensityName OnlyZeros::getType()
-{
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	return(ZI);
-}
-
-void OnlyZeros::update(double* weight)
+void ZeroInflation::update(double* weight)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 }
 
-double OnlyZeros::getLogDensityAt(int x)
+double ZeroInflation::getLogDensityAt(int x)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	double logdens;
@@ -918,12 +878,12 @@ double OnlyZeros::getLogDensityAt(int x)
 	double mean = 0, variance = 0;
 	for(int t=0; t<this->T; t++)
 	{
-		mean += O[t];
+		mean += obs[t];
 	}
 	mean = mean / this->T;
 	for(int t=0; t<this->T; t++)
 	{
-		variance += pow(O[t] - mean, 2);
+		variance += pow(obs[t] - mean, 2);
 	}
 	variance = variance / this->T;
 	// Calculate logdensity
@@ -939,15 +899,35 @@ double OnlyZeros::getLogDensityAt(int x)
 	return(logdens);
 }
 
-	
-// ------------------------------------------------------------
-// Multivariate Copula Approximation
-// ------------------------------------------------------------
+// Getter and Setter ------------------------------------------
+double ZeroInflation::get_mean()
+{
+	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	return 0;
+}
 
+double ZeroInflation::get_variance()
+{
+	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	return 0;
+}
+
+DensityName ZeroInflation::get_name()
+{
+	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	return(ZERO_INFLATION);
+}
+
+	
+// ============================================================
+// Multivariate Copula Approximation
+// ============================================================
+
+// Constructor and Destructor ---------------------------------
 MVCopulaApproximation::MVCopulaApproximation(int** multiobservations, int T, std::vector<Density*> marginals, double* cor_matrix_inv, double cor_matrix_determinant)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	this->multiO = multiobservations;
+	this->multi_obs = multiobservations;
 	this->T = T;
 	// these are the marginal distributions (we need their CDF function)
 	this->marginals = marginals;
@@ -965,6 +945,7 @@ MVCopulaApproximation::~MVCopulaApproximation()
 	}
 }
 
+// Methods ----------------------------------------------------
 void MVCopulaApproximation::calc_logdensities(double* logdens)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
@@ -1062,21 +1043,23 @@ void MVCopulaApproximation::calc_densities(double* dens)
 	}
 }
 
-DensityName MVCopulaApproximation::getType()
+// Getter and Setter ------------------------------------------
+DensityName MVCopulaApproximation::get_name()
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	return(Other);
+	return(OTHER);
 }
 
 	
-// ------------------------------------------------------------
+// ============================================================
 // Multivariate Product of Bernoullis
-// ------------------------------------------------------------
+// ============================================================
 
+// Constructor and Destructor ---------------------------------
 BernoulliProduct::BernoulliProduct(double** multiobservations, bool* binary_states, int T, int Nmod)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	this->multiO = multiobservations;
+	this->multi_obs = multiobservations;
 	this->binary_states = binary_states;
 	this->T = T;
 	this->Nmod = Nmod;
@@ -1087,6 +1070,7 @@ BernoulliProduct::~BernoulliProduct()
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 }
 
+// Methods ----------------------------------------------------
 void BernoulliProduct::calc_logdensities(double* logdens)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
@@ -1102,11 +1086,11 @@ void BernoulliProduct::calc_logdensities(double* logdens)
 			//if state[iN] is such that modification imod is modified, multiProb[t][imod] is the univariate posterior of being modified
 			if (binary_states[imod])
 			{
-				mult = 1-this->multiO[imod][t];
+				mult = 1-this->multi_obs[imod][t];
 			}
 			else
 			{
-				mult = this->multiO[imod][t];
+				mult = this->multi_obs[imod][t];
 			}
 			if(mult>=1) mult=0.9999999999999;
 			if(mult<=0) mult=0.0000000000001;
@@ -1117,9 +1101,10 @@ void BernoulliProduct::calc_logdensities(double* logdens)
 	freeDoubleMatrix(tempPost, this->Nmod);
 }
 
-DensityName BernoulliProduct::getType()
+// Getter and Setter ------------------------------------------
+DensityName BernoulliProduct::get_name()
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	return(Other);
+	return(OTHER);
 }
 
