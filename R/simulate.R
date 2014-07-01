@@ -32,10 +32,10 @@ simulate.univariate = function(coordinates, transition, emission, initial=1) {
 	numbins.in.state = aggregate(rep(1,length(statevec)), list(state=statevec), sum)
 	reads[statevec==1] = 0
 	if (!is.na(numbins.in.state[2,'x'])) {
-		reads[statevec==2] = rnbinom(numbins.in.state[2,'x'], r=emission[2,'size'], prob=emission[2,'prob'])
+		reads[statevec==2] = rnbinom(numbins.in.state[2,'x'], size=emission[2,'size'], prob=emission[2,'prob'])
 	}
 	if (!is.na(numbins.in.state[3,'x'])) {
-		reads[statevec==3] = rnbinom(numbins.in.state[3,'x'], r=emission[3,'size'], prob=emission[3,'prob'])
+		reads[statevec==3] = rnbinom(numbins.in.state[3,'x'], size=emission[3,'size'], prob=emission[3,'prob'])
 	}
 	cat(" done\n")
 
@@ -88,8 +88,8 @@ simulate.multivariate = function(coordinates, transition, emissions, weights, si
 	## Make reads from state vector and emission distributions
 	reads = matrix(rep(NA, nummod*numbins), ncol=nummod)
 
-	rs = unlist(lapply(emissions, "[", 2:3, 'size'))
-	ps = unlist(lapply(emissions, "[", 2:3, 'prob'))
+	sizes = unlist(lapply(emissions, "[", 2:3, 'size'))
+	probs = unlist(lapply(emissions, "[", 2:3, 'prob'))
 	ws = unlist(lapply(weights, "[", 1))
 	for (istate in use.states) {
 		cat("Generating reads for state ",istate,"\n")
@@ -109,14 +109,14 @@ simulate.multivariate = function(coordinates, transition, emissions, weights, si
 		u = matrix(apply(z, 2, pnorm), ncol=nummod)
 		# Transform to count space using marginals
 		cat("transform to count space...                     \r")
-		irs = rs[binary_stateTF]
-		ips = ps[binary_stateTF]
+		isizes = sizes[binary_stateTF]
+		iprobs = probs[binary_stateTF]
 		for (imod in 1:nummod) {
 			mask = statevec==istate
 			if (binary_state[imod] == 0) {
-				reads[mask,imod] = qzinbinom(u[,imod], w=ws[imod], r=irs[imod], prob=ips[imod])
+				reads[mask,imod] = qzinbinom(u[,imod], w=ws[imod], size=isizes[imod], prob=iprobs[imod])
 			} else {
-				reads[mask,imod] = qnbinom(u[,imod], r=irs[imod], prob=ips[imod])
+				reads[mask,imod] = qnbinom(u[,imod], size=isizes[imod], prob=iprobs[imod])
 			}
 		}
 		cat("                                                \r")
