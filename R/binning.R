@@ -12,8 +12,13 @@ bed2binned <- function(bedfile, chrom.length.file, outputfolder="binned_data", b
 
 align2binned <- function(file, format, index=file, chrom.length.file, outputfolder="binned_data", binsizes=200, chromosomes=NULL, separate.chroms=TRUE, save.as.RData=TRUE) {
 
+	## Check user input
+	if (save.as.RData==FALSE) {
+		separate.chroms=FALSE
+	}
+
 	## Load libraries
-# 	library(GenomicRanges)
+	library(GenomicRanges)
 
 	## Create outputfolder if not exists
 	if (!file.exists(outputfolder) & save.as.RData==TRUE) {
@@ -151,7 +156,7 @@ align2binned <- function(file, format, index=file, chrom.length.file, outputfold
 			cat("                                         \r")
 
 		}
-		if (separate.chroms!=TRUE) {
+		if (separate.chroms==FALSE) {
 			cat("Concatenating chromosomes ...")
 			binned.data.allchroms <- do.call("rbind",binned.data.allchroms)
 			cat(" done\n")

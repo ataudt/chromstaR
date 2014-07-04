@@ -40,12 +40,14 @@ rzinbinom,
 
 simulate.univariate,
 simulate.multivariate,
+simulate.binned2sam,
+simulate.binned2bed,
 find.optimal.binsize,
 bernoulli.from.univariate.results,
 rescale.univariate.model
 )
 
 # Import all packages listed as Imports or Depends
-import(
-	GenomicRanges, IRanges
-)
+# import(
+# 	GenomicRanges, IRanges
+# )

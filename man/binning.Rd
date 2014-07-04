@@ -30,7 +30,7 @@ A file which contains the chromosome lengths in basepairs. The first column cont
 If set to 'TRUE', separate output files will be written for each chromosome. The chromosome name will be included in the filename. If set to 'FALSE', only a single output file containing all the chromosomes will be produced.
 }
 \item{save.as.RData}{
-If set to 'FALSE', no output file will be written. Instead, a data.frame containing the binned data will be returned. Only the first binsize and the first (separate) chromosome will be processed in this case!
+If set to 'FALSE', no output file will be written. Instead, a data.frame containing the binned data will be returned. Only the first binsize will be processed in this case. Option \option{separate.chroms} will be ignored (FALSE).
 }
 }
 

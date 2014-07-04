@@ -1,5 +1,6 @@
 binned2GRanges <- function(binned.data) {
 
+	library(GenomicRanges)
 	gr <- GenomicRanges::GRanges(
 			seqnames = Rle(binned.data$chrom),
 			ranges = IRanges(start=binned.data$start, end=binned.data$end),
@@ -16,6 +17,7 @@ hmm2GRanges <- function(hmm, reduce=TRUE) {
 	if (check.multivariate.model(hmm)!=0 & check.univariate.model(hmm)!=0) stop("argument 'hmm' expects a univariate or multivariate hmm object (type ?uni.hmm or ?multi.hmm for help)")
 	if (check.logical(reduce)!=0) stop("argument 'reduce' expects TRUE or FALSE")
 
+	library(GenomicRanges)
 	### Create GRanges ###
 	# Transfer coordinates
 	gr <- GenomicRanges::GRanges(

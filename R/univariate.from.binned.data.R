@@ -1,10 +1,10 @@
-univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.it=-1, num.trials=1, eps.try=NULL, num.threads=1, output.if.not.converged=FALSE, filter.reads=TRUE, control=FALSE) {
+univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.iter=-1, num.trials=1, eps.try=NULL, num.threads=1, output.if.not.converged=FALSE, filter.reads=TRUE, control=FALSE) {
 
 	## Intercept user input
 	IDcheck <- ID  #trigger error if not defined
 	if (check.positive(eps)!=0) stop("argument 'eps' expects a positive numeric")
 	if (check.integer(max.time)!=0) stop("argument 'max.time' expects an integer")
-	if (check.integer(max.it)!=0) stop("argument 'max.it' expects an integer")
+	if (check.integer(max.iter)!=0) stop("argument 'max.iter' expects an integer")
 	if (check.positive.integer(num.trials)!=0) stop("argument 'num.trials' expects a positive integer")
 	if (!is.null(eps.try)) {
 		if (check.positive(eps.try)!=0) stop("argument 'eps.try' expects a positive numeric")
@@ -53,7 +53,7 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 			num.states = as.integer(numstates), # int* N
 			size = double(length=numstates), # double* size
 			prob = double(length=numstates), # double* prob
-			num.iterations = as.integer(max.it), #  int* maxiter
+			num.iterations = as.integer(max.iter), #  int* maxiter
 			time.sec = as.integer(max.time), # double* maxtime
 			loglik.delta = as.double(eps.try), # double* eps
 			posteriors = double(length=numbins * numstates), # double* posteriors
@@ -109,7 +109,7 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 			num.states = as.integer(numstates), # int* N
 			size = double(length=numstates), # double* size
 			prob = double(length=numstates), # double* prob
-			num.iterations = as.integer(max.it), #  int* maxiter
+			num.iterations = as.integer(max.iter), #  int* maxiter
 			time.sec = as.integer(max.time), # double* maxtime
 			loglik.delta = as.double(eps), # double* eps
 			posteriors = double(length=numbins * numstates), # double* posteriors

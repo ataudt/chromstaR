@@ -1,7 +1,18 @@
-multivariate.from.univariate.results <- function(modellist, use.states=NULL, num.states=NULL, eps=0.001, num.threads=1, max.time=-1, max.it=-1, output.if.not.converged=FALSE, use.total.correlation=FALSE, checkpoint.after.it=-1, checkpoint.after.time=-1, checkpoint.file="chromStar_checkpoint", checkpoint.reduce=c("coordinates","reads","posteriors"), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL) {
+multivariate.from.univariate.results <- function(modellist, use.states=NULL, num.states=NULL, eps=0.001, num.threads=1, max.time=-1, max.iter=-1, output.if.not.converged=FALSE, use.total.correlation=FALSE, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file="chromStar_checkpoint", checkpoint.reduce=c("coordinates","reads","posteriors"), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL) {
 
 	## Intercept user input
-	if (check.univariate.modellist(modellist)!=0) stop("argument 'modellist' expects a list of univariate hmms")
+# 	if (check.univariate.modellist(modellist)!=0) stop("argument 'modellist' expects a list of univariate hmms")
+	if (check.univariate.modellist(modellist)!=0) {
+		cat("Loading univariate HMMs from files ...")
+		mlist <- NULL
+		for (modelfile in modellist) {
+			mlist[[length(mlist)+1]] <- get(load(modelfile))
+		}
+		modellist <- mlist
+		remove(mlist)
+		cat(" done\n")
+		if (check.univariate.modellist(modellist)!=0) stop("argument 'modellist' expects a list of univariate hmms or a list of files that contain univariate hmms")
+	}
 	if (!is.null(use.states)) {
 		if (check.nonnegative.integer.vector(use.states)!=0) stop("argument 'comb.states' expects a vector of positive integers")
 		num.states <- NULL
@@ -12,10 +23,10 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 	if (check.positive(eps)!=0) stop("argument 'eps' expects a positive numeric")
 	if (check.positive.integer(num.threads)!=0) stop("argument 'num.threads' expects a positive integer")
 	if (check.integer(max.time)!=0) stop("argument 'max.time' expects an integer")
-	if (check.integer(max.it)!=0) stop("argument 'max.it' expects an integer")
+	if (check.integer(max.iter)!=0) stop("argument 'max.iter' expects an integer")
 	if (check.logical(output.if.not.converged)!=0) stop("argument 'output.if.not.converged' expects a logical (TRUE or FALSE)")
 	if (check.logical(use.total.correlation)!=0) stop("argument 'use.total.correlation' expects a logical (TRUE or FALSE)")
-	if (check.integer(checkpoint.after.it)!=0) stop("argument 'checkpoint.after.it' expects an integer")
+	if (check.integer(checkpoint.after.iter)!=0) stop("argument 'checkpoint.after.iter' expects an integer")
 	if (check.integer(checkpoint.after.time)!=0) stop("argument 'checkpoint.after.time' expects an integer")
 	if (check.logical(checkpoint.overwrite)!=0) stop("argument 'checkpoint.overwrite' expects a logical (TRUE or FALSE)")
 
@@ -77,8 +88,8 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 			use.initial <- TRUE
 		}
 	}
-	if (checkpoint.after.it < 0) {
-		checkpoint.after.it <- max.it
+	if (checkpoint.after.iter < 0) {
+		checkpoint.after.iter <- max.iter
 	}
 	if (checkpoint.after.time < 0) {
 		checkpoint.after.time <- max.time
@@ -87,10 +98,10 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 	time.total <- 0
 	repeat{
 		# Determine runtime
-		if (max.it > 0) {
-			maxiter <- min(checkpoint.after.it, max.it-iteration.total)
+		if (max.iter > 0) {
+			maxiter <- min(checkpoint.after.iter, max.iter-iteration.total)
 		} else {
-			maxiter <- checkpoint.after.it
+			maxiter <- checkpoint.after.iter
 		}
 		if (max.time > 0) {
 			maxtime <- min(checkpoint.after.time, max.time-time.total)
@@ -158,7 +169,7 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 		time.total <- time.total + hmm$time.sec
 		hmm$time.sec <- time.total
 		# Test if terminating condition has been reached
-		if (hmm$loglik.delta <= hmm$eps | (time.total >= max.time & max.time > 0) | (iteration.total >= max.it & max.it > 0)) break
+		if (hmm$loglik.delta <= hmm$eps | (time.total >= max.time & max.time > 0) | (iteration.total >= max.iter & max.iter > 0)) break
 		# Reduce the hmm for checkpointing
 		hmm[checkpoint.reduce] <- NULL
 		# Save checkpoint

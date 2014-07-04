@@ -7,7 +7,7 @@ Run an HMM for a single histone mark
 Run an HMM for a single histone mark to determine regions which are either 'unmodified' or 'modified'. Input is a data.frame with \code{\link{binned.data}} and output is an \code{\link{chromstar.univariate.hmm}} list object.
 }
 \usage{
-univariate.from.binned.data(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.it=-1, num.trials=1, eps.try=NULL, num.threads=1, output.if.not.converged=FALSE, filter.reads=TRUE, control=FALSE)
+univariate.from.binned.data(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.iter=-1, num.trials=1, eps.try=NULL, num.threads=1, output.if.not.converged=FALSE, filter.reads=TRUE, control=FALSE)
 }
 \arguments{
 \item{binned.data}{A data.frame containing genomic coordinates and read counts (see \code{\link{binned.data}} for a more detailed description).}
@@ -17,7 +17,7 @@ univariate.from.binned.data(binned.data, ID, eps=0.001, init="standard", max.tim
 Initialization procedure for the distributions. Either "standard" or "random". The "standard" procedure initializes the first Negative Binomial with mean and variance of the data and the second Negative Binomial with mean+1 and variance of the data. This initialization usually gives the fastest convergence. The "random" procedure initializes both distributions with random values for mean and variance. The mean will be chosen between 0 and 10 times the data mean. The variance will be chosen between 0 and 20 times the random mean.
 }
 \item{max.time}{The maximum running time for the Baum-Welch algorithm. If this time is reached, the Baum-Welch will terminate after the current iteration finishes. The default -1 is no limit.}
-\item{max.it}{The maximum number of iterations for the Baum-Welch algorithm. The default -1 is no limit.}
+\item{max.iter}{The maximum number of iterations for the Baum-Welch algorithm. The default -1 is no limit.}
 \item{num.trials}{The number of trials to run the HMM. Each time, the HMM is seeded with different random initial values. The HMM with the best likelihood is given as output. TODO: starting values are not random at the moment}
 \item{eps.try}{If option num.trials is set to greater than 1, \option{eps.try} is used for the trial runs. If unset, \option{eps} is used.}
 \item{num.threads}{Number of threads to use. Setting this to >1 may give increased performance.}

@@ -1,4 +1,4 @@
-bernoulli.from.univariate.results = function(modellist, use.states=NULL, num.states=NULL, eps=0.001, num.threads=2, max.time=-1, max.it=-1, output.if.not.converged=FALSE, checkpoint.after.it=-1, checkpoint.after.time=-1, checkpoint.file="chromStar_checkpoint", checkpoint.reduce=c("coordinates","reads","posteriors","univariate.prob.unmodified"), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL) {
+bernoulli.from.univariate.results = function(modellist, use.states=NULL, num.states=NULL, eps=0.001, num.threads=2, max.time=-1, max.iter=-1, output.if.not.converged=FALSE, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file="chromStar_checkpoint", checkpoint.reduce=c("coordinates","reads","posteriors","univariate.prob.unmodified"), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL) {
 
 	## Intercept user input
 	if (check.univariate.modellist(modellist)!=0) stop("argument 'modellist' expects a list of univariate models")
@@ -12,9 +12,9 @@ bernoulli.from.univariate.results = function(modellist, use.states=NULL, num.sta
 	if (check.positive(eps)!=0) stop("argument 'eps' expects a positive numeric")
 	if (check.positive.integer(num.threads)!=0) stop("argument 'num.threads' expects a positive integer")
 	if (check.integer(max.time)!=0) stop("argument 'max.time' expects an integer")
-	if (check.integer(max.it)!=0) stop("argument 'max.it' expects an integer")
+	if (check.integer(max.iter)!=0) stop("argument 'max.iter' expects an integer")
 	if (check.logical(output.if.not.converged)!=0) stop("argument 'output.if.not.converged' expects a logical (TRUE or FALSE)")
-	if (check.integer(checkpoint.after.it)!=0) stop("argument 'checkpoint.after.it' expects an integer")
+	if (check.integer(checkpoint.after.iter)!=0) stop("argument 'checkpoint.after.iter' expects an integer")
 	if (check.integer(checkpoint.after.time)!=0) stop("argument 'checkpoint.after.time' expects an integer")
 	if (check.logical(checkpoint.overwrite)!=0) stop("argument 'checkpoint.overwrite' expects a logical (TRUE or FALSE)")
 
@@ -55,8 +55,8 @@ bernoulli.from.univariate.results = function(modellist, use.states=NULL, num.sta
 			use.initial = TRUE
 		}
 	}
-	if (checkpoint.after.it < 0) {
-		checkpoint.after.it = max.it
+	if (checkpoint.after.iter < 0) {
+		checkpoint.after.iter = max.iter
 	}
 	if (checkpoint.after.time < 0) {
 		checkpoint.after.time = max.time
@@ -65,10 +65,10 @@ bernoulli.from.univariate.results = function(modellist, use.states=NULL, num.sta
 	time.total = 0
 	repeat{
 		# Determine runtime
-		if (max.it > 0) {
-			maxiter = min(checkpoint.after.it, max.it-iteration.total)
+		if (max.iter > 0) {
+			maxiter = min(checkpoint.after.iter, max.iter-iteration.total)
 		} else {
-			maxiter = checkpoint.after.it
+			maxiter = checkpoint.after.iter
 		}
 		if (max.time > 0) {
 			maxtime = min(checkpoint.after.time, max.time-time.total)
@@ -129,7 +129,7 @@ bernoulli.from.univariate.results = function(modellist, use.states=NULL, num.sta
 		time.total = time.total + model$time.in.sec
 		model$time.in.sec = time.total
 		# Test if terminating condition has been reached
-		if (model$delta.loglik <= model$epsilon | (time.total >= max.time & max.time > 0) | (iteration.total >= max.it & max.it > 0)) break
+		if (model$delta.loglik <= model$epsilon | (time.total >= max.time & max.time > 0) | (iteration.total >= max.iter & max.iter > 0)) break
 		# Reduce the model for checkpointing
 		model[checkpoint.reduce] = NULL
 		# Save checkpoint
