@@ -52,7 +52,7 @@ class ScaleHMM  {
 		double** scalealpha; ///< matrix [T x N] of forward probabilities
 		double** scalebeta; ///<  matrix [T x N] of backward probabilities
 		double** densities; ///< matrix [N x T] of density values
-		double** tdensities; ///< matrix [T x N] of density values, for use in multivariate
+// 		double** tdensities; ///< matrix [T x N] of density values, for use in multivariate !increases speed, but on cost of RAM usage and that seems to be limiting
 		double* sumgamma; ///< vector[N] of sum of posteriors (gamma values)
 		double** sumxi; ///< matrix[N x N] of xi values
 		double** gamma; ///< matrix[N x T] of posteriors

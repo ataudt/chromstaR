@@ -237,7 +237,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* m
 // This function takes parameters from R, creates a multivariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // =====================================================================================================================================================
 extern "C" {
-void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* size, double* prob, double* w, double* cor_matrix_inv, double* det, int* maxiter, int* maxtime, double* eps, double* posteriors, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error)
+void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, double* size, double* prob, double* w, double* cor_matrix_inv, double* det, int* maxiter, int* maxtime, double* eps, int* states, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error)
 {
 
 	// Define logging level {"ERROR", "WARNING", "INFO", "ITERATION", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4"}
@@ -309,14 +309,14 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 // 		}
 // 	}
 
-	// Prepare the binary_states (univariate) vector: binary_states[N][Nmod], e.g., binary_states[iN][imod] tells me at state states[iN], modification imod is non-enriched (0) or enriched (1)
+	// Prepare the binary_states (univariate) vector: binary_states[N][Nmod], e.g., binary_states[iN][imod] tells me at state comb_states[iN], modification imod is non-enriched (0) or enriched (1)
 	FILE_LOG(logDEBUG1) << "Preparing the binary_states vector";
 	bool **binary_states = allocBoolMatrix(*N, *Nmod);
 	for(int iN=0; iN < *N; iN++) //for each comb state considered
 	{
 		for(int imod=0; imod < *Nmod; imod++) //for each modification of this comb state
 		{
-			binary_states[iN][imod] = states[iN]&(int)pow(2,*Nmod-imod-1);//if =0->hidden state states[iN] has modification imod non enriched; if !=0->enriched
+			binary_states[iN][imod] = comb_states[iN]&(int)pow(2,*Nmod-imod-1);//if =0->hidden state comb_states[iN] has modification imod non enriched; if !=0->enriched
 			if (binary_states[iN][imod] != 0 )
 				binary_states[iN][imod] = 1;
 		}
@@ -361,14 +361,26 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* states, double* 
 	}
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
 	
-	// Compute the posteriors and save results directly to the R pointer
-	FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
-	for (int iN=0; iN<*N; iN++)
+// 	// Compute the posteriors and save results directly to the R pointer
+// 	FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
+// 	for (int iN=0; iN<*N; iN++)
+// 	{
+// 		for (int t=0; t<*T; t++)
+// 		{
+// 			posteriors[t + iN * (*T)] = hmm->get_posterior(iN, t);
+// 		}
+// 	}
+
+	// Compute the states from posteriors
+	FILE_LOG(logDEBUG1) << "Computing states from posteriors";
+	double posterior_per_t [*N];
+	for (int t=0; t<*T; t++)
 	{
-		for (int t=0; t<*T; t++)
+		for (int iN=0; iN<*N; iN++)
 		{
-			posteriors[t + iN * (*T)] = hmm->get_posterior(iN, t);
+			posterior_per_t[iN] = hmm->get_posterior(iN, t);
 		}
+		states[t] = comb_states[argMax(posterior_per_t, *N)];
 	}
 	
 	FILE_LOG(logDEBUG1) << "Return parameters";
