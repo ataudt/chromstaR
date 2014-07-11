@@ -56,11 +56,12 @@ class ScaleHMM  {
 		double* sumgamma; ///< vector[N] of sum of posteriors (gamma values)
 		double** sumxi; ///< matrix[N x N] of xi values
 		double** gamma; ///< matrix[N x T] of posteriors
+		double** gammaold; ///< matrix[N x T] with posteriors of previous iteration (only used for univariate case)
 		double dlogP; ///< difference in loglikelihood from one iteration to the next
 		time_t baumWelchStartTime_sec; ///< start time of the Baum-Welch in sec
 		int baumWelchTime_real; ///< elapsed time from start of the 0th iteration
-		int sumdiff_state_last; ///< sum of the difference in the state 1 assignments from one iteration to the next
-		double sumdiff_posterior; ///< sum of the difference in posterior (gamma) values from one iteration to the next
+		int sumdiff_state_last; ///< sum of the difference in the state 1 assignments from one iteration to the next (only univariate case)
+		double sumdiff_posterior; ///< sum of the difference in posterior (gamma) values from one iteration to the next (only univariate case)
 		whichvariate xvariate; ///< enum which stores if UNIVARIATE or MULTIVARIATE
 		
 		// Methods

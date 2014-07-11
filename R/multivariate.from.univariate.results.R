@@ -1,7 +1,6 @@
 multivariate.from.univariate.results <- function(modellist, use.states=NULL, num.states=NULL, eps=0.001, num.threads=1, max.time=-1, max.iter=-1, output.if.not.converged=FALSE, use.total.correlation=FALSE, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file="chromStar_checkpoint", checkpoint.reduce=c("coordinates","reads"), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL) {
 
 	## Intercept user input
-# 	if (check.univariate.modellist(modellist)!=0) stop("argument 'modellist' expects a list of univariate hmms")
 	if (check.univariate.modellist(modellist)!=0) {
 		cat("Loading univariate HMMs from files ...")
 		mlist <- NULL

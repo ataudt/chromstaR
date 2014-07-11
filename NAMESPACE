@@ -29,6 +29,7 @@ dec2bin,
 bin2dec,
 mixedsort,
 mixedorder,
+estimate.RAM.consumption,
 
 bin.annotation,
 enrichment.analysis,
