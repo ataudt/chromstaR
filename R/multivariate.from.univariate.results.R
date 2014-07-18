@@ -32,6 +32,7 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 	## Prepare the HMM
 	params <- prepare.multivariate(modellist, use.states, num.states)
 	coordinates <- params$coordinates
+	seqlengths <- params$seqlengths
 	reads <- params$reads
 	numbins <- params$numbins
 	nummod <- params$nummod
@@ -51,7 +52,7 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 	}
 	usestateTF <- params$usestateTF
 	numstates2use <- params$numstates2use
-	A.estimated <- params$A.estimated
+# 	A.estimated <- params$A.estimated
 	IDs <- params$IDs
 	# Clean up to reduce memory usage
 	remove(modellist)
@@ -81,10 +82,10 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 			A.initial <- double(length=numstates2use*numstates2use)
 			proba.initial <- double(length=numstates2use)
 			use.initial <- FALSE
-		} else if (A.initial=="estimate") {
-			A.initial <- A.estimated
-			proba.initial <- rep(1/numstates2use, numstates2use)
-			use.initial <- TRUE
+# 		} else if (A.initial=="estimate") {
+# 			A.initial <- A.estimated
+# 			proba.initial <- rep(1/numstates2use, numstates2use)
+# 			use.initial <- TRUE
 		} else {
 			proba.initial <- rep(1/numstates2use, numstates2use)
 			use.initial <- TRUE
@@ -140,9 +141,11 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 		# Add useful entries
 		class(hmm) <- class.chromstar.multivariate
 		hmm$coordinates <- coordinates
+		hmm$seqlengths <- seqlengths
 		hmm$reads <- reads # reassign because of matrix layout
 # 		hmm$posteriors <- matrix(hmm$posteriors, ncol=numstates2use)
 # 		colnames(hmm$posteriors) <- paste("P(state.",comb.states2use,")", sep="")
+		hmm$states <- factor(hmm$states, levels=hmm$comb.states)
 		hmm$eps <- eps
 		hmm$A <- matrix(hmm$A, ncol=numstates2use, byrow=TRUE)
 		colnames(hmm$A) <- comb.states2use

@@ -52,7 +52,7 @@ simulate.univariate = function(coordinates, transition, emission, initial=1) {
 
 
 
-simulate.multivariate = function(coordinates, transition, emissions, weights, sigma, use.states, initial=1) {
+simulate.multivariate = function(coordinates, transition, emissions, weights, sigma, use.states, IDs, initial=1) {
 
 	lib = require(mvtnorm)
 	if (lib == FALSE) {
@@ -87,6 +87,7 @@ simulate.multivariate = function(coordinates, transition, emissions, weights, si
 
 	## Make reads from state vector and emission distributions
 	reads = matrix(rep(NA, nummod*numbins), ncol=nummod)
+	colnames(reads) <- IDs
 
 	sizes = unlist(lapply(emissions, "[", 2:3, 'size'))
 	probs = unlist(lapply(emissions, "[", 2:3, 'prob'))
@@ -131,7 +132,8 @@ simulate.multivariate = function(coordinates, transition, emissions, weights, si
 				transition = transition,
 				sigma = sigma,
 				use.states = use.states,
-				weights = weights
+				weights = weights,
+				IDs = IDs
 				)
 	return(out)
 

@@ -8,7 +8,7 @@ combinatorial.states = function(modellist, binary=FALSE) {
 	# Get the univariate states (zero inflation = 0, unmodified = 0, modified = 1) from the modellist
 	binary_statesmatrix = matrix(rep(NA,numbins*nummod), ncol=nummod)
 	for (imod in 1:nummod) {
-		binary_statesmatrix[,imod] = c(TRUE,FALSE,FALSE)[modellist[[imod]]$states] # T,F,F corresponds to levels 'modified','unmodified','zero-inflation'
+		binary_statesmatrix[,imod] = c(FALSE,FALSE,TRUE)[modellist[[imod]]$states] # F,F,T corresponds to levels 'zero-inflation','unmodified','modified'
 	}
 
 	if (binary == TRUE) {

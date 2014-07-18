@@ -8,7 +8,6 @@ bam2binned,
 bedGraph2binned,
 
 univariate.from.binned.data,
-
 plot.distribution,
 plot.distribution.normal,
 plot.boxplot,
@@ -33,6 +32,7 @@ estimate.RAM.consumption,
 
 bin.annotation,
 enrichment.analysis,
+multivariate.enrichment,
 
 dzinbinom,
 pzinbinom,
@@ -49,6 +49,6 @@ rescale.univariate.model
 )
 
 # Import all packages listed as Imports or Depends
-# import(
-# 	GenomicRanges, IRanges
-# )
+import(
+	GenomicRanges, IRanges
+)

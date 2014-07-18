@@ -14,7 +14,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, ber
 	}
 
 	nummod = length(modellist)
-	numbins = length(modellist[[1]]$reads)
+	numbins = modellist[[1]]$num.bins
 	IDs <- unlist(lapply(modellist, "[[", "ID"))
 
 	# Extract the reads
@@ -41,6 +41,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, ber
 
 	# Extract coordinates and other stuff
 	coordinates = modellist[[1]]$coordinates
+	seqlengths <- modellist[[1]]$seqlengths
 	distributions = lapply(modellist,"[[","distributions")
 	weights = lapply(modellist,"[[","weights")
 
@@ -69,18 +70,18 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, ber
 	# Clean up to reduce memory usage
 	remove(modellist)
 
-	## Calculate transition matrix
-	cat("Estimating new transition matrix...")
-	A.estimated = matrix(0, ncol=2^nummod, nrow=2^nummod)
-	colnames(A.estimated) = 1:2^nummod-1
-	rownames(A.estimated) = 1:2^nummod-1
-	for (i1 in 1:(length(combstates.per.bin)-1)) {
-		from = combstates.per.bin[i1] + 1
-		to = combstates.per.bin[i1+1] + 1
-		A.estimated[from,to] = A.estimated[from,to] + 1
-	}
-	A.estimated = sweep(A.estimated, 1, rowSums(A.estimated), "/")
-	cat(" done\n")
+# 	## Calculate transition matrix
+# 	cat("Estimating new transition matrix...")
+# 	A.estimated = matrix(0, ncol=2^nummod, nrow=2^nummod)
+# 	colnames(A.estimated) = 1:2^nummod-1
+# 	rownames(A.estimated) = 1:2^nummod-1
+# 	for (i1 in 1:(length(combstates.per.bin)-1)) {
+# 		from = combstates.per.bin[i1] + 1
+# 		to = combstates.per.bin[i1+1] + 1
+# 		A.estimated[from,to] = A.estimated[from,to] + 1
+# 	}
+# 	A.estimated = sweep(A.estimated, 1, rowSums(A.estimated), "/")
+# 	cat(" done\n")
 		
 	## We pre-compute the z-values for each number of reads
 	cat("Computing pre z-matrix...")
@@ -224,12 +225,13 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, ber
 	comb.states2use = comb.states[usestateTF][1:numstates2use]
 	comb.states.table2use = comb.states.table[as.character(comb.states2use)]
 	determinant2use = determinant[usestateTF][1:numstates2use]
-	A.estimated2use = A.estimated[as.character(comb.states2use), as.character(comb.states2use)]
-	A.estimated2use = sweep(A.estimated2use, 1, rowSums(A.estimated2use), "/") # rescale to rowSums = 1 because of the rows and columns taken out
+# 	A.estimated2use = A.estimated[as.character(comb.states2use), as.character(comb.states2use)]
+# 	A.estimated2use = sweep(A.estimated2use, 1, rowSums(A.estimated2use), "/") # rescale to rowSums = 1 because of the rows and columns taken out
 
 	# Return parameters
 	out = list(IDs = IDs,
 				coordinates = coordinates,
+				seqlengths = seqlengths,
 				reads = reads,
 				prob.unmodified = 1-prob.modified,
 				numbins = numbins,
@@ -248,8 +250,8 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, ber
 				usestateTF = usestateTF,
 				numstates2use = numstates2use,
 				comb.states.per.bin = combstates.per.bin,
-				z = z_final,
-				A.estimated = A.estimated2use
+				z = z_final
+# 				A.estimated = A.estimated2use
 	)
 	return(out)
 }

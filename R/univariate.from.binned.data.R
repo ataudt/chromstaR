@@ -16,26 +16,25 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 	war <- NULL
 	if (is.null(eps.try)) eps.try <- eps
 
-	names(binned.data) <- binned.data.names # defined globally outside this function
-
 	## Assign variables
 	if (control) {
 		state.labels <- state.labels[1:2] # assigned globally outside this function
 	}
 	numstates <- length(state.labels)
-	numbins <- length(binned.data$reads)
+	numbins <- length(binned.data)
+	reads <- mcols(binned.data)$reads
 	iniproc <- which(init==c("standard","random","empiric")) # transform to int
 
 	# Check if there are reads in the data, otherwise HMM will blow up
-	if (!any(binned.data$reads!=0)) {
+	if (!any(reads!=0)) {
 		stop("All reads in data are zero. No univariate HMM done.")
 	}
 
 	# Filter high reads out, makes HMM faster
-	read.cutoff <- as.integer(quantile(binned.data$reads, 0.9999))
+	read.cutoff <- as.integer(quantile(reads, 0.9999))
 	if (filter.reads) {
-		mask <- binned.data$reads > read.cutoff
-		binned.data$reads[mask] <- read.cutoff
+		mask <- reads > read.cutoff
+		reads[mask] <- read.cutoff
 		numfiltered <- length(which(mask))
 		if (numfiltered > 0) {
 			warning(paste("There are very high read counts in your data (probably artificial). Replaced read counts > ",read.cutoff," (99.99% quantile) by ",read.cutoff," in ",numfiltered," bins. Set option 'filter.reads=FALSE' to disable this filtering.", sep=""))
@@ -48,7 +47,7 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 	for (i_try in 1:num.trials) {
 		cat("\n\nTry ",i_try," of ",num.trials," ------------------------------\n")
 		hmm <- .C("R_univariate_hmm",
-			reads = as.integer(binned.data$reads), # double* O
+			reads = as.integer(reads), # double* O
 			num.bins = as.integer(numbins), # int* T
 			num.states = as.integer(numstates), # int* N
 			size = double(length=numstates), # double* size
@@ -104,7 +103,7 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 		# Rerun the HMM with different epsilon and initial parameters from trial run
 		cat("\n\nRerunning try ",indexmax," with eps =",eps,"--------------------\n")
 		hmm <- .C("R_univariate_hmm",
-			reads = as.integer(binned.data$reads), # double* O
+			reads = as.integer(reads), # double* O
 			num.bins = as.integer(numbins), # int* T
 			num.states = as.integer(numstates), # int* N
 			size = double(length=numstates), # double* size
@@ -132,7 +131,9 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 	# Add useful entries
 	hmm$ID <- ID
 	names(hmm$weights) <- state.labels
-	hmm$coordinates <- binned.data[,coordinate.names]
+	hmm$coordinates <- data.frame(as.character(seqnames(binned.data)), start(ranges(binned.data)), end(ranges(binned.data)))
+	names(hmm$coordinates) <- coordinate.names
+	hmm$seqlengths <- seqlengths(binned.data)
 	hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
 	colnames(hmm$posteriors) <- paste("P(",state.labels,")", sep="")
 	class(hmm) <- class.chromstar.univariate
@@ -152,6 +153,7 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 	hmm$control <- control
 
 	# Delete redundant entries
+	hmm$posteriors <- NULL
 	hmm$size <- NULL
 	hmm$prob <- NULL
 	hmm$size.initial <- NULL

@@ -1,66 +1,170 @@
-enrichment.analysis = function(annotation.table, comb.states) {
+multivariate.enrichment <- function(multi.hmm, annotation.file.gtf) {
 
-	## Check user input
-	if (nrow(annotation.table)!=length(comb.states)) {
-		stop("both arguments must have the same length")
+	## Intercept user input
+	if (check.multivariate.model(multi.hmm)!=0) {
+		cat("Loading multivariate HMM from file ...")
+		multi.hmm <- get(load(multi.hmm))
+		cat(" done\n")
+		if (check.multivariate.model(multi.hmm)!=0) stop("argument 'multi.hmm' expects a multivariate hmm object or a file that contains a multivariate hmm (type ?multi.hmm for help)")
 	}
 
-	## Insert artificial column to get 'bincount' later
-	numbins = length(comb.states) # total number of bins
-	# Delete coordinate columns and add bincount
-	drops = c("chrom","start","end")
-	bincount = rep(1,nrow(annotation.table)) # contains the number of bins in each states later
-	annotation.table = data.frame(annotation.table[ , !(names(annotation.table) %in% drops)], bincount = bincount)
+	## Load annotation file
+	library(rtracklayer)
+	cat("Loading annotation file ...")
+	anno <- rtracklayer::import(annotation.file.gtf, format="gtf")
+	cat(" done\n")
 
-	## Convert numbers to logicals (a feature is either present or not at a given position)
-	cat("convert to logical...      \r")
-	annotations2aggregate = as.data.frame(lapply(annotation.table, as.logical))
-	## Aggregate
-	cat("aggregating...             \r")
-	aggregated = aggregate(annotations2aggregate, by=list(comb.state = comb.states), sum)
-	ind_aggregated = 2:(ncol(aggregated)-1) # first columns now holds the comb.states, last is bincount
+	## Convert hmm to GRanges
+	gr <- hmm2GRanges(multi.hmm, reduce=FALSE)
 
-	## Calculate p-values
-	cat("calculate p-values...      \r")
-	p.depleted = NULL
-	p.enriched = NULL
-	for (icol in ind_aggregated) {
-		x = aggregated[,icol] # number of overlaps
-		m = sum(x) # number of feature in column
-		n = numbins - m # number of not-feature in column
-		k = aggregated[,"bincount"] # number of combinatorial states
-		p.depleted[[length(p.depleted)+1]] = phyper(x,m,n,k)
-		p.enriched[[length(p.enriched)+1]] = 1 - phyper(x-1,m,n,k)
+	## Do the enrichment analysis
+	cat("Doing enrichment analysis ...")
+	enrichment.table <- enrichment.analysis(gr, anno)
+	cat(" done\n")
+
+	## Return results
+	return(enrichment.table)
+
+}
+
+
+enrichment.analysis <- function(granges.states.per.bin, granges.annotation) {
+
+	# Rename variables for easier access
+	gr.states <- granges.states.per.bin
+	gr.anno <- granges.annotation
+
+	# Split gr.states into list by states
+	grl.states <- split(gr.states, mcols(gr.states)$states)
+
+	# Total number of bins
+	num.bins <- length(gr.states)
+
+	# Features in gr.annotation
+	features <- levels(mcols(gr.anno)$type)
+
+	# P-values for overlaps into each combinatorial state
+	overlaps.per.state <- NULL
+	num.feature <- NULL
+	num.nonfeature <- NULL
+	num.bins.per.state <- unlist(lapply(grl.states, length))
+	p.depleted <- NULL
+	p.enriched <- NULL
+	for (feature in features) {
+		i1 <- which(feature==features)
+		mask <- mcols(gr.anno)$type == feature
+		overlaps.per.state[[i1]] <- countOverlaps(grl.states, gr.anno[mask])
+		num.feature[[i1]] <- sum(overlaps.per.state[[i1]])
+		num.nonfeature[[i1]] <- num.bins - num.feature[[i1]]
+		# p-values
+		p.depleted[[i1]] <- phyper(overlaps.per.state[[i1]], num.feature[[i1]], num.nonfeature[[i1]], num.bins.per.state)
+		p.enriched[[i1]] <- 1 - phyper(overlaps.per.state[[i1]]-1, num.feature[[i1]], num.nonfeature[[i1]], num.bins.per.state)
 	}
-	p.depleted = matrix(p.adjust(unlist(p.depleted), method="holm"), ncol=length(ind_aggregated))
-	p.enriched = matrix(p.adjust(unlist(p.enriched), method="holm"), ncol=length(ind_aggregated))
+	# Multiple testing correction
+	p.depleted <- matrix(p.adjust(unlist(p.depleted), method="holm"), ncol=length(features))
+	colnames(p.depleted) <- features
+	rownames(p.depleted) <- names(grl.states)
+	p.enriched <- matrix(p.adjust(unlist(p.enriched), method="holm"), ncol=length(features))
+	colnames(p.enriched) <- features
+	rownames(p.enriched) <- names(grl.states)
 
 	## Make return data.frame
-	cat("concatenate...             \r")
-	out = data.frame(
-		comb.state = aggregated[,"comb.state"],
-		num.bins = aggregated[,"bincount"],
-		perc.bins = aggregated[,"bincount"] / numbins * 100,
-		aggregated[,ind_aggregated],
-		aggregated[,ind_aggregated] / aggregated[,"bincount"] * 100,
+	enrich <- data.frame(
+		state = names(grl.states),
+		num.bins = num.bins.per.state,
+		perc.bins = num.bins.per.state / num.bins * 100,
+		overlaps.per.state,
+		lapply(lapply(overlaps.per.state, "/", num.bins.per.state), "*", 100),
 		p.depleted,
 		p.enriched
 	)
-	names(out) = c(
-		"comb.state",
-		"bins.num",
-		"bins.%.data",
-		paste(names(aggregated[,ind_aggregated]), "num", sep="."),
-		paste(names(aggregated[,ind_aggregated]), "%", "state", sep="."),
-		paste(names(aggregated[,ind_aggregated]), "p_depleted", sep="."),
-		paste(names(aggregated[,ind_aggregated]), "p_enriched", sep=".")
+	names(enrich) <- c(
+		"state",
+		"num.bins",
+		"%.bins",
+		paste("num", features, sep="."),
+		paste("%", features, sep="."),
+		paste(features, "p_dep", sep="."),
+		paste(features, "p_enr", sep=".")
 	)
 	# Reorder columns
-	lia = length(ind_aggregated)
-	reorder = c(1:3, as.vector( rbind( (4):(4+1*lia-1),(4+1*lia):(4+2*lia-1),(4+2*lia):(4+3*lia-1),(4+3*lia):(4+4*lia-1) ) ) )
-	out = out[reorder]
-	cat("                           \r")
+# 	lf = length(features)
+# 	reorder = c(1:3, as.vector( rbind( (4):(4+1*lf-1),(4+1*lf):(4+2*lf-1),(4+2*lf):(4+3*lf-1),(4+3*lf):(4+4*lf-1) ) ) )
+# 	enrich = enrich[reorder]
+	enrich <- as.data.frame(enrich)
+	enrich <- enrich[order(enrich$num.bins, decreasing=TRUE),]
+	enrich <- apply(enrich, 2, as.double)
 
-	return(out)
+	return(enrich)
 
 }
+
+
+
+
+# enrichment.analysis = function(annotation.table, comb.states) {
+# 
+# 	## Check user input
+# 	if (nrow(annotation.table)!=length(comb.states)) {
+# 		stop("both arguments must have the same length")
+# 	}
+# 
+# 	## Insert artificial column to get 'bincount' later
+# 	numbins = length(comb.states) # total number of bins
+# 	# Delete coordinate columns and add bincount
+# 	drops = c("chrom","start","end")
+# 	bincount = rep(1,nrow(annotation.table)) # contains the number of bins in each states later
+# 	annotation.table = data.frame(annotation.table[ , !(names(annotation.table) %in% drops)], bincount = bincount)
+# 
+# 	## Convert numbers to logicals (a feature is either present or not at a given position)
+# 	cat("convert to logical...      \r")
+# 	annotations2aggregate = as.data.frame(lapply(annotation.table, as.logical))
+# 	## Aggregate
+# 	cat("aggregating...             \r")
+# 	aggregated = aggregate(annotations2aggregate, by=list(comb.state = comb.states), sum)
+# 	ind_aggregated = 2:(ncol(aggregated)-1) # first columns now holds the comb.states, last is bincount
+# 
+# 	## Calculate p-values
+# 	cat("calculate p-values...      \r")
+# 	p.depleted = NULL
+# 	p.enriched = NULL
+# 	for (icol in ind_aggregated) {
+# 		x = aggregated[,icol] # number of overlaps
+# 		m = sum(x) # number of feature in column
+# 		n = numbins - m # number of not-feature in column
+# 		k = aggregated[,"bincount"] # number of combinatorial states
+# 		p.depleted[[length(p.depleted)+1]] = phyper(x,m,n,k)
+# 		p.enriched[[length(p.enriched)+1]] = 1 - phyper(x-1,m,n,k)
+# 	}
+# 	p.depleted = matrix(p.adjust(unlist(p.depleted), method="holm"), ncol=length(ind_aggregated))
+# 	p.enriched = matrix(p.adjust(unlist(p.enriched), method="holm"), ncol=length(ind_aggregated))
+# 
+# 	## Make return data.frame
+# 	cat("concatenate...             \r")
+# 	out = data.frame(
+# 		comb.state = aggregated[,"comb.state"],
+# 		num.bins = aggregated[,"bincount"],
+# 		perc.bins = aggregated[,"bincount"] / numbins * 100,
+# 		aggregated[,ind_aggregated],
+# 		aggregated[,ind_aggregated] / aggregated[,"bincount"] * 100,
+# 		p.depleted,
+# 		p.enriched
+# 	)
+# 	names(out) = c(
+# 		"comb.state",
+# 		"bins.num",
+# 		"bins.%.data",
+# 		paste(names(aggregated[,ind_aggregated]), "num", sep="."),
+# 		paste(names(aggregated[,ind_aggregated]), "%", "state", sep="."),
+# 		paste(names(aggregated[,ind_aggregated]), "p_depleted", sep="."),
+# 		paste(names(aggregated[,ind_aggregated]), "p_enriched", sep=".")
+# 	)
+# 	# Reorder columns
+# 	lia = length(ind_aggregated)
+# 	reorder = c(1:3, as.vector( rbind( (4):(4+1*lia-1),(4+1*lia):(4+2*lia-1),(4+2*lia):(4+3*lia-1),(4+3*lia):(4+4*lia-1) ) ) )
+# 	out = out[reorder]
+# 	cat("                           \r")
+# 
+# 	return(out)
+# 
+# }
