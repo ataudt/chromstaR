@@ -140,12 +140,12 @@ multivariate2bed <- function(multi.hmm, separate.tracks=FALSE, exclude.state.zer
 	}
 
 	# Generate the colors for each combinatorial state
-	colors <- colors()[grep(colors(), pattern="white|grey|gray|snow", invert=T)]
+	colors <- colors()[grep(colors(), pattern="white|grey|gray|snow|aliceblue|azure", invert=T)]
 	step <- length(colors) %/% numstates
 	colors <- colors[seq(1,by=step,length=numstates)]
 	RGBs <- t(col2rgb(colors))
 	RGBs <- apply(RGBs,1,paste,collapse=",")
-	itemRgb <- RGBs[as.factor(collapsed.calls$name)]
+	itemRgb <- RGBs[as.integer(as.character(collapsed.calls$name))]
 
 	# Write to file
 	cat("browser hide all\n", file=file)

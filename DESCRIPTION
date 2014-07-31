@@ -7,8 +7,8 @@ Author: Maria Colome Tatche, Aaron Taudt, Matthias Heinig
 Maintainer: Aaron Taudt <a.s.taudt@umcg.nl>
 Description: not yet
 Depends: R (>= 2.15.2)
-Imports: GenomicRanges, IRanges
-Suggests: ggplot2, Rsamtools, GenomicAlignments, mvtnorm
+Imports: GenomicRanges, IRanges, Rsamtools, GenomicAlignments
+Suggests: ggplot2, mvtnorm
 License: GPL
 LazyLoad: yes
 Packaged: 2014-05-03 00:00:00 CET+1; Taudt

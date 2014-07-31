@@ -32,7 +32,10 @@ estimate.RAM.consumption,
 
 bin.annotation,
 enrichment.analysis,
-multivariate.enrichment,
+enrichment.from.annotation,
+enrichment.from.expression,
+correlation.analysis,
+gwasCatalog2GRanges,
 
 dzinbinom,
 pzinbinom,
@@ -50,5 +53,5 @@ rescale.univariate.model
 
 # Import all packages listed as Imports or Depends
 import(
-	GenomicRanges, IRanges
+	GenomicRanges, IRanges, Rsamtools, GenomicAlignments
 )

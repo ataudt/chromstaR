@@ -1,4 +1,87 @@
-multivariate.enrichment <- function(multi.hmm, annotation.file.gtf) {
+gwasCatalog2GRanges <- function(gwas.catalog.file) {
+	
+	data.unf <- read.csv(gwas.catalog.file, header=TRUE, sep="\t")
+	# Filter NA rows
+	data <- data.unf[!is.na(data.unf[,"Chr_id"]) & !is.na(data.unf[,"Chr_pos"]) , ]
+	gr <- GenomicRanges::GRanges(seqnames = paste0("chr",data[,"Chr_id"]),
+																ranges = IRanges(start=data[,"Chr_pos"], end=data[,"Chr_pos"]),
+																strand = Rle(strand("*"), nrow(data)),
+																reported.gene = data[,"Reported.Gene.s."],
+																intergenic = data[,"Intergenic"]
+																)
+
+	return(gr)
+
+
+}
+
+enrichment.from.expression <- function(multi.hmm, bamfile, bamindex=bamfile, per.mark=FALSE) {
+
+	## Intercept user input
+	if (check.multivariate.model(multi.hmm)!=0) {
+		cat("Loading multivariate HMM from file ...")
+		multi.hmm <- get(load(multi.hmm))
+		cat(" done\n")
+		if (check.multivariate.model(multi.hmm)!=0) stop("argument 'multi.hmm' expects a multivariate hmm object or a file that contains a multivariate hmm (type ?multi.hmm for help)")
+	}
+
+	## Convert hmm to GRanges
+	gr <- hmm2GRanges(multi.hmm, reduce=FALSE)
+
+	## Read in BAM file
+	align <- GenomicAlignments::readGAlignmentsFromBam(bamfile, index=bamindex, param=Rsamtools::ScanBamParam(what=c("pos"),which=range(gr)))
+
+	## Create annotation object with same coordinates as HMM
+	anno <- gr
+	mcols(anno) <- NULL
+
+	## Count reads
+	mcols(anno)$reads <- countOverlaps(anno, align)
+
+	### Categorize the read count
+	# To get a good categorization, split the bins into unexpressed (zero-inflation + unmodified) and expressed (modified) bins with our HMM
+	expr.hmm <- univariate.from.binned.data(anno, ID="expr", max.iter=100, eps=1, output.if.not.converged=TRUE)
+	## Set the categories based on the expressed bins
+	expr.breaks <- quantile(expr.hmm$reads[expr.hmm$states=='modified'], 0:10/11)
+	# Insert interval [0,1) into breaks if not there
+	expr.breaks <- unique(sort(c(0,1,expr.breaks)))
+	expr.category <- findInterval(mcols(anno)$reads, expr.breaks)
+
+	labels <- paste0("expr.", expr.breaks[expr.category], "-", expr.breaks[expr.category+1])
+	mcols(anno)$type <- factor(labels, levels=mixedsort(unique(labels)))
+
+	## Do the enrichment analysis
+	cat("Doing enrichment analysis ...")
+	if (per.mark) {
+		enrichment.table <- NULL
+		gr.mark <- gr
+		mcols(gr.mark) <- NULL
+		# Convert combinatorial states (factors) to binary representation
+		binary.states <- dec2bin(as.integer(as.character(mcols(gr)$states)))
+		colnames(binary.states) <- multi.hmm$IDs.univariate
+		# Do enrichment analysis for every mark
+		for (col in 1:ncol(binary.states)) {
+			mcols(gr.mark)$states <- as.integer(binary.states[,col])
+			enrichment.table.mark <- enrichment.analysis(gr.mark, anno)
+			# Select only 'modified' row
+			enrichment.table.mark <- enrichment.table.mark[2,]
+			# Set name properly
+			enrichment.table.mark$state <- colnames(binary.states)[col]
+			# Combine to result
+			enrichment.table <- rbind(enrichment.table, enrichment.table.mark)
+		}
+	} else {
+		enrichment.table <- enrichment.analysis(gr, anno)
+	}
+	cat(" done\n")
+
+	## Return results
+	return(enrichment.table)
+
+
+}
+
+enrichment.from.annotation <- function(multi.hmm, annotation.file.gtf, per.mark=FALSE) {
 
 	## Intercept user input
 	if (check.multivariate.model(multi.hmm)!=0) {
@@ -19,14 +102,33 @@ multivariate.enrichment <- function(multi.hmm, annotation.file.gtf) {
 
 	## Do the enrichment analysis
 	cat("Doing enrichment analysis ...")
-	enrichment.table <- enrichment.analysis(gr, anno)
+	if (per.mark) {
+		enrichment.table <- NULL
+		gr.mark <- gr
+		mcols(gr.mark) <- NULL
+		# Convert combinatorial states (factors) to binary representation
+		binary.states <- dec2bin(as.integer(as.character(mcols(gr)$states)))
+		colnames(binary.states) <- multi.hmm$IDs.univariate
+		# Do enrichment analysis for every mark
+		for (col in 1:ncol(binary.states)) {
+			mcols(gr.mark)$states <- as.integer(binary.states[,col])
+			enrichment.table.mark <- enrichment.analysis(gr.mark, anno)
+			# Select only 'modified' row
+			enrichment.table.mark <- enrichment.table.mark[2,]
+			# Set name properly
+			enrichment.table.mark$state <- colnames(binary.states)[col]
+			# Combine to result
+			enrichment.table <- rbind(enrichment.table, enrichment.table.mark)
+		}
+	} else {
+		enrichment.table <- enrichment.analysis(gr, anno)
+	}
 	cat(" done\n")
 
 	## Return results
 	return(enrichment.table)
 
 }
-
 
 enrichment.analysis <- function(granges.states.per.bin, granges.annotation) {
 
@@ -94,6 +196,7 @@ enrichment.analysis <- function(granges.states.per.bin, granges.annotation) {
 	enrich <- as.data.frame(enrich)
 	enrich <- enrich[order(enrich$num.bins, decreasing=TRUE),]
 	enrich <- apply(enrich, 2, as.double)
+	enrich <- as.data.frame(enrich)
 
 	return(enrich)
 

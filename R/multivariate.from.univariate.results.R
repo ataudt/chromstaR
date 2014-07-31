@@ -143,9 +143,9 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 		hmm$coordinates <- coordinates
 		hmm$seqlengths <- seqlengths
 		hmm$reads <- reads # reassign because of matrix layout
+		hmm$states <- factor(hmm$states, levels=hmm$comb.states)
 # 		hmm$posteriors <- matrix(hmm$posteriors, ncol=numstates2use)
 # 		colnames(hmm$posteriors) <- paste("P(state.",comb.states2use,")", sep="")
-		hmm$states <- factor(hmm$states, levels=hmm$comb.states)
 		hmm$eps <- eps
 		hmm$A <- matrix(hmm$A, ncol=numstates2use, byrow=TRUE)
 		colnames(hmm$A) <- comb.states2use

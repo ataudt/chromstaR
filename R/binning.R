@@ -167,7 +167,7 @@ align2binned <- function(file, format, index=file, chrom.length.file, outputfold
 		if (separate.chroms==FALSE) {
 			if (save.as.RData==TRUE) {
 				# Print to file
-				filename <- paste(basename(file),"_binsize_",binsize,".RData", sep="")
+				filename <- paste0(basename(file),"_binsize_",binsize,".RData")
 				cat("Saving to file ...")
 				save(binned.data, file=file.path(outputfolder,filename) )
 				cat(" done\n")

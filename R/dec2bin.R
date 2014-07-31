@@ -6,7 +6,7 @@ dec2bin = function(dec, ndigits=NULL, names=NULL) {
 		if (is.null(names)) {
 			ndigits = max(which(as.logical(intToBits(maxdec))))
 		} else {
-			ndigits = length(modifications)
+			ndigits = length(names)
 		}
 	}
 	if (!is.null(names)) {
