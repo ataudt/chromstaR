@@ -1,5 +1,7 @@
 dec2bin = function(dec, ndigits=NULL, names=NULL) {
 
+	# Convert factor to integer
+	dec <- as.integer(as.character(dec))
 	# Check user input
 	maxdec = max(dec)
 	if (is.null(ndigits)) {

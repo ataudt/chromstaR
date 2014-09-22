@@ -1,4 +1,4 @@
-multivariate.from.univariate.results <- function(modellist, use.states=NULL, num.states=NULL, eps=0.001, num.threads=1, max.time=-1, max.iter=-1, output.if.not.converged=FALSE, use.total.correlation=FALSE, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file="chromStar_checkpoint", checkpoint.reduce=c("coordinates","reads"), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL) {
+multivariate.from.univariate.results <- function(modellist, use.states=NULL, num.states=NULL, eps=0.001, num.threads=1, max.time=-1, max.iter=-1, output.if.not.converged=FALSE, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file="chromStar_checkpoint", checkpoint.reduce=c("coordinates","reads"), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL) {
 
 	## Intercept user input
 	if (check.univariate.modellist(modellist)!=0) {
@@ -24,13 +24,12 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 	if (check.integer(max.time)!=0) stop("argument 'max.time' expects an integer")
 	if (check.integer(max.iter)!=0) stop("argument 'max.iter' expects an integer")
 	if (check.logical(output.if.not.converged)!=0) stop("argument 'output.if.not.converged' expects a logical (TRUE or FALSE)")
-	if (check.logical(use.total.correlation)!=0) stop("argument 'use.total.correlation' expects a logical (TRUE or FALSE)")
 	if (check.integer(checkpoint.after.iter)!=0) stop("argument 'checkpoint.after.iter' expects an integer")
 	if (check.integer(checkpoint.after.time)!=0) stop("argument 'checkpoint.after.time' expects an integer")
 	if (check.logical(checkpoint.overwrite)!=0) stop("argument 'checkpoint.overwrite' expects a logical (TRUE or FALSE)")
 
 	## Prepare the HMM
-	params <- prepare.multivariate(modellist, use.states, num.states)
+	params <- prepare.multivariate(modellist, use.states=use.states, num.states=num.states, num.threads=num.threads)
 	coordinates <- params$coordinates
 	seqlengths <- params$seqlengths
 	reads <- params$reads
@@ -43,16 +42,8 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 	correlationMatrix2use <- params$correlationMatrix
 	correlationMatrixInverse2use <- params$correlationMatrixInverse
 	determinant2use <- params$determinant
-	if (use.total.correlation) {
-		for (i1 in 1:dim(correlationMatrix2use)[3]) {
-			correlationMatrix2use[,,i1] <- params$correlationMatrixAll
-			correlationMatrixInverse2use[,,i1] <- params$correlationMatrixAllInverse
-			determinant2use[i1] <- params$determinantAll
-		}
-	}
 	usestateTF <- params$usestateTF
 	numstates2use <- params$numstates2use
-# 	A.estimated <- params$A.estimated
 	IDs <- params$IDs
 	# Clean up to reduce memory usage
 	remove(modellist)
@@ -82,10 +73,6 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 			A.initial <- double(length=numstates2use*numstates2use)
 			proba.initial <- double(length=numstates2use)
 			use.initial <- FALSE
-# 		} else if (A.initial=="estimate") {
-# 			A.initial <- A.estimated
-# 			proba.initial <- rep(1/numstates2use, numstates2use)
-# 			use.initial <- TRUE
 		} else {
 			proba.initial <- rep(1/numstates2use, numstates2use)
 			use.initial <- TRUE
@@ -126,7 +113,6 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 			num.iterations = as.integer(maxiter), # int* maxiter
 			time.sec = as.integer(maxtime), # double* maxtime
 			loglik.delta = as.double(eps), # double* eps
-# 			posteriors = double(length=numbins*numstates2use), # double* posteriors
 			states = integer(length=numbins), # int* states
 			A = double(length=numstates2use*numstates2use), # double* A
 			proba = double(length=numstates2use), # double* proba
@@ -144,8 +130,6 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 		hmm$seqlengths <- seqlengths
 		hmm$reads <- reads # reassign because of matrix layout
 		hmm$states <- factor(hmm$states, levels=hmm$comb.states)
-# 		hmm$posteriors <- matrix(hmm$posteriors, ncol=numstates2use)
-# 		colnames(hmm$posteriors) <- paste("P(state.",comb.states2use,")", sep="")
 		hmm$eps <- eps
 		hmm$A <- matrix(hmm$A, ncol=numstates2use, byrow=TRUE)
 		colnames(hmm$A) <- comb.states2use
@@ -156,7 +140,6 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 		hmm$A.initial <- matrix(hmm$A.initial, ncol=numstates2use, byrow=TRUE)
 		colnames(hmm$A.initial) <- comb.states2use
 		rownames(hmm$A.initial) <- comb.states2use
-# 		hmm$states <- hmm$comb.states[apply(hmm$posteriors, 1, which.max)]
 		hmm$correlation.matrix <- correlationMatrix2use
 		hmm$correlation.matrix.inverse <- correlationMatrixInverse2use
 

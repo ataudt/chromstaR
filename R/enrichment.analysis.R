@@ -35,11 +35,9 @@ enrichment.from.expression <- function(multi.hmm, bamfile, bamindex=bamfile, per
 	anno <- gr
 	mcols(anno) <- NULL
 
-	## Count reads
-	mcols(anno)$reads <- countOverlaps(anno, align)
-
 	### Categorize the read count
 	# To get a good categorization, split the bins into unexpressed (zero-inflation + unmodified) and expressed (modified) bins with our HMM
+	mcols(anno)$reads <- countOverlaps(anno, align)
 	expr.hmm <- univariate.from.binned.data(anno, ID="expr", max.iter=100, eps=1, output.if.not.converged=TRUE)
 	## Set the categories based on the expressed bins
 	expr.breaks <- quantile(expr.hmm$reads[expr.hmm$states=='modified'], 0:10/11)
@@ -48,7 +46,7 @@ enrichment.from.expression <- function(multi.hmm, bamfile, bamindex=bamfile, per
 	expr.category <- findInterval(mcols(anno)$reads, expr.breaks)
 
 	labels <- paste0("expr.", expr.breaks[expr.category], "-", expr.breaks[expr.category+1])
-	mcols(anno)$type <- factor(labels, levels=mixedsort(unique(labels)))
+	mcols(anno)$feature <- factor(labels, levels=mixedsort(unique(labels)))
 
 	## Do the enrichment analysis
 	cat("Doing enrichment analysis ...")
@@ -57,11 +55,11 @@ enrichment.from.expression <- function(multi.hmm, bamfile, bamindex=bamfile, per
 		gr.mark <- gr
 		mcols(gr.mark) <- NULL
 		# Convert combinatorial states (factors) to binary representation
-		binary.states <- dec2bin(as.integer(as.character(mcols(gr)$states)))
+		binary.states <- dec2bin(as.integer(as.character(mcols(gr)$state)))
 		colnames(binary.states) <- multi.hmm$IDs.univariate
 		# Do enrichment analysis for every mark
 		for (col in 1:ncol(binary.states)) {
-			mcols(gr.mark)$states <- as.integer(binary.states[,col])
+			mcols(gr.mark)$state <- as.integer(binary.states[,col])
 			enrichment.table.mark <- enrichment.analysis(gr.mark, anno)
 			# Select only 'modified' row
 			enrichment.table.mark <- enrichment.table.mark[2,]
@@ -102,16 +100,17 @@ enrichment.from.annotation <- function(multi.hmm, annotation.file.gtf, per.mark=
 
 	## Do the enrichment analysis
 	cat("Doing enrichment analysis ...")
+	mcols(anno)$feature <- mcols(anno)$type
 	if (per.mark) {
 		enrichment.table <- NULL
 		gr.mark <- gr
 		mcols(gr.mark) <- NULL
 		# Convert combinatorial states (factors) to binary representation
-		binary.states <- dec2bin(as.integer(as.character(mcols(gr)$states)))
+		binary.states <- dec2bin(as.integer(as.character(mcols(gr)$state)))
 		colnames(binary.states) <- multi.hmm$IDs.univariate
 		# Do enrichment analysis for every mark
 		for (col in 1:ncol(binary.states)) {
-			mcols(gr.mark)$states <- as.integer(binary.states[,col])
+			mcols(gr.mark)$state <- as.integer(binary.states[,col])
 			enrichment.table.mark <- enrichment.analysis(gr.mark, anno)
 			# Select only 'modified' row
 			enrichment.table.mark <- enrichment.table.mark[2,]
@@ -137,13 +136,13 @@ enrichment.analysis <- function(granges.states.per.bin, granges.annotation) {
 	gr.anno <- granges.annotation
 
 	# Split gr.states into list by states
-	grl.states <- split(gr.states, mcols(gr.states)$states)
+	grl.states <- split(gr.states, mcols(gr.states)$state)
 
 	# Total number of bins
 	num.bins <- length(gr.states)
 
 	# Features in gr.annotation
-	features <- levels(mcols(gr.anno)$type)
+	features <- levels(mcols(gr.anno)$feature)
 
 	# P-values for overlaps into each combinatorial state
 	overlaps.per.state <- NULL
@@ -152,21 +151,24 @@ enrichment.analysis <- function(granges.states.per.bin, granges.annotation) {
 	num.bins.per.state <- unlist(lapply(grl.states, length))
 	p.depleted <- NULL
 	p.enriched <- NULL
+	fold.enrichment <- NULL
 	for (feature in features) {
 		i1 <- which(feature==features)
-		mask <- mcols(gr.anno)$type == feature
+		mask <- mcols(gr.anno)$feature == feature
 		overlaps.per.state[[i1]] <- countOverlaps(grl.states, gr.anno[mask])
 		num.feature[[i1]] <- sum(overlaps.per.state[[i1]])
 		num.nonfeature[[i1]] <- num.bins - num.feature[[i1]]
 		# p-values
 		p.depleted[[i1]] <- phyper(overlaps.per.state[[i1]], num.feature[[i1]], num.nonfeature[[i1]], num.bins.per.state)
 		p.enriched[[i1]] <- 1 - phyper(overlaps.per.state[[i1]]-1, num.feature[[i1]], num.nonfeature[[i1]], num.bins.per.state)
+		# fold enrichment
+		fold.enrichment[[i1]] <- log( base=2, overlaps.per.state[[i1]] / num.feature[[i1]] / num.bins.per.state * num.bins )
 	}
 	# Multiple testing correction
-	p.depleted <- matrix(p.adjust(unlist(p.depleted), method="holm"), ncol=length(features))
+	p.depleted <- matrix(p.adjust(unlist(p.depleted), method="bonferroni"), ncol=length(features))
 	colnames(p.depleted) <- features
 	rownames(p.depleted) <- names(grl.states)
-	p.enriched <- matrix(p.adjust(unlist(p.enriched), method="holm"), ncol=length(features))
+	p.enriched <- matrix(p.adjust(unlist(p.enriched), method="bonferroni"), ncol=length(features))
 	colnames(p.enriched) <- features
 	rownames(p.enriched) <- names(grl.states)
 
@@ -177,6 +179,7 @@ enrichment.analysis <- function(granges.states.per.bin, granges.annotation) {
 		perc.bins = num.bins.per.state / num.bins * 100,
 		overlaps.per.state,
 		lapply(lapply(overlaps.per.state, "/", num.bins.per.state), "*", 100),
+		fold.enrichment,
 		p.depleted,
 		p.enriched
 	)
@@ -186,6 +189,7 @@ enrichment.analysis <- function(granges.states.per.bin, granges.annotation) {
 		"%.bins",
 		paste("num", features, sep="."),
 		paste("%", features, sep="."),
+		paste(features, "fold_enrich", sep="."),
 		paste(features, "p_dep", sep="."),
 		paste(features, "p_enr", sep=".")
 	)

@@ -105,6 +105,7 @@ void ScaleHMM::initialize_transition_probs(double* initial_A, bool use_initial_p
 		{
 			for (int jN=0; jN<this->N; jN++)
 			{
+				// convert from vector to matrix representation
 				this->A[jN][iN] = initial_A[iN*this->N + jN];
 			}
 		}
@@ -369,6 +370,7 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 // 					}
 					if (isnan(this->A[iN][jN]))
 					{
+						FILE_LOG(logERROR) << "updating transition probabilities";
 						FILE_LOG(logERROR) << "A["<<iN<<"]["<<jN<<"] = " << A[iN][jN];
 						FILE_LOG(logERROR) << "sumxi["<<iN<<"]["<<jN<<"] = " << sumxi[iN][jN];
 						FILE_LOG(logERROR) << "sumgamma["<<iN<<"] = " << sumgamma[iN];
@@ -556,7 +558,7 @@ void ScaleHMM::get_posteriors(double** post)
 
 double ScaleHMM::get_posterior(int iN, int t)
 {
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	FILE_LOG(logDEBUG3) << __PRETTY_FUNCTION__;
 	return(this->gamma[iN][t]);
 }
 
@@ -726,12 +728,12 @@ void ScaleHMM::backward()
 		{
 			for (int iN=0; iN<this->N; iN++)
 			{
-				FILE_LOG(logDEBUG4) << "Calculating backward variable for state " << iN;
 				beta[iN] = 0.0;
 				for(int jN=0; jN<this->N; jN++)
 				{
 					beta[iN] += this->A[iN][jN] * this->densities[jN][t+1] * this->scalebeta[t+1][jN];
 				}
+				FILE_LOG(logDEBUG4) << "beta["<<iN<<"] = " << beta[iN];
 			}
 			FILE_LOG(logDEBUG4) << "scalefactoralpha["<<t<<"] = " << scalefactoralpha[t];
 			for (int iN=0; iN<this->N; iN++)
@@ -820,6 +822,8 @@ void ScaleHMM::calc_sumgamma()
 	{
 		this->sumgamma[iN] = 0.0;
 	}
+
+	// Compute the gammas (posteriors) and sumgamma
 	#pragma omp parallel for
 	for (int iN=0; iN<this->N; iN++)
 	{

@@ -71,18 +71,7 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 			read.cutoff = as.integer(read.cutoff) # int* read_cutoff
 		)
 
-		names(hmm$weights) <- state.labels
 		hmm$eps <- eps.try
-		hmm$A <- matrix(hmm$A, ncol=hmm$num.states, byrow=TRUE)
-		rownames(hmm$A) <- state.labels
-		colnames(hmm$A) <- state.labels
-		hmm$distributions <- cbind(size=hmm$size, prob=hmm$prob, mu=fmean(hmm$size,hmm$prob), variance=fvariance(hmm$size,hmm$prob))
-		rownames(hmm$distributions) <- state.labels
-		hmm$A.initial <- matrix(hmm$A.initial, ncol=hmm$num.states, byrow=TRUE)
-		rownames(hmm$A.initial) <- state.labels
-		colnames(hmm$A.initial) <- state.labels
-		hmm$distributions.initial <- cbind(size=hmm$size.initial, prob=hmm$prob.initial, mu=fmean(hmm$size.initial,hmm$prob.initial), variance=fvariance(hmm$size.initial,hmm$prob.initial))
-		rownames(hmm$distributions.initial) <- state.labels
 		if (num.trials > 1) {
 			if (hmm$loglik.delta > hmm$eps) {
 				warning("HMM did not converge in trial run ",i_try,"!\n")
@@ -117,8 +106,8 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 			loglik = double(length=1), # double* loglik
 			weights = double(length=numstates), # double* weights
 			ini.proc = as.integer(iniproc), # int* iniproc
-			size.initial = as.vector(hmm$distributions[,'size']), # double* initial_size
-			prob.initial = as.vector(hmm$distributions[,'prob']), # double* initial_prob
+			size.initial = as.vector(hmm$size), # double* initial_size
+			prob.initial = as.vector(hmm$prob), # double* initial_prob
 			A.initial = as.vector(hmm$A), # double* initial_A
 			proba.initial = as.vector(hmm$proba), # double* initial_proba
 			use.initial.params = as.logical(1), # bool* use_initial_params

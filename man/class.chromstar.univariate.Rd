@@ -14,7 +14,7 @@ The univariate HMM object is output of the function \code{\link{univariate.from.
 \item{time.sec}{Time in seconds that the Baum-Welch needed to converge to the desired \option{eps}.}
 \item{loglik.delta}{Change in loglikelihood after the last iteration (should be smaller than \option{eps})}
 \item{posteriors}{Matrix of posterior probabilities for each bin (rows) and state (columns).}
-\item{A}{Matrix of transition probabilities for each state into each state.}
+\item{A}{Matrix of transition probabilities for each state (row) into each state (column).}
 \item{proba}{Probabilities for the first bin. Same as \option{hmm$posteriors[1,]}.}
 \item{loglik}{Final loglikelihood after the last iteration.}
 \item{weights}{Weight for each component. Same as \option{apply(hmm$posteriors,2,mean)}.}

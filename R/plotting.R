@@ -170,3 +170,19 @@ plot.boxplot <- function(model) {
 
 }
 
+# ------------------------------------------------------------
+# Plot a heat map of the transition probabilities
+# ------------------------------------------------------------
+plot.transition <- function(multi.hmm) {
+
+	library(ggplot2)
+	library(reshape2)
+
+	A <- melt(multi.hmm$A, varnames=c('from','to'), value.name='prob')
+	A$from <- factor(A$from, levels=stateorderByTransition(multi.hmm))
+	A$to <- factor(A$to, levels=stateorderByTransition(multi.hmm))
+	ggplt <- ggplot(data=A) + geom_tile(aes(x=to, y=from, fill=prob)) + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + scale_fill_gradient(low="white", high="blue")
+
+	return(ggplt)
+
+}
