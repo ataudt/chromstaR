@@ -131,13 +131,14 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 	hmm$A <- matrix(hmm$A, ncol=hmm$num.states, byrow=TRUE)
 	rownames(hmm$A) <- state.labels
 	colnames(hmm$A) <- state.labels
-	hmm$distributions <- cbind(size=hmm$size, prob=hmm$prob, mu=fmean(hmm$size,hmm$prob), variance=fvariance(hmm$size,hmm$prob))
+	hmm$distributions <- data.frame(type=state.distributions, size=hmm$size, prob=hmm$prob, mu=fmean(hmm$size,hmm$prob), variance=fvariance(hmm$size,hmm$prob))
 	rownames(hmm$distributions) <- state.labels
 	hmm$A.initial <- matrix(hmm$A.initial, ncol=hmm$num.states, byrow=TRUE)
 	rownames(hmm$A.initial) <- state.labels
 	colnames(hmm$A.initial) <- state.labels
-	hmm$distributions.initial <- cbind(size=hmm$size.initial, prob=hmm$prob.initial, mu=fmean(hmm$size.initial,hmm$prob.initial), variance=fvariance(hmm$size.initial,hmm$prob.initial))
+	hmm$distributions.initial <- data.frame(type=state.distributions, size=hmm$size.initial, prob=hmm$prob.initial, mu=fmean(hmm$size.initial,hmm$prob.initial), variance=fvariance(hmm$size.initial,hmm$prob.initial))
 	rownames(hmm$distributions.initial) <- state.labels
+	hmm$distributions.initial['zero-inflation',2:5] <- c(0,1,0,0)
 	hmm$filter.reads <- filter.reads
 	hmm$control <- control
 

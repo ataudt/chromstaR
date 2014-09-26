@@ -2,6 +2,7 @@
 # Some global variables that can be used in all functions
 # =======================================================
 state.labels <- c("zero-inflation","unmodified","modified")
+state.distributions <- c('delta','dnbinom','dnbinom')
 coordinate.names <- c("chrom","start","end")
 binned.data.names <- c(coordinate.names,"reads")
 class.chromstar.univariate <- "chromstar.univariate.hmm"
