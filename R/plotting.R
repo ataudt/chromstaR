@@ -18,7 +18,7 @@ plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NUL
 	}
 
 	## Plot settings
-	cols <- gcolors[c("unmodified","modified","total")]
+	cols <- state.colors[c("unmodified","modified","total")]
 
 	# Add artificial entries to deal with control experiments
 	if (model$control) {
@@ -110,7 +110,7 @@ plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NUL
 		}
 		
 		# Make legend and colors correct
-		ggplt <- ggplt + scale_color_manual(name="components", values=cols)
+		ggplt <- ggplt + scale_color_manual(name="components", values=cols) + theme(legend.justification=c(1,1), legend.position=c(1,1))
 
 	}
 
@@ -130,7 +130,7 @@ plot.distribution.normal <- function(model, state=0) {
 	if (state!=0 & state!=1) { stop("state has to be either 0 or 1") }
 
 	## Plot settings
-	cols <- gcolors[c("unmodified","modified")]
+	cols <- state.colors[c("unmodified","modified")]
 
 	## Transform the reads
 	states <- get.states(model)
@@ -160,7 +160,7 @@ plot.boxplot <- function(model) {
 	library(ggplot2)
 
 	## Plot settings
-	cols <- gcolors[c("unmodified","modified")]
+	cols <- state.colors[c("unmodified","modified")]
 
 	## Boxplot
 	components <- c("unmodified","modified")[as.factor(get.states(model))]

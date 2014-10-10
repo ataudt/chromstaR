@@ -1,3 +1,28 @@
+hmmList2GRangesList <- function(hmm.list, reduce=TRUE, numCPU=1) {
+
+	## Load models
+	hmm.list <- loadHmmsFromFiles(hmm.list)
+
+	## Transform to GRanges
+	cat('transforming to GRanges\n')
+	if (numCPU > 1) {
+		suppressMessages( library(doParallel) )
+		cl <- makeCluster(numCPU)
+		registerDoParallel(cl)
+		cfun <- function(...) { GRangesList(...) }
+		hmm.grl <- foreach (hmm = hmm.list, .packages=c('chromstar','GenomicRanges'), .combine='cfun', .multicombine=TRUE) %dopar% {
+			hmm2GRanges(hmm, reduce=reduce)
+		}
+		stopCluster(cl)
+	} else {
+		hmm.grl <- GRangesList()
+		for (hmm in hmm.list) {
+			hmm.grl[[length(hmm.grl)+1]] <- hmm2GRanges(hmm, reduce=reduce)
+		}
+	}
+	return(hmm.grl)
+}
+
 binned2GRanges <- function(binned.data, chrom.length.file=NULL, offset=0) {
 
 	library(GenomicRanges)

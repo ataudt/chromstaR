@@ -1,17 +1,7 @@
 unis2pseudomulti <- function(uni.hmm.list) {
 
-	## Intercept user input
-	if (check.univariate.modellist(uni.hmm.list)!=0) {
-		cat("Loading univariate HMMs from files ...")
-		mlist <- NULL
-		for (modelfile in uni.hmm.list) {
-			mlist[[length(mlist)+1]] <- get(load(modelfile))
-		}
-		uni.hmm.list <- mlist
-		remove(mlist)
-		cat(" done\n")
-		if (check.univariate.modellist(uni.hmm.list)!=0) stop("argument 'uni.hmm.list' expects a list of univariate hmms or a list of files that contain univariate hmms")
-	}
+	# Load models
+	uni.hmm.list <- loadHmmsFromFiles(uni.hmm.list)
 
 	# Extract coordinates and other stuff
 	nummod = length(uni.hmm.list)

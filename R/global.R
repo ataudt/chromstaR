@@ -2,29 +2,31 @@
 # Some global variables that can be used in all functions
 # =======================================================
 state.labels <- c("zero-inflation","unmodified","modified")
-state.distributions <- c('delta','dnbinom','dnbinom')
+state.distributions <- factor(c('delta','dnbinom','dnbinom', levels=c('delta','dnbinom')))
 coordinate.names <- c("chrom","start","end")
 binned.data.names <- c(coordinate.names,"reads")
 class.chromstar.univariate <- "chromstar.univariate.hmm"
 class.chromstar.multivariate <- "chromstar.multivariate.hmm"
-gcolors <- c("zero-inflation"="gray30","unmodified"="gray48","modified"="orangered3", "total"="black")
+state.colors <- c("zero-inflation"="gray30","unmodified"="gray48","modified"="orangered3", "total"="black")
+get.state.labels <- function() { return(state.labels) }
+get.state.colors <- function() { return(state.colors[state.labels]) }
  
 # ============================================================================
 # Functions for a Negative Binomial to transform (mean,variance)<->(size,prob)
 # ============================================================================
-fsize <- function(mean, variance) {
+dnbinom.size <- function(mean, variance) {
 	return(mean^2 / (variance - mean))
 }
 
-fprob <- function(mean, variance) {
+dnbinom.prob <- function(mean, variance) {
 	return(mean/variance)
 }
 
-fmean <- function(size, prob) {
+dnbinom.mean <- function(size, prob) {
 	return(size/prob - size)
 }
 
-fvariance <- function(size, prob) {
+dnbinom.variance <- function(size, prob) {
 	return( (size - prob*size) / prob^2 )
 }
 

@@ -975,6 +975,7 @@ void MVCopulaApproximation::calc_logdensities(double* logdens)
 				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 				FILE_LOG(logERROR) << "uniform = "<< uniform;
 				FILE_LOG(logERROR) << "z[imod] = "<< z[imod];
+				throw nan_detected;
 			}
 		}
 		exponent = 0.0;
@@ -1010,7 +1011,8 @@ void MVCopulaApproximation::calc_logdensities(double* logdens)
 				throw nan_detected;
 			}
 		}
-		logdens[t] = log(1/sqrt(this->cor_matrix_determinant)) - 0.5 * exponent + sum;
+// 		logdens[t] = log(1/sqrt(this->cor_matrix_determinant)) - 0.5 * exponent + sum;
+		logdens[t] = -0.5 * log(this->cor_matrix_determinant) - 0.5 * exponent + sum;
 		if (isnan(logdens[t]))
 		{
 			FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
