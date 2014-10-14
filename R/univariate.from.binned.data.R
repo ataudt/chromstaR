@@ -1,7 +1,11 @@
-univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.iter=-1, num.trials=1, eps.try=NULL, num.threads=1, output.if.not.converged=FALSE, filter.reads=TRUE, control=FALSE) {
+univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.iter=-1, num.trials=1, eps.try=NULL, num.threads=1, output.if.not.converged=FALSE, read.cutoff.quantile=0.999, control=FALSE) {
 
 	## Intercept user input
 	IDcheck <- ID  #trigger error if not defined
+	if (class(binned.data) != 'GRanges') {
+		binned.data <- get(load(binned.data))
+		if (class(binned.data) != 'GRanges') stop("argument 'binned.data' expects a GRanges with meta-column 'reads' or a file that contains such an object")
+	}
 	if (check.positive(eps)!=0) stop("argument 'eps' expects a positive numeric")
 	if (check.integer(max.time)!=0) stop("argument 'max.time' expects an integer")
 	if (check.integer(max.iter)!=0) stop("argument 'max.iter' expects an integer")
@@ -31,16 +35,13 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 	}
 
 	# Filter high reads out, makes HMM faster
-	read.cutoff <- as.integer(quantile(reads, 0.9999))
-	if (filter.reads) {
-		mask <- reads > read.cutoff
-		reads[mask] <- read.cutoff
-		numfiltered <- length(which(mask))
-		if (numfiltered > 0) {
-			warning(paste("There are very high read counts in your data (probably artificial). Replaced read counts > ",read.cutoff," (99.99% quantile) by ",read.cutoff," in ",numfiltered," bins. Set option 'filter.reads=FALSE' to disable this filtering.", sep=""))
-		}
+	read.cutoff <- as.integer(quantile(reads, read.cutoff.quantile))
+	mask <- reads > read.cutoff
+	reads[mask] <- read.cutoff
+	numfiltered <- length(which(mask))
+	if (numfiltered > 0) {
+		cat(paste0("Replaced read counts > ",read.cutoff," (",names(read.cutoff)," quantile) by ",read.cutoff," in ",numfiltered," bins. Set option 'read.cutoff.quantile=1' to disable this filtering.\n"))
 	}
-	
 	
 	## Call univariate in a for loop to enable multiple trials
 	modellist <- list()
@@ -131,15 +132,14 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 	hmm$A <- matrix(hmm$A, ncol=hmm$num.states, byrow=TRUE)
 	rownames(hmm$A) <- state.labels
 	colnames(hmm$A) <- state.labels
-	hmm$distributions <- data.frame(type=state.distributions, size=hmm$size, prob=hmm$prob, mu=fmean(hmm$size,hmm$prob), variance=fvariance(hmm$size,hmm$prob))
+	hmm$distributions <- data.frame(type=state.distributions, size=hmm$size, prob=hmm$prob, mu=dnbinom.mean(hmm$size,hmm$prob), variance=dnbinom.variance(hmm$size,hmm$prob))
 	rownames(hmm$distributions) <- state.labels
 	hmm$A.initial <- matrix(hmm$A.initial, ncol=hmm$num.states, byrow=TRUE)
 	rownames(hmm$A.initial) <- state.labels
 	colnames(hmm$A.initial) <- state.labels
-	hmm$distributions.initial <- data.frame(type=state.distributions, size=hmm$size.initial, prob=hmm$prob.initial, mu=fmean(hmm$size.initial,hmm$prob.initial), variance=fvariance(hmm$size.initial,hmm$prob.initial))
+	hmm$distributions.initial <- data.frame(type=state.distributions, size=hmm$size.initial, prob=hmm$prob.initial, mu=dnbinom.mean(hmm$size.initial,hmm$prob.initial), variance=dnbinom.variance(hmm$size.initial,hmm$prob.initial))
 	rownames(hmm$distributions.initial) <- state.labels
 	hmm$distributions.initial['zero-inflation',2:5] <- c(0,1,0,0)
-	hmm$filter.reads <- filter.reads
 	hmm$control <- control
 
 	# Delete redundant entries
@@ -149,7 +149,6 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 	hmm$size.initial <- NULL
 	hmm$prob.initial <- NULL
 	hmm$use.initial.params <- NULL
-	hmm$read.cutoff <- NULL
 
 	# Issue warnings
 	if (num.trials == 1) {

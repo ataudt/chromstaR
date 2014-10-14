@@ -925,18 +925,35 @@ void ScaleHMM::calc_densities()
 		this->densityFunctions[iN]->calc_densities(this->densities[iN]);
 	}
 
-// 	if (this->xvariate==MULTIVARIATE)
-// 	{
-// 
-// 		for (int t=0; t<this->T; t++)
-// 		{
-// 			for (int iN=0; iN<this->N; iN++)
-// 			{
-// 				this->tdensities[t][iN] = this->densities[iN][t];
-// 			}
-// 		}
-// 
-// 	}
+	// Check if the density for all states is numerically zero and correct to prevent NaNs
+	double temp [this->N];
+	// t=0
+	for (int iN=0; iN<this->N; iN++)
+	{
+		temp[iN] = this->densities[iN][0];
+	}
+	if (Max(temp, this->N) == 0.0)
+	{
+		for (int iN=0; iN<this->N; iN++)
+		{
+			this->densities[iN][0] = 0.00000000001;
+		}
+	}
+	// t>0
+	for (int t=1; t<this->T; t++)
+	{
+		for (int iN=0; iN<this->N; iN++)
+		{
+			temp[iN] = this->densities[iN][t];
+		}
+		if (Max(temp, this->N) == 0.0)
+		{
+			for (int iN=0; iN<this->N; iN++)
+			{
+				this->densities[iN][t] = this->densities[iN][t-1];
+			}
+		}
+	}
 
 // 	dtime = clock() - time;
 // 	FILE_LOG(logDEBUG) << "calc_densities(): " << dtime << " clicks";

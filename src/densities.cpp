@@ -839,7 +839,7 @@ void ZeroInflation::calc_logdensities(double* logdens)
 		};
 		if(obs[t]>0)
 		{
-			logdens[t] = -100; // -INFINITY gives nan's somewhere downstream
+			logdens[t] = -INFINITY;
 		}
 		FILE_LOG(logDEBUG4) << "logdens["<<t<<"] = " << logdens[t];
 	}
@@ -856,8 +856,7 @@ void ZeroInflation::calc_densities(double* dens)
 		}
 		if(obs[t]>0)
 		{
-			// Assigning a non-zero value prevents nan in case all other states become zero which can be the case for very high observations
-			dens[t] = 0.00000000001; // TODO: find a non arbitrary number
+			dens[t] = 0.0;
 		}
 		FILE_LOG(logDEBUG4) << "dens["<<t<<"] = " << dens[t];
 	}
@@ -1035,13 +1034,10 @@ void MVCopulaApproximation::calc_densities(double* dens)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	this->calc_logdensities(dens);
+
 	for (int t=0; t<this->T; t++)
 	{
 		dens[t] = exp( dens[t] );
-		if (dens[t] == 0)
-		{
-			dens[t] = 0.00000000001; // TODO: find a non arbitrary number
-		}
 	}
 }
 

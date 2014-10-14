@@ -1,6 +1,27 @@
-# ------------------------------------------------------------
+# ============================================================
+# Plot a read histogram with univariate fits for a multivariate HMM
+# ============================================================
+plot.distribution.multi <- function(multi.hmm) {
+
+	## Make fake uni.hmm and plot
+	ggplts <- list()
+	for (i1 in 1:multi.hmm$num.modifications) {
+		uni.hmm <- list(coordinates=multi.hmm$coordinates,
+										reads=multi.hmm$reads[,i1],
+										weights=multi.hmm$weights.univariate[[i1]],
+										distributions=multi.hmm$distributions.univariate[[i1]],
+										control=FALSE
+										)
+		ggplts[[i1]] <- plot.distribution(uni.hmm)
+	}
+	
+	return(ggplts)
+
+}
+
+# ============================================================
 # Plot a read histogram with univariate fits
-# ------------------------------------------------------------
+# ============================================================
 plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NULL) {
 
 	## Load libraries
@@ -118,9 +139,9 @@ plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NUL
 
 }
 
-# ------------------------------------------------------------
+# ============================================================
 # Plot a read histogram in normal space of the given state
-# ------------------------------------------------------------
+# ============================================================
 plot.distribution.normal <- function(model, state=0) {
 
 	## Load libraries
@@ -151,9 +172,9 @@ plot.distribution.normal <- function(model, state=0) {
 
 }
 
-# ------------------------------------------------------------
+# ============================================================
 # Plot a boxplot of the univariate calls
-# ------------------------------------------------------------
+# ============================================================
 plot.boxplot <- function(model) {
 
 	## Load libraries
@@ -170,9 +191,9 @@ plot.boxplot <- function(model) {
 
 }
 
-# ------------------------------------------------------------
+# ============================================================
 # Plot a heat map of the transition probabilities
-# ------------------------------------------------------------
+# ============================================================
 plot.transition <- function(multi.hmm) {
 
 	library(ggplot2)
