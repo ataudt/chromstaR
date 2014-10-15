@@ -23,6 +23,7 @@ export.unihmm2wiggle,
 export.multihmm2bed,
 export.multihmm2wiggle,
 export.GRanges2bed,
+export.binned2bedGraph,
 binned2GRanges,
 hmm2GRanges,
 bed2GRanges,
@@ -63,5 +64,5 @@ rescale.univariate.model
 
 # Import all packages listed as Imports or Depends
 import(
-	GenomicRanges, IRanges, Rsamtools, GenomicAlignments
+	GenomicRanges, IRanges, Rsamtools
 )

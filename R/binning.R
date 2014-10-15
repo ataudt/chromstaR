@@ -17,9 +17,6 @@ align2binned <- function(file, format, index=file, chrom.length.file, outputfold
 		separate.chroms=FALSE
 	}
 
-	## Load libraries
-# 	library(GenomicRanges)
-
 	## Create outputfolder if not exists
 	if (!file.exists(outputfolder) & save.as.RData==TRUE) {
 		dir.create(outputfolder)

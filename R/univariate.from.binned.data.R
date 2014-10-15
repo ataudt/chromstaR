@@ -1,4 +1,4 @@
-univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.iter=-1, num.trials=1, eps.try=NULL, num.threads=1, output.if.not.converged=FALSE, read.cutoff.quantile=0.999, control=FALSE) {
+univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.iter=-1, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff.quantile=0.999, max.mean=10, control=FALSE) {
 
 	## Intercept user input
 	IDcheck <- ID  #trigger error if not defined
@@ -14,8 +14,6 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 		if (check.positive(eps.try)!=0) stop("argument 'eps.try' expects a positive numeric")
 	}
 	if (check.positive.integer(num.threads)!=0) stop("argument 'num.threads' expects a positive integer")
-	if (check.logical(output.if.not.converged)!=0) stop("argument 'output.if.not.converged' expects a logical (TRUE or FALSE)")
-
 
 	war <- NULL
 	if (is.null(eps.try)) eps.try <- eps
@@ -28,6 +26,7 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 	numbins <- length(binned.data)
 	reads <- mcols(binned.data)$reads
 	iniproc <- which(init==c("standard","random","empiric")) # transform to int
+	mean.reads <- mean(reads[reads>0])
 
 	# Check if there are reads in the data, otherwise HMM will blow up
 	if (!any(reads!=0)) {
@@ -35,12 +34,29 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 	}
 
 	# Filter high reads out, makes HMM faster
-	read.cutoff <- as.integer(quantile(reads, read.cutoff.quantile))
+	read.cutoff <- quantile(reads, read.cutoff.quantile)
+	names.read.cutoff <- names(read.cutoff)
+	read.cutoff <- as.integer(read.cutoff)
 	mask <- reads > read.cutoff
 	reads[mask] <- read.cutoff
 	numfiltered <- length(which(mask))
 	if (numfiltered > 0) {
-		cat(paste0("Replaced read counts > ",read.cutoff," (",names(read.cutoff)," quantile) by ",read.cutoff," in ",numfiltered," bins. Set option 'read.cutoff.quantile=1' to disable this filtering.\n"))
+		cat(paste0("Replaced read counts > ",read.cutoff," (",names.read.cutoff," quantile) by ",read.cutoff," in ",numfiltered," bins. Set option 'read.cutoff.quantile=1' to disable this filtering. This filtering was done to increase the speed of the HMM and should not affect the results.\n"))
+	}
+
+	# Filter out low read counts that arise when the bin size is larger than optimal (should correct the result to near optimal again)
+	hist <- hist(reads[reads>0], breaks=0:max(reads), right=FALSE, plot=FALSE)
+	maxhist <- which.max(hist$counts)
+	if (maxhist-1 > max.mean) {	# -1 to get from 1-based histogram indices to (0-based) read counts
+		# Two empirical rules to remove low reads
+		read.counts.to.remove.1 <- which(hist$counts[1:maxhist]<=hist$counts[2]) -1
+		minlow <- which.min(hist$counts[2:maxhist])
+		read.counts.to.remove <- max(c(read.counts.to.remove.1, 2*minlow))
+		index.filtered <- which(reads>0 & reads<=read.counts.to.remove)
+		reads[index.filtered] <- 0
+		if (length(index.filtered)>0) {
+			warning(paste0("Replaced read counts <= ",read.counts.to.remove," by 0. This was done because the selected bin size is considered too big for this dataset: The mean of the read counts (zeros removed) is bigger than the specified max.mean = ",max.mean,". However, the results should be good now."))
+		}
 	}
 	
 	## Call univariate in a for loop to enable multiple trials
@@ -119,6 +135,7 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 	}
 
 	# Add useful entries
+# 	hmm$reads <- mcols(binned.data)$reads
 	hmm$ID <- ID
 	names(hmm$weights) <- state.labels
 	hmm$coordinates <- data.frame(as.character(seqnames(binned.data)), start(ranges(binned.data)), end(ranges(binned.data)))
@@ -163,11 +180,5 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 	}
 
 	# Return results
-	if (!is.null(war)) {
-		if (output.if.not.converged == TRUE) {
-			return(hmm)
-		}
-	} else {
-		return(hmm)
-	}
+	return(hmm)
 }

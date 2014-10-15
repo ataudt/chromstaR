@@ -47,6 +47,9 @@ export.unihmm2bed <- function(hmm.list, only.modified=TRUE, file="view_me_in_gen
 		itemRgb <- RGBs[as.character(collapsed.calls$state)]
 		numsegments <- nrow(collapsed.calls)
 		df <- cbind(collapsed.calls, score=rep(0,numsegments), strand=rep(".",numsegments), thickStart=collapsed.calls$start, thickEnd=collapsed.calls$end, itemRgb=itemRgb)
+		# Convert from 1-based closed to 0-based half open
+		df$start <- df$start - 1
+		df$thickStart <- df$thickStart - 1
 		if (only.modified) {
 			df <- df[df$state=='modified',]
 		}
@@ -159,6 +162,8 @@ export.multihmm2bed <- function(multi.hmm, separate.tracks=TRUE, exclude.state.z
 			numsegments <- length(which(bin[,icol]))
 			priority <- 52 + 3*icol
 			df <- cbind(collapsed.calls[bin[,icol],], score=rep(0,numsegments), strand=rep(".",numsegments))
+			# Convert from 1-based closed to 0-based half open
+			df$start <- df$start - 1
 			df$thickStart <- df$start
 			df$thickEnd <- df$end
 			RGB <- t(col2rgb(state.colors['modified']))
@@ -179,6 +184,9 @@ export.multihmm2bed <- function(multi.hmm, separate.tracks=TRUE, exclude.state.z
 		# Write to file
 		numsegments <- nrow(collapsed.calls)
 		df <- cbind(collapsed.calls, score=rep(0,numsegments), strand=rep(".",numsegments), thickStart=collapsed.calls$start, thickEnd=collapsed.calls$end, itemRgb=itemRgb)
+		# Convert from 1-based closed to 0-based half open
+		df$start <- df$start - 1
+		df$thickStart <- df$thickStart - 1
 		cat(paste0("track name=\"combinatorial state\" description=\"multivariate combinatorial states\" visibility=1 itemRgb=On priority=49\n"), file=file, append=TRUE)
 		write.table(format(df, scientific=FALSE), file=file, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
 	}
@@ -267,3 +275,56 @@ export.GRanges2bed <- function(gr, file="view_me_in_genome_browser", separate.tr
 	close(file)
 
 }
+
+
+# =================================
+# Export binned GRanges to bedGraph
+# =================================
+export.binned2bedGraph <- function(binned.data.list, file="view_me_in_genome_browser") {
+
+	## Function definitions
+	insertchr <- function(hmm.gr) {
+		# Change chromosome names from '1' to 'chr1' if necessary
+		mask <- which(!grepl('chr', seqnames(hmm.gr)))
+		mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
+		mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
+		mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
+		return(hmm.gr)
+	}
+
+	## Variables
+	nummod <- length(binned.data.list)
+	filename <- paste0(file,".bedGraph.gz")
+	file <- gzfile(filename, 'w')
+
+	## Load data
+	for (imod in 1:nummod) {
+		if (class(binned.data.list[[imod]])!='GRanges') {
+			binned.data.list[[imod]] <- get(load(binned.data.list[[imod]]))
+			if (class(binned.data.list[[imod]])!='GRanges') stop("argument 'binned.data.list' expects a list with GRanges objects with meta column 'reads'")
+		}
+	}
+
+	# Write first line to file
+	cat('writing to file',filename,'\n')
+	cat("", file=file)
+	
+	### Write every model to file ###
+	for (imod in 1:nummod) {
+		cat('writing binned.data',imod,'/',nummod,'\r')
+		gr <- binned.data.list[[imod]]
+		df <- as.data.frame(gr)[,c(1,2,3,6)]
+		df <- df[df$reads>0,]
+		# Convert from 1-based closed to 0-based half open
+		df$start <- df$start - 1
+		priority <- 50 + 3*imod
+		name <- names(binned.data.list)[imod]
+		cat(paste0("track type=bedGraph name=\"read count for ",name,"\" description=\"read count for ",name,"\" visibility=full autoScale=on color=90,90,90 maxHeightPixels=100:50:20 graphType=bar priority=",priority,"\n"), file=file, append=TRUE)
+		# Write read data
+		write.table(format(df, scientific=F), file=file, append=TRUE, row.names=FALSE, col.names=FALSE, quote=F)
+	}
+	close(file)
+	cat('\n')
+
+}
+
