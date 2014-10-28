@@ -148,7 +148,7 @@ align2binned <- function(file, format, index=file, chrom.length.file, outputfold
 				binned.data <- i.binned.data
 				if (save.as.RData==TRUE) {
 					## Print to file
-					filename <- paste(basename(file),"_binsize_",binsize,"_",chromosome,".RData", sep="")
+					filename <- paste(basename(file),"_binsize_",format(binsize, scientific=F),"_",chromosome,".RData", sep="")
 					cat("save...                                  \r")
 					save(binned.data, file=file.path(outputfolder,filename) )
 				} else {
@@ -164,7 +164,7 @@ align2binned <- function(file, format, index=file, chrom.length.file, outputfold
 		if (separate.chroms==FALSE) {
 			if (save.as.RData==TRUE) {
 				# Print to file
-				filename <- paste0(basename(file),"_binsize_",binsize,".RData")
+				filename <- paste0(basename(file),"_binsize_",format(binsize, scientific=F),".RData")
 				cat("Saving to file ...")
 				save(binned.data, file=file.path(outputfolder,filename) )
 				cat(" done\n")

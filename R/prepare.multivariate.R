@@ -37,11 +37,11 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 	## We pre-compute the z-values for each number of reads
 	cat("Computing pre z-matrix...")
 	z_per_read = matrix(rep(NA,(maxreads+1)*nummod*2), ncol=nummod*2)
+	xreads = 0:maxreads
 	for (imod in 1:nummod) {
 		# Go through unmodified and modified
 		for (i1 in 2:3) {
 			
-			xreads = 0:maxreads
 			r = distributions[[imod]][i1,'size']
 			p = distributions[[imod]][i1,'prob']
 

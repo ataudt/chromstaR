@@ -1,12 +1,60 @@
+# =================================================================
+# Plot a list of uni.hmms or a matrix with uni.hmm filenames to pdf
+# =================================================================
+plot.distributions.to.pdf <- function(uni.hmms, file='distribution-plots') {
+
+	## Preprocess input
+	uni.hmms <- as.matrix(uni.hmms) # TODO: include handling when only one hmm is given
+
+	## Set up the page
+	library(grid)
+	ncols <- ncol(uni.hmms)
+	nrows <- nrow(uni.hmms)
+	pdf(file=paste0(file,".pdf"), width=8*ncols, height=7*nrows)
+	numPlots <- length(uni.hmms)
+	grid.newpage()
+	layout <- matrix(seq(1, ncols * nrows), ncol = ncols, nrow = nrows, byrow = TRUE)
+	pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+	## Plot
+	ptm = proc.time()
+	for (irow in 1:nrows) {
+		for (icol in 1:ncols) {
+			uni.hmm <- uni.hmms[irow,icol]
+			if (class(uni.hmm)=='character') {
+				if (uni.hmm!='' & uni.hmm!='NA') {
+					uni.hmm <- chromstar:::loadHmmsFromFiles(uni.hmm)[[1]]
+					ggplt <- plot.distribution(uni.hmm)
+				} else {
+					ggplt <- ggplot(data=data.frame(x=0:10, y=0:10)) + geom_line(aes(x=x,y=y))
+				}
+			} else if (class(uni.hmm)==class.chromstar.univariate) {
+				ggplt <- plot.distribution(uni.hmm)
+			}
+				
+			# Get the i,j matrix positions of the regions that contain this subplot
+			i <- (which(irow==1:nrows)-1) * ncols + which(icol==1:ncols)
+			matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+			print(ggplt, vp = viewport(layout.pos.row = matchidx$row, layout.pos.col = matchidx$col))
+		}
+	}
+
+	d <- dev.off()
+	print("Time for plotting to file")
+	print(proc.time() - ptm)
+
+}
+
 # ============================================================
 # Plot a read histogram with univariate fits for a multivariate HMM
 # ============================================================
-plot.distribution.multi <- function(multi.hmm) {
+plot.distributions.multi <- function(multi.hmm) {
 
 	## Make fake uni.hmm and plot
 	ggplts <- list()
 	for (i1 in 1:multi.hmm$num.modifications) {
-		uni.hmm <- list(coordinates=multi.hmm$coordinates,
+		uni.hmm <- list(ID=multi.hmm$IDs.univariate[i1],
+										coordinates=multi.hmm$coordinates,
 										reads=multi.hmm$reads[,i1],
 										weights=multi.hmm$weights.univariate[[i1]],
 										distributions=multi.hmm$distributions.univariate[[i1]],
@@ -132,6 +180,8 @@ plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NUL
 		
 		# Make legend and colors correct
 		ggplt <- ggplt + scale_color_manual(name="components", values=cols) + theme(legend.justification=c(1,1), legend.position=c(1,1))
+		# Add title
+		ggplt <- ggplt + ggtitle(model$ID)
 
 	}
 
