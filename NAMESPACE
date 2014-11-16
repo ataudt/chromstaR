@@ -6,6 +6,7 @@ export(
 bed2binned,
 bam2binned,
 bedGraph2binned,
+get.chrom.lengths,
 
 univariate.from.binned.data,
 plot.distribution,

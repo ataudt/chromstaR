@@ -243,9 +243,8 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 	// Define logging level {"ERROR", "WARNING", "INFO", "ITERATION", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4"}
 // 	FILE* pFile = fopen("chromStar.log", "w");
 // 	Output2FILE::Stream() = pFile;
-//  	FILELog::ReportingLevel() = FILELog::FromString("ITERATION");
-//  	FILELog::ReportingLevel() = FILELog::FromString("DEBUG");
  	FILELog::ReportingLevel() = FILELog::FromString("ERROR");
+//  	FILELog::ReportingLevel() = FILELog::FromString("DEBUG3");
 
 	// Parallelization settings
 	omp_set_num_threads(*num_threads);

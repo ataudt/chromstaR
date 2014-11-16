@@ -921,7 +921,7 @@ void ScaleHMM::calc_densities()
 	#pragma omp parallel for
 	for (int iN=0; iN<this->N; iN++)
 	{
-		FILE_LOG(logDEBUG3) << "Calculating densities for state " << iN;
+		FILE_LOG(logDEBUG1) << "Calculating densities for state " << iN;
 		this->densityFunctions[iN]->calc_densities(this->densities[iN]);
 	}
 

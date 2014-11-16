@@ -7,10 +7,11 @@ plot.distributions.to.pdf <- function(uni.hmms, file='distribution-plots') {
 	uni.hmms <- as.matrix(uni.hmms) # TODO: include handling when only one hmm is given
 
 	## Set up the page
+	library(ggplot2)
 	library(grid)
 	ncols <- ncol(uni.hmms)
 	nrows <- nrow(uni.hmms)
-	pdf(file=paste0(file,".pdf"), width=8*ncols, height=7*nrows)
+	pdf(file=file, width=8*ncols, height=7*nrows)
 	numPlots <- length(uni.hmms)
 	grid.newpage()
 	layout <- matrix(seq(1, ncols * nrows), ncol = ncols, nrow = nrows, byrow = TRUE)
@@ -23,7 +24,7 @@ plot.distributions.to.pdf <- function(uni.hmms, file='distribution-plots') {
 			uni.hmm <- uni.hmms[irow,icol]
 			if (class(uni.hmm)=='character') {
 				if (uni.hmm!='' & uni.hmm!='NA') {
-					uni.hmm <- chromstar:::loadHmmsFromFiles(uni.hmm)[[1]]
+					uni.hmm <- loadHmmsFromFiles(uni.hmm)[[1]]
 					ggplt <- plot.distribution(uni.hmm)
 				} else {
 					ggplt <- ggplot(data=data.frame(x=0:10, y=0:10)) + geom_line(aes(x=x,y=y))
@@ -74,6 +75,7 @@ plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NUL
 
 	## Load libraries
 	library(ggplot2)
+	library(reshape2)
 
 	# -----------------------------------------
 	# Get right x limit
@@ -85,9 +87,6 @@ plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NUL
 		rightxlim <- min(c(rightxlim1,rightxlim2), na.rm=TRUE)
 		return(rightxlim)
 	}
-
-	## Plot settings
-	cols <- state.colors[c("unmodified","modified","total")]
 
 	# Add artificial entries to deal with control experiments
 	if (model$control) {
@@ -144,11 +143,11 @@ plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NUL
 	rightxlim <- get_rightxlim(histdata, reads)
 
 	# Plot the histogram
-	ggplt <- ggplot(data.frame(reads)) + geom_histogram(aes(x=reads, y=..density..), binwidth=1, color='black', fill='white') + xlim(0,rightxlim) + theme_bw() + xlab("read count")
+	ggplt <- ggplot(data.frame(reads)) + geom_histogram(aes(x=reads, y=..density..), binwidth=1, color='black', fill='white') + coord_cartesian(xlim=c(0,rightxlim)) + theme_bw() + xlab("read count")
 
 	### Add fits to the histogram
 	numstates <- length(weights)
-	x <- 0:rightxlim
+	x <- 0:max(reads)
 	distributions <- data.frame(x)
 
 	# Unmodified
@@ -159,29 +158,39 @@ plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NUL
 	distributions$modified <- weights[3] * dnbinom(x, model$distributions[3,'size'], model$distributions[3,'prob'])
 	# Total
 	distributions$total <- distributions$unmodified + distributions$modified
+	# Convert to long format
+	df <- melt(distributions, id.vars='x', variable.name='state', value.name='y')
+
+	# Make legend
+	lmeans <- round(model$distributions[,'mu'], 2)[-1]
+	lvars <- round(model$distributions[,'variance'], 2)[-1]
+	legend <- paste(c('unmodified','modified'), ", mean=", lmeans, ", var=", lvars, sep='')
+	legend <- c(legend, paste0('total, mean(data)=', round(mean(reads),2), ', var(data)=', round(var(reads),2)))
+	ggplt <- ggplt + ggtitle(model$ID)
 
 	### Plot the distributions
 	if (model$control) {
 
-		ggplt <- ggplt + geom_line(aes(x=x, y=unmodified, color="unmodified"), data=distributions, size=1)
+		ggplt <- ggplt + geom_line(data=df, aes(x=x, y=y, col=state))
 		# Make legend and colors correct
-		ggplt <- ggplt + scale_color_manual(name="components", values=cols['unmodified'])
+		ggplt <- ggplt + scale_color_manual(name="components", values=state.colors['unmodified'])
 
 	} else {
 
 		if (is.null(state)) {
-			ggplt <- ggplt + geom_line(aes(x=x, y=unmodified, color="unmodified", group=1), data=distributions, size=1)
-			ggplt <- ggplt + geom_line(aes(x=x, y=modified, color="modified", group=1), data=distributions, size=1)
-			ggplt <- ggplt + geom_line(aes(x=x, y=total, color="total", group=1), data=distributions, size=1)
+			ggplt <- ggplt + geom_line(data=df, aes(x=x, y=y, col=state))
+			ggplt <- ggplt + scale_color_manual(name="components", values=state.colors[c('unmodified','modified','total')], labels=legend) + theme(legend.justification=c(1,1), legend.position=c(1,1))
 		} else {
-			if (state=="unmodified") ggplt <- ggplt + geom_line(aes(x=x, y=unmodified, color="unmodified", group=1), data=distributions, size=1)
-			if (state=="modified") ggplt <- ggplt + geom_line(aes(x=x, y=modified, color="modified", group=1), data=distributions, size=1)
+			if (state=="unmodified") {
+				ggplt <- ggplt + geom_line(data=df[df$state=='unmodified',], aes(x=x, y=y, col=state))
+				ggplt <- ggplt + scale_color_manual(name="components", values=state.colors[c('unmodified')], labels=legend[1]) + theme(legend.justification=c(1,1), legend.position=c(1,1))
+			}
+			if (state=="modified") {
+				ggplt <- ggplt + geom_line(data=df[df$state=='modified',], aes(x=x, y=y, col=state))
+				ggplt <- ggplt + scale_color_manual(name="components", values=state.colors[c('modified')], labels=legend[2]) + theme(legend.justification=c(1,1), legend.position=c(1,1))
+			}
 		}
 		
-		# Make legend and colors correct
-		ggplt <- ggplt + scale_color_manual(name="components", values=cols) + theme(legend.justification=c(1,1), legend.position=c(1,1))
-		# Add title
-		ggplt <- ggplt + ggtitle(model$ID)
 
 	}
 

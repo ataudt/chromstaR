@@ -3,13 +3,15 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 	## Intercept user input
 	if (check.univariate.modellist(modellist)!=0) {
 		cat("Loading univariate HMMs from files ...")
+		ptm <- proc.time()
 		mlist <- NULL
 		for (modelfile in modellist) {
 			mlist[[length(mlist)+1]] <- get(load(modelfile))
 		}
 		modellist <- mlist
 		remove(mlist)
-		cat(" done\n")
+		time <- proc.time() - ptm
+		cat(paste0(" ",round(time[3],2),"s\n"))
 		if (check.univariate.modellist(modellist)!=0) stop("argument 'modellist' expects a list of univariate hmms or a list of files that contain univariate hmms")
 	}
 	if (!is.null(use.states)) {
@@ -141,6 +143,8 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 		rownames(hmm$A.initial) <- comb.states2use
 		hmm$correlation.matrix <- correlationMatrix2use
 		hmm$correlation.matrix.inverse <- correlationMatrixInverse2use
+		tstates <- table(hmm$states)
+		hmm$weights <- tstates/sum(tstates)
 
 		# Delete redundant entries
 		hmm$size <- NULL

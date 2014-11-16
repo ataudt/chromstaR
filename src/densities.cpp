@@ -52,7 +52,7 @@ void ZiNB::calc_logdensities(double* logdens)
 	// Select strategy for computing gammas
 	if (this->max_obs <= this->T)
 	{
-		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+		FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
 		double lGammaRplusX[this->max_obs+1];
 		for (int j=0; j<=this->max_obs; j++)
 		{
@@ -112,7 +112,7 @@ void ZiNB::calc_densities(double* dens)
 	// Select strategy for computing gammas
 	if (this->max_obs <= this->T)
 	{
-		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+		FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
 		double lGammaRplusX[this->max_obs+1];
 		for (int j=0; j<=this->max_obs; j++)
 		{
@@ -172,7 +172,7 @@ void ZiNB::calc_CDFs(double* CDF)
 // 	// Select strategy for computing gammas
 // 	if (this->max_obs <= this->T)
 //	{
-		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+		FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
 		double lGamma1plusRplusX[this->max_obs+1], lGamma2plusX[this->max_obs+1], lHyper[this->max_obs+1], lppowert[this->max_obs+1];
 		double precomputed_CDF[this->max_obs+1];
 		for (int j=0; j<=this->max_obs; j++)
@@ -235,7 +235,7 @@ void ZiNB::calc_logCDFs(double* logCDF)
 	// Select strategy for computing gammas
 	if (this->max_obs <= this->T)
 	{
-		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+		FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
 		double lGamma1plusRplusX[this->max_obs+1], lGamma2plusX[this->max_obs+1], lHyper[this->max_obs+1], lppowert[this->max_obs+1];
 		for (int j=0; j<=this->max_obs; j++)
 		{
@@ -426,7 +426,7 @@ void NegativeBinomial::calc_logdensities(double* logdens)
 	// Select strategy for computing gammas
 	if (this->max_obs <= this->T)
 	{
-		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+		FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
 		double logdens_per_read [this->max_obs+1];
 		for (int j=0; j<=this->max_obs; j++)
 		{
@@ -473,7 +473,7 @@ void NegativeBinomial::calc_densities(double* dens)
 	// Select strategy for computing gammas
 	if (this->max_obs <= this->T)
 	{
-		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+		FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
 		double dens_per_read [this->max_obs+1];
 		for (int j=0; j<=this->max_obs; j++)
 		{
@@ -520,7 +520,7 @@ void NegativeBinomial::calc_CDFs(double* CDF)
 // 	// Select strategy for computing gammas
 // 	if (this->max_obs <= this->T)
 // 	{
-		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+		FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
 		double lGamma1plusRplusX[this->max_obs+1], lGamma2plusX[this->max_obs+1], lHyper[this->max_obs+1], lppowert[this->max_obs+1];
 		double precomputed_CDF[this->max_obs+1];
 		for (int j=0; j<=this->max_obs; j++)
@@ -583,7 +583,7 @@ void NegativeBinomial::calc_logCDFs(double* logCDF)
 	// Select strategy for computing gammas
 	if (this->max_obs <= this->T)
 	{
-		FILE_LOG(logDEBUG2) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+		FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
 		double lGamma1plusRplusX[this->max_obs+1], lGamma2plusX[this->max_obs+1], lHyper[this->max_obs+1], lppowert[this->max_obs+1];
 		for (int j=0; j<=this->max_obs; j++)
 		{
@@ -659,7 +659,7 @@ void NegativeBinomial::update(double* weight)
 	// Select strategy for computing digammas
 	if (this->max_obs <= this->T)
 	{
-		FILE_LOG(logDEBUG2) << "Precomputing digammas in " << __func__ << " for every obs[t], because max(O)<=T";
+		FILE_LOG(logDEBUG3) << "Precomputing digammas in " << __func__ << " for every obs[t], because max(O)<=T";
 		double DigammaRplusX[this->max_obs+1], DigammaRplusDRplusX[this->max_obs+1];
 		for (int k=1; k<kmax; k++)
 		{
