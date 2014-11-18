@@ -165,122 +165,83 @@ void ZiNB::calc_densities(double* dens)
 void ZiNB::calc_CDFs(double* CDF)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	double logp = log(this->prob);
 	double log1minusp = log(1-this->prob);
-	double lGammaR = lgamma(this->size);
-	double lppowerr = this->size * log(this->prob);
-	// No selection strategy here, because we must precompute CDF to deal with 1s by shifting them
-// 	// Select strategy for computing gammas
-// 	if (this->max_obs <= this->T)
-//	{
-		FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
-		double lGamma1plusRplusX[this->max_obs+1], lGamma2plusX[this->max_obs+1], lHyper[this->max_obs+1], lppowert[this->max_obs+1];
-		double precomputed_CDF[this->max_obs+1];
-		for (int j=0; j<=this->max_obs; j++)
+	double lGammaR,lxfactorial;
+	lGammaR=lgamma(this->size);
+	double precomputed_CDF[this->max_obs+1];
+	double dens;
+
+	FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+	// Calculate for j=0
+	precomputed_CDF[0] = this->w + (1-this->w) * exp( lgamma(this->size) - lGammaR - this->lxfactorials[0] + this->size * logp );
+	// Calculate for j>0
+	for (int j=1; j<=this->max_obs; j++)
+	{
+		dens = (1-this->w) * exp( lgamma(this->size + j) - lGammaR - this->lxfactorials[j] + this->size * logp + j * log1minusp );
+		if (isnan(dens))
 		{
-			lGamma1plusRplusX[j] = lgamma(1 + this->size + j);
-			lGamma2plusX[j] = lgamma(2 + j);
-			lHyper[j] = log(gsl_sf_hyperg_2F1(1, 1 + this->size + j, 2 + j, 1-this->prob));
-			lppowert[j] = (1+j) * log1minusp;
-			precomputed_CDF[j] = 1 - exp( log(1-this->w) + lppowerr + lppowert[j] + lGamma1plusRplusX[j] + lHyper[j] - lGammaR - lGamma2plusX[j] );
-			if (precomputed_CDF[j] == 1)
-			{
-				FILE_LOG(logDEBUG4) << "CDF = 1 for obs[t] = "<<j<< ", shifting to value of obs[t] = "<<j-1;
-				precomputed_CDF[j] = precomputed_CDF[j-1]; 
-			}
+			FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+			FILE_LOG(logERROR) << "dens = "<< dens;
+			throw nan_detected;
 		}
-		for (int t=0; t<this->T; t++)
+		precomputed_CDF[j] = precomputed_CDF[j-1] + dens;
+		if (precomputed_CDF[j] >= 1)
 		{
-			CDF[t] = precomputed_CDF[(int)obs[t]];
-			if (isnan(CDF[t]))
-			{
-				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
-				FILE_LOG(logERROR) << "CDF["<<t<<"] = "<< CDF[t];
-				throw nan_detected;
-			}
+			FILE_LOG(logDEBUG4) << "CDF >= 1 for obs[t] = "<<j<< ", shifting to value of obs[t] = "<<j-1;
+			precomputed_CDF[j] = precomputed_CDF[j-1]; 
 		}
-// 	}
-// 	else
-// 	{
-// 		FILE_LOG(logDEBUG2) << "Computing gammas in " << __func__ << " for every t, because max(O)>T";
-// 		double lGamma1plusRplusX, lGamma2plusX, lHyper, lppowert;
-// 		for (int t=0; t<this->T; t++)
-//		{
-// 			lGamma1plusRplusX = lgamma(1 + this->size + this->obs[t]);
-// 			lGamma2plusX = lgamma(2 + this->obs[t]);
-// 			lHyper = log(gsl_sf_hyperg_2F1(1, 1 + this->size + this->obs[t], 2 + this->obs[t], 1-this->prob));
-// 			lppowert = (1+this->obs[t]) * log1minusp;
-// 			CDF[t] = 1 - exp( log(1-this->w) + lppowerr + lppowert + lGamma1plusRplusX + lHyper - lGammaR - lGamma2plusX ); //TODO: Check formula for log
-// 			if(CDF[t] == 0)
-// 			{
-// 				FILE_LOG(logERROR) << "CDF["<<t<<"] = "<< CDF[t]; //TODO: Check if this works
-// // 				cout<<"CAUTION!!!! current ="<<current<<endl; current = this->cdf->at(i-1);
-// 			}
-// 			if (isnan(CDF[t]))
-// 			{
-// 				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
-// 				FILE_LOG(logERROR) << "CDF["<<t<<"] = "<< CDF[t];
-// 				throw nan_detected;
-// 			}
-// 		}
-// 	}
+	}
+	for (int t=0; t<this->T; t++)
+	{
+		CDF[t] = precomputed_CDF[(int)obs[t]];
+		if (isnan(CDF[t]))
+		{
+			FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+			FILE_LOG(logERROR) << "CDF["<<t<<"] = "<< CDF[t];
+			throw nan_detected;
+		}
+	}
 }
 
 void ZiNB::calc_logCDFs(double* logCDF)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	double logp = log(this->prob);
 	double log1minusp = log(1-this->prob);
-	double lGamma1plusRplusX, lHyper, lGammaR, lGamma2plusX, lppowert, lppowerr;
-	lGammaR = lgamma(this->size);
-	lppowerr = this->size * log(this->prob);
-	// Select strategy for computing gammas
-	if (this->max_obs <= this->T)
+	double lGammaR,lxfactorial;
+	lGammaR=lgamma(this->size);
+	double precomputed_logCDF[this->max_obs+1];
+	double logdens;
+
+	FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+	// Calculate for j=0
+	precomputed_logCDF[0] = log( this->w + (1-this->w) * exp( lgamma(this->size) - lGammaR - this->lxfactorials[0] + this->size * logp ) );
+	// Calculate for j>0
+	for (int j=1; j<=this->max_obs; j++)
 	{
-		FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
-		double lGamma1plusRplusX[this->max_obs+1], lGamma2plusX[this->max_obs+1], lHyper[this->max_obs+1], lppowert[this->max_obs+1];
-		for (int j=0; j<=this->max_obs; j++)
+		logdens = log(1-this->w) + lgamma(this->size + j) - lGammaR - this->lxfactorials[j] + this->size * logp + j * log1minusp;
+		if (isnan(logdens))
 		{
-			lGamma1plusRplusX[j] = lgamma(1 + this->size + j);
-			lGamma2plusX[j] = lgamma(2 + j);
-			lHyper[j] = log(gsl_sf_hyperg_2F1(1, 1 + this->size + j, 2 + j, 1-this->prob));
-			lppowert[j] = (1+j) * log1minusp;
+			FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+			FILE_LOG(logERROR) << "logdens = "<< logdens;
+			throw nan_detected;
 		}
-		for (int t=0; t<this->T; t++)
+		precomputed_logCDF[j] = log( exp(precomputed_logCDF[j-1]) + exp(logdens) );
+		if (precomputed_logCDF[j] >= 0)
 		{
-			logCDF[t] = log(1 - exp( log(1-this->w) + lppowerr + lppowert[(int)obs[t]] + lGamma1plusRplusX[(int)obs[t]] + lHyper[(int)obs[t]] - lGammaR - lGamma2plusX[(int)obs[t]] ));
-			if(logCDF[t] == 0)
-			{
-				FILE_LOG(logWARNING) << "logCDF["<<t<<"] = 0";
-// 				cout<<"CAUTION!!!! current ="<<current<<endl; current = this->cdf->at(i-1);
-			}
-			if (isnan(logCDF[t]))
-			{
-				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
-				FILE_LOG(logERROR) << "logCDF["<<t<<"] = "<< logCDF[t];
-				throw nan_detected;
-			}
+			FILE_LOG(logDEBUG4) << "logCDF >= 0 for obs[t] = "<<j<< ", shifting to value of obs[t] = "<<j-1;
+			precomputed_logCDF[j] = precomputed_logCDF[j-1]; 
 		}
 	}
-	else
+	for (int t=0; t<this->T; t++)
 	{
-		FILE_LOG(logDEBUG2) << "Computing gammas in " << __func__ << " for every t, because max(O)>T";
-		for (int t=0; t<this->T; t++)
+		logCDF[t] = precomputed_logCDF[(int)obs[t]];
+		if (isnan(logCDF[t]))
 		{
-			lGamma1plusRplusX = lgamma(1 + this->size + this->obs[t]);
-			lGamma2plusX = lgamma(2 + this->obs[t]);
-			lHyper = log(gsl_sf_hyperg_2F1(1, 1 + this->size + this->obs[t], 2 + this->obs[t], 1-this->prob));
-			lppowert = (1+this->obs[t]) * log1minusp;
-			logCDF[t] = log(1 - exp( log(1-this->w) + lppowerr + lppowert + lGamma1plusRplusX + lHyper - lGammaR - lGamma2plusX )); //TODO: Check formula for log
-			if(logCDF[t] == 0)
-			{
-				FILE_LOG(logWARNING) << "logCDF["<<t<<"] = 0"; //TODO: Check if this works
-// 				cout<<"CAUTION!!!! current ="<<current<<endl; current = this->cdf->at(i-1);
-			}
-			if (isnan(logCDF[t]))
-			{
-				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
-				FILE_LOG(logERROR) << "logCDF["<<t<<"] = "<< logCDF[t];
-				throw nan_detected;
-			}
+			FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+			FILE_LOG(logERROR) << "logCDF["<<t<<"] = "<< logCDF[t];
+			throw nan_detected;
 		}
 	}
 }
@@ -513,122 +474,83 @@ void NegativeBinomial::calc_densities(double* dens)
 void NegativeBinomial::calc_CDFs(double* CDF)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	double logp = log(this->prob);
 	double log1minusp = log(1-this->prob);
-	double lGammaR = lgamma(this->size);
-	double lppowerr = this->size * log(this->prob);
-	// No selection strategy here, because we must precompute CDF to deal with 1s by shifting them
-// 	// Select strategy for computing gammas
-// 	if (this->max_obs <= this->T)
-// 	{
-		FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
-		double lGamma1plusRplusX[this->max_obs+1], lGamma2plusX[this->max_obs+1], lHyper[this->max_obs+1], lppowert[this->max_obs+1];
-		double precomputed_CDF[this->max_obs+1];
-		for (int j=0; j<=this->max_obs; j++)
+	double lGammaR,lxfactorial;
+	lGammaR=lgamma(this->size);
+	double precomputed_CDF[this->max_obs+1];
+	double dens;
+
+	FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+	// Calculate for j=0
+	precomputed_CDF[0] = exp( lgamma(this->size) - lGammaR - this->lxfactorials[0] + this->size * logp );
+	// Calculate for j>0
+	for (int j=1; j<=this->max_obs; j++)
+	{
+		dens = exp( lgamma(this->size + j) - lGammaR - this->lxfactorials[j] + this->size * logp + j * log1minusp );
+		if (isnan(dens))
 		{
-			lGamma1plusRplusX[j] = lgamma(1 + this->size + j);
-			lGamma2plusX[j] = lgamma(2 + j);
-			lHyper[j] = log(gsl_sf_hyperg_2F1(1, 1 + this->size + j, 2 + j, 1-this->prob));
-			lppowert[j] = (1+j) * log1minusp;
-			precomputed_CDF[j] = 1 - exp( lppowerr + lppowert[j] + lGamma1plusRplusX[j] + lHyper[j] - lGammaR - lGamma2plusX[j] );
-			if (precomputed_CDF[j] == 1)
-			{
-				FILE_LOG(logDEBUG4) << "CDF = 1 for obs[t] = "<<j<< ", shifting to value of obs[t] = "<<j-1;
-				precomputed_CDF[j] = precomputed_CDF[j-1]; 
-			}
+			FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+			FILE_LOG(logERROR) << "dens = "<< dens;
+			throw nan_detected;
 		}
-		for (int t=0; t<this->T; t++)
+		precomputed_CDF[j] = precomputed_CDF[j-1] + dens;
+		if (precomputed_CDF[j] >= 1)
 		{
-			CDF[t] = precomputed_CDF[(int)obs[t]];
-			if (isnan(CDF[t]))
-			{
-				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
-				FILE_LOG(logERROR) << "CDF["<<t<<"] = "<< CDF[t];
-				throw nan_detected;
-			}
+			FILE_LOG(logDEBUG4) << "CDF >= 1 for obs[t] = "<<j<< ", shifting to value of obs[t] = "<<j-1;
+			precomputed_CDF[j] = precomputed_CDF[j-1]; 
 		}
-// 	}
-// 	else
-// 	{
-// 		FILE_LOG(logDEBUG2) << "Computing gammas in " << __func__ << " for every t, because max(O)>T";
-// 		double lGamma1plusRplusX, lGamma2plusX, lHyper, lppowert;
-// 		for (int t=0; t<this->T; t++)
-// 		{
-// 			lGamma1plusRplusX = lgamma(1 + this->size + this->obs[t]);
-// 			lGamma2plusX = lgamma(2 + this->obs[t]);
-// 			lHyper = log(gsl_sf_hyperg_2F1(1, 1 + this->size + this->obs[t], 2 + this->obs[t], 1-this->prob));
-// 			lppowert = (1+this->obs[t]) * log1minusp;
-// 			CDF[t] = 1 - exp( lppowerr + lppowert + lGamma1plusRplusX + lHyper - lGammaR - lGamma2plusX ); //TODO: Check formula for log
-// 			if(CDF[t] == 1)
-// 			{
-// 				FILE_LOG(logERROR) << "CDF["<<t<<"] = "<< CDF[t]; //TODO: Check if this works
-// // 				cout<<"CAUTION!!!! current ="<<current<<endl; current = this->cdf->at(i-1);
-// 			}
-// 			if (isnan(CDF[t]))
-// 			{
-// 				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
-// 				FILE_LOG(logERROR) << "CDF["<<t<<"] = "<< CDF[t];
-// 				throw nan_detected;
-// 			}
-// 		}
-// 	}
+	}
+	for (int t=0; t<this->T; t++)
+	{
+		CDF[t] = precomputed_CDF[(int)obs[t]];
+		if (isnan(CDF[t]))
+		{
+			FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+			FILE_LOG(logERROR) << "CDF["<<t<<"] = "<< CDF[t];
+			throw nan_detected;
+		}
+	}
 }
 
 void NegativeBinomial::calc_logCDFs(double* logCDF)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	double logp = log(this->prob);
 	double log1minusp = log(1-this->prob);
-	double lGamma1plusRplusX, lHyper, lGammaR, lGamma2plusX, lppowert, lppowerr;
-	lGammaR = lgamma(this->size);
-	lppowerr = this->size * log(this->prob);
-	// Select strategy for computing gammas
-	if (this->max_obs <= this->T)
+	double lGammaR,lxfactorial;
+	lGammaR=lgamma(this->size);
+	double precomputed_logCDF[this->max_obs+1];
+	double logdens;
+
+	FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
+	// Calculate for j=0
+	precomputed_logCDF[0] = lgamma(this->size) - lGammaR - this->lxfactorials[0] + this->size * logp;
+	// Calculate for j>0
+	for (int j=1; j<=this->max_obs; j++)
 	{
-		FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
-		double lGamma1plusRplusX[this->max_obs+1], lGamma2plusX[this->max_obs+1], lHyper[this->max_obs+1], lppowert[this->max_obs+1];
-		for (int j=0; j<=this->max_obs; j++)
+		logdens = lgamma(this->size + j) - lGammaR - this->lxfactorials[j] + this->size * logp + j * log1minusp;
+		if (isnan(logdens))
 		{
-			lGamma1plusRplusX[j] = lgamma(1 + this->size + j);
-			lGamma2plusX[j] = lgamma(2 + j);
-			lHyper[j] = log(gsl_sf_hyperg_2F1(1, 1 + this->size + j, 2 + j, 1-this->prob));
-			lppowert[j] = (1+j) * log1minusp;
+			FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+			FILE_LOG(logERROR) << "logdens = "<< logdens;
+			throw nan_detected;
 		}
-		for (int t=0; t<this->T; t++)
+		precomputed_logCDF[j] = log( exp(precomputed_logCDF[j-1]) + exp(logdens) );
+		if (precomputed_logCDF[j] >= 0)
 		{
-			logCDF[t] = log(1 - exp( lppowerr + lppowert[(int)obs[t]] + lGamma1plusRplusX[(int)obs[t]] + lHyper[(int)obs[t]] - lGammaR - lGamma2plusX[(int)obs[t]] ));
-			if(logCDF[t] == 0)
-			{
-				FILE_LOG(logWARNING) << "logCDF["<<t<<"] = 0";
-// 				cout<<"CAUTION!!!! current ="<<current<<endl; current = this->cdf->at(i-1);
-			}
-			if (isnan(logCDF[t]))
-			{
-				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
-				FILE_LOG(logERROR) << "logCDF["<<t<<"] = "<< logCDF[t];
-				throw nan_detected;
-			}
+			FILE_LOG(logDEBUG4) << "logCDF >= 0 for obs[t] = "<<j<< ", shifting to value of obs[t] = "<<j-1;
+			precomputed_logCDF[j] = precomputed_logCDF[j-1]; 
 		}
 	}
-	else
+	for (int t=0; t<this->T; t++)
 	{
-		FILE_LOG(logDEBUG2) << "Computing gammas in " << __func__ << " for every t, because max(O)>T";
-		for (int t=0; t<this->T; t++)
+		logCDF[t] = precomputed_logCDF[(int)obs[t]];
+		if (isnan(logCDF[t]))
 		{
-			lGamma1plusRplusX = lgamma(1 + this->size + this->obs[t]);
-			lGamma2plusX = lgamma(2 + this->obs[t]);
-			lHyper = log(gsl_sf_hyperg_2F1(1, 1 + this->size + this->obs[t], 2 + this->obs[t], 1-this->prob));
-			lppowert = (1+this->obs[t]) * log1minusp;
-			logCDF[t] = log(1 - exp( lppowerr + lppowert + lGamma1plusRplusX + lHyper - lGammaR - lGamma2plusX )); //TODO: Check formula for log
-			if(logCDF[t] == 0)
-			{
-				FILE_LOG(logWARNING) << "logCDF["<<t<<"] = 1"; //TODO: Check if this works
-// 				cout<<"CAUTION!!!! current ="<<current<<endl; current = this->cdf->at(i-1);
-			}
-			if (isnan(logCDF[t]))
-			{
-				FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
-				FILE_LOG(logERROR) << "logCDF["<<t<<"] = "<< logCDF[t];
-				throw nan_detected;
-			}
+			FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
+			FILE_LOG(logERROR) << "logCDF["<<t<<"] = "<< logCDF[t];
+			throw nan_detected;
 		}
 	}
 }

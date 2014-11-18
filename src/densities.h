@@ -1,5 +1,4 @@
 #include <Rmath.h> // digamma() and qnorm()
-#include <gsl/gsl_sf_hyperg.h> //needed for the hypergeometric function
 #include <vector> // storing density functions in MVCopula
 #include "utility.h" // FILE_LOG(), intMax(), allocDoubleMatrix()
 

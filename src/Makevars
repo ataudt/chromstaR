@@ -1,2 +1,2 @@
-PKG_LIBS = -L./ -lgsl -lgslcblas
-PKG_CPPFLAGS = -I./external-header -fopenmp
+PKG_LIBS = 
+PKG_CPPFLAGS = -fopenmp
