@@ -1,36 +1,46 @@
 prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num.threads=1) {
 
-	nummod = length(modellist)
-	numbins = modellist[[1]]$num.bins
+	nummod <- length(modellist)
+	numbins <- length(modellist[[1]]$bins)
 	IDs <- unlist(lapply(modellist, "[[", "ID"))
 
-	### Extract the reads
+	### Extract the reads ###
 	cat("Extracting reads from modellist...")
 	ptm <- proc.time()
-	reads = matrix(NA, ncol=nummod, nrow=numbins)
+	reads <- matrix(NA, ncol=nummod, nrow=numbins)
 	colnames(reads) <- IDs
 	for (imod in 1:nummod) {
-		reads[,imod] = modellist[[imod]]$reads
+		reads[,imod] <- modellist[[imod]]$bins$reads
 	}
-	maxreads = max(reads)
+	maxreads <- max(reads)
 	time <- proc.time() - ptm
 	cat(paste0(" ",round(round(time[3], 2),2),"s\n"))
 
-	### Extract coordinates and other stuff
-	coordinates = modellist[[1]]$coordinates
-	seqlengths <- modellist[[1]]$seqlengths
-	distributions = lapply(modellist,"[[","distributions")
-	weights = lapply(modellist,"[[","weights")
+	### Extract bins and other stuff ###
+	bins <- modellist[[1]]$bins
+	mcols(bins) <- NULL
+	distributions <- lapply(modellist,"[[","distributions")
+	weights <- lapply(modellist,"[[","weights")
 
-	### Get the combinatorial states
+	### Get the combinatorial states ###
 	cat("Getting combinatorial states...")
 	ptm <- proc.time()
-	combstates.per.bin = combinatorial.states(modellist)
-	comb.states.table = table(combstates.per.bin)
+	## Get the univariate states (zero inflation = 0, unmodified = 0, modified = 1) from the modellist
+		binary_statesmatrix <- matrix(rep(NA,numbins*nummod), ncol=nummod)
+		for (imod in 1:nummod) {
+			binary_statesmatrix[,imod] <- c(FALSE,FALSE,TRUE)[modellist[[imod]]$bins$state] # F,F,T corresponds to levels 'zero-inflation','unmodified','modified'
+		}
+	## Transform binary to decimal
+		decimal_states <- rep(0,numbins)
+		for (imod in 1:nummod) {
+			decimal_states <- decimal_states + 2^(nummod-imod) * binary_statesmatrix[,imod]
+		}
+	combstates.per.bin <- decimal_states
+	comb.states.table <- table(combstates.per.bin)
 	if (is.null(use.states)) {
-		comb.states = as.numeric(names(sort(comb.states.table, decreasing=TRUE)))
+		comb.states <- as.numeric(names(sort(comb.states.table, decreasing=TRUE)))
 	} else {
-		comb.states = use.states
+		comb.states <- use.states
 	}
 	time <- proc.time() - ptm
 	cat(paste0(" ",round(time[3], 2),"s\n"))
@@ -167,9 +177,6 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 	comb.states.table2use = comb.states.table[as.character(comb.states2use)]
 	determinant2use = determinant[usestateTF][1:numstates2use]
 
-
-
-
 # 	## Calculate multivariate densities for each state
 # 	cat("Calculating multivariate densities...")
 # 	densities <- matrix(1, ncol=numstates2use, nrow=numbins, dimnames=list(bin=1:numbins, comb.state=comb.states2use))
@@ -217,8 +224,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 
 	# Return parameters
 	out = list(IDs = IDs,
-				coordinates = coordinates,
-				seqlengths = seqlengths,
+				bins = bins,
 				reads = reads,
 				numbins = numbins,
 				nummod = nummod,

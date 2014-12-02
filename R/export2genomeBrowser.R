@@ -1,7 +1,7 @@
 # ==============================================
 # Write color-coded tracks with states from HMMs
 # ==============================================
-export.unihmm2bed <- function(hmm.list, only.modified=TRUE, file="view_me_in_genome_browser", numCPU=1) {
+export.unihmm2bed <- function(hmm.list, only.modified=TRUE, file="view_me_in_genome_browser") {
 
 	## Function definitions
 	insertchr <- function(hmm.gr) {
@@ -17,12 +17,12 @@ export.unihmm2bed <- function(hmm.list, only.modified=TRUE, file="view_me_in_gen
 	hmm.list <- loadHmmsFromFiles(hmm.list)
 
 	## Transform to GRanges
-	hmm.grl <- hmmList2GRangesList(hmm.list, reduce=T, numCPU=numCPU)
+	hmm.grl <- lapply(hmm.list, '[[', 'segments')
 	hmm.grl <- lapply(hmm.grl, insertchr)
 
 	# Variables
 	nummod <- length(hmm.list)
-	numstates <- hmm.list[[1]]$num.states
+	numstates <- length(hmm.list[[1]]$weights)
 	filename <- paste0(file,".bed.gz")
 	file <- gzfile(filename, 'w')
 
@@ -64,7 +64,7 @@ export.unihmm2bed <- function(hmm.list, only.modified=TRUE, file="view_me_in_gen
 # =============================
 # Write signal tracks from HMMs
 # =============================
-export.unihmm2wiggle <- function(hmm.list, file="view_me_in_genome_browser", numCPU=1) {
+export.unihmm2wiggle <- function(hmm.list, file="view_me_in_genome_browser") {
 
 	## Function definitions
 	insertchr <- function(hmm.gr) {
@@ -80,18 +80,17 @@ export.unihmm2wiggle <- function(hmm.list, file="view_me_in_genome_browser", num
 	hmm.list <- loadHmmsFromFiles(hmm.list)
 
 	## Transform to GRanges
-	temp <- hmmList2GRangesList(hmm.list, reduce=F, numCPU=numCPU)
-	hmm.grl <- lapply(temp$grl, insertchr)
+	grl <- lapply(hmm.list, '[[', 'bins')
+	hmm.grl <- lapply(grl, insertchr)
 
 	# Variables
 	nummod <- length(hmm.list)
-	numstates <- hmm.list[[1]]$num.states
+	numstates <- length(hmm.list[[1]]$weights)
 	filename <- paste0(file,".wiggle.gz")
 	file <- gzfile(filename, 'w')
 
 	# Write first line to file
 	cat('writing to file',filename,'\n')
-# 	cat("browser hide all\n", file=file)
 	cat("", file=file)
 	
 	### Write every model to file ###
@@ -118,9 +117,9 @@ export.unihmm2wiggle <- function(hmm.list, file="view_me_in_genome_browser", num
 # ===============================================================
 export.multihmm2bed <- function(multi.hmm, separate.tracks=TRUE, exclude.state.zero=TRUE, numstates=NULL, file="view_me_in_genome_browser") {
 
-	if (class(multi.hmm)!=class.chromstar.multivariate) {
+	if (class(multi.hmm)!=class.multivariate.hmm) {
 		multi.hmm <- get(load(multi.hmm))
-		if (class(multi.hmm)!=class.chromstar.multivariate) {
+		if (class(multi.hmm)!=class.multivariate.hmm) {
 			stop("argument 'multi.hmm' expects a multivariate hmm or a file which contains a multivariate hmm")
 		}
 	}
@@ -128,7 +127,7 @@ export.multihmm2bed <- function(multi.hmm, separate.tracks=TRUE, exclude.state.z
 	# Variables
 	filename <- paste0(file,".bed.gz")
 	file <- gzfile(filename, 'w')
-	combstates <- multi.hmm$comb.states
+	combstates <- names(multi.hmm$weights)
 	if (is.null(numstates)) {
 		numstates <- length(combstates)
 	} else if (numstates > length(combstates)) {
@@ -136,14 +135,15 @@ export.multihmm2bed <- function(multi.hmm, separate.tracks=TRUE, exclude.state.z
 	}
 	if (exclude.state.zero) {
 		combstates2use <- setdiff(combstates,0)
-		combstates2use <- combstates2use[1:numstates]
-		combstates2use <- combstates2use[!is.na(combstates2use)]
-		numstates <- length(combstates2use)
+	} else {
+		combstates2use <- combstates
 	}
+	combstates2use <- combstates2use[1:numstates]
+	combstates2use <- combstates2use[!is.na(combstates2use)]
+	numstates <- length(combstates2use)
 
 	# Collapse the calls
-	calls <- cbind(multi.hmm$coordinates, state=multi.hmm$states)
-	collapsed.calls <- collapse.bins(calls, column2collapseBy=4)
+	collapsed.calls <- as.data.frame(multi.hmm$segments)
 	# Select only desired states
 	mask <- rep(FALSE,nrow(collapsed.calls))
 	for (istate in combstates2use) {
@@ -153,10 +153,9 @@ export.multihmm2bed <- function(multi.hmm, separate.tracks=TRUE, exclude.state.z
 
 	## Write to file
 	cat('writing to file',filename,'\n')
-# 	cat("browser hide all\n", file=file)
 	cat("", file=file)
 	if (separate.tracks) {
-		bin <- dec2bin(collapsed.calls$state, ndigits=ncol(multi.hmm$reads))
+		bin <- dec2bin(collapsed.calls$state, ndigits=length(multi.hmm$IDs.univariate))
 		colnames(bin) <- multi.hmm$IDs.univariate
 		for (icol in 1:ncol(bin)) {
 			numsegments <- length(which(bin[,icol]))
@@ -200,9 +199,9 @@ export.multihmm2bed <- function(multi.hmm, separate.tracks=TRUE, exclude.state.z
 # ===================================================
 export.multihmm2wiggle <- function(multi.hmm, file="view_me_in_genome_browser") {
 
-	if (class(multi.hmm)!=class.chromstar.multivariate) {
+	if (class(multi.hmm)!=class.multivariate.hmm) {
 		multi.hmm <- get(load(multi.hmm))
-		if (class(multi.hmm)!=class.chromstar.multivariate) {
+		if (class(multi.hmm)!=class.multivariate.hmm) {
 			stop("argument 'multi.hmm' expects a multivariate hmm or a file which contains a multivariate hmm")
 		}
 	}
@@ -210,11 +209,10 @@ export.multihmm2wiggle <- function(multi.hmm, file="view_me_in_genome_browser") 
 	# Variables
 	filename <- paste0(file,".wiggle.gz")
 	file <- gzfile(filename, 'w')
-	nummod <- ncol(multi.hmm$reads)
+	nummod <- length(multi.hmm$IDs.univariate)
 
 	# Write first line to file
 	cat('writing to file',filename,'\n')
-# 	cat("browser hide all\n", file=file)
 	cat("", file=file)
 	
 	### Write every model to file ###
@@ -222,12 +220,12 @@ export.multihmm2wiggle <- function(multi.hmm, file="view_me_in_genome_browser") 
 		cat('writing track',imod,'/',nummod,'\r')
 		ID <- multi.hmm$IDs.univariate[imod]
 		priority <- 50 + 3*imod
-		binsize <- diff(multimodel$coordinates$start)[1]
+		binsize <- width(multi.hmm$bins[1])
 		cat(paste0("track type=wiggle_0 name=\"read count for ",ID,"\" description=\"read count for ",ID,"\" visibility=full autoScale=on color=90,90,90 maxHeightPixels=100:50:20 graphType=bar priority=",priority,"\n"), file=file, append=TRUE)
 		# Write read data
-		for (chrom in unique(multi.hmm$coordinates$chrom)) {
+		for (chrom in seqlevels(multi.hmm$bins)) {
 			cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=file, append=TRUE)
-			write.table(multi.hmm$reads[multi.hmm$coordinates$chrom==chrom,imod], file=file, append=TRUE, row.names=FALSE, col.names=FALSE)
+			write.table(multi.hmm$bins[seqnames(multi.hmm$bins)==chrom]$reads[,imod], file=file, append=TRUE, row.names=FALSE, col.names=FALSE)
 		}
 	}
 	close(file)
@@ -255,7 +253,6 @@ export.GRanges2bed <- function(gr, file="view_me_in_genome_browser", separate.tr
 
 	# Write to file
 	cat('writing to file',filename,'\n')
-# 	cat("browser hide all\n", file=file)
 	cat("", file=file)
 	numsegments <- length(gr)
 	df <- cbind(as.data.frame(gr)[,c(1:3,6)], score=rep(0,numsegments), strand=rep(".",numsegments), thickStart=start(ranges(gr)), thickEnd=end(ranges(gr)), itemRgb=itemRgb)
@@ -327,4 +324,51 @@ export.binned2bedGraph <- function(binned.data.list, file="view_me_in_genome_bro
 	cat('\n')
 
 }
+
+
+# ====================================
+# Write signal tracks from binned data
+# ====================================
+export.binned2wiggle <- function(binned.data.list, file="view_me_in_genome_browser") {
+
+	## Function definitions
+	insertchr <- function(hmm.gr) {
+		# Change chromosome names from '1' to 'chr1' if necessary
+		mask <- which(!grepl('chr', seqnames(hmm.gr)))
+		mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
+		mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
+		mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
+		return(hmm.gr)
+	}
+
+	## Transform to GRanges
+	binned.data.list <- lapply(binned.data.list, insertchr)
+
+	# Variables
+	nummod <- length(binned.data.list)
+	filename <- paste0(file,".wiggle.gz")
+	file <- gzfile(filename, 'w')
+
+	# Write first line to file
+	cat('writing to file',filename,'\n')
+	cat("", file=file)
+	
+	### Write every model to file ###
+	for (imod in 1:nummod) {
+		cat('writing binned data',imod,'/',nummod,'\r')
+		b <- binned.data.list[[imod]]
+		priority <- 50 + 3*imod
+		binsize <- width(b[1])
+		name <- names(binned.data.list)[imod]
+		cat(paste0("track type=wiggle_0 name=\"read count for ",name,"\" description=\"read count for ",name,"\" visibility=full autoScale=on color=90,90,90 maxHeightPixels=100:50:20 graphType=bar priority=",priority,"\n"), file=file, append=TRUE)
+		# Write read data
+		for (chrom in unique(b$chromosome)) {
+			cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=file, append=TRUE)
+			write.table(mcols(b[b$chromosome==chrom])$reads, file=file, append=TRUE, row.names=FALSE, col.names=FALSE)
+		}
+	}
+	close(file)
+	cat('\n')
+}
+
 

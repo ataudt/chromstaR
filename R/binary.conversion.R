@@ -43,3 +43,25 @@ bin2dec = function(bin) {
 	return(dec)
 }
 
+state.brewer <- function(statespec) {
+
+	# List of possible binary states
+	ntracks <- length(statespec)
+	all.binstates <- dec2bin(0:(2^ntracks-1))
+
+	# Generate select mask
+	mask <- rep(TRUE, nrow(all.binstates))
+	for (itrack in 1:length(statespec)) {
+		bit <- statespec[itrack]
+		if (bit == 1 | bit == 0) {
+			mask <- mask & all.binstates[,itrack]==bit
+		}
+	}
+
+	# Select specified states
+	binstates <- all.binstates[mask,]
+	combstates <- bin2dec(binstates)
+
+	return(combstates)
+
+}

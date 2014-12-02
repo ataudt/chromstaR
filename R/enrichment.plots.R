@@ -3,7 +3,7 @@ plot.fractionOfSegmentation <- function(multi.hmm) {
 	# Convert to GRanges if not already GRanges
 	if (class(multi.hmm)=="GRanges") {
 		gr <- multi.hmm
-	} else if (class(multi.hmm)==class.chromstar.multivariate) {
+	} else if (class(multi.hmm)==class.multivariate.hmm) {
 		gr <- hmm2GRanges(multi.hmm, reduce=TRUE)
 	} else {
 		stop("argument 'multi.hmm' expects either a multivariate hmm object (type ?multi.hmm for help) or a derived GRanges object")

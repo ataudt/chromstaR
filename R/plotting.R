@@ -24,12 +24,12 @@ plot.distributions.to.pdf <- function(uni.hmms, file='distribution-plots') {
 			uni.hmm <- uni.hmms[irow,icol]
 			if (class(uni.hmm)=='character') {
 				if (uni.hmm!='' & uni.hmm!='NA') {
-					uni.hmm <- loadHmmsFromFiles(uni.hmm)[[1]]
+					uni.hmm <- loadHmmsFromFiles(list(uni.hmm))[[1]]
 					ggplt <- plot.distribution(uni.hmm)
 				} else {
 					ggplt <- ggplot(data=data.frame(x=0:10, y=0:10)) + geom_line(aes(x=x,y=y))
 				}
-			} else if (class(uni.hmm)==class.chromstar.univariate) {
+			} else if (class(uni.hmm)==class.univariate.hmm) {
 				ggplt <- plot.distribution(uni.hmm)
 			}
 				
@@ -73,6 +73,12 @@ plot.distributions.multi <- function(multi.hmm) {
 # ============================================================
 plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NULL) {
 
+	## Check user input
+	if (check.univariate.model(model)!=0) {
+		model <- get(load(model))
+		if (check.univariate.model(model)!=0) stop("argument 'model' expects a univariate HMM or a file that contains a univariate HMM")
+	}
+
 	## Load libraries
 	library(ggplot2)
 	library(reshape2)
@@ -88,57 +94,46 @@ plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NUL
 		return(rightxlim)
 	}
 
-	# Add artificial entries to deal with control experiments
-	if (model$control) {
-		model$weights[3] = 0
-		names(model$weights)[3] <- state.labels[3]
-		model$distributions <- rbind(model$distributions, c(NA,NA,NA,NA))
-		row.names(model$distributions)[3] <- state.labels[3]
-	}
-
 	# Select the rows to plot
-	selectmask <- rep(TRUE,length(model$reads))
-	numchrom <- length(table(model$coordinates$chrom))
+	selectmask <- rep(TRUE,length(model$bins))
+	numchrom <- length(table(seqnames(model$bins)))
 	if (!is.null(chrom)) {
-		if (! chrom %in% levels(model$coordinates$chrom)) {
+		if (! chrom %in% levels(seqnames(model$bins))) {
 			stop(chrom," can't be found in the model coordinates.")
 		}
-		selectchrom <- model$coordinates$chrom == chrom
+		selectchrom <- seqnames(model$bins) == chrom
 		selectmask <- selectmask & selectchrom
 		numchrom <- 1
 	}
 	if (numchrom == 1) {
 		if (!is.null(start)) {
-			selectstart <- model$coordinates$start >= start
+			selectstart <- start(ranges(model$bins)) >= start
 			selectmask <- selectmask & selectstart
 		}
 		if (!is.null(end)) {
-			selectend <- model$coordinates$end <= end
+			selectend <- end(ranges(model$bins)) <= end
 			selectmask <- selectmask & selectend
 		}
 	}
 	if (!is.null(state)) {
-		selectmask <- selectmask & model$states==state
+		selectmask <- selectmask & model$bins$state==state
 	}
-	if (length(which(selectmask)) != length(model$reads)) {
-		reads <- model$reads[selectmask]
-# 		posteriors <- model$posteriors[selectmask,]
-# 		weights <- apply(posteriors,2,mean)
-		states <- model$states[selectmask]
+	if (length(which(selectmask)) != length(model$bins$reads)) {
+		reads <- model$bins$reads[selectmask]
+		states <- model$bins$state[selectmask]
 		weights <- rep(NA, 3)
 		weights[1] <- length(which(states=="zero-inflation"))
 		weights[2] <- length(which(states=="unmodified"))
 		weights[3] <- length(which(states=="modified"))
 		weights <- weights / length(states)
 	} else {
-		reads <- model$reads
+		reads <- model$bins$reads
 		weights <- model$weights
 	}
 
 	# Find the x limits
 	breaks <- max(reads)
 	if (max(reads)==0) { breaks <- 1 }
-# 	rightxlim <- quantile(reads,0.98)
 	histdata <- hist(reads, right=FALSE, breaks=breaks, plot=FALSE)
 	rightxlim <- get_rightxlim(histdata, reads)
 
@@ -169,31 +164,20 @@ plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NUL
 	ggplt <- ggplt + ggtitle(model$ID)
 
 	### Plot the distributions
-	if (model$control) {
-
+	if (is.null(state)) {
 		ggplt <- ggplt + geom_line(data=df, aes(x=x, y=y, col=state))
-		# Make legend and colors correct
-		ggplt <- ggplt + scale_color_manual(name="components", values=state.colors['unmodified'])
-
+		ggplt <- ggplt + scale_color_manual(name="components", values=state.colors[c('unmodified','modified','total')], labels=legend) + theme(legend.justification=c(1,1), legend.position=c(1,1))
 	} else {
-
-		if (is.null(state)) {
-			ggplt <- ggplt + geom_line(data=df, aes(x=x, y=y, col=state))
-			ggplt <- ggplt + scale_color_manual(name="components", values=state.colors[c('unmodified','modified','total')], labels=legend) + theme(legend.justification=c(1,1), legend.position=c(1,1))
-		} else {
-			if (state=="unmodified") {
-				ggplt <- ggplt + geom_line(data=df[df$state=='unmodified',], aes(x=x, y=y, col=state))
-				ggplt <- ggplt + scale_color_manual(name="components", values=state.colors[c('unmodified')], labels=legend[1]) + theme(legend.justification=c(1,1), legend.position=c(1,1))
-			}
-			if (state=="modified") {
-				ggplt <- ggplt + geom_line(data=df[df$state=='modified',], aes(x=x, y=y, col=state))
-				ggplt <- ggplt + scale_color_manual(name="components", values=state.colors[c('modified')], labels=legend[2]) + theme(legend.justification=c(1,1), legend.position=c(1,1))
-			}
+		if (state=="unmodified") {
+			ggplt <- ggplt + geom_line(data=df[df$state=='unmodified',], aes(x=x, y=y, col=state))
+			ggplt <- ggplt + scale_color_manual(name="components", values=state.colors[c('unmodified')], labels=legend[1]) + theme(legend.justification=c(1,1), legend.position=c(1,1))
 		}
-		
-
+		if (state=="modified") {
+			ggplt <- ggplt + geom_line(data=df[df$state=='modified',], aes(x=x, y=y, col=state))
+			ggplt <- ggplt + scale_color_manual(name="components", values=state.colors[c('modified')], labels=legend[2]) + theme(legend.justification=c(1,1), legend.position=c(1,1))
+		}
 	}
-
+		
 	return(ggplt)
 
 }

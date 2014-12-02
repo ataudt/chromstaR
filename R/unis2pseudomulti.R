@@ -58,7 +58,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
 										num.states = numstates,
 										num.modifications = nummod,
 										A.initial = A.estimated)
-	class(multi.hmm) <- class.chromstar.multivariate
+	class(multi.hmm) <- class.multivariate.hmm
 	return(multi.hmm)
 
 }

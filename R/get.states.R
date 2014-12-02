@@ -1,6 +1,6 @@
 get.states <- function(model, threshold=0.5, separate.zeroinflation=FALSE, control=FALSE) {
 	states <- rep(NA,model$num.bins)
-	if (is(model,class.chromstar.univariate)) {
+	if (is(model,class.univariate.hmm)) {
 		if (control) {
 			states <- ifelse(model$posteriors[,2]>threshold, 2, 1)
 			states <- factor(state.labels[1:2], levels=states.labels[1:2])[states]
@@ -14,7 +14,7 @@ get.states <- function(model, threshold=0.5, separate.zeroinflation=FALSE, contr
 			states <- factor(state.labels[2:3], levels=states.labels[2:3])[states]
 		}
 		return(states)
-	} else if (is(model,class.chromstar.multivariate)) {
+	} else if (is(model,class.multivariate.hmm)) {
 		stop("Multivariate get.states() not implemented")
 	} else {
 		stop("Supply either a univariate or multivariate chromstar model")

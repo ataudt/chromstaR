@@ -134,42 +134,9 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 		)
 	}
 
-	# Add useful entries
-# 	hmm$reads <- mcols(binned.data)$reads
-	hmm$ID <- ID
-	names(hmm$weights) <- state.labels
-	hmm$coordinates <- data.frame(as.character(seqnames(binned.data)), start(ranges(binned.data)), end(ranges(binned.data)))
-	names(hmm$coordinates) <- coordinate.names
-	hmm$seqlengths <- seqlengths(binned.data)
-	hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
-	colnames(hmm$posteriors) <- paste("P(",state.labels,")", sep="")
-	class(hmm) <- class.chromstar.univariate
-	hmm$states <- get.states(hmm, separate.zeroinflation=TRUE, control=control)
-	hmm$eps <- eps
-	hmm$A <- matrix(hmm$A, ncol=hmm$num.states, byrow=TRUE)
-	rownames(hmm$A) <- state.labels
-	colnames(hmm$A) <- state.labels
-	hmm$distributions <- data.frame(type=state.distributions, size=hmm$size, prob=hmm$prob, mu=dnbinom.mean(hmm$size,hmm$prob), variance=dnbinom.variance(hmm$size,hmm$prob))
-	rownames(hmm$distributions) <- state.labels
-	hmm$A.initial <- matrix(hmm$A.initial, ncol=hmm$num.states, byrow=TRUE)
-	rownames(hmm$A.initial) <- state.labels
-	colnames(hmm$A.initial) <- state.labels
-	hmm$distributions.initial <- data.frame(type=state.distributions, size=hmm$size.initial, prob=hmm$prob.initial, mu=dnbinom.mean(hmm$size.initial,hmm$prob.initial), variance=dnbinom.variance(hmm$size.initial,hmm$prob.initial))
-	rownames(hmm$distributions.initial) <- state.labels
-	hmm$distributions.initial['zero-inflation',2:5] <- c(0,1,0,0)
-	hmm$control <- control
-
-	# Delete redundant entries
-	hmm$posteriors <- NULL
-	hmm$size <- NULL
-	hmm$prob <- NULL
-	hmm$size.initial <- NULL
-	hmm$prob.initial <- NULL
-	hmm$use.initial.params <- NULL
-
-	# Issue warnings
+	### Issue warnings ###
 	if (num.trials == 1) {
-		if (hmm$loglik.delta > hmm$eps) {
+		if (hmm$loglik.delta > eps) {
 			war <- warning("HMM did not converge!\n")
 		}
 	}
@@ -179,6 +146,70 @@ univariate.from.binned.data <- function(binned.data, ID, eps=0.001, init="standa
 		stop("An error occurred during the Baum-Welch! Parameter estimation terminated prematurely.")
 	}
 
+	### Make return object ###
+		result <- list()
+		result$ID <- ID
+	## Get states
+		hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
+		colnames(hmm$posteriors) <- paste0("P(",state.labels,")")
+		threshold <- 0.5
+		states <- rep(NA,hmm$num.bins)
+		states[ hmm$posteriors[,3]<=threshold & hmm$posteriors[,2]<=hmm$posteriors[,1] ] <- 1
+		states[ hmm$posteriors[,3]<=threshold & hmm$posteriors[,2]>=hmm$posteriors[,1] ] <- 2
+		states[ hmm$posteriors[,3]>threshold ] <- 3
+		states <- state.labels[states]
+	## Bin coordinates and states
+		result$bins <- GRanges(seqnames=seqnames(binned.data),
+														ranges=ranges(binned.data),
+														reads=hmm$reads,
+														state=states) 
+		seqlengths(result$bins) <- seqlengths(binned.data)
+	## Segmentation
+		cat("Making segmentation ...")
+		ptm <- proc.time()
+		gr <- result$bins
+		red.gr.list <- GRangesList()
+		for (state in state.labels) {
+			red.gr <- GenomicRanges::reduce(gr[states==state])
+			mcols(red.gr)$state <- rep(factor(state, levels=levels(state.labels)),length(red.gr))
+			red.gr.list[[length(red.gr.list)+1]] <- red.gr
+		}
+		red.gr <- GenomicRanges::sort(GenomicRanges::unlist(red.gr.list))
+		result$segments <- red.gr
+		seqlengths(result$segments) <- seqlengths(binned.data)
+		cat(paste0(" ",round(time[3],2),"s\n"))
+	## Parameters
+		# Weights
+		result$weights <- hmm$weights
+		names(result$weights) <- state.labels
+		# Transition matrices
+		transitionProbs <- matrix(hmm$A, ncol=hmm$num.states, byrow=TRUE)
+		rownames(transitionProbs) <- state.labels
+		colnames(transitionProbs) <- state.labels
+		result$transitionProbs <- transitionProbs
+		transitionProbs.initial <- matrix(hmm$A.initial, ncol=hmm$num.states, byrow=TRUE)
+		rownames(transitionProbs.initial) <- state.labels
+		colnames(transitionProbs.initial) <- state.labels
+		result$transitionProbs.initial <- transitionProbs.initial
+		# Initial probs
+		result$startProbs <- hmm$proba
+		names(result$startProbs) <- paste0("P(",state.labels,")")
+		result$startProbs.initial <- hmm$proba.initial
+		names(result$startProbs.initial) <- paste0("P(",state.labels,")")
+		# Distributions
+		distributions <- data.frame(type=state.distributions, size=hmm$size, prob=hmm$prob, mu=dnbinom.mean(hmm$size,hmm$prob), variance=dnbinom.variance(hmm$size,hmm$prob))
+		rownames(distributions) <- state.labels
+		result$distributions <- distributions
+		distributions.initial <- data.frame(type=state.distributions, size=hmm$size.initial, prob=hmm$prob.initial, mu=dnbinom.mean(hmm$size.initial,hmm$prob.initial), variance=dnbinom.variance(hmm$size.initial,hmm$prob.initial))
+		rownames(distributions.initial) <- state.labels
+		distributions.initial['zero-inflation',2:5] <- c(0,1,0,0)
+		result$distributions.initial <- distributions.initial
+	## Convergence info
+		convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec)
+		result$convergenceInfo <- convergenceInfo
+	## Add class
+		class(result) <- class.univariate.hmm
+	
 	# Return results
-	return(hmm)
+	return(result)
 }

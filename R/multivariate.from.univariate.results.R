@@ -1,4 +1,4 @@
-multivariate.from.univariate.results <- function(modellist, use.states=NULL, num.states=NULL, eps=0.001, num.threads=1, max.time=-1, max.iter=-1, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file="chromStar_checkpoint", checkpoint.reduce=c("coordinates","reads"), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL) {
+multivariate.from.univariate.results <- function(modellist, use.states=NULL, num.states=NULL, eps=0.001, num.threads=1, max.time=-1, max.iter=-1, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file="chromStar_checkpoint", checkpoint.reduce=c("bins","segments"), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL) {
 
 	## Intercept user input
 	if (check.univariate.modellist(modellist)!=0) {
@@ -31,8 +31,7 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 
 	## Prepare the HMM
 	params <- prepare.multivariate(modellist, use.states=use.states, num.states=num.states, num.threads=num.threads)
-	coordinates <- params$coordinates
-	seqlengths <- params$seqlengths
+	bins <- params$bins
 	reads <- params$reads
 	numbins <- params$numbins
 	nummod <- params$nummod
@@ -125,70 +124,93 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 			error = as.integer(0) # error handling
 			)
 			
-		# Add useful entries
-		class(hmm) <- class.chromstar.multivariate
-		hmm$coordinates <- coordinates
-		hmm$seqlengths <- seqlengths
-		hmm$reads <- reads # reassign because of matrix layout
-		hmm$states <- factor(hmm$states, levels=hmm$comb.states)
-		hmm$eps <- eps
-		hmm$A <- matrix(hmm$A, ncol=numstates2use, byrow=TRUE)
-		colnames(hmm$A) <- comb.states2use
-		rownames(hmm$A) <- comb.states2use
-		hmm$IDs.univariate <- IDs
-		hmm$distributions.univariate <- distributions
-		hmm$weights.univariate <- weights
-		hmm$A.initial <- matrix(hmm$A.initial, ncol=numstates2use, byrow=TRUE)
-		colnames(hmm$A.initial) <- comb.states2use
-		rownames(hmm$A.initial) <- comb.states2use
-		hmm$correlation.matrix <- correlationMatrix2use
-		hmm$correlation.matrix.inverse <- correlationMatrixInverse2use
-		tstates <- table(hmm$states)
-		hmm$weights <- tstates/sum(tstates)
+		### Check convergence ###
+		war <- NULL
+		if (hmm$loglik.delta > eps) {
+			war <- warning("HMM did not converge!\n")
+		}
+		if (hmm$error == 1) {
+			stop("A nan occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
+		} else if (hmm$error == 2) {
+			stop("An error occurred during the Baum-Welch! Parameter estimation terminated prematurely.")
+		}
 
-		# Delete redundant entries
-		hmm$size <- NULL
-		hmm$prob <- NULL
-		hmm$w <- NULL
-		hmm$use.initial.params <- NULL
+		### Make return object ###
+			result <- list()
+			result$IDs.univariate <- IDs
+		## Bin coordinates and states
+			result$bins <- bins
+			result$bins$reads <- reads
+			result$bins$state <- factor(hmm$states, levels=hmm$comb.states)
+		## Segmentation
+			cat("Making segmentation ...")
+			ptm <- proc.time()
+			gr <- result$bins
+			red.gr.list <- GRangesList()
+			for (state in hmm$comb.states) {
+				red.gr <- GenomicRanges::reduce(gr[gr$state==state])
+				mcols(red.gr)$state <- rep(factor(state, levels=levels(gr$state)),length(red.gr))
+				red.gr.list[[length(red.gr.list)+1]] <- red.gr
+			}
+			red.gr <- GenomicRanges::sort(GenomicRanges::unlist(red.gr.list))
+			result$segments <- red.gr
+			seqlengths(result$segments) <- seqlengths(result$bins)
+			time <- proc.time() - ptm
+			cat(paste0(" ",round(time[3],2),"s\n"))
+		## Parameters
+			# Weights
+			tstates <- table(hmm$states)
+			result$weights <- sort(tstates/sum(tstates), decreasing=T)
+			# Transition matrices
+			result$transitionProbs <- matrix(hmm$A, ncol=numstates2use, byrow=TRUE)
+			colnames(result$transitionProbs) <- comb.states2use
+			rownames(result$transitionProbs) <- comb.states2use
+			result$transitionProbs.initial <- matrix(hmm$A.initial, ncol=numstates2use, byrow=TRUE)
+			colnames(result$transitionProbs.initial) <- comb.states2use
+			rownames(result$transitionProbs.initial) <- comb.states2use
+			# Initial probs
+			result$startProbs <- hmm$proba
+			names(result$startProbs) <- paste0("P(",comb.states2use,")")
+			result$startProbs.initial <- hmm$proba.initial
+			names(result$startProbs.initial) <- paste0("P(",comb.states2use,")")
+			# Distributions
+			result$distributions <- distributions
+			names(result$distributions) <- IDs
+		## Convergence info
+			convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec)
+			result$convergenceInfo <- convergenceInfo
+		## Correlation matrices
+# 			result$correlation.matrix <- correlationMatrix2use
+		## Add class
+			class(result) <- class.multivariate.hmm
 
 		# Adjust parameters for the next round
-		A.initial <- hmm$A
+		A.initial <- result$transitionProbs
 		proba.initial <- hmm$proba
 		use.initial <- TRUE
 		iteration.total <- iteration.total + hmm$num.iterations
-		hmm$num.iterations <- iteration.total
+		result$convergenceInfo$num.iterations <- iteration.total
 		time.total <- time.total + hmm$time.sec
-		hmm$time.sec <- time.total
+		result$convergenceInfo$time.sec <- time.total
 		# Test if terminating condition has been reached
-		if (hmm$loglik.delta <= hmm$eps | (time.total >= max.time & max.time > 0) | (iteration.total >= max.iter & max.iter > 0)) break
+		if (result$convergenceInfo$loglik.delta <= result$convergenceInfo$eps | (time.total >= max.time & max.time > 0) | (iteration.total >= max.iter & max.iter > 0)) break
 		# Reduce the hmm for checkpointing
-		hmm[checkpoint.reduce] <- NULL
+		result[checkpoint.reduce] <- NULL
 		# Save checkpoint
+		hmm.checkpoint <- result
 		if (checkpoint.overwrite) {
 			cat("Saving checkpoint to file ",checkpoint.file,"\n")
-			save(hmm, file=checkpoint.file)
+			save(hmm.checkpoint, file=checkpoint.file)
 		} else {
 			cfile <- paste(checkpoint.file,"_iteration_",iteration.total, sep="")
 			cat("Saving checkpoint to file ",cfile,"\n")
-			save(hmm, file=cfile)
+			save(hmm.checkpoint, file=cfile)
 		}
 		cat("\nTotal time: ", time.total)
 		cat("\nTotal iterations: ", iteration.total)
 		cat("\n\nRestarting HMM\n")
 	}
 	
-	# Check convergence
-	war <- NULL
-	if (hmm$loglik.delta > hmm$eps) {
-		war <- warning("HMM did not converge!\n")
-	}
-	if (hmm$error == 1) {
-		stop("A nan occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
-	} else if (hmm$error == 2) {
-		stop("An error occurred during the Baum-Welch! Parameter estimation terminated prematurely.")
-	}
-
-	return(hmm)
+	return(result)
 
 }
