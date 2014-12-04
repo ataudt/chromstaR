@@ -124,7 +124,7 @@ void ScaleHMM::initialize_transition_probs(double* initial_A, bool use_initial_p
 				else
 					this->A[iN][jN] = other;
 				// Save value to initial A
-				initial_A[iN*this->N + jN] = this->A[iN][jN];
+				initial_A[jN*this->N + iN] = this->A[iN][jN];
 			}
 		}
 	}
@@ -176,9 +176,9 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 	if (this->xvariate == UNIVARIATE)
 	{
 		FILE_LOG(logINFO) << "";
-		Rprintf("\n");
+// 		Rprintf("\n");
 		FILE_LOG(logINFO) << "INITIAL PARAMETERS";
-		Rprintf("INITIAL PARAMETERS\n");
+// 		Rprintf("INITIAL PARAMETERS\n");
 		this->print_uni_params();
 		this->print_uni_iteration(0);
 	}
@@ -414,9 +414,9 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 	if (this->xvariate == UNIVARIATE)
 	{
 		FILE_LOG(logINFO) << "";
-		Rprintf("\n");
+// 		Rprintf("\n");
 		FILE_LOG(logINFO) << "FINAL ESTIMATION RESULTS";
-		Rprintf("FINAL ESTIMATION RESULTS\n");
+// 		Rprintf("FINAL ESTIMATION RESULTS\n");
 		this->print_uni_params();
 	}
 
@@ -447,13 +447,13 @@ void ScaleHMM::check_for_state_swap()
 		cutoff_logdens[2] = log(weights[2]) + this->densityFunctions[2]->getLogDensityAt(this->cutoff);
 
 		FILE_LOG(logINFO) << "mean(0) = "<<this->densityFunctions[0]->get_mean() << ", mean(1) = "<<this->densityFunctions[1]->get_mean() << ", mean(2) = "<<this->densityFunctions[2]->get_mean();
-		Rprintf("mean(0) = %g, mean(1) = %g, mean(2) = %g\n", this->densityFunctions[0]->get_mean(), this->densityFunctions[1]->get_mean(), this->densityFunctions[2]->get_mean());
+// 		Rprintf("mean(0) = %g, mean(1) = %g, mean(2) = %g\n", this->densityFunctions[0]->get_mean(), this->densityFunctions[1]->get_mean(), this->densityFunctions[2]->get_mean());
 		FILE_LOG(logINFO) << "weight(0) = "<<weights[0] << ", weight(1) = "<<weights[1] << ", weight(2) = "<<weights[2];
-		Rprintf("weight(0) = %g, weight(1) = %g, weight(2) = %g\n", weights[0], weights[1], weights[2]);
+// 		Rprintf("weight(0) = %g, weight(1) = %g, weight(2) = %g\n", weights[0], weights[1], weights[2]);
 		FILE_LOG(logINFO) << "maxdens(0) = "<<maxdens[0] << ", maxdens(1) = "<<maxdens[1] << ", maxdens(2) = "<<maxdens[2];
-		Rprintf("maxdens(0) = %g, maxdens(1) = %g, maxdens(2) = %g\n", maxdens[0], maxdens[1], maxdens[2]);
+// 		Rprintf("maxdens(0) = %g, maxdens(1) = %g, maxdens(2) = %g\n", maxdens[0], maxdens[1], maxdens[2]);
 		FILE_LOG(logINFO) << "logdensity at x = "<<this->cutoff <<": logdens(0) = "<<cutoff_logdens[0] << ", logdens(1) = "<<cutoff_logdens[1] << ", logdens(2) = "<<cutoff_logdens[2];
-		Rprintf("logdensity at x = %d: logdens(0) = %g, logdens(1) = %g, logdens(2) = %g\n", this->cutoff, cutoff_logdens[0], cutoff_logdens[1], cutoff_logdens[2]);
+// 		Rprintf("logdensity at x = %d: logdens(0) = %g, logdens(1) = %g, logdens(2) = %g\n", this->cutoff, cutoff_logdens[0], cutoff_logdens[1], cutoff_logdens[2]);
 		// Different methods for state swapping detection
 		// 1) Compare means. Does not work for all datasets.
 	// 	if (this->densityFunctions[1]->get_mean() > this->densityFunctions[2]->get_mean()) //states 1 and 2 need to be exchanged
@@ -463,7 +463,7 @@ void ScaleHMM::check_for_state_swap()
 	// 	if (maxdens[1] < maxdens[2])
 		{
 			FILE_LOG(logINFO) << "...swapping states";
-			Rprintf("...swapping states\n");
+// 			Rprintf("...swapping states\n");
 			NegativeBinomial *tempDens = new NegativeBinomial();
 			tempDens->copy(this->densityFunctions[2]); // tempDens is densifunc[2]
 			this->densityFunctions[2]->copy(this->densityFunctions[1]); 
@@ -505,13 +505,13 @@ void ScaleHMM::check_for_state_swap()
 			cutoff_logdens[2] = log(weights[2]) + this->densityFunctions[2]->getLogDensityAt(this->cutoff);
 
 			FILE_LOG(logINFO) << "mean(0) = "<<this->densityFunctions[0]->get_mean() << ", mean(1) = "<<this->densityFunctions[1]->get_mean() << ", mean(2) = "<<this->densityFunctions[2]->get_mean();
-			Rprintf("mean(0) = %g, mean(1) = %g, mean(2) = %g\n", this->densityFunctions[0]->get_mean(), this->densityFunctions[1]->get_mean(), this->densityFunctions[2]->get_mean());
+// 			Rprintf("mean(0) = %g, mean(1) = %g, mean(2) = %g\n", this->densityFunctions[0]->get_mean(), this->densityFunctions[1]->get_mean(), this->densityFunctions[2]->get_mean());
 			FILE_LOG(logINFO) << "weight(0) = "<<weights[0] << ", weight(1) = "<<weights[1] << ", weight(2) = "<<weights[2];
-			Rprintf("weight(0) = %g, weight(1) = %g, weight(2) = %g\n", weights[0], weights[1], weights[2]);
+// 			Rprintf("weight(0) = %g, weight(1) = %g, weight(2) = %g\n", weights[0], weights[1], weights[2]);
 			FILE_LOG(logINFO) << "maxdens(0) = "<<maxdens[0] << ", maxdens(1) = "<<maxdens[1] << ", maxdens(2) = "<<maxdens[2];
-			Rprintf("maxdens(0) = %g, maxdens(1) = %g, maxdens(2) = %g\n", maxdens[0], maxdens[1], maxdens[2]);
+// 			Rprintf("maxdens(0) = %g, maxdens(1) = %g, maxdens(2) = %g\n", maxdens[0], maxdens[1], maxdens[2]);
 			FILE_LOG(logINFO) << "logdensity at x = "<<this->cutoff <<": logdens(0) = "<<cutoff_logdens[0] << ", logdens(1) = "<<cutoff_logdens[1] << ", logdens(2) = "<<cutoff_logdens[2];
-			Rprintf("logdensity at x = %d: logdens(0) = %g, logdens(1) = %g, logdens(2) = %g\n", this->cutoff, cutoff_logdens[0], cutoff_logdens[1], cutoff_logdens[2]);
+// 			Rprintf("logdensity at x = %d: logdens(0) = %g, logdens(1) = %g, logdens(2) = %g\n", this->cutoff, cutoff_logdens[0], cutoff_logdens[1], cutoff_logdens[2]);
 		}
 	}
 }
@@ -1029,17 +1029,17 @@ void ScaleHMM::print_uni_params()
 	int cx;
 	snprintf(buffer, bs, " -------------------------------------------------------------------------------");
 	FILE_LOG(logINFO) << buffer;
-	Rprintf("%s\n", buffer);
+// 	Rprintf("%s\n", buffer);
 	snprintf(buffer, bs, "|%80s", "|");
 	FILE_LOG(logINFO) << buffer;
-	Rprintf("%s\n", buffer);
+// 	Rprintf("%s\n", buffer);
 	// print loglik
 	snprintf(buffer, bs, "| log(P) = %*.6f%54s", 16, this->logP, "|");
 	FILE_LOG(logINFO) << buffer;
-	Rprintf("%s\n", buffer);
+// 	Rprintf("%s\n", buffer);
 	snprintf(buffer, bs, "|%80s", "|");
 	FILE_LOG(logINFO) << buffer;
-	Rprintf("%s\n", buffer);
+// 	Rprintf("%s\n", buffer);
 	// print initial probabilities
 	cx = snprintf(buffer, bs, "|%7s", "");
 	for (int iN=0; iN<this->N; iN++)
@@ -1048,10 +1048,10 @@ void ScaleHMM::print_uni_params()
 	}
 	cx += snprintf(buffer+cx, bs-cx, "   |");
 	FILE_LOG(logINFO) << buffer;
-	Rprintf("%s\n", buffer);
+// 	Rprintf("%s\n", buffer);
 	snprintf(buffer, bs, "|%80s", "|");
 	FILE_LOG(logINFO) << buffer;
-	Rprintf("%s\n", buffer);
+// 	Rprintf("%s\n", buffer);
 	// print transition probabilities
 	for (int iN=0; iN<this->N; iN++)
 	{
@@ -1062,25 +1062,25 @@ void ScaleHMM::print_uni_params()
 		}
 		cx += snprintf(buffer+cx, bs-cx, "      |");
 		FILE_LOG(logINFO) << buffer;
-		Rprintf("%s\n", buffer);
+// 		Rprintf("%s\n", buffer);
 	}
 	// print emission parameters
 	snprintf(buffer, bs, "|%80s", "|");
 	FILE_LOG(logINFO) << buffer;
-	Rprintf("%s\n", buffer);
+// 	Rprintf("%s\n", buffer);
 	for (int iN=0; iN<this->N; iN++)
 	{
 		if (iN == 1)
 		{
 			snprintf(buffer, bs, "| unmodified component%59s", "|");
 			FILE_LOG(logINFO) << buffer;
-			Rprintf("%s\n", buffer);
+// 			Rprintf("%s\n", buffer);
 		}
 		if (iN == 2)
 		{
 			snprintf(buffer, bs, "| modified component%61s", "|");
 			FILE_LOG(logINFO) << buffer;
-			Rprintf("%s\n", buffer);
+// 			Rprintf("%s\n", buffer);
 		}
 		if (this->densityFunctions[iN]->get_name() == NEGATIVE_BINOMIAL)
 		{
@@ -1091,20 +1091,20 @@ void ScaleHMM::print_uni_params()
 			double curVar = temp->get_variance();
 			snprintf(buffer, bs, "| r = %*.6f, p = %*.6f, mean = %*.2f, var = %*.2f%20s", 9, curR, 9, curP, 6, curMean, 8, curVar, "|");
 			FILE_LOG(logINFO) << buffer;
-			Rprintf("%s\n", buffer);
+// 			Rprintf("%s\n", buffer);
 		}
 	}
 	
 	snprintf(buffer, bs, "|%80s", "|");
 	FILE_LOG(logINFO) << buffer;
-	Rprintf("%s\n", buffer);
+// 	Rprintf("%s\n", buffer);
 	snprintf(buffer, bs, " -------------------------------------------------------------------------------");
 	FILE_LOG(logINFO) << buffer;
-	Rprintf("%s\n", buffer);
+// 	Rprintf("%s\n", buffer);
 	FILE_LOG(logINFO) << "";
-	Rprintf("\n");
+// 	Rprintf("\n");
 
 	// Flush Rprintf statements to R console
-	R_FlushConsole();
+// 	R_FlushConsole();
 }
 

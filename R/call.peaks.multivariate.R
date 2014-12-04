@@ -1,4 +1,4 @@
-multivariate.from.univariate.results <- function(modellist, use.states=NULL, num.states=NULL, eps=0.001, num.threads=1, max.time=-1, max.iter=-1, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file="chromStar_checkpoint", checkpoint.reduce=c("bins","segments"), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL) {
+call.peaks.multivariate <- function(modellist, use.states=NULL, num.states=NULL, eps=0.001, num.threads=1, max.time=-1, max.iter=-1, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file=NULL, checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL) {
 
 	## Intercept user input
 	if (check.univariate.modellist(modellist)!=0) {
@@ -65,8 +65,8 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 	if (file.exists(checkpoint.file) & checkpoint.use.existing) {
 		cat("Loading checkpoint file ",checkpoint.file,"\n")
 		hmm <- get(load(checkpoint.file))
-		A.initial <- hmm$A
-		proba.initial <- hmm$proba
+		A.initial <- hmm$transitionProbs
+		proba.initial <- hmm$startProbs
 		use.initial <- TRUE
 	} else {
 		if (is.null(A.initial)) {
@@ -89,14 +89,14 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 	repeat{
 		# Determine runtime
 		if (max.iter > 0) {
-			maxiter <- min(checkpoint.after.iter, max.iter-iteration.total)
+			max.iter.temp <- min(checkpoint.after.iter, max.iter-iteration.total)
 		} else {
-			maxiter <- checkpoint.after.iter
+			max.iter.temp <- checkpoint.after.iter
 		}
 		if (max.time > 0) {
-			maxtime <- min(checkpoint.after.time, max.time-time.total)
+			max.time.temp <- min(checkpoint.after.time, max.time-time.total)
 		} else {
-			maxtime <- checkpoint.after.time
+			max.time.temp <- checkpoint.after.time
 		}
 		# Call the C function
 		hmm <- .C("R_multivariate_hmm",
@@ -110,8 +110,8 @@ multivariate.from.univariate.results <- function(modellist, use.states=NULL, num
 			w = as.double(ws), # double* w
 			correlation.matrix.inverse = as.double(correlationMatrixInverse2use), # double* cor_matrix_inv
 			determinant = as.double(determinant2use), # double* det
-			num.iterations = as.integer(maxiter), # int* maxiter
-			time.sec = as.integer(maxtime), # double* maxtime
+			num.iterations = as.integer(max.iter.temp), # int* maxiter
+			time.sec = as.integer(max.time.temp), # double* maxtime
 			loglik.delta = as.double(eps), # double* eps
 			states = integer(length=numbins), # int* states
 			A = double(length=numstates2use*numstates2use), # double* A

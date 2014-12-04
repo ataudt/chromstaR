@@ -8,7 +8,11 @@ bam2binned,
 bedGraph2binned,
 get.chrom.lengths,
 
-univariate.from.binned.data,
+call.peaks.univariate,
+prepare.multivariate,
+call.peaks.multivariate,
+unis2pseudomulti,
+
 plot.distribution,
 plot.distributions.multi,
 plot.distributions.to.pdf,
@@ -16,10 +20,6 @@ plot.distribution.normal,
 plot.boxplot,
 plot.transition,
 stateorderByTransition,
-
-prepare.multivariate,
-multivariate.from.univariate.results,
-unis2pseudomulti,
 
 export.unihmm2bed,
 export.unihmm2wiggle,

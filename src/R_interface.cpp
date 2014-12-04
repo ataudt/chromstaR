@@ -205,7 +205,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* m
 		proba[i] = hmm->get_proba(i);
 		for (int j=0; j<*N; j++)
 		{
-			A[i * (*N) + j] = hmm->get_A(i,j);
+			A[i * (*N) + j] = hmm->get_A(j,i);
 		}
 	}
 
