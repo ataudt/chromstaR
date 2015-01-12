@@ -62,7 +62,16 @@ call.peaks.multivariate <- function(modellist, use.states=NULL, num.states=NULL,
 	ws <- ws1 / (ws2+ws1)
 
 	# Load checkpoint file if it exists and if desired
-	if (file.exists(checkpoint.file) & checkpoint.use.existing) {
+	if (is.null(checkpoint.file)) {
+		checkpoint.file.exists <- FALSE
+	} else {
+		if (file.exists(checkpoint.file)) {
+			checkpoint.file.exists <- TRUE
+		} else {
+			checkpoint.file.exists <- FALSE
+		}
+	}
+	if (checkpoint.file.exists & checkpoint.use.existing) {
 		cat("Loading checkpoint file ",checkpoint.file,"\n")
 		hmm <- get(load(checkpoint.file))
 		A.initial <- hmm$transitionProbs
@@ -125,10 +134,6 @@ call.peaks.multivariate <- function(modellist, use.states=NULL, num.states=NULL,
 			)
 			
 		### Check convergence ###
-		war <- NULL
-		if (hmm$loglik.delta > eps) {
-			war <- warning("HMM did not converge!\n")
-		}
 		if (hmm$error == 1) {
 			stop("A nan occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
 		} else if (hmm$error == 2) {
@@ -180,7 +185,7 @@ call.peaks.multivariate <- function(modellist, use.states=NULL, num.states=NULL,
 			convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec)
 			result$convergenceInfo <- convergenceInfo
 		## Correlation matrices
-# 			result$correlation.matrix <- correlationMatrix2use
+			result$correlation.matrix <- correlationMatrix2use
 		## Add class
 			class(result) <- class.multivariate.hmm
 
@@ -195,7 +200,7 @@ call.peaks.multivariate <- function(modellist, use.states=NULL, num.states=NULL,
 		# Test if terminating condition has been reached
 		if (result$convergenceInfo$loglik.delta <= result$convergenceInfo$eps | (time.total >= max.time & max.time > 0) | (iteration.total >= max.iter & max.iter > 0)) break
 		# Reduce the hmm for checkpointing
-		result[checkpoint.reduce] <- NULL
+		result[c('bins','segments')] <- NULL
 		# Save checkpoint
 		hmm.checkpoint <- result
 		if (checkpoint.overwrite) {
@@ -211,6 +216,10 @@ call.peaks.multivariate <- function(modellist, use.states=NULL, num.states=NULL,
 		cat("\n\nRestarting HMM\n")
 	}
 	
+	## Check convergence
+	if (result$convergenceInfo$loglik.delta > result$convergenceInfo$eps) {
+		war <- warning("HMM did not converge!\n")
+	}
 	return(result)
 
 }

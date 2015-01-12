@@ -347,7 +347,7 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 			if (this->sumgamma[iN] == 0)
 			{
 				FILE_LOG(logINFO) << "Not reestimating A["<<iN<<"][x] because sumgamma["<<iN<<"] = 0";
-				Rprintf("Not reestimating A[%d][x] because sumgamma[%d] = 0\n", iN, iN);
+// 				Rprintf("Not reestimating A[%d][x] because sumgamma[%d] = 0\n", iN, iN);
 			}
 			else
 			{
@@ -457,7 +457,7 @@ void ScaleHMM::check_for_state_swap()
 		// Different methods for state swapping detection
 		// 1) Compare means. Does not work for all datasets.
 	// 	if (this->densityFunctions[1]->get_mean() > this->densityFunctions[2]->get_mean()) //states 1 and 2 need to be exchanged
-		// 2) Compare density values at 10*variance. Does it work for all datasets?
+		// 2) Compare density values at upper cutoff. Does it work for all datasets?
 		if (cutoff_logdens[1] > cutoff_logdens[2]) //states 1 and 2 need to be exchanged
 		// 3) Compare max(density values). Does not work for all datasets.
 	// 	if (maxdens[1] < maxdens[2])
@@ -487,14 +487,25 @@ void ScaleHMM::check_for_state_swap()
 			temp = this->A[1][2];
 			this->A[1][2] = this->A[2][1];
 			A[2][1] = temp;
-			// swap dens and gamma
+			// swap dens
 			double * tempp;
 			tempp = this->densities[1];
 			this->densities[1] = this->densities[2];
 			this->densities[2] = tempp;
-			tempp = this->gamma[1];
-			this->gamma[1] = this->gamma[2];
-			this->gamma[2] = tempp;
+			// recalculate other baum-welch stuff
+			FILE_LOG(logDEBUG1) << "Calling forward() from check_for_state_swap()";
+			try { this->forward(); } catch(...) { throw; }
+			R_CheckUserInterrupt();
+			FILE_LOG(logDEBUG1) << "Calling backward() from check_for_state_swap()";
+			try { this->backward(); } catch(...) { throw; }
+			R_CheckUserInterrupt();
+			FILE_LOG(logDEBUG1) << "Calling calc_sumxi() from check_for_state_swap()";
+			this->calc_sumxi();
+			R_CheckUserInterrupt();
+			FILE_LOG(logDEBUG1) << "Calling calc_sumgamma() from check_for_state_swap()";
+			this->calc_sumgamma();
+			R_CheckUserInterrupt();
+			
 			// recalculate weight, maxdens and logdens at cutoff
 			this->calc_weights(weights);
 			maxdens[0] = weights[0];
@@ -918,11 +929,12 @@ void ScaleHMM::calc_densities()
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 // 	clock_t time = clock(), dtime;
+// Errors thrown inside a #pragma are not forwarded properly
 	#pragma omp parallel for
 	for (int iN=0; iN<this->N; iN++)
 	{
 		FILE_LOG(logDEBUG1) << "Calculating densities for state " << iN;
-		this->densityFunctions[iN]->calc_densities(this->densities[iN]);
+		try { this->densityFunctions[iN]->calc_densities(this->densities[iN]); } catch(...) { throw; }
 	}
 
 	// Check if the density for all states is numerically zero and correct to prevent NaNs

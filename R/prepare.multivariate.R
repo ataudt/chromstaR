@@ -26,15 +26,15 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 	cat("Getting combinatorial states...")
 	ptm <- proc.time()
 	## Get the univariate states (zero inflation = 0, unmodified = 0, modified = 1) from the modellist
-		binary_statesmatrix <- matrix(rep(NA,numbins*nummod), ncol=nummod)
-		for (imod in 1:nummod) {
-			binary_statesmatrix[,imod] <- c(FALSE,FALSE,TRUE)[modellist[[imod]]$bins$state] # F,F,T corresponds to levels 'zero-inflation','unmodified','modified'
-		}
+	binary_statesmatrix <- matrix(rep(NA,numbins*nummod), ncol=nummod)
+	for (imod in 1:nummod) {
+		binary_statesmatrix[,imod] <- c(FALSE,FALSE,TRUE)[modellist[[imod]]$bins$state] # F,F,T corresponds to levels 'zero-inflation','unmodified','modified'
+	}
 	## Transform binary to decimal
-		decimal_states <- rep(0,numbins)
-		for (imod in 1:nummod) {
-			decimal_states <- decimal_states + 2^(nummod-imod) * binary_statesmatrix[,imod]
-		}
+	decimal_states <- rep(0,numbins)
+	for (imod in 1:nummod) {
+		decimal_states <- decimal_states + 2^(nummod-imod) * binary_statesmatrix[,imod]
+	}
 	combstates.per.bin <- decimal_states
 	comb.states.table <- table(combstates.per.bin)
 	if (is.null(use.states)) {
@@ -127,13 +127,25 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 				correlationMatrixInverse[,,istate] = solve(correlationMatrix[,,istate])
 				usestateTF[istate] = TRUE
 			} else {
-				usestateTF[istate] = FALSE
+				correlationMatrix[,,istate] <- diag(nummod)
+				determinant[istate] <- det( correlationMatrix[,,istate] )
+				correlationMatrixInverse[,,istate] <- solve(correlationMatrix[,,istate])
+				usestateTF[istate] <- TRUE
+# 				usestateTF[istate] = FALSE
 			}
 		}, warning = function(war) {
-			usestateTF[istate] <<- FALSE
+			correlationMatrix[,,istate] <<- diag(nummod)
+			determinant[istate] <<- det( correlationMatrix[,,istate] )
+			correlationMatrixInverse[,,istate] <<- solve(correlationMatrix[,,istate])
+			usestateTF[istate] <<- TRUE
+# 			usestateTF[istate] <<- FALSE
 			war
 		}, error = function(err) {
-			usestateTF[istate] <<- FALSE
+			correlationMatrix[,,istate] <<- diag(nummod)
+			determinant[istate] <<- det( correlationMatrix[,,istate] )
+			correlationMatrixInverse[,,istate] <<- solve(correlationMatrix[,,istate])
+			usestateTF[istate] <<- TRUE
+# 			usestateTF[istate] <<- FALSE
 			err
 		})
 	}
@@ -148,7 +160,8 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 		numstates2use = ok.numstates
 	} else if (!is.null(use.states)) {
 		if (ok.numstates < length(use.states)) {
-			stop("Cannot use the specified states. The occurrence of the following states is too low: ",paste(use.states[!usestateTF], collapse=" "))
+			warning("Cannot use all of the specified states. The occurrence of the following states is too low: ",paste(use.states[!usestateTF], collapse=" "),". Continuing without them.")
+			numstates2use <- length(which(usestateTF))
 		} else {
 			numstates2use = length(use.states)
 		}
@@ -176,51 +189,6 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 	comb.states2use = comb.states[usestateTF][1:numstates2use]
 	comb.states.table2use = comb.states.table[as.character(comb.states2use)]
 	determinant2use = determinant[usestateTF][1:numstates2use]
-
-# 	## Calculate multivariate densities for each state
-# 	cat("Calculating multivariate densities...")
-# 	densities <- matrix(1, ncol=numstates2use, nrow=numbins, dimnames=list(bin=1:numbins, comb.state=comb.states2use))
-# 	for (state in comb.states2use) {
-# 		i <- which(state==comb.states2use)
-# 		binary_state = rev(as.integer(intToBits(state))[1:nummod])
-# 		product <- 1
-# 		for (imod in 1:nummod) {
-# 			cat("track ",imod,"\n")
-# 			if (binary_state[imod]==0) {
-# 				exponent <- -0.5 * apply( ( z.per.bin[ , , 'unmodified'] %*% (correlationMatrixInverse2use[ , , i] - diag(nummod)) ) * z.per.bin[ , , 'unmodified'], 1, sum)
-# 				size <- distributions[[imod]]['unmodified','size']
-# 				prob <- distributions[[imod]]['unmodified','prob']
-# 				w = weights[[imod]][1] / (weights[[imod]][2] + weights[[imod]][1])
-# 				product <- product * dzinbinom(reads[,imod], w, size, prob)
-# 				densities[,i] <- product * determinant2use[i]^(-0.5) * exp( exponent )
-# 			} else if (binary_state[imod]==1) {
-# 				exponent <- -0.5 * apply( ( z.per.bin[ , , 'modified'] %*% (correlationMatrixInverse2use[ , , i] - diag(nummod)) ) * z.per.bin[ , , 'modified'], 1, sum)
-# 				size <- distributions[[imod]]['modified','size']
-# 				prob <- distributions[[imod]]['modified','prob']
-# 				product <- product * dnbinom(reads[,imod], size, prob)
-# 				densities[,i] <- product * determinant2use[i]^(-0.5) * exp( exponent )
-# 			}
-# 		}
-# 	}
-# 	# Check if densities are > 1
-# 	if (any(densities>1)) stop("Densities > 1")
-# 	if (any(densities<0)) stop("Densities < 0")
-# 	densities[densities>1] <- 1
-# 	densities[densities<0] <- 0
-# 	# Check if densities are 0 everywhere in some bins
-# 	check <- which(apply(densities, 1, sum) == 0)
-# 	if (length(check)>0) {
-# 		if (check[1]==1) {
-# 			densities[1,] <- rep(1e-10, ncol(densities))
-# 			check <- check[-1]
-# 		}
-# 		for (icheck in check) {
-# 			densities[icheck,] <- densities[icheck-1,]
-# 		}
-# 	}
-# 	cat(" done\n")
-
-
 
 	# Return parameters
 	out = list(IDs = IDs,

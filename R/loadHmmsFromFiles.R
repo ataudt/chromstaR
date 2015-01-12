@@ -16,4 +16,21 @@ loadHmmsFromFiles <- function(hmm.list) {
 
 }
 
+loadMultiHmmsFromFiles <- function(hmm.list) {
+
+	## Intercept user input
+	if (check.multivariate.modellist(hmm.list)!=0) {
+		cat("loading multivariate HMMs from files\n")
+		mlist <- NULL
+		for (modelfile in hmm.list) {
+			mlist[[length(mlist)+1]] <- get(load(modelfile))
+		}
+		hmm.list <- mlist
+		remove(mlist)
+		if (check.multivariate.modellist(hmm.list)!=0) stop("argument 'hmm.list' expects a list of multivariate hmms or a list of files that contain multivariate hmms")
+	}
+	
+	return(hmm.list)
+
+}
 

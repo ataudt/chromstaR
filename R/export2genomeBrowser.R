@@ -22,7 +22,6 @@ export.unihmm2bed <- function(hmm.list, only.modified=TRUE, file="view_me_in_gen
 
 	# Variables
 	nummod <- length(hmm.list)
-	numstates <- length(hmm.list[[1]]$weights)
 	filename <- paste0(file,".bed.gz")
 	file <- gzfile(filename, 'w')
 
@@ -85,7 +84,6 @@ export.unihmm2wiggle <- function(hmm.list, file="view_me_in_genome_browser") {
 
 	# Variables
 	nummod <- length(hmm.list)
-	numstates <- length(hmm.list[[1]]$weights)
 	filename <- paste0(file,".wiggle.gz")
 	file <- gzfile(filename, 'w')
 
@@ -115,7 +113,7 @@ export.unihmm2wiggle <- function(hmm.list, file="view_me_in_genome_browser") {
 # ===============================================================
 # Write color-coded tracks with multivariate combinatorial states
 # ===============================================================
-export.multihmm2bed <- function(multi.hmm, separate.tracks=TRUE, exclude.state.zero=TRUE, numstates=NULL, file="view_me_in_genome_browser") {
+export.multihmm2bed <- function(multi.hmm, separate.tracks=TRUE, exclude.states=0, include.states=NULL, file="view_me_in_genome_browser") {
 
 	if (class(multi.hmm)!=class.multivariate.hmm) {
 		multi.hmm <- get(load(multi.hmm))
@@ -124,26 +122,30 @@ export.multihmm2bed <- function(multi.hmm, separate.tracks=TRUE, exclude.state.z
 		}
 	}
 
-	# Variables
+	## Function definitions
+	insertchr <- function(hmm.gr) {
+		# Change chromosome names from '1' to 'chr1' if necessary
+		mask <- which(!grepl('chr', seqnames(hmm.gr)))
+		mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
+		mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
+		mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
+		return(hmm.gr)
+	}
+
+	## Variables
 	filename <- paste0(file,".bed.gz")
 	file <- gzfile(filename, 'w')
-	combstates <- names(multi.hmm$weights)
-	if (is.null(numstates)) {
-		numstates <- length(combstates)
-	} else if (numstates > length(combstates)) {
-		numstates <- length(combstates)
-	}
-	if (exclude.state.zero) {
-		combstates2use <- setdiff(combstates,0)
+	combstates <- levels(multi.hmm$bins$state)
+	numstates <- length(combstates)
+	if (is.null(include.states)) {
+		combstates2use <- setdiff(combstates, exclude.states)
 	} else {
-		combstates2use <- combstates
+		combstates2use <- intersect(combstates, include.states)
 	}
-	combstates2use <- combstates2use[1:numstates]
-	combstates2use <- combstates2use[!is.na(combstates2use)]
 	numstates <- length(combstates2use)
 
-	# Collapse the calls
-	collapsed.calls <- as.data.frame(multi.hmm$segments)
+	## Collapse the calls
+	collapsed.calls <- as.data.frame(insertchr(multi.hmm$segments))[,c(7,2:3,6)]
 	# Select only desired states
 	mask <- rep(FALSE,nrow(collapsed.calls))
 	for (istate in combstates2use) {
@@ -206,12 +208,22 @@ export.multihmm2wiggle <- function(multi.hmm, file="view_me_in_genome_browser") 
 		}
 	}
 
-	# Variables
+	## Function definitions
+	insertchr <- function(hmm.gr) {
+		# Change chromosome names from '1' to 'chr1' if necessary
+		mask <- which(!grepl('chr', seqnames(hmm.gr)))
+		mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
+		mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
+		mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
+		return(hmm.gr)
+	}
+
+	## Variables
 	filename <- paste0(file,".wiggle.gz")
 	file <- gzfile(filename, 'w')
 	nummod <- length(multi.hmm$IDs.univariate)
 
-	# Write first line to file
+	## Write first line to file
 	cat('writing to file',filename,'\n')
 	cat("", file=file)
 	
@@ -224,7 +236,12 @@ export.multihmm2wiggle <- function(multi.hmm, file="view_me_in_genome_browser") 
 		cat(paste0("track type=wiggle_0 name=\"read count for ",ID,"\" description=\"read count for ",ID,"\" visibility=full autoScale=on color=90,90,90 maxHeightPixels=100:50:20 graphType=bar priority=",priority,"\n"), file=file, append=TRUE)
 		# Write read data
 		for (chrom in seqlevels(multi.hmm$bins)) {
-			cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=file, append=TRUE)
+			if (!grepl('chr', chrom)) {
+				chromr <- sub(pattern='^', replacement='chr', chrom)
+			} else {
+				chromr <- chrom
+			}
+			cat(paste0("fixedStep chrom=",chromr," start=1 step=",binsize," span=",binsize,"\n"), file=file, append=TRUE)
 			write.table(multi.hmm$bins[seqnames(multi.hmm$bins)==chrom]$reads[,imod], file=file, append=TRUE, row.names=FALSE, col.names=FALSE)
 		}
 	}

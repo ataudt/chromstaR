@@ -53,14 +53,13 @@ plot.distributions.multi <- function(multi.hmm) {
 
 	## Make fake uni.hmm and plot
 	ggplts <- list()
-	for (i1 in 1:multi.hmm$num.modifications) {
-		uni.hmm <- list(ID=multi.hmm$IDs.univariate[i1],
-										coordinates=multi.hmm$coordinates,
-										reads=multi.hmm$reads[,i1],
-										weights=multi.hmm$weights.univariate[[i1]],
-										distributions=multi.hmm$distributions.univariate[[i1]],
-										control=FALSE
-										)
+	for (i1 in 1:length(multi.hmm$IDs.univariate)) {
+		uni.hmm <- list()
+		uni.hmm$ID <- multi.hmm$IDs.univariate[i1]
+		uni.hmm$bins <- multi.hmm$bins
+		uni.hmm$reads <- multi.hmm$bins$reads[,i1]
+		uni.hmm$weights <- multi.hmm$weights.univariate[[i1]]
+		uni.hmm$distributions <- multi.hmm$distributions[[i1]]
 		ggplts[[i1]] <- plot.distribution(uni.hmm)
 	}
 	
@@ -141,7 +140,6 @@ plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NUL
 	ggplt <- ggplot(data.frame(reads)) + geom_histogram(aes(x=reads, y=..density..), binwidth=1, color='black', fill='white') + coord_cartesian(xlim=c(0,rightxlim)) + theme_bw() + xlab("read count")
 
 	### Add fits to the histogram
-	numstates <- length(weights)
 	x <- 0:max(reads)
 	distributions <- data.frame(x)
 
@@ -159,7 +157,8 @@ plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NUL
 	# Make legend
 	lmeans <- round(model$distributions[,'mu'], 2)[-1]
 	lvars <- round(model$distributions[,'variance'], 2)[-1]
-	legend <- paste(c('unmodified','modified'), ", mean=", lmeans, ", var=", lvars, sep='')
+	lweights <- round(c(1-weights[3], weights[3]), 2)
+	legend <- paste0(c('unmodified','modified'), ", mean=", lmeans, ", var=", lvars, ", weight=", lweights)
 	legend <- c(legend, paste0('total, mean(data)=', round(mean(reads),2), ', var(data)=', round(var(reads),2)))
 	ggplt <- ggplt + ggtitle(model$ID)
 
