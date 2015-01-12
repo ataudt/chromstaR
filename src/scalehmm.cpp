@@ -14,20 +14,20 @@ ScaleHMM::ScaleHMM(int T, int N)
 	this->xvariate = UNIVARIATE;
 	this->T = T;
 	this->N = N;
-	this->A = allocDoubleMatrix(N, N);
-	this->scalefactoralpha = (double*) calloc(T, sizeof(double));
-	this->scalealpha = allocDoubleMatrix(T, N);
-	this->scalebeta = allocDoubleMatrix(T, N);
-	this->densities = allocDoubleMatrix(N, T);
-	this->proba = (double*) calloc(N, sizeof(double));
-	this->gamma = allocDoubleMatrix(N, T);
-	this->states_prev = (bool*) calloc(T, sizeof(bool));
-	this->sumgamma = (double*) calloc(N, sizeof(double));
-	this->sumxi = allocDoubleMatrix(N, N);
+	this->A = CallocDoubleMatrix(N, N);
+	this->scalefactoralpha = (double*) Calloc(T, double);
+	this->scalealpha = CallocDoubleMatrix(T, N);
+	this->scalebeta = CallocDoubleMatrix(T, N);
+	this->densities = CallocDoubleMatrix(N, T);
+	this->proba = (double*) Calloc(N, double);
+	this->gamma = CallocDoubleMatrix(N, T);
+	this->states_prev = (bool*) Calloc(T, bool);
+	this->sumgamma = (double*) Calloc(N, double);
+	this->sumxi = CallocDoubleMatrix(N, N);
 	this->logP = -INFINITY;
 	this->dlogP = INFINITY;
 	this->sumdiff_state_last = 0;
-// 	this->num_nonzero_A_into_state = (int*) calloc(N, sizeof(int));
+// 	this->num_nonzero_A_into_state = (int*) Calloc(N, int);
 // 	this->index_nonzero_A_into_state = allocIntMatrix(N, N);
 // 	this->transition_cutoff = 1e-10;
 // 	this->sparsity_cutoff = 0.0;
@@ -41,21 +41,21 @@ ScaleHMM::ScaleHMM(int T, int N, int Nmod)
 	this->xvariate = MULTIVARIATE;
 	this->T = T;
 	this->N = N;
-	this->A = allocDoubleMatrix(N, N);
-	this->scalefactoralpha = (double*) calloc(T, sizeof(double));
-	this->scalealpha = allocDoubleMatrix(T, N);
-	this->scalebeta = allocDoubleMatrix(T, N);
-	this->densities = allocDoubleMatrix(N, T);
-// 	this->tdensities = allocDoubleMatrix(T, N);
-	this->proba = (double*) calloc(N, sizeof(double));
-	this->gamma = allocDoubleMatrix(N, T);
-	this->sumgamma = (double*) calloc(N, sizeof(double));
-	this->sumxi = allocDoubleMatrix(N, N);
+	this->A = CallocDoubleMatrix(N, N);
+	this->scalefactoralpha = (double*) Calloc(T, double);
+	this->scalealpha = CallocDoubleMatrix(T, N);
+	this->scalebeta = CallocDoubleMatrix(T, N);
+	this->densities = CallocDoubleMatrix(N, T);
+// 	this->tdensities = CallocDoubleMatrix(T, N);
+	this->proba = (double*) Calloc(N, double);
+	this->gamma = CallocDoubleMatrix(N, T);
+	this->sumgamma = (double*) Calloc(N, double);
+	this->sumxi = CallocDoubleMatrix(N, N);
 	this->logP = -INFINITY;
 	this->dlogP = INFINITY;
 // 	this->sumdiff_state_last = 0;
 	this->Nmod = Nmod;
-// 	this->num_nonzero_A_into_state = (int*) calloc(N, sizeof(int));
+// 	this->num_nonzero_A_into_state = (int*) Calloc(N, int);
 // 	this->index_nonzero_A_into_state = allocIntMatrix(N, N);
 // 	this->transition_cutoff = 1e-10;
 // 	this->sparsity_cutoff = 0.7;
@@ -65,27 +65,27 @@ ScaleHMM::ScaleHMM(int T, int N, int Nmod)
 ScaleHMM::~ScaleHMM()
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	freeDoubleMatrix(this->A, this->N);
-	free(this->scalefactoralpha);
-	freeDoubleMatrix(this->scalealpha, this->T);
-	freeDoubleMatrix(this->scalebeta, this->T);
-	freeDoubleMatrix(this->densities, this->N);
+	FreeDoubleMatrix(this->A, this->N);
+	Free(this->scalefactoralpha);
+	FreeDoubleMatrix(this->scalealpha, this->T);
+	FreeDoubleMatrix(this->scalebeta, this->T);
+	FreeDoubleMatrix(this->densities, this->N);
 // 	if (this->xvariate==MULTIVARIATE)
 // 	{
-// 		freeDoubleMatrix(this->tdensities, this->T);
+// 		FreeDoubleMatrix(this->tdensities, this->T);
 // 	}
-	freeDoubleMatrix(this->gamma, this->N);
-	freeDoubleMatrix(this->sumxi, this->N);
-	free(this->proba);
-	free(this->sumgamma);
+	FreeDoubleMatrix(this->gamma, this->N);
+	FreeDoubleMatrix(this->sumxi, this->N);
+	Free(this->proba);
+	Free(this->sumgamma);
 
 	for (int iN=0; iN<this->N; iN++)
 	{
 		FILE_LOG(logDEBUG1) << "Deleting density functions"; 
 		delete this->densityFunctions[iN];
 	}
-// 	free(this->num_nonzero_A_into_state);
-// 	freeIntMatrix(this->index_nonzero_A_into_state, this->N);
+// 	Free(this->num_nonzero_A_into_state);
+// 	FreeIntMatrix(this->index_nonzero_A_into_state, this->N);
 }
 
 // Methods ----------------------------------------------------

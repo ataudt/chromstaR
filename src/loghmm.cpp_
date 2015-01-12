@@ -13,15 +13,15 @@ LogHMM::LogHMM(int T, int N)
 	this->logalpha = allocDoubleMatrix(T, N);
 	this->logbeta = allocDoubleMatrix(T, N);
 	this->logdensities = allocDoubleMatrix(N, T);
-	this->logproba = (double*) calloc(N, sizeof(double));
+	this->logproba = (double*) Calloc(N, double);
 	this->gamma = allocDoubleMatrix(N, T);
-	this->sumgamma = (double*) calloc(N, sizeof(double));
+	this->sumgamma = (double*) Calloc(N, double);
 	this->sumxi = allocDoubleMatrix(N, N);
 	this->logP = -INFINITY;
 	this->dlogP = INFINITY;
 	this->sumdiff_state1 = 0;
 	this->sumdiff_posterior = 0.0;
-// 	this->num_nonzero_A_into_state = (int*) calloc(N, sizeof(int));
+// 	this->num_nonzero_A_into_state = (int*) Calloc(N, int);
 // 	this->index_nonzero_A_into_state = allocIntMatrix(N, N);
 // 	this->transition_cutoff = 1e-10;
 // 	this->sparsity_cutoff = 0.0;
@@ -40,16 +40,16 @@ LogHMM::LogHMM(int T, int N, int Nmod)
 	this->logalpha = allocDoubleMatrix(T, N);
 	this->logbeta = allocDoubleMatrix(T, N);
 	this->logdensities = allocDoubleMatrix(N, T);
-	this->logproba = (double*) calloc(N, sizeof(double));
+	this->logproba = (double*) Calloc(N, double);
 	this->gamma = allocDoubleMatrix(N, T);
-	this->sumgamma = (double*) calloc(N, sizeof(double));
+	this->sumgamma = (double*) Calloc(N, double);
 	this->sumxi = allocDoubleMatrix(N, N);
 	this->logP = -INFINITY;
 	this->dlogP = INFINITY;
 	this->sumdiff_state1 = 0;
 	this->sumdiff_posterior = 0.0;
 	this->Nmod = Nmod;
-// 	this->num_nonzero_A_into_state = (int*) calloc(N, sizeof(int));
+// 	this->num_nonzero_A_into_state = (int*) Calloc(N, int);
 // 	this->index_nonzero_A_into_state = allocIntMatrix(N, N);
 // 	this->transition_cutoff = 1e-10;
 // 	this->sparsity_cutoff = 0.7;
@@ -59,22 +59,22 @@ LogHMM::LogHMM(int T, int N, int Nmod)
 LogHMM::~LogHMM()
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	freeDoubleMatrix(this->A, this->N);
-	freeDoubleMatrix(this->logA, this->N);
-	freeDoubleMatrix(this->logalpha, this->T);
-	freeDoubleMatrix(this->logbeta, this->T);
-	freeDoubleMatrix(this->logdensities, this->N);
-	freeDoubleMatrix(this->gamma, this->N);
-	freeDoubleMatrix(this->sumxi, this->N);
-	free(this->logproba);
-	free(this->sumgamma);
+	FreeDoubleMatrix(this->A, this->N);
+	FreeDoubleMatrix(this->logA, this->N);
+	FreeDoubleMatrix(this->logalpha, this->T);
+	FreeDoubleMatrix(this->logbeta, this->T);
+	FreeDoubleMatrix(this->logdensities, this->N);
+	FreeDoubleMatrix(this->gamma, this->N);
+	FreeDoubleMatrix(this->sumxi, this->N);
+	Free(this->logproba);
+	Free(this->sumgamma);
 	for (int iN=0; iN<this->N; iN++)
 	{
 		FILE_LOG(logDEBUG1) << "Deleting density functions"; 
 		delete this->densityFunctions[iN];
 	}
-// 	free(this->num_nonzero_A_into_state);
-// 	freeIntMatrix(this->index_nonzero_A_into_state, this->N);
+// 	Free(this->num_nonzero_A_into_state);
+// 	FreeIntMatrix(this->index_nonzero_A_into_state, this->N);
 }
 
 void LogHMM::initialize_transition_probs(double* initial_A, bool use_initial_params)
@@ -668,8 +668,8 @@ void LogHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 		this->print_uni_params();
 	}
 
-	/* free memory */
-	freeDoubleMatrix(gammaold, this->N);
+	/* Free memory */
+	FreeDoubleMatrix(gammaold, this->N);
 
 	// Return values
 	*maxiter = iteration;

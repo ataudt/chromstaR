@@ -283,7 +283,7 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 
 	// Recode the observation vector to matrix representation
 // 	clock_t clocktime = clock(), dtime;
-	int** multiO = allocIntMatrix(*Nmod, *T);
+	int** multiO = CallocIntMatrix(*Nmod, *T);
 	for (int imod=0; imod<*Nmod; imod++)
 	{
 		for (int t=0; t<*T; t++)
@@ -313,7 +313,7 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 
 	// Prepare the binary_states (univariate) vector: binary_states[N][Nmod], e.g., binary_states[iN][imod] tells me at state comb_states[iN], modification imod is non-enriched (0) or enriched (1)
 	FILE_LOG(logDEBUG1) << "Preparing the binary_states vector";
-	bool **binary_states = allocBoolMatrix(*N, *Nmod);
+	bool **binary_states = CallocBoolMatrix(*N, *Nmod);
 	for(int iN=0; iN < *N; iN++) //for each comb state considered
 	{
 		for(int imod=0; imod < *Nmod; imod++) //for each modification of this comb state
@@ -347,7 +347,7 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 		MVCopulaApproximation *tempMVdens = new MVCopulaApproximation(multiO, *T, tempMarginals, &(cor_matrix_inv[iN**Nmod**Nmod]), det[iN]); // delete is done inside ~ScaleHMM()
 		hmm->densityFunctions.push_back(tempMVdens);
 	}
-	freeBoolMatrix(binary_states, *N);
+	FreeBoolMatrix(binary_states, *N);
 	
 	// Estimate the parameters
 	FILE_LOG(logDEBUG1) << "Starting Baum-Welch estimation";
@@ -400,7 +400,7 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 
 	FILE_LOG(logDEBUG1) << "Deleting the hmm";
 	delete hmm;
-	freeIntMatrix(multiO, *Nmod);
+	FreeIntMatrix(multiO, *Nmod);
 }
 } // extern C
 
@@ -439,7 +439,7 @@ void R_multivariate_hmm_productBernoulli(double* O, int* T, int* N, int *Nmod, i
 
 	// Recode the observation vector to matrix representation
 // 	clock_t clocktime = clock(), dtime;
-	double** multiO = allocDoubleMatrix(*Nmod, *T);
+	double** multiO = CallocDoubleMatrix(*Nmod, *T);
 	for (int imod=0; imod<*Nmod; imod++)
 	{
 		for (int t=0; t<*T; t++)
@@ -470,7 +470,7 @@ void R_multivariate_hmm_productBernoulli(double* O, int* T, int* N, int *Nmod, i
 
 	// Prepare the binary_states (univariate) vector: binary_states[N][Nmod], e.g., binary_states[iN][imod] tells me at state states[iN], modification imod is non-enriched (0) or enriched (1)
 	FILE_LOG(logDEBUG1) << "Preparing the binary_states vector";
-	bool **binary_states = allocBoolMatrix(*N, *Nmod);
+	bool **binary_states = CallocBoolMatrix(*N, *Nmod);
 	for(int iN=0; iN < *N; iN++) //for each comb state considered
 	{
 		for(int imod=0; imod < *Nmod; imod++) //for each modification of this comb state
@@ -489,7 +489,7 @@ void R_multivariate_hmm_productBernoulli(double* O, int* T, int* N, int *Nmod, i
 		BernoulliProduct *tempBP = new BernoulliProduct(multiO, binary_states[iN], *T, *Nmod); // delete is done inside ~ScaleHMM()
 		hmm->densityFunctions.push_back(tempBP);
 	}
-	freeBoolMatrix(binary_states, *N);
+	FreeBoolMatrix(binary_states, *N);
 
 	// Estimate the parameters
 	FILE_LOG(logDEBUG1) << "Starting Baum-Welch estimation";
@@ -530,6 +530,6 @@ void R_multivariate_hmm_productBernoulli(double* O, int* T, int* N, int *Nmod, i
 
 	FILE_LOG(logDEBUG1) << "Deleting the hmm";
 	delete hmm;
-	freeDoubleMatrix(multiO, *Nmod);
+	FreeDoubleMatrix(multiO, *Nmod);
 }
 } // extern C

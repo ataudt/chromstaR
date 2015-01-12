@@ -22,6 +22,27 @@ void freeDoubleMatrix(double** matrix, int rows)
 	free(matrix);
 }
 
+double** CallocDoubleMatrix(int rows, int cols)
+{
+	double** matrix = (double**) Calloc(rows, double*);
+	int i;
+	for (i=0; i<rows; i++)
+	{
+		matrix[i] = (double*) Calloc(cols, double);
+	}
+	return(matrix);
+}
+
+void FreeDoubleMatrix(double** matrix, int rows)
+{
+	int i;
+	for (i=0; i<rows; i++)
+	{
+		Free(matrix[i]);
+	}
+	Free(matrix);
+}
+
 int** allocIntMatrix(int rows, int cols)
 {
 	int** matrix = (int**) calloc(rows, sizeof(int*));
@@ -43,6 +64,27 @@ void freeIntMatrix(int** matrix, int rows)
 	free(matrix);
 }
 
+int** CallocIntMatrix(int rows, int cols)
+{
+	int** matrix = (int**) Calloc(rows, int*);
+	int i;
+	for (i=0; i<rows; i++)
+	{
+		matrix[i] = (int*) Calloc(cols, int);
+	}
+	return(matrix);
+}
+
+void FreeIntMatrix(int** matrix, int rows)
+{
+	int i;
+	for (i=0; i<rows; i++)
+	{
+		Free(matrix[i]);
+	}
+	Free(matrix);
+}
+
 bool** allocBoolMatrix(int rows, int cols)
 {
 	bool** matrix = (bool**) calloc(rows, sizeof(bool*));
@@ -62,6 +104,27 @@ void freeBoolMatrix(bool** matrix, int rows)
 		free(matrix[i]);
 	}
 	free(matrix);
+}
+
+bool** CallocBoolMatrix(int rows, int cols)
+{
+	bool** matrix = (bool**) Calloc(rows, bool*);
+	int i;
+	for (i=0; i<rows; i++)
+	{
+		matrix[i] = (bool*) Calloc(cols, bool);
+	}
+	return(matrix);
+}
+
+void FreeBoolMatrix(bool** matrix, int rows)
+{
+	int i;
+	for (i=0; i<rows; i++)
+	{
+		Free(matrix[i]);
+	}
+	Free(matrix);
 }
 
 double*** alloc3Ddouble(int dim1, int dim2, int dim3)

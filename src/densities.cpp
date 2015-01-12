@@ -22,8 +22,8 @@ ZiNB::ZiNB(int* observations, int T, double size, double prob, double w)
 	if (this->obs != NULL)
 	{
 		this->max_obs = intMax(observations, T);
-		this->lxfactorials = (double*) calloc(max_obs+1, sizeof(double));
-		this->lxfactorials[0] = 0.0;	// Not necessary, already 0 because of calloc
+		this->lxfactorials = (double*) Calloc(max_obs+1, double);
+		this->lxfactorials[0] = 0.0;	// Not necessary, already 0 because of Calloc
 		this->lxfactorials[1] = 0.0;
 		for (int j=2; j<=max_obs; j++)
 		{
@@ -37,7 +37,7 @@ ZiNB::~ZiNB()
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	if (this->obs != NULL)
 	{
-		free(this->lxfactorials);
+		Free(this->lxfactorials);
 	}
 }
 
@@ -357,8 +357,8 @@ NegativeBinomial::NegativeBinomial(int* observations, int T, double size, double
 	if (this->obs != NULL)
 	{
 		this->max_obs = intMax(observations, T);
-		this->lxfactorials = (double*) calloc(max_obs+1, sizeof(double));
-		this->lxfactorials[0] = 0.0;	// Not necessary, already 0 because of calloc
+		this->lxfactorials = (double*) Calloc(max_obs+1, double);
+		this->lxfactorials[0] = 0.0;	// Not necessary, already 0 because of Calloc
 		this->lxfactorials[1] = 0.0;
 		for (int j=2; j<=max_obs; j++)
 		{
@@ -372,7 +372,7 @@ NegativeBinomial::~NegativeBinomial()
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	if (this->lxfactorials != NULL)
 	{
-		free(this->lxfactorials);
+		Free(this->lxfactorials);
 	}
 }
 
@@ -871,8 +871,8 @@ void MVCopulaApproximation::calc_logdensities(double* logdens)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	// Calculate logdensities for marginals
-	double** marginals_logdensities = allocDoubleMatrix(this->Nmod, this->T);
-	double** marginals_CDFs = allocDoubleMatrix(this->Nmod, this->T);
+	double** marginals_logdensities = CallocDoubleMatrix(this->Nmod, this->T);
+	double** marginals_CDFs = CallocDoubleMatrix(this->Nmod, this->T);
 	for (int imod=0; imod<this->Nmod; imod++)
 	{
 		FILE_LOG(logDEBUG2) << __func__ << ": calculating marginals for imod = " << imod;
@@ -882,7 +882,7 @@ void MVCopulaApproximation::calc_logdensities(double* logdens)
 	// Calculate multivariate Copula approximation
 	FILE_LOG(logDEBUG2) << __func__ << ": calculate Copula approximation";
 	double sum, uniform, exponent, exponentTemp;
-	double* z = (double*) calloc(this->Nmod, sizeof(double));
+	double* z = (double*) Calloc(this->Nmod, double);
 	for (int t=0; t<this->T; t++)
 	{
 		sum = 0.0;
@@ -947,9 +947,9 @@ void MVCopulaApproximation::calc_logdensities(double* logdens)
 	}
 
 	// Clean up
-	freeDoubleMatrix(marginals_logdensities, this->Nmod);
-	freeDoubleMatrix(marginals_CDFs, this->Nmod);
-	free(z);
+	FreeDoubleMatrix(marginals_logdensities, this->Nmod);
+	FreeDoubleMatrix(marginals_CDFs, this->Nmod);
+	Free(z);
 }
 
 void MVCopulaApproximation::calc_densities(double* dens)
@@ -995,7 +995,7 @@ void BernoulliProduct::calc_logdensities(double* logdens)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	double d, mult;
-	double** tempPost = allocDoubleMatrix(this->Nmod, this->T);
+	double** tempPost = CallocDoubleMatrix(this->Nmod, this->T);
 
 	for (int t=0; t<this->T; t++)
 	{
@@ -1018,7 +1018,7 @@ void BernoulliProduct::calc_logdensities(double* logdens)
 		}
 		logdens[t] = log(d);
 	}
-	freeDoubleMatrix(tempPost, this->Nmod);
+	FreeDoubleMatrix(tempPost, this->Nmod);
 }
 
 // Getter and Setter ------------------------------------------
