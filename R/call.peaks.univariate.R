@@ -296,6 +296,8 @@ call.peaks.univariate <- function(binned.data, ID, eps=0.001, init="standard", m
 		result <- list()
 		result$ID <- ID
 	## Get states
+		cat("Calculating states from posteriors ...")
+		ptm <- proc.time()
 		hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
 		colnames(hmm$posteriors) <- paste0("P(",state.labels,")")
 		threshold <- 0.5
@@ -310,6 +312,8 @@ call.peaks.univariate <- function(binned.data, ID, eps=0.001, init="standard", m
 														reads=hmm$reads,
 														state=states) 
 		seqlengths(result$bins) <- seqlengths(binned.data)
+		time <- proc.time() - ptm
+		cat(paste0(" ",round(time[3],2),"s\n"))
 	## Segmentation
 		cat("Making segmentation ...")
 		ptm <- proc.time()

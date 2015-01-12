@@ -190,6 +190,8 @@ void R_univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* m
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
 	// Compute the posteriors and save results directly to the R pointer
 	FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
+	Rprintf("Recoding posteriors ...\n");
+	R_FlushConsole();
 	#pragma omp parallel for
 	for (int iN=0; iN<*N; iN++)
 	{
