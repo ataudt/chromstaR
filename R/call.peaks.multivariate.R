@@ -49,6 +49,9 @@ call.peaks.multivariate <- function(modellist, use.states=NULL, num.states=NULL,
 	remove(modellist)
 	remove(params)
 
+	### Define cleanup behaviour ###
+	on.exit(.C("R_multivariate_cleanup", as.integer(nummod)))
+
 	## Starting multivariate HMM
 	cat("\nStarting multivariate HMM\n")
 	cat("Using the following combinatorial states, covering", mean(comb.states.per.bin %in% comb.states2use)*100, "% of the bins:\n", paste(comb.states2use, collapse=" "),"\n")

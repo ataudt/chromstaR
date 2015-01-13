@@ -100,17 +100,17 @@ plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NUL
 		if (! chrom %in% levels(seqnames(model$bins))) {
 			stop(chrom," can't be found in the model coordinates.")
 		}
-		selectchrom <- seqnames(model$bins) == chrom
+		selectchrom <- as.logical(seqnames(model$bins) == chrom)
 		selectmask <- selectmask & selectchrom
 		numchrom <- 1
 	}
 	if (numchrom == 1) {
 		if (!is.null(start)) {
-			selectstart <- start(ranges(model$bins)) >= start
+			selectstart <- as.logical(start(ranges(model$bins)) >= start)
 			selectmask <- selectmask & selectstart
 		}
 		if (!is.null(end)) {
-			selectend <- end(ranges(model$bins)) <= end
+			selectend <- as.logical(end(ranges(model$bins)) <= end)
 			selectmask <- selectmask & selectend
 		}
 	}

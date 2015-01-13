@@ -3,6 +3,9 @@
 #include <vector> // storing density functions in multivariate
 #include <omp.h> // parallelization options
 
+static ScaleHMM* hmm; // declare as static outside the function because we only need one and this enables memory-cleanup on R_CheckUserInterrupt()
+static int** multiO;
+
 // ===================================================================================================================================================
 // This function takes parameters from R, creates a univariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // ===================================================================================================================================================
@@ -16,6 +19,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* m
  	FILELog::ReportingLevel() = FILELog::FromString("ERROR");
 //  	FILELog::ReportingLevel() = FILELog::FromString("DEBUG1");
 
+	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	// Parallelization settings
 	omp_set_num_threads(*num_threads);
 
@@ -53,7 +57,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* m
 
 	// Create the HMM
 	FILE_LOG(logDEBUG1) << "Creating a univariate HMM";
-	ScaleHMM* hmm = new ScaleHMM(*T, *N);
+	hmm = new ScaleHMM(*T, *N);
 	hmm->set_cutoff(*read_cutoff);
 	// Initialize the transition probabilities and proba
 	hmm->initialize_transition_probs(initial_A, *use_initial_params);
@@ -249,6 +253,7 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
  	FILELog::ReportingLevel() = FILELog::FromString("ERROR");
 //  	FILELog::ReportingLevel() = FILELog::FromString("DEBUG3");
 
+	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	// Parallelization settings
 	omp_set_num_threads(*num_threads);
 
@@ -283,7 +288,7 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 
 	// Recode the observation vector to matrix representation
 // 	clock_t clocktime = clock(), dtime;
-	int** multiO = CallocIntMatrix(*Nmod, *T);
+	multiO = CallocIntMatrix(*Nmod, *T);
 	for (int imod=0; imod<*Nmod; imod++)
 	{
 		for (int t=0; t<*T; t++)
@@ -296,7 +301,7 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 
 	// Create the HMM
 	FILE_LOG(logDEBUG1) << "Creating the multivariate HMM";
-	ScaleHMM* hmm = new ScaleHMM(*T, *N, *Nmod);
+	hmm = new ScaleHMM(*T, *N, *Nmod);
 	// Initialize the transition probabilities and proba
 	hmm->initialize_transition_probs(initial_A, *use_initial_params);
 	hmm->initialize_proba(initial_proba, *use_initial_params);
@@ -404,132 +409,24 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 }
 } // extern C
 
-// ---------------------------------------------------------------
-// void R_multivariate_hmm_productBernoulli()
-// This function takes parameters from R, creates a multivariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
-// ---------------------------------------------------------------
-extern "C" {//observation is now the posterior for being UNMODIFIED
-void R_multivariate_hmm_productBernoulli(double* O, int* T, int* N, int *Nmod, int* states, int* maxiter, int* maxtime, double* eps, double* posteriors, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error)
+
+// =======================================================
+// This function make a cleanup if anything was left over
+// =======================================================
+extern "C" {
+void R_univariate_cleanup()
 {
-
-	// Define logging level
-// 	FILELog::ReportingLevel() = FILELog::FromString("DEBUG3");
-	FILELog::ReportingLevel() = FILELog::FromString("ITERATION");
-
-	// Parallelization settings
-// 	omp_set_num_threads(*num_threads);
-
-	// Print some information
-	FILE_LOG(logINFO) << "number of states = " << *N;
-	FILE_LOG(logINFO) << "number of bins = " << *T;
-	if (*maxiter < 0)
-	{
-		FILE_LOG(logINFO) << "maximum number of iterations = none";
-	} else {
-		FILE_LOG(logINFO) << "maximum number of iterations = " << *maxiter;
-	}
-	if (*maxtime < 0)
-	{
-		FILE_LOG(logINFO) << "maximum running time = none";
-	} else {
-		FILE_LOG(logINFO) << "maximum running time = " << *maxtime << " sec";
-	}
-	FILE_LOG(logINFO) << "epsilon = " << *eps;
-	FILE_LOG(logINFO) << "number of modifications = " << *Nmod;
-
-	// Recode the observation vector to matrix representation
-// 	clock_t clocktime = clock(), dtime;
-	double** multiO = CallocDoubleMatrix(*Nmod, *T);
-	for (int imod=0; imod<*Nmod; imod++)
-	{
-		for (int t=0; t<*T; t++)
-		{
-			multiO[imod][t] = O[imod*(*T)+t];
-		}
-	}
-// 	dtime = clock() - clocktime;
-// 	FILE_LOG(logDEBUG1) << "recoding observation and probability vectors to matrix representation: " << dtime << " clicks";
-
-	// Create the HMM
-	FILE_LOG(logDEBUG1) << "Creating the multivariate HMM";
-	ScaleHMM* hmm = new ScaleHMM(*T, *N, *Nmod);
-
-	// Initialize the transition probabilities and proba
-	hmm->initialize_transition_probs(initial_A, *use_initial_params);
-	hmm->initialize_proba(initial_proba, *use_initial_params);
-	
-	// Print logproba and A
-// 	for (int iN=0; iN<*N; iN++)
-// 	{
-// 		FILE_LOG(logINFO) << "proba["<<iN<<"] = " <<exp(hmm->logproba[iN]);
-// 		for (int jN=0; jN<*N; jN++)
-// 		{
-// 			FILE_LOG(logINFO) << "A["<<iN<<"]["<<jN<<"] = " << hmm->A[iN][jN];
-// 		}
-// 	}
-
-	// Prepare the binary_states (univariate) vector: binary_states[N][Nmod], e.g., binary_states[iN][imod] tells me at state states[iN], modification imod is non-enriched (0) or enriched (1)
-	FILE_LOG(logDEBUG1) << "Preparing the binary_states vector";
-	bool **binary_states = CallocBoolMatrix(*N, *Nmod);
-	for(int iN=0; iN < *N; iN++) //for each comb state considered
-	{
-		for(int imod=0; imod < *Nmod; imod++) //for each modification of this comb state
-		{
-			binary_states[iN][imod] = states[iN]&(int)pow(2,*Nmod-imod-1);//if =0->hidden state states[iN] has modification imod non enriched; if !=0->enriched
-			if (binary_states[iN][imod] != 0 )
-				binary_states[iN][imod] = 1;
-		}
-	}
-
-	/* initialize the distributions */
-	FILE_LOG(logDEBUG1) << "Initializing the distributions";
-	for (int iN=0; iN<*N; iN++) //for each combinatorial state
-	{
-		FILE_LOG(logDEBUG1) << "Calling BernoulliProduct";
-		BernoulliProduct *tempBP = new BernoulliProduct(multiO, binary_states[iN], *T, *Nmod); // delete is done inside ~ScaleHMM()
-		hmm->densityFunctions.push_back(tempBP);
-	}
-	FreeBoolMatrix(binary_states, *N);
-
-	// Estimate the parameters
-	FILE_LOG(logDEBUG1) << "Starting Baum-Welch estimation";
-	try
-	{
-		hmm->baumWelch(maxiter, maxtime, eps);
-	}
-	catch (std::exception& e)
-	{
-		FILE_LOG(logERROR) << "Error in Baum-Welch: " << e.what();
-		Rprintf("Error in Baum-Welch: %s\n", e.what());
-		if (e.what()=="nan detected") { *error = 1; }
-		else { *error = 2; }
-	}
-	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
-	
-	// Compute the posteriors and save results directly to the R pointer
-	FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
-	for (int iN=0; iN<*N; iN++)
-	{
-		for (int t=0; t<*T; t++)
-		{
-			posteriors[t + iN * (*T)] = hmm->get_posterior(iN, t);
-		}
-	}
-	
-	FILE_LOG(logDEBUG1) << "Return parameters";
-	// also return the estimated transition matrix and the initial probs
-	for (int i=0; i<*N; i++)
-	{
-		proba[i] = hmm->get_proba(i);
-		for (int j=0; j<*N; j++)
-		{
-				A[i * (*N) + j] = hmm->get_A(i,j);
-		}
-	}
-	*loglik = hmm->get_logP();
-
-	FILE_LOG(logDEBUG1) << "Deleting the hmm";
+	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	delete hmm;
-	FreeDoubleMatrix(multiO, *Nmod);
 }
-} // extern C
+}
+
+extern "C" {
+void R_multivariate_cleanup(int* Nmod)
+{
+	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	delete hmm;
+	FreeIntMatrix(multiO, *Nmod);
+}
+}
+

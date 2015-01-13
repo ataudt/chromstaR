@@ -1,5 +1,8 @@
 call.peaks.univariate <- function(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.iter=-1, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff.quantile=0.999, max.mean=10, control=FALSE, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE) {
 
+	### Define cleanup behaviour ###
+	on.exit(.C("R_univariate_cleanup"))
+
 	### Intercept user input ###
 	IDcheck <- ID  #trigger error if not defined
 	if (check.positive(eps)!=0) stop("argument 'eps' expects a positive numeric")
