@@ -17,7 +17,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* m
 // 	FILE* pFile = fopen("chromStar.log", "w");
 // 	Output2FILE::Stream() = pFile;
  	FILELog::ReportingLevel() = FILELog::FromString("ERROR");
-//  	FILELog::ReportingLevel() = FILELog::FromString("DEBUG1");
+//  	FILELog::ReportingLevel() = FILELog::FromString("DEBUG2");
 
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	// Parallelization settings
@@ -237,6 +237,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* m
 	
 	FILE_LOG(logDEBUG1) << "Deleting the hmm";
 	delete hmm;
+	hmm = NULL; // assign NULL to defuse the additional delete in on.exit() call
 }
 } // extern C
 
@@ -405,7 +406,8 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 
 	FILE_LOG(logDEBUG1) << "Deleting the hmm";
 	delete hmm;
-	FreeIntMatrix(multiO, *Nmod);
+	hmm = NULL; // assign NULL to defuse the additional delete in on.exit() call
+// 	FreeIntMatrix(multiO, *Nmod); // free on.exit() in R code
 }
 } // extern C
 
