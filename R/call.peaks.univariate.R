@@ -1,4 +1,4 @@
-call.peaks.univariate <- function(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.iter=-1, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff.quantile=0.999, max.mean=10, control=FALSE, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE) {
+call.peaks.univariate <- function(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.iter=-1, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff.quantile=0.999, max.mean=10, control=FALSE, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, false.discovery.rate=0.5, keep.posteriors=FALSE) {
 
 	### Define cleanup behaviour ###
 	on.exit(.C("R_univariate_cleanup"))
@@ -16,6 +16,8 @@ call.peaks.univariate <- function(binned.data, ID, eps=0.001, init="standard", m
 	if (check.integer(checkpoint.after.iter)!=0) stop("argument 'checkpoint.after.iter' expects an integer")
 	if (check.integer(checkpoint.after.time)!=0) stop("argument 'checkpoint.after.time' expects an integer")
 	if (check.logical(checkpoint.overwrite)!=0) stop("argument 'checkpoint.overwrite' expects a logical (TRUE or FALSE)")
+	if (false.discovery.rate>1 | false.discovery.rate<0) stop("argument 'false.discovery.rate' has to be between 0 and 1 if specified")
+	if (check.logical(keep.posteriors)!=0) stop("argument 'keep.posteriors' expects a logical (TRUE or FALSE)")
 	war <- NULL
 	if (is.null(eps.try)) eps.try <- eps
 	## Load binned.data and reuse values if present
@@ -189,6 +191,8 @@ call.peaks.univariate <- function(binned.data, ID, eps=0.001, init="standard", m
 				rownames(distributions.initial) <- state.labels
 				distributions.initial['zero-inflation',2:5] <- c(0,1,0,0)
 				result$distributions.initial <- distributions.initial
+				# FDR
+				result$FDR <- false.discovery.rate
 			## Convergence info
 				convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec)
 				result$convergenceInfo <- convergenceInfo
@@ -303,17 +307,20 @@ call.peaks.univariate <- function(binned.data, ID, eps=0.001, init="standard", m
 		ptm <- proc.time()
 		hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
 		colnames(hmm$posteriors) <- paste0("P(",state.labels,")")
-		threshold <- 0.5
+		threshold <- 1-false.discovery.rate
 		states <- rep(NA,hmm$num.bins)
-		states[ hmm$posteriors[,3]<=threshold & hmm$posteriors[,2]<=hmm$posteriors[,1] ] <- 1
-		states[ hmm$posteriors[,3]<=threshold & hmm$posteriors[,2]>=hmm$posteriors[,1] ] <- 2
-		states[ hmm$posteriors[,3]>threshold ] <- 3
+		states[ hmm$posteriors[,3]<threshold & hmm$posteriors[,2]<=hmm$posteriors[,1] ] <- 1
+		states[ hmm$posteriors[,3]<threshold & hmm$posteriors[,2]>hmm$posteriors[,1] ] <- 2
+		states[ hmm$posteriors[,3]>=threshold ] <- 3
 		states <- state.labels[states]
-	## Bin coordinates and states
+	## Bin coordinates, posteriors and states
 		result$bins <- GRanges(seqnames=seqnames(binned.data),
 														ranges=ranges(binned.data),
 														reads=hmm$reads,
 														state=states) 
+		if (keep.posteriors) {
+			result$bins$posteriors <- hmm$posteriors
+		}
 		seqlengths(result$bins) <- seqlengths(binned.data)
 		time <- proc.time() - ptm
 		cat(paste0(" ",round(time[3],2),"s\n"))
@@ -358,6 +365,8 @@ call.peaks.univariate <- function(binned.data, ID, eps=0.001, init="standard", m
 		rownames(distributions.initial) <- state.labels
 		distributions.initial['zero-inflation',2:5] <- c(0,1,0,0)
 		result$distributions.initial <- distributions.initial
+		# FDR
+		result$FDR <- false.discovery.rate
 	## Convergence info
 		convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec)
 		result$convergenceInfo <- convergenceInfo

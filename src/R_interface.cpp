@@ -245,7 +245,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* m
 // This function takes parameters from R, creates a multivariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // =====================================================================================================================================================
 extern "C" {
-void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, double* size, double* prob, double* w, double* cor_matrix_inv, double* det, int* maxiter, int* maxtime, double* eps, int* states, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error)
+void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, double* size, double* prob, double* w, double* cor_matrix_inv, double* det, int* maxiter, int* maxtime, double* eps, double* posteriors, bool* keep_posteriors, int* states, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error)
 {
 
 	// Define logging level {"ERROR", "WARNING", "INFO", "ITERATION", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4"}
@@ -370,15 +370,21 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 	}
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
 	
-// 	// Compute the posteriors and save results directly to the R pointer
-// 	FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
-// 	for (int iN=0; iN<*N; iN++)
-// 	{
-// 		for (int t=0; t<*T; t++)
-// 		{
-// 			posteriors[t + iN * (*T)] = hmm->get_posterior(iN, t);
-// 		}
-// 	}
+	// Compute the posteriors and save results directly to the R pointer
+	if (*keep_posteriors == true)
+	{
+		FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
+		Rprintf("Recoding posteriors ...\n");
+		R_FlushConsole();
+		#pragma omp parallel for
+		for (int iN=0; iN<*N; iN++)
+		{
+			for (int t=0; t<*T; t++)
+			{
+				posteriors[t + iN * (*T)] = hmm->get_posterior(iN, t);
+			}
+		}
+	}
 
 	// Compute the states from posteriors
 	FILE_LOG(logDEBUG1) << "Computing states from posteriors";
@@ -418,7 +424,7 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 extern "C" {
 void R_univariate_cleanup()
 {
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+// 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__; // This message will be shown if interrupt happens before start of C-code
 	delete hmm;
 }
 }
@@ -426,7 +432,6 @@ void R_univariate_cleanup()
 extern "C" {
 void R_multivariate_cleanup(int* Nmod)
 {
-	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	delete hmm;
 	FreeIntMatrix(multiO, *Nmod);
 }

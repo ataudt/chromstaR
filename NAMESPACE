@@ -34,7 +34,7 @@ binned2GRanges,
 hmm2GRanges,
 bed2GRanges,
 
-get.states,
+change.FDR,
 combinatorial.states,
 collapse.bins,
 dec2bin,
