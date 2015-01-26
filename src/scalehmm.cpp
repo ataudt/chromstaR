@@ -185,7 +185,7 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 		this->print_multi_iteration(0);
 		// Print densities
 // 		int bs = 100;
-// 		char buffer [bs];
+// 		char buffer [100];
 // 		int cx;
 // 		for (int t=0; t<this->T; t++)
 // 		{
@@ -406,9 +406,9 @@ void ScaleHMM::check_for_state_swap()
 	if (this->N == 3)
 	{
 
-		double weights [this->N];
-		double maxdens [this->N];
-		double cutoff_logdens [this->N];
+		std::vector<double> weights(this->N);
+		std::vector<double> maxdens(this->N);
+		std::vector<double> cutoff_logdens(this->N);
 
 		// calculate weights, maxdens and logdens at cutoff
 		this->calc_weights(weights);
@@ -500,6 +500,21 @@ void ScaleHMM::check_for_state_swap()
 	}
 }
 
+void ScaleHMM::calc_weights(std::vector<double> weights)
+{
+	#pragma omp parallel for
+	for (int iN=0; iN<this->N; iN++)
+	{
+		// Do not use weights[iN] = ( this->sumgamma[iN] + this->gamma[iN][T-1] ) / this->T; here, since states are swapped and gammas not
+		double sum_over_gammas_per_state = 0;
+		for (int t=0; t<this->T; t++)
+		{
+			sum_over_gammas_per_state += this->gamma[iN][t];
+		}
+		weights[iN] = sum_over_gammas_per_state / this->T;
+	}
+}
+
 void ScaleHMM::calc_weights(double* weights)
 {
 	#pragma omp parallel for
@@ -576,7 +591,7 @@ void ScaleHMM::forward()
 // 	if (this->xvariate==UNIVARIATE)
 // 	{
 
-		double alpha [this->N];
+		std::vector<double> alpha(this->N);
 		// Initialization
 		this->scalefactoralpha[0] = 0.0;
 		for (int iN=0; iN<this->N; iN++)
@@ -630,7 +645,7 @@ void ScaleHMM::forward()
 // 	else if (this->xvariate==MULTIVARIATE)
 // 	{
 // 
-// 		double alpha [this->N];
+// 		std::vector<double> alpha(this->N);
 // 		// Initialization
 // 		this->scalefactoralpha[0] = 0.0;
 // 		for (int iN=0; iN<this->N; iN++)
@@ -694,7 +709,7 @@ void ScaleHMM::backward()
 // 	if (this->xvariate==UNIVARIATE)
 // 	{
 
-		double beta [this->N];
+		std::vector<double> beta(this->N);
 		// Initialization
 		for (int iN=0; iN<this->N; iN++)
 		{
@@ -744,7 +759,7 @@ void ScaleHMM::backward()
 // 	else if (this->xvariate==MULTIVARIATE)
 // 	{
 // 
-// 		double beta [this->N];
+// 		std::vector<double> beta(this->N);
 // 		// Initialization
 // 		for (int iN=0; iN<this->N; iN++)
 // 		{
@@ -911,13 +926,13 @@ void ScaleHMM::calc_densities()
 	}
 
 	// Check if the density for all states is numerically zero and correct to prevent NaNs
-	double temp [this->N];
+	std::vector<double> temp(this->N);
 	// t=0
 	for (int iN=0; iN<this->N; iN++)
 	{
 		temp[iN] = this->densities[iN][0];
 	}
-	if (Max(temp, this->N) == 0.0)
+	if (*std::max_element(temp.begin(), temp.end()) == 0.0)
 	{
 		for (int iN=0; iN<this->N; iN++)
 		{
@@ -931,7 +946,7 @@ void ScaleHMM::calc_densities()
 		{
 			temp[iN] = this->densities[iN][t];
 		}
-		if (Max(temp, this->N) == 0.0)
+		if (*std::max_element(temp.begin(), temp.end()) == 0.0)
 		{
 			for (int iN=0; iN<this->N; iN++)
 			{
@@ -949,7 +964,7 @@ void ScaleHMM::print_uni_iteration(int iteration)
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	this->baumWelchTime_real = difftime(time(NULL),this->baumWelchStartTime_sec);
 	int bs = 106;
-	char buffer [bs];
+	char buffer [106];
 	if (iteration % 20 == 0)
 	{
 		snprintf(buffer, bs, "%10s%20s%20s%19s%d%15s", "Iteration", "log(P)", "dlog(P)", "Diff in state ",this->N-1, "Time in sec");
@@ -980,7 +995,7 @@ void ScaleHMM::print_multi_iteration(int iteration)
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	this->baumWelchTime_real = difftime(time(NULL),this->baumWelchStartTime_sec);
 	int bs = 86;
-	char buffer [bs];
+	char buffer [86];
 	if (iteration % 20 == 0)
 	{
 		snprintf(buffer, bs, "%10s%20s%20s%15s", "Iteration", "log(P)", "dlog(P)", "Time in sec");
@@ -1010,7 +1025,7 @@ void ScaleHMM::print_uni_params()
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	int bs = 82;
-	char buffer [bs];
+	char buffer [82];
 	int cx;
 	snprintf(buffer, bs, " -------------------------------------------------------------------------------");
 	FILE_LOG(logINFO) << buffer;

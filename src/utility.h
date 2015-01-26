@@ -10,6 +10,7 @@
 // #include <cstring> // for memcpy() in printDoubleAsBinary()
 #include "logging.h" // FILE_LOG() capability
 #include <R.h> // Calloc() etc.
+#include <algorithm> // max_element
 
 /* custom error handling class */
 // extern statement to avoid 'multiple definition' errors

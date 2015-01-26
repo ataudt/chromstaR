@@ -13,13 +13,13 @@ class Density {
 		// Constructor and Destructor
 		virtual ~Density() {};
 		// Methods
-		virtual void calc_logdensities(double* logdensity) {};
-		virtual void calc_densities(double* density) {};
-		virtual void calc_logCDFs(double* logCDF) {};
-		virtual void calc_CDFs(double* CDF) {};
-		virtual void update(double* weight) {}; 
-		virtual void copy(Density* other) {};
-		virtual double getLogDensityAt(int x) { return(0); };
+		virtual void calc_logdensities(double*) {};
+		virtual void calc_densities(double*) {};
+		virtual void calc_logCDFs(double*) {};
+		virtual void calc_CDFs(double*) {};
+		virtual void update(double*) {}; 
+		virtual void copy(Density*) {};
+		virtual double getLogDensityAt(int) { return(0); };
 		// Getter and Setter
 		virtual DensityName get_name() { return(OTHER); };
 		virtual double get_mean() { return(0); };

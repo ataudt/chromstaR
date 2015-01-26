@@ -53,7 +53,7 @@ void ZiNB::calc_logdensities(double* logdens)
 	if (this->max_obs <= this->T)
 	{
 		FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
-		double lGammaRplusX[this->max_obs+1];
+		std::vector<double> lGammaRplusX(this->max_obs+1);
 		for (int j=0; j<=this->max_obs; j++)
 		{
 			lGammaRplusX[j] = lgamma(this->size + j);
@@ -113,7 +113,7 @@ void ZiNB::calc_densities(double* dens)
 	if (this->max_obs <= this->T)
 	{
 		FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
-		double lGammaRplusX[this->max_obs+1];
+		std::vector<double> lGammaRplusX(this->max_obs+1);
 		for (int j=0; j<=this->max_obs; j++)
 		{
 			lGammaRplusX[j] = lgamma(this->size + j);
@@ -167,9 +167,9 @@ void ZiNB::calc_CDFs(double* CDF)
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	double logp = log(this->prob);
 	double log1minusp = log(1-this->prob);
-	double lGammaR,lxfactorial;
+	double lGammaR;
 	lGammaR=lgamma(this->size);
-	double precomputed_CDF[this->max_obs+1];
+	std::vector<double> precomputed_CDF(this->max_obs+1);
 	double dens;
 
 	FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
@@ -209,9 +209,9 @@ void ZiNB::calc_logCDFs(double* logCDF)
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	double logp = log(this->prob);
 	double log1minusp = log(1-this->prob);
-	double lGammaR,lxfactorial;
+	double lGammaR;
 	lGammaR=lgamma(this->size);
-	double precomputed_logCDF[this->max_obs+1];
+	std::vector<double> precomputed_logCDF(this->max_obs+1);
 	double logdens;
 
 	FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
@@ -388,7 +388,7 @@ void NegativeBinomial::calc_logdensities(double* logdens)
 	if (this->max_obs <= this->T)
 	{
 		FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
-		double logdens_per_read [this->max_obs+1];
+		std::vector<double> logdens_per_read(this->max_obs+1);
 		for (int j=0; j<=this->max_obs; j++)
 		{
 			logdens_per_read[j] = lgamma(this->size + j) - lGammaR - lxfactorials[j] + this->size * logp + j * log1minusp;
@@ -435,7 +435,7 @@ void NegativeBinomial::calc_densities(double* dens)
 	if (this->max_obs <= this->T)
 	{
 		FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
-		double dens_per_read [this->max_obs+1];
+		std::vector<double> dens_per_read(this->max_obs+1);
 		for (int j=0; j<=this->max_obs; j++)
 		{
 			dens_per_read[j] = exp( lgamma(this->size + j) - lGammaR - lxfactorials[j] + this->size * logp + j * log1minusp );
@@ -476,9 +476,9 @@ void NegativeBinomial::calc_CDFs(double* CDF)
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	double logp = log(this->prob);
 	double log1minusp = log(1-this->prob);
-	double lGammaR,lxfactorial;
+	double lGammaR;
 	lGammaR=lgamma(this->size);
-	double precomputed_CDF[this->max_obs+1];
+	std::vector<double> precomputed_CDF(this->max_obs+1);
 	double dens;
 
 	FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
@@ -518,9 +518,9 @@ void NegativeBinomial::calc_logCDFs(double* logCDF)
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	double logp = log(this->prob);
 	double log1minusp = log(1-this->prob);
-	double lGammaR,lxfactorial;
+	double lGammaR;
 	lGammaR=lgamma(this->size);
-	double precomputed_logCDF[this->max_obs+1];
+	std::vector<double> precomputed_logCDF(this->max_obs+1);
 	double logdens;
 
 	FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
@@ -582,7 +582,8 @@ void NegativeBinomial::update(double* weight)
 	if (this->max_obs <= this->T)
 	{
 		FILE_LOG(logDEBUG3) << "Precomputing digammas in " << __func__ << " for every obs[t], because max(O)<=T";
-		double DigammaRplusX[this->max_obs+1], DigammaRplusDRplusX[this->max_obs+1];
+		std::vector<double> DigammaRplusX(this->max_obs+1);
+		std::vector<double> DigammaRplusDRplusX(this->max_obs+1);
 		for (int k=1; k<kmax; k++)
 		{
 			Fr=dFrdr=0.0;
@@ -784,9 +785,9 @@ void ZeroInflation::calc_densities(double* dens)
 	}
 }
 
-void ZeroInflation::copy(Density* other) {}
+void ZeroInflation::copy(Density*) {}
 
-void ZeroInflation::update(double* weight)
+void ZeroInflation::update(double*)
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 }
@@ -860,7 +861,7 @@ MVCopulaApproximation::MVCopulaApproximation(int** multiobservations, int T, std
 MVCopulaApproximation::~MVCopulaApproximation()
 {
 	FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	for (int imod; imod<this->Nmod; imod++)
+	for (int imod=0; imod<this->Nmod; imod++)
 	{
 		delete this->marginals[imod];
 	}

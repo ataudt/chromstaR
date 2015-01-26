@@ -2,6 +2,7 @@
 #include "scalehmm.h"
 #include <vector> // storing density functions in multivariate
 #include <omp.h> // parallelization options
+#include <string> // strcmp
 
 static ScaleHMM* hmm; // declare as static outside the function because we only need one and this enables memory-cleanup on R_CheckUserInterrupt()
 static int** multiO;
@@ -79,7 +80,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* m
 	Rprintf("data mean = %g, data variance = %g\n", mean, variance);		
 	
 	// Go through all states of the hmm and assign the density functions
-	double imean, ivariance;
+	double imean=0, ivariance=0;
 	for (int i_state=0; i_state<*N; i_state++)
 	{
 		if (*use_initial_params) {
@@ -187,7 +188,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* m
 	{
 		FILE_LOG(logERROR) << "Error in Baum-Welch: " << e.what();
 		Rprintf("Error in Baum-Welch: %s\n", e.what());
-		if (e.what()=="nan detected") { *error = 1; }
+		if (strcmp(e.what(),"nan detected")==0) { *error = 1; }
 		else { *error = 2; }
 	}
 		
@@ -365,7 +366,7 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 	{
 		FILE_LOG(logERROR) << "Error in Baum-Welch: " << e.what();
 		Rprintf("Error in Baum-Welch: %s\n", e.what());
-		if (e.what()=="nan detected") { *error = 1; }
+		if (strcmp(e.what(),"nan detected")==0) { *error = 1; }
 		else { *error = 2; }
 	}
 	FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
@@ -390,14 +391,14 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 	FILE_LOG(logDEBUG1) << "Computing states from posteriors";
 // 	if (*fdr == -1)
 // 	{
-		double posterior_per_t [*N];
+		std::vector<double> posterior_per_t(*N);
 		for (int t=0; t<*T; t++)
 		{
 			for (int iN=0; iN<*N; iN++)
 			{
 				posterior_per_t[iN] = hmm->get_posterior(iN, t);
 			}
-			states[t] = comb_states[argMax(posterior_per_t, *N)];
+			states[t] = comb_states[(int)*std::max_element(posterior_per_t.begin(), posterior_per_t.end())];
 		}
 // 	}
 // 	else

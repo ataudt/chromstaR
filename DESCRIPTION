@@ -6,9 +6,9 @@ Date: 2014-05-03
 Author: Maria Colome Tatche, Aaron Taudt, Matthias Heinig 
 Maintainer: Aaron Taudt <a.s.taudt@umcg.nl>
 Description: not yet
-Depends: R (>= 2.15.2)
-Imports: GenomicRanges, IRanges, Rsamtools
-Suggests: ggplot2, mvtnorm
+Depends: R (>= 2.15.2), GenomicRanges, IRanges
+Imports: Rsamtools
+Suggests: ggplot2
 License: GPL
 LazyLoad: yes
 Packaged: 2014-05-03 00:00:00 CET+1; Taudt
