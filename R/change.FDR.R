@@ -1,11 +1,13 @@
-change.FDR <- function(model, false.discovery.rate=0.5, separate.zeroinflation=TRUE, control=FALSE) {
+change.FDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, control=FALSE) {
 
 	## Check if posteriors are present
 	if (is.null(model$bins$posteriors)) stop("Cannot recalculate states because posteriors are missing. Run 'call.peaks.univariate' again with option 'keep.posteriors' set to TRUE.")
 
 	## Get the states
-	threshold <- 1-false.discovery.rate
-	model$FDR <- false.discovery.rate
+	threshold <- 1-FDR
+	model$FDR <- FDR
+
+	### Univariate HMM ###
 	if (is(model,class.univariate.hmm)) {
 		## Calculate states
 		cat("Calculating states from posteriors ...")
@@ -43,10 +45,12 @@ change.FDR <- function(model, false.discovery.rate=0.5, separate.zeroinflation=T
 		cat(paste0(" ",round(time[3],2),"s\n"))
 # 		## Redo weights
 # 		model$weights <- table(model$bins$state) / length(model$bins)
+
+	### Multivariate HMM ###
 	} else if (is(model,class.multivariate.hmm)) {
 		cat("Calculating states from posteriors ...")
 		ptm <- proc.time()
-		if (is.null(false.discovery.rate)) {
+		if (is.null(FDR)) {
 			states <- factor(levels(model$bins$state)[apply(model$bins$posteriors, 1, which.max)], levels=levels(model$bins$state))
 		} else {
 			post.per.track <- matrix(0, ncol=ncol(model$bins$reads), nrow=nrow(model$bins$reads))

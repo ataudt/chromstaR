@@ -1,4 +1,4 @@
-call.peaks.multivariate <- function(modellist, use.states=NULL, num.states=NULL, eps=0.001, num.threads=1, max.time=-1, max.iter=-1, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file=NULL, checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL, false.discovery.rate=NULL, keep.posteriors=FALSE) {
+call.peaks.multivariate <- function(modellist, use.states=NULL, num.states=NULL, eps=0.001, num.threads=1, max.time=-1, max.iter=-1, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file=NULL, checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL, FDR=NULL, keep.posteriors=FALSE) {
 
 	## Intercept user input
 	if (check.univariate.modellist(modellist)!=0) {
@@ -29,8 +29,12 @@ call.peaks.multivariate <- function(modellist, use.states=NULL, num.states=NULL,
 	if (check.integer(checkpoint.after.time)!=0) stop("argument 'checkpoint.after.time' expects an integer")
 	if (check.logical(checkpoint.overwrite)!=0) stop("argument 'checkpoint.overwrite' expects a logical (TRUE or FALSE)")
 	if (check.logical(keep.posteriors)!=0) stop("argument 'keep.posteriors' expects a logical (TRUE or FALSE)")
-	if (!is.null(false.discovery.rate)) {
-		if (false.discovery.rate>1 | false.discovery.rate<0) stop("argument 'false.discovery.rate' has to be between 0 and 1 if specified")
+	if (!is.null(FDR)) {
+		if (FDR>1 | FDR<0) stop("argument 'FDR' has to be between 0 and 1 if specified")
+		get.posteriors <- TRUE
+	} else {
+		FDR <- -1
+		get.posteriors <- keep.posteriors
 	}
 
 	## Prepare the HMM
@@ -67,7 +71,7 @@ call.peaks.multivariate <- function(modellist, use.states=NULL, num.states=NULL,
 	ws2 <- unlist(lapply(weights,"[",2))
 	ws3 <- unlist(lapply(weights,"[",3))
 	ws <- ws1 / (ws2+ws1)
-	if (keep.posteriors) { lenPosteriors <- numbins * numstates2use } else { lenPosteriors <- 1 }
+	if (get.posteriors) { lenPosteriors <- numbins * numstates2use } else { lenPosteriors <- 1 }
 
 	# Load checkpoint file if it exists and if desired
 	if (is.null(checkpoint.file)) {
@@ -131,7 +135,7 @@ call.peaks.multivariate <- function(modellist, use.states=NULL, num.states=NULL,
 			time.sec = as.integer(max.time.temp), # double* maxtime
 			loglik.delta = as.double(eps), # double* eps
 			posteriors = double(length=lenPosteriors), # double* posteriors
-			keep.posteriors = as.logical(keep.posteriors), # bool* keep_posteriors
+			get.posteriors = as.logical(get.posteriors), # bool* keep_posteriors
 			states = integer(length=numbins), # int* states
 			A = double(length=numstates2use*numstates2use), # double* A
 			proba = double(length=numstates2use), # double* proba
@@ -156,13 +160,10 @@ call.peaks.multivariate <- function(modellist, use.states=NULL, num.states=NULL,
 		## Bin coordinates, posteriors and states
 			result$bins <- bins
 			result$bins$reads <- reads
-			hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
-			if (keep.posteriors) {
-				result$bins$posteriors <- hmm$posteriors
-				colnames(result$bins$posteriors) <- paste0("P(",hmm$comb.states,")")
-			}
-			if (!is.null(false.discovery.rate)) {
+			if (!is.null(FDR)) {
 				cat("Calculating states from posteriors ...")
+				hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
+				colnames(hmm$posteriors) <- paste0("P(",hmm$comb.states,")")
 				ptm <- proc.time()
 				post.per.track <- matrix(0, ncol=hmm$num.modifications, nrow=hmm$num.bins)
 				binstates <- dec2bin(hmm$comb.states, ndigits=hmm$num.modifications)
@@ -171,10 +172,17 @@ call.peaks.multivariate <- function(modellist, use.states=NULL, num.states=NULL,
 					post.per.track <- post.per.track + binstate.matrix * hmm$posteriors[,icol]
 				}
 				result$bins$state <- factor(bin2dec(post.per.track >= threshold), levels=hmm$comb.states)
+				if (keep.posteriors) {
+					result$bins$posteriors <- hmm$posteriors
+				}
 				time <- proc.time() - ptm
 				cat(paste0(" ",round(time[3],2),"s\n"))
 			} else {
 				result$bins$state <- factor(hmm$states, levels=hmm$comb.states)
+				if (keep.posteriors) {
+					result$bins$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
+					colnames(result$bins$posteriors) <- paste0("P(",hmm$comb.states,")")
+				}
 			}
 		## Segmentation
 			cat("Making segmentation ...")
@@ -211,7 +219,11 @@ call.peaks.multivariate <- function(modellist, use.states=NULL, num.states=NULL,
 			result$distributions <- distributions
 			names(result$distributions) <- IDs
 			# FDR
-			result$FDR <- false.discovery.rate
+			if (FDR == -1) {
+				result$FDR <- NULL
+			} else {
+				result$FDR <- hmm$FDR
+			}
 		## Convergence info
 			convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec)
 			result$convergenceInfo <- convergenceInfo

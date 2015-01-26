@@ -388,15 +388,32 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 
 	// Compute the states from posteriors
 	FILE_LOG(logDEBUG1) << "Computing states from posteriors";
-	double posterior_per_t [*N];
-	for (int t=0; t<*T; t++)
-	{
-		for (int iN=0; iN<*N; iN++)
+// 	if (*fdr == -1)
+// 	{
+		double posterior_per_t [*N];
+		for (int t=0; t<*T; t++)
 		{
-			posterior_per_t[iN] = hmm->get_posterior(iN, t);
+			for (int iN=0; iN<*N; iN++)
+			{
+				posterior_per_t[iN] = hmm->get_posterior(iN, t);
+			}
+			states[t] = comb_states[argMax(posterior_per_t, *N)];
 		}
-		states[t] = comb_states[argMax(posterior_per_t, *N)];
-	}
+// 	}
+// 	else
+// 	{
+// 		double** transformed_posteriors = CallocDoubleMatrix(*T, *Nmod);
+// 		for (int t=0; t<*T; t++)
+// 		{
+// 			for (int iN=0; iN<*N; iN++)
+// 			{
+// 				for (int iNmod=0; iNmod<*Nmod; iNmod++)
+// 				{
+// 					transformed_posteriors[t][iNmod] += (double)binary_states[iN][iNmod] * hmm->get_posterior(iN, t);
+// 				}
+// 			}
+// 		}
+// 	}
 	
 	FILE_LOG(logDEBUG1) << "Return parameters";
 	// also return the estimated transition matrix and the initial probs
