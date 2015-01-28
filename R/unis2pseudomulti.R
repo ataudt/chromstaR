@@ -14,7 +14,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
 	weights = lapply(uni.hmm.list,"[[","weights")
 
 	# Extract the reads
-	cat("Extracting reads from uni.hmm.list...")
+	message("Extracting reads from uni.hmm.list...", appendLF=F)
 	reads = matrix(NA, ncol=nummod, nrow=numbins)
 	colnames(reads) <- IDs
 	for (imod in 1:nummod) {
@@ -22,19 +22,19 @@ unis2pseudomulti <- function(uni.hmm.list) {
 	}
 	maxreads = max(reads)
 	bins$reads <- reads
-	cat(" done\n")
+	message(" done")
 
 	## Get combinatorial states
-	cat("Getting combinatorial states...")
+	message("Getting combinatorial states...", appendLF=F)
 	combstates.per.bin = combinatorialStates(uni.hmm.list)
 	comb.states.table = table(combstates.per.bin)
 	comb.states = as.numeric(names(sort(comb.states.table, decreasing=TRUE)))
 	numstates <- length(comb.states)
 	bins$state <- factor(combstates.per.bin, levels=comb.states)
-	cat(" done\n")
+	message(" done")
 	
 	## Calculate transition matrix
-	cat("Estimating transition matrix...")
+	message("Estimating transition matrix...", appendLF=F)
 	A.estimated = matrix(0, ncol=2^nummod, nrow=2^nummod)
 	colnames(A.estimated) = 1:2^nummod-1
 	rownames(A.estimated) = 1:2^nummod-1
@@ -46,14 +46,14 @@ unis2pseudomulti <- function(uni.hmm.list) {
 	A.estimated = sweep(A.estimated, 1, rowSums(A.estimated), "/")
 	# Select only states that are in data
 	A.estimated = A.estimated[as.character(comb.states),as.character(comb.states)]
-	cat(" done\n")
+	message(" done")
 
 	## Return multi.hmm
 	multi.hmm <- list()
 	multi.hmm$IDs.univariate <- IDs
 	multi.hmm$bins <- bins
 	## Segmentation
-		cat("Making segmentation ...")
+		message("Making segmentation ...", appendLF=F)
 		ptm <- proc.time()
 		gr <- multi.hmm$bins
 		red.gr.list <- GRangesList()
@@ -66,7 +66,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
 		multi.hmm$segments <- red.gr
 		seqlengths(multi.hmm$segments) <- seqlengths(multi.hmm$bins)
 		time <- proc.time() - ptm
-		cat(paste0(" ",round(time[3],2),"s\n"))
+		message(" ",round(time[3],2),"s")
 	## Parameters
 		# Weights
 		tstates <- table(combstates.per.bin)

@@ -25,7 +25,7 @@ align2binned <- function(file, format, assembly, index=file, chrom.length.file=N
 	### Read in the data
 	## BED (0-based)
 	if (format == "bed") {
-		cat("Reading file",basename(file),"...")
+		message("Reading file ",basename(file)," ...", appendLF=F)
 		if (!is.null(chrom.length.file)) {
 			# File with chromosome lengths (1-based)
 			chrom.lengths.df <- read.table(chrom.length.file)
@@ -56,13 +56,13 @@ align2binned <- function(file, format, assembly, index=file, chrom.length.file=N
 		chroms.in.data <- seqlevels(data)
 	## BAM (1-based)
 	} else if (format == "bam") {
-		cat("Reading header of",basename(file),"...")
+		message("Reading header of ",basename(file)," ...", appendLF=F)
 		file.header <- Rsamtools::scanBamHeader(file)[[1]]
 		chrom.lengths <- file.header$targets
 		chroms.in.data <- names(chrom.lengths)
 	## BEDGraph (0-based)
 	} else if (format == "bedGraph") {
-		cat("Reading file",basename(file),"...")
+		message("Reading file ",basename(file)," ...", appendLF=F)
 		if (!is.null(chrom.length.file)) {
 			# File with chromosome lengths (1-based)
 			chrom.lengths.df <- read.table(chrom.length.file)
@@ -82,12 +82,12 @@ align2binned <- function(file, format, assembly, index=file, chrom.length.file=N
 		seqlengths(data) <- as.integer(chrom.lengths[names(seqlengths(data))])
 		chroms.in.data <- seqlevels(data)
 	}
-	cat(" done\n")
+	message(" done")
 
  
 	### Do the loop for all binsizes
 	for (binsize in binsizes) {
-		cat("Binning into binsize",binsize,"\n")
+		message("Binning into binsize ",binsize)
 
 		### Iterate over all chromosomes
 		binned.data <- GenomicRanges::GRanges()
@@ -103,7 +103,7 @@ align2binned <- function(file, format, assembly, index=file, chrom.length.file=N
 				warning("Skipped chromosome ",chromosome,", no length found!")
 				next
 			}
-			cat(chromosome,"                              \n")
+			message(chromosome,"                              ")
 			## Check last incomplete bin
 			incomplete.bin <- chrom.lengths[chromosome] %% binsize > 0
 			if (incomplete.bin) {
@@ -116,7 +116,7 @@ align2binned <- function(file, format, assembly, index=file, chrom.length.file=N
 				next
 			}
 			## Initialize vectors
-			cat("initialize vectors...\r")
+			message("initialize vectors...\r", appendLF=F)
 			chroms <- rep(chromosome,numbins)
 			reads <- rep(0,numbins)
 			start <- seq(from=1, by=binsize, length.out=numbins)
@@ -124,7 +124,7 @@ align2binned <- function(file, format, assembly, index=file, chrom.length.file=N
 # 			end[length(end)] <- chrom.lengths[chromosome] # last ending coordinate is size of chromosome, only if incomplete bins are desired
 
 			## Create binned chromosome as GRanges object
-			cat("creating GRanges container...            \r")
+			message("creating GRanges container...            \r", appendLF=F)
 			i.binned.data <- GenomicRanges::GRanges(seqnames = Rle(chromosome, numbins),
 							ranges = IRanges(start=start, end=end),
 							strand = Rle(strand("*"), numbins)
@@ -132,12 +132,12 @@ align2binned <- function(file, format, assembly, index=file, chrom.length.file=N
 			seqlengths(i.binned.data) <- chrom.lengths[chromosome]
 
 			if (format=="bam") {
-				cat("reading reads from file...               \r")
+				message("reading reads from file...               \r", appendLF=F)
 				data <- GenomicAlignments::readGAlignmentsFromBam(file, index=index, param=ScanBamParam(what=c("pos"),which=range(i.binned.data),flag=scanBamFlag(isDuplicate=F)))
 			}
 
 			## Count overlaps
-			cat("counting overlaps...                     \r")
+			message("counting overlaps...                     \r", appendLF=F)
 			if (format=="bam" | format=="bed") {
 				reads <- GenomicRanges::countOverlaps(i.binned.data, data[seqnames(data)==chromosome])
 			} else if (format=="bedGraph") {
@@ -157,7 +157,7 @@ align2binned <- function(file, format, assembly, index=file, chrom.length.file=N
 			}
 			
 			## Concatenate
-			cat("concatenate...                           \r")
+			message("concatenate...                           \r", appendLF=F)
 			mcols(i.binned.data)$reads <- reads
 
 			if (separate.chroms==TRUE) {
@@ -165,25 +165,25 @@ align2binned <- function(file, format, assembly, index=file, chrom.length.file=N
 				if (save.as.RData==TRUE) {
 					## Print to file
 					filename <- paste(basename(file),"_binsize_",format(binsize, scientific=F),"_",chromosome,".RData", sep="")
-					cat("save...                                  \r")
+					message("save...                                  \r", appendLF=F)
 					save(binned.data, file=file.path(outputfolder,filename) )
 				} else {
-					cat("                                         \r")
+					message("                                         \r", appendLF=F)
 					return(binned.data)
 				}
 			} else {
 				binned.data <- suppressWarnings(BiocGenerics::append(binned.data, i.binned.data))
 			}
-			cat("                                         \r")
+			message("                                         \r", appendLF=F)
 
 		}
 		if (separate.chroms==FALSE) {
 			if (save.as.RData==TRUE) {
 				# Print to file
 				filename <- paste0(basename(file),"_binsize_",format(binsize, scientific=F),".RData")
-				cat("Saving to file ...")
+				message("Saving to file ...", appendLF=F)
 				save(binned.data, file=file.path(outputfolder,filename) )
-				cat(" done\n")
+				message(" done")
 			} else {
 				return(binned.data)
 			}
@@ -191,5 +191,4 @@ align2binned <- function(file, format, assembly, index=file, chrom.length.file=N
 
 	}
 
-	return(0)
 }

@@ -51,7 +51,7 @@ stateBrewer,
 # plotFractionOfSegmentation,
 # plotHeatmapFoldEnrichment,
 # cross.correlation,
-summary,
+summarize,
 
 dzinbinom,
 pzinbinom,

@@ -34,7 +34,7 @@ combinatorial.variance <- function(multi.hmm, groups, file='combinatorial_varian
 	filename <- paste0(file,".bed.gz")
 	filegz <- gzfile(filename, 'w')
 	# Write to file
-	cat('writing to file',filename,'\n')
+	message('writing to file',filename)
 	cat("", file=filegz)
 	numsegments <- length(gr)
 	df <- as.data.frame(gr)[,1:3]

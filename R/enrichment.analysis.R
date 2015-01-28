@@ -19,9 +19,9 @@ enrichment.from.expression <- function(multi.hmm, bamfile, bamindex=bamfile, per
 
 	## Intercept user input
 	if (check.multivariate.model(multi.hmm)!=0) {
-		cat("Loading multivariate HMM from file ...")
+		message("Loading multivariate HMM from file ...", appendLF=F)
 		multi.hmm <- get(load(multi.hmm))
-		cat(" done\n")
+		message(" done")
 		if (check.multivariate.model(multi.hmm)!=0) stop("argument 'multi.hmm' expects a multivariate hmm object or a file that contains a multivariate hmm (type ?multi.hmm for help)")
 	}
 
@@ -49,7 +49,7 @@ enrichment.from.expression <- function(multi.hmm, bamfile, bamindex=bamfile, per
 	mcols(anno)$feature <- factor(labels, levels=mixedsort(unique(labels)))
 
 	## Do the enrichment analysis
-	cat("Doing enrichment analysis ...")
+	message("Doing enrichment analysis ...", appendLF=F)
 	if (per.mark) {
 		enrichment.table <- NULL
 		gr.mark <- gr
@@ -71,7 +71,7 @@ enrichment.from.expression <- function(multi.hmm, bamfile, bamindex=bamfile, per
 	} else {
 		enrichment.table <- enrichment.analysis(gr, anno)
 	}
-	cat(" done\n")
+	message(" done")
 
 	## Return results
 	return(enrichment.table)
@@ -83,23 +83,23 @@ enrichment.from.annotation <- function(multi.hmm, annotation.file.gtf, per.mark=
 
 	## Intercept user input
 	if (check.multivariate.model(multi.hmm)!=0) {
-		cat("Loading multivariate HMM from file ...")
+		message("Loading multivariate HMM from file ...", appendLF=F)
 		multi.hmm <- get(load(multi.hmm))
-		cat(" done\n")
+		message(" done")
 		if (check.multivariate.model(multi.hmm)!=0) stop("argument 'multi.hmm' expects a multivariate hmm object or a file that contains a multivariate hmm (type ?multi.hmm for help)")
 	}
 
 	## Load annotation file
 	library(rtracklayer)
-	cat("Loading annotation file ...")
+	message("Loading annotation file ...", appendLF=F)
 	anno <- rtracklayer::import(annotation.file.gtf, format="gtf")
-	cat(" done\n")
+	message(" done")
 
 	## Convert hmm to GRanges
 	gr <- multi.hmm$bins
 
 	## Do the enrichment analysis
-	cat("Doing enrichment analysis ...")
+	message("Doing enrichment analysis ...", appendLF=F)
 	mcols(anno)$feature <- mcols(anno)$type
 	if (per.mark) {
 		enrichment.table <- NULL
@@ -122,7 +122,7 @@ enrichment.from.annotation <- function(multi.hmm, annotation.file.gtf, per.mark=
 	} else {
 		enrichment.table <- enrichment.analysis(gr, anno)
 	}
-	cat(" done\n")
+	message(" done")
 
 	## Return results
 	return(enrichment.table)
@@ -224,15 +224,15 @@ enrichment.analysis <- function(granges.states.per.bin, granges.annotation) {
 # 	annotation.table = data.frame(annotation.table[ , !(names(annotation.table) %in% drops)], bincount = bincount)
 # 
 # 	## Convert numbers to logicals (a feature is either present or not at a given position)
-# 	cat("convert to logical...      \r")
+# 	message("convert to logical...      \r", appendLF=F)
 # 	annotations2aggregate = as.data.frame(lapply(annotation.table, as.logical))
 # 	## Aggregate
-# 	cat("aggregating...             \r")
+# 	message("aggregating...             \r", appendLF=F)
 # 	aggregated = aggregate(annotations2aggregate, by=list(comb.state = comb.states), sum)
 # 	ind_aggregated = 2:(ncol(aggregated)-1) # first columns now holds the comb.states, last is bincount
 # 
 # 	## Calculate p-values
-# 	cat("calculate p-values...      \r")
+# 	message("calculate p-values...      \r", appendLF=F)
 # 	p.depleted = NULL
 # 	p.enriched = NULL
 # 	for (icol in ind_aggregated) {
@@ -247,7 +247,7 @@ enrichment.analysis <- function(granges.states.per.bin, granges.annotation) {
 # 	p.enriched = matrix(p.adjust(unlist(p.enriched), method="holm"), ncol=length(ind_aggregated))
 # 
 # 	## Make return data.frame
-# 	cat("concatenate...             \r")
+# 	message("concatenate...             \r", appendLF=F)
 # 	out = data.frame(
 # 		comb.state = aggregated[,"comb.state"],
 # 		num.bins = aggregated[,"bincount"],
@@ -270,7 +270,7 @@ enrichment.analysis <- function(granges.states.per.bin, granges.annotation) {
 # 	lia = length(ind_aggregated)
 # 	reorder = c(1:3, as.vector( rbind( (4):(4+1*lia-1),(4+1*lia):(4+2*lia-1),(4+2*lia):(4+3*lia-1),(4+3*lia):(4+4*lia-1) ) ) )
 # 	out = out[reorder]
-# 	cat("                           \r")
+# 	message("                           \r", appendLF=F)
 # 
 # 	return(out)
 # 

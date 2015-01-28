@@ -31,13 +31,13 @@ export.unihmm2bed <- function(hmm.list, only.modified=TRUE, filename="view_me_in
 	RGBs <- apply(RGBs,1,paste,collapse=",")
 
 	# Write first line to file
-	cat('writing to file',filename,'\n')
+	message('writing to file ',filename)
 # 	cat("browser hide all\n", file=filename.gz)
 	cat("", file=filename.gz)
 	
 	### Write every model to file ###
 	for (imod in 1:nummod) {
-		cat('writing hmm',imod,'/',nummod,'\r')
+		message('writing hmm ',imod,' / ',nummod,'\r', appendLF=F)
 		hmm <- hmm.list[[imod]]
 		hmm.gr <- hmm.grl[[imod]]
 		priority <- 51 + 3*imod
@@ -55,7 +55,7 @@ export.unihmm2bed <- function(hmm.list, only.modified=TRUE, filename="view_me_in
 		write.table(format(df, scientific=FALSE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
 	}
 	close(filename.gz)
-	cat('\n')
+	message('')
 
 }
 
@@ -88,12 +88,12 @@ export.unihmm2wiggle <- function(hmm.list, filename="view_me_in_genome_browser")
 	filename.gz <- gzfile(filename, 'w')
 
 	# Write first line to file
-	cat('writing to file',filename,'\n')
+	message('writing to file ',filename)
 	cat("", file=filename.gz)
 	
 	### Write every model to file ###
 	for (imod in 1:nummod) {
-		cat('writing hmm',imod,'/',nummod,'\r')
+		message('writing hmm ',imod,' / ',nummod,'\r', appendLF=F)
 		hmm <- hmm.list[[imod]]
 		hmm.gr <- hmm.grl[[imod]]
 		priority <- 50 + 3*imod
@@ -106,7 +106,7 @@ export.unihmm2wiggle <- function(hmm.list, filename="view_me_in_genome_browser")
 		}
 	}
 	close(filename.gz)
-	cat('\n')
+	message('')
 }
 
 
@@ -154,7 +154,7 @@ export.multihmm2bed <- function(multi.hmm, separate.tracks=TRUE, exclude.states=
 	collapsed.calls <- collapsed.calls[mask,]
 
 	## Write to file
-	cat('writing to file',filename,'\n')
+	message('writing to file ',filename)
 	cat("", file=filename.gz)
 	if (separate.tracks) {
 		bin <- dec2bin(collapsed.calls$state, ndigits=length(multi.hmm$IDs.univariate))
@@ -224,12 +224,12 @@ export.multihmm2wiggle <- function(multi.hmm, filename="view_me_in_genome_browse
 	nummod <- length(multi.hmm$IDs.univariate)
 
 	## Write first line to file
-	cat('writing to file',filename,'\n')
+	message('writing to file ',filename)
 	cat("", file=filename.gz)
 	
 	### Write every model to file ###
 	for (imod in 1:nummod) {
-		cat('writing track',imod,'/',nummod,'\r')
+		message('writing hmm ',imod,' / ',nummod,'\r', appendLF=F)
 		ID <- multi.hmm$IDs.univariate[imod]
 		priority <- 50 + 3*imod
 		binsize <- width(multi.hmm$bins[1])
@@ -246,7 +246,7 @@ export.multihmm2wiggle <- function(multi.hmm, filename="view_me_in_genome_browse
 		}
 	}
 	close(filename.gz)
-	cat('\n')
+	message('')
 }
 
 
@@ -269,7 +269,7 @@ export.GRanges2bed <- function(gr, filename="view_me_in_genome_browser", separat
 	itemRgb <- RGBs[as.integer(factor(gr$state))]
 
 	# Write to file
-	cat('writing to file',filename,'\n')
+	message('writing to file ',filename)
 	cat("", file=filename.gz)
 	numsegments <- length(gr)
 	df <- cbind(as.data.frame(gr)[,c(1:3,6)], score=rep(0,numsegments), strand=rep(".",numsegments), thickStart=start(ranges(gr)), thickEnd=end(ranges(gr)), itemRgb=itemRgb)
@@ -320,12 +320,12 @@ export.binned2bedGraph <- function(binned.data.list, filename="view_me_in_genome
 	}
 
 	# Write first line to file
-	cat('writing to file',filename,'\n')
+	message('writing to file ',filename)
 	cat("", file=filename.gz)
 	
 	### Write every model to file ###
 	for (imod in 1:nummod) {
-		cat('writing binned.data',imod,'/',nummod,'\r')
+		message('writing binned.data ',imod,' / ',nummod,'\r', appendLF=F)
 		gr <- binned.data.list[[imod]]
 		df <- as.data.frame(gr)[,c(1,2,3,6)]
 		df <- df[df$reads>0,]
@@ -338,7 +338,7 @@ export.binned2bedGraph <- function(binned.data.list, filename="view_me_in_genome
 		write.table(format(df, scientific=F), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=F)
 	}
 	close(filename.gz)
-	cat('\n')
+	message('')
 
 }
 
@@ -367,12 +367,12 @@ export.binned2wiggle <- function(binned.data.list, filename="view_me_in_genome_b
 	filename.gz <- gzfile(filename, 'w')
 
 	# Write first line to file
-	cat('writing to file',filename,'\n')
+	message('writing to file ',filename)
 	cat("", file=filename.gz)
 	
 	### Write every model to file ###
 	for (imod in 1:nummod) {
-		cat('writing binned data',imod,'/',nummod,'\r')
+		message('writing binned data ',imod,' / ',nummod,'\r', appendLF=F)
 		b <- binned.data.list[[imod]]
 		priority <- 50 + 3*imod
 		binsize <- width(b[1])
@@ -385,7 +385,7 @@ export.binned2wiggle <- function(binned.data.list, filename="view_me_in_genome_b
 		}
 	}
 	close(filename.gz)
-	cat('\n')
+	message('')
 }
 
 

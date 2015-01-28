@@ -23,11 +23,11 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 	## Load binned.data and reuse values if present
 	continue.from.univariate.hmm <- FALSE
 	if (class(binned.data) == 'character') { 
-		cat("Loading file ",binned.data,"\n")
+		message("Loading file ",binned.data)
 		binned.data <- get(load(binned.data))
 	}
 	if (class(binned.data) == class.univariate.hmm) {
-		cat("Using parameters from univariate HMM\n")
+		message("Using parameters from univariate HMM")
 		hmm <- binned.data
 		binned.data <- hmm$bins
 		binned.data$state <- NULL
@@ -67,7 +67,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 	reads[mask] <- read.cutoff
 	numfiltered <- length(which(mask))
 	if (numfiltered > 0) {
-		cat(paste0("Replaced read counts > ",read.cutoff," (",names.read.cutoff," quantile) by ",read.cutoff," in ",numfiltered," bins. Set option 'read.cutoff.quantile=1' to disable this filtering. This filtering was done to increase the speed of the HMM and should not affect the results.\n"))
+		message("\nReplaced read counts > ",read.cutoff," (",names.read.cutoff," quantile) by ",read.cutoff," in ",numfiltered," bins. Set option 'read.cutoff.quantile=1' to disable this filtering. This filtering was done to increase the speed of the HMM and should not affect the results.\n")
 	}
 
 	### Filter out low read counts that arise when the bin size is larger than optimal (should correct the result to near optimal again) ###
@@ -88,9 +88,9 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 	if (num.trials == 1) {
 		### Load checkpoint file if it exists and if desired ###
 		if (file.exists(checkpoint.file) & checkpoint.use.existing) {
-			cat("Loading checkpoint file ",checkpoint.file,"\n")
+			message("Loading checkpoint file ",checkpoint.file)
 			hmm <- get(load(checkpoint.file))
-			cat("Using parameters from checkpoint file",checkpoint.file,"\n")
+			message("Using parameters from checkpoint file ",checkpoint.file)
 			A.initial <- hmm$transitionProbs
 			proba.initial <- hmm$startProbs
 			size.initial <- hmm$distributions$size
@@ -112,7 +112,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 		### Run univariate HMM ###
 		iteration.total <- 0
 		time.total <- 0
-		cat("\nTry 1 of 1 ------------------------------\n")
+		message("------------------------------------ Try ",1," of ",1," -------------------------------------")
 		repeat {
 			## Determine runtime
 			if (max.iter > 0) {
@@ -201,17 +201,17 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 			## Save to file
 				hmm.checkpoint <- result
 				if (checkpoint.overwrite) {
-					cat("Saving checkpoint to file",checkpoint.file,"\n")
+					message("Saving checkpoint to file ",checkpoint.file)
 					save(hmm.checkpoint, file=checkpoint.file)
 				} else {
 					cfile <- paste(checkpoint.file,"_iteration_",iteration.total, sep="")
-					cat("Saving checkpoint to file",cfile,"\n")
+					message("Saving checkpoint to file ",cfile)
 					save(hmm.checkpoint, file=cfile)
 				}
 
-			cat("Total time: ", time.total,"\n")
-			cat("Total iterations: ", iteration.total,"\n")
-			cat("Restarting HMM\n")
+			message("Total time: ", time.total)
+			message("Total iterations: ", iteration.total)
+			message("Restarting HMM")
 		}
 
 	} else {
@@ -219,7 +219,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 		## Call univariate in a for loop to enable multiple trials
 		modellist <- list()
 		for (i_try in 1:num.trials) {
-			cat("\n\nTry ",i_try," of ",num.trials," ------------------------------\n")
+			message("------------------------------------ Try ",i_try," of ",num.trials," -------------------------------------")
 			hmm <- .C("R_univariate_hmm",
 				reads = as.integer(reads), # double* O
 				num.bins = as.integer(numbins), # int* T
@@ -261,7 +261,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 		hmm <- modellist[[indexmax]]
 
 		# Rerun the HMM with different epsilon and initial parameters from trial run
-		cat("\n\nRerunning try ",indexmax," with eps =",eps,"--------------------\n")
+		message("------------------------- Rerunning try ",indexmax," with eps = ",eps," -------------------------")
 		hmm <- .C("R_univariate_hmm",
 			reads = as.integer(reads), # double* O
 			num.bins = as.integer(numbins), # int* T
@@ -303,7 +303,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 		result <- list()
 		result$ID <- ID
 	## Get states
-		cat("Calculating states from posteriors ...")
+		message("Calculating states from posteriors ...", appendLF=F)
 		ptm <- proc.time()
 		hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
 		colnames(hmm$posteriors) <- paste0("P(",state.labels,")")
@@ -323,9 +323,9 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 		}
 		seqlengths(result$bins) <- seqlengths(binned.data)
 		time <- proc.time() - ptm
-		cat(paste0(" ",round(time[3],2),"s\n"))
+		message(" ",round(time[3],2),"s")
 	## Segmentation
-		cat("Making segmentation ...")
+		message("Making segmentation ...", appendLF=F)
 		ptm <- proc.time()
 		gr <- result$bins
 		red.gr.list <- GRangesList()
@@ -338,7 +338,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 		result$segments <- red.gr
 		seqlengths(result$segments) <- seqlengths(binned.data)
 		time <- proc.time() - ptm
-		cat(paste0(" ",round(time[3],2),"s\n"))
+		message(" ",round(time[3],2),"s")
 	## Parameters
 		# Weights
 		result$weights <- hmm$weights

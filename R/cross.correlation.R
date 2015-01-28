@@ -34,7 +34,7 @@ plot.cross.correlation <- function(hmm, annotation, bp.around.annotation=10000) 
 	lag <- round(bp.around.annotation/binsize)
 
 	### Calculationg cross-correlation inside of normed annotation ###
-	cat("calculating cross-correlation inside of annotation\n")
+	message("calculating cross-correlation inside of annotation")
 	# Select only annotations that span more than 10 bins
 	annotation.sub <- annotation
 	# Not necessary but makes it easier to debug
@@ -98,7 +98,7 @@ plot.cross.correlation <- function(hmm, annotation, bp.around.annotation=10000) 
 	}
 	
 	### 10000 bp before and after annotation ###
-	cat("calculating cross-correlation before annotation\n")
+	message("calculating cross-correlation before annotation")
 	# Get bins that overlap the start of annotation
 	index.start.plus <- findOverlaps(annotation[strand(annotation)=='+'], hmm$bins, select="first")
 	index.start.minus <- findOverlaps(annotation[strand(annotation)=='-'], hmm$bins, select="last")
@@ -108,14 +108,14 @@ plot.cross.correlation <- function(hmm, annotation, bp.around.annotation=10000) 
 	binstates.before <- array(dim=c(length(-lag:0), ncol(hmm$bins$reads)), dimnames=list(lag=-lag:0, track=colnames(hmm$bins$reads)))
 	reads.before <- array(dim=c(length(-lag:0), ncol(hmm$bins$reads)), dimnames=list(lag=-lag:0, track=colnames(hmm$bins$reads)))
 	for (ilag in -lag:0) {
-		cat("lag =",ilag,"\r")
+		message("lag = ",ilag,"\r", appendLF=F)
 		index <- c(index.start.plus+ilag, index.start.minus-ilag)
 		index <- index[index>0]
 		binstates.before[as.character(ilag),] <- colMeans(binstates[index,])
 		reads.before[as.character(ilag),] <- colMeans(hmm$bins$reads[index,])
-		cat("             \r")
+		message("             \r")
 	}
-	cat("calculating cross-correlation after annotation\n")
+	message("calculating cross-correlation after annotation")
 	# Get bins that overlap the end of annotation
 	index.end.plus <- findOverlaps(annotation[strand(annotation)=='+'], hmm$bins, select="last")
 	index.end.minus <- findOverlaps(annotation[strand(annotation)=='-'], hmm$bins, select="first")
@@ -125,12 +125,12 @@ plot.cross.correlation <- function(hmm, annotation, bp.around.annotation=10000) 
 	binstates.after <- array(dim=c(length(0:lag), ncol(hmm$bins$reads)), dimnames=list(lag=0:lag, track=colnames(hmm$bins$reads)))
 	reads.after <- array(dim=c(length(0:lag), ncol(hmm$bins$reads)), dimnames=list(lag=0:lag, track=colnames(hmm$bins$reads)))
 	for (ilag in 0:lag) {
-		cat("lag =",ilag,"\r")
+		message("lag = ",ilag,"\r", appendLF=F)
 		index <- c(index.end.plus+ilag, index.end.minus-ilag)
 		index <- index[index>0]
 		binstates.after[as.character(ilag),] <- colMeans(binstates[index,])
 		reads.after[as.character(ilag),] <- colMeans(hmm$bins$reads[index,])
-		cat("             \r")
+		message("             \r", appendLF=F)
 	}
 
 	### Combine results ###
@@ -157,15 +157,15 @@ plot.cross.correlation <- function(hmm, annotation, bp.around.annotation=10000) 
 cross.correlation <- function(multi.hmm, annotation.file, grouping=NULL, lag.in.bp=10000) {
 
 	## Import annotation file
-	cat("importing",annotation.file," ...")
+	message("importing ",annotation.file," ...", appendLF=F)
 	anno.data <- rtracklayer::import(annotation.file)
-	cat(" done\n")
+	message(" done")
 
 	## Convert multi.hmm to GRanges
 	if (class(multi.hmm) == class.multivariate.hmm) {
-		cat("converting multi.hmm to GRanges...")
+		message("converting multi.hmm to GRanges...", appendLF=F)
 		multi.gr <- multi.hmm$bins
-		cat(" done\n")
+		message(" done")
 	} else if (class(multi.hmm) == 'GRanges') {
 		multi.gr <- multi.hmm
 	} else {
@@ -193,7 +193,7 @@ cross.correlation <- function(multi.hmm, annotation.file, grouping=NULL, lag.in.
 	### Loop over every feature in the data
 	ggplts <- list()
 	for (feature in features) {
-		cat(paste0("Calculating cross correlation for feature '",feature,"'\n"))
+		message("Calculating cross correlation for feature '",feature,"'")
 		anno.data.feature <- anno.data[anno.data$type==feature]
 		## Do stuff for each strand separately to take directionality of the features into account
 		# Get bins that overlap the start of that feature
@@ -212,7 +212,7 @@ cross.correlation <- function(multi.hmm, annotation.file, grouping=NULL, lag.in.
 		tracks.start <- array(dim=c(length(-lag:lag), ncol(multi.gr$reads)), dimnames=list(lag=-lag:lag, track=colnames(multi.gr$reads)))
 		tracks.end <- tracks.start
 		for (ilag in -lag:lag) {
-			cat("lag =",ilag,"\r")
+			message("lag = ",ilag,"\r", appendLF=F)
 			# Combinatorial states
 			for (group in groups) {
 				tables.start[as.character(ilag), ,as.character(group)] <- table(states.per.group[[as.character(group)]][index.start.plus+ilag]) + table(states.per.group[[as.character(group)]][index.start.minus-ilag])
@@ -221,7 +221,7 @@ cross.correlation <- function(multi.hmm, annotation.file, grouping=NULL, lag.in.
 			# Tracks
 			tracks.start[as.character(ilag),] <- colSums(dec2bin(multi.gr[index.start.plus+ilag]$state, ndigits=ncol(multi.gr$reads))) + colSums(dec2bin(multi.gr[index.start.minus-ilag]$state, ndigits=ncol(multi.gr$reads)))
 			tracks.end[as.character(ilag),] <- colSums(dec2bin(multi.gr[index.end.plus+ilag]$state, ndigits=ncol(multi.gr$reads))) + colSums(dec2bin(multi.gr[index.end.minus-ilag]$state, ndigits=ncol(multi.gr$reads)))
-			cat("             \r")
+			message("             \r", appendLF=F)
 		}
 
 		## Plot cross-correlations

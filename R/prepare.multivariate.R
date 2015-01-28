@@ -5,7 +5,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 	IDs <- unlist(lapply(modellist, "[[", "ID"))
 
 	### Extract the reads ###
-	cat("Extracting reads from modellist...")
+	message("Extracting reads from modellist...", appendLF=F)
 	ptm <- proc.time()
 	reads <- matrix(NA, ncol=nummod, nrow=numbins)
 	colnames(reads) <- IDs
@@ -14,7 +14,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 	}
 	maxreads <- max(reads)
 	time <- proc.time() - ptm
-	cat(paste0(" ",round(round(time[3], 2),2),"s\n"))
+	message(" ",round(time[3], 2),"s")
 
 	### Extract bins and other stuff ###
 	bins <- modellist[[1]]$bins
@@ -23,7 +23,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 	weights <- lapply(modellist,"[[","weights")
 
 	### Get the combinatorial states ###
-	cat("Getting combinatorial states...")
+	message("Getting combinatorial states...", appendLF=F)
 	ptm <- proc.time()
 	## Get the univariate states (zero inflation = 0, unmodified = 0, modified = 1) from the modellist
 	binary_statesmatrix <- matrix(rep(NA,numbins*nummod), ncol=nummod)
@@ -43,13 +43,13 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 		comb.states <- use.states
 	}
 	time <- proc.time() - ptm
-	cat(paste0(" ",round(time[3], 2),"s\n"))
+	message(" ",round(time[3], 2),"s")
 
 	# Clean up to reduce memory usage
 	remove(modellist)
 
 	## We pre-compute the z-values for each number of reads
-	cat("Computing pre z-matrix...")
+	message("Computing pre z-matrix...", appendLF=F)
 	ptm <- proc.time()
 	z.per.read <- array(NA, dim=c(maxreads+1, nummod, 2))
 # 	z_per_read = matrix(rep(NA,(maxreads+1)*nummod*2), ncol=nummod*2)
@@ -81,10 +81,10 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 		}
 	}
 	time <- proc.time() - ptm
-	cat(paste0(" ",round(time[3], 2),"s\n"))
+	message(" ",round(time[3], 2),"s")
 
 	## Compute the z matrix
-	cat("Transfering values into z-matrix...")
+	message("Transfering values into z-matrix...", appendLF=F)
 	ptm <- proc.time()
 	z.per.bin = array(NA, dim=c(numbins, nummod, 2), dimnames=list(bin=1:numbins, track=IDs, state.labels[2:3]))
 	for (imod in 1:nummod) {
@@ -96,10 +96,10 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 	# Clean up to reduce memory usage
 	remove(z.per.read)
 	time <- proc.time() - ptm
-	cat(paste0(" ",round(time[3], 2),"s\n"))
+	message(" ",round(time[3], 2),"s")
 
 	### Calculate correlation matrix
-	cat("Computing inverse of correlation matrix...")
+	message("Computing inverse of correlation matrix...", appendLF=F)
 	ptm <- proc.time()
 # 	covarianceMatrix = array(NA, dim=c(nummod,nummod,length(comb.states)))
 	correlationMatrix = array(NA, dim=c(nummod,nummod,length(comb.states)), dimnames=list(track=IDs, track=IDs, comb.state=comb.states))
@@ -151,7 +151,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 	}
 	remove(z.per.bin)
 	time <- proc.time() - ptm
-	cat(paste0(" ",round(time[3], 2),"s\n"))
+	message(" ",round(time[3], 2),"s")
 
 	# Determine how many (numstates2use) of the usable (usestateTF) states to use
 	ok.numstates = length(which(usestateTF==TRUE))

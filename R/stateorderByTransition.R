@@ -2,9 +2,9 @@ stateorderByTransition <- function(multi.hmm) {
 
 	## Intercept user input
 	if (check.multivariate.model(multi.hmm)!=0) {
-		cat("Loading multivariate HMM from file ...")
+		message("Loading multivariate HMM from file ...", appendLF=F)
 		multi.hmm <- get(load(multi.hmm))
-		cat(" done\n")
+		message(" done")
 		if (check.multivariate.model(multi.hmm)!=0) stop("argument 'multi.hmm' expects a multivariate hmm object or a file that contains a multivariate hmm (type ?multi.hmm for help)")
 	}
 

@@ -42,11 +42,11 @@ mergeChromsFromMultivariates <- function(multi.hmm.list, filename=NULL) {
 	post.present <- Reduce('|', unlist(lapply(multi.hmm.list, function(x) { !is.null(x$bins$posteriors) })))
 	
 	## Construct new HMM
-	cat("concatenating HMMs\n")
+	message("concatenating HMMs")
 	bins <- list()	# do not use GRangesList() because it copies the whole list each time an element is added
 	segments <- list()
 	for (i1 in 1:num.models) {
-		cat(" ",i1," of ",num.models,"        \r")
+		message(" ",i1," of ",num.models,"        \r", appendLF=F)
 		hmm <- multi.hmm.list[[1]]	# select always first because we remove it at the end of the loop
 		if (post.present) {
 			if (length(levels(hmm)) < num.tracks) {
@@ -65,14 +65,14 @@ mergeChromsFromMultivariates <- function(multi.hmm.list, filename=NULL) {
 		if (i1 < num.models) remove(hmm)	# remove it because otherwise R will make a copy when we NULL the underlying reference (multi.hmm.list[[1]])
 		multi.hmm.list[[1]] <- NULL
 	}
-	cat("\n")
+	message("")
 # 	if (!post.present) {
-		cat("merging ..."); ptm <- proc.time()
+		message("merging ...", appendLF=F); ptm <- proc.time()
 		bins <- do.call('c', bins)	# this can be too memory intensive if posteriors are present
 		segments <- do.call('c', segments)
-		time <- proc.time() - ptm; cat(paste0(" ",round(time[3],2),"s\n"))
+		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 # 	} else {
-# 		cat("temporarily storing posteriors ..."); ptm <- proc.time()
+# 		message("temporarily storing posteriors ...", appendLF=F); ptm <- proc.time()
 # 		rm(.Random.seed, envir=globalenv())
 # 		randomString <- paste(sample(c(0:9, letters, LETTERS), 15, replace=T), collapse="")
 # 		tempfile <- paste0('temp_R_chromstaR_merge.chroms_posteriors_',randomString)
@@ -86,37 +86,37 @@ mergeChromsFromMultivariates <- function(multi.hmm.list, filename=NULL) {
 # 			}
 # 		}
 # # 		close(tempfile.gz)
-# 		time <- proc.time() - ptm; cat(paste0(" ",round(time[3],2),"s\n"))
-# 		cat("merging ..."); ptm <- proc.time()
+# 		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+# 		message("merging ...", appendLF=F); ptm <- proc.time()
 # 		bins <- do.call('c', bins)
 # 		segments <- do.call('c', segments)
-# 		time <- proc.time() - ptm; cat(paste0(" ",round(time[3],2),"s\n"))
-# 		cat("loading posteriors ..."); ptm <- proc.time()
+# 		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+# 		message("loading posteriors ...", appendLF=F); ptm <- proc.time()
 # 		tab5rows <- read.table(tempfile, nrows=5)
 # 		classes.in.file <- sapply(tab5rows, class)
 # 		bins$posteriors <- as.matrix(read.table(tempfile, header=F, colClasses=classes.in.file))
 # 		colnames(bins$posteriors) <- post.colnames
 # 		file.remove(tempfile)
-# 		time <- proc.time() - ptm; cat(paste0(" ",round(time[3],2),"s\n"))
+# 		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 # 	}
 	multi.hmm <- hmm
 	multi.hmm$bins <- bins
 	multi.hmm$segments <- segments
-	cat("calculating weights ..."); ptm <- proc.time()
+	message("calculating weights ...", appendLF=F); ptm <- proc.time()
 	if (post.present) {
 		multi.hmm$weights <- apply(multi.hmm$bins$posteriors, 2, mean)
 		names(multi.hmm$weights) <- levels(multi.hmm$bins$state)
 	} else {
 		multi.hmm$weights <- table(multi.hmm$bins$state) / length(multi.hmm$bins)
 	}
-	time <- proc.time() - ptm; cat(paste0(" ",round(time[3],2),"s\n"))
+	time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 
 	if (is.null(filename)) {
 		return(multi.hmm)
 	} else {
-		cat("writing to file",filename,"..."); ptm <- proc.time()
+		message("writing to file ",filename," ...", appendLF=F); ptm <- proc.time()
 		save(multi.hmm, file=filename)
-		time <- proc.time() - ptm; cat(paste0(" ",round(time[3],2),"s\n"))
+		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 	}
 
 	return(NULL)

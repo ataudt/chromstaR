@@ -26,7 +26,7 @@ scanBinsizes = function(files.binned, outputfolder, chromosomes="chr10", eps=0.0
 	for (irep in 1:repetitions) {
 
 		## Simulate data from univariates
-		cat("#--- Simulate data ---#\n")
+		message("#--- Simulate data ---#")
 		path.sim.bin = file.path(outputfolder, paste0("simulated_rep_",irep,"_binned"))
 		if (!file.exists(path.sim.bin)) dir.create(path.sim.bin)
 		simfile = file.path(path.sim.bin, paste0("simulated.RData"))
@@ -34,7 +34,7 @@ scanBinsizes = function(files.binned, outputfolder, chromosomes="chr10", eps=0.0
 			files2sim = list.files(path.uni, full.names=TRUE)
 			sim.data.list = list()
 			for (binfile in files.binned) {
-				cat(binfile,"\n")
+				message(binfile)
 				unifile = file.path(path.uni, paste0("univariate_",basename(binfile)))
 				unimodel = get(load(unifile))
 				sim.data = simulateUnivariate(unimodel$bins, unimodel$transitionProbs, unimodel$distributions)
@@ -50,12 +50,12 @@ scanBinsizes = function(files.binned, outputfolder, chromosomes="chr10", eps=0.0
 			sim.data.list = get(load(simfile))
 		}
 		# Get simulated original states
-		cat("Getting simulated original states...")
+		message("Getting simulated original states...", appendLF=F)
 		sim.states.list = lapply(lapply(sim.data.list, "[[", 'bins'), function(gr) { return(gr$state) } )
 		for (i1 in 1:length(sim.states.list)) {
 			sim.states.list[[i1]] = state.labels[sim.states.list[[i1]]]
 		}
-		cat(" done\n")
+		message(" done")
 
 		## Univariate (simulated)
 		path.sim.uni = file.path(outputfolder, paste0("simulated_rep_",irep,"_results_univariate"))
@@ -78,17 +78,17 @@ scanBinsizes = function(files.binned, outputfolder, chromosomes="chr10", eps=0.0
 				unimodel <- get(load(unifile))
 			}
 			# Get univariate predicted states
-			cat("Getting predicted univariate states...")
+			message("Getting predicted univariate states...", appendLF=F)
 			uni.states.list[[i1]] = unimodel$bins$state
 			binsizes[i1] <- width(unimodel$bins)[1]
-			cat(" done\n")
+			message(" done")
 
 			# Performance
-			cat("Calculating performance...")
+			message("Calculating performance...", appendLF=F)
 			mask = sim.states.list[[i1]] != uni.states.list[[i1]]
 			miscalls = length(which(mask)) / length(sim.states.list[[i1]])
 			performance = rbind(performance, data.frame(binsize=binsizes[i1], miscalls, state1weight=unimodel$weights[3]))
-			cat(" done\n")
+			message(" done")
 
 			## Plot miscalls
 			if (plot.progress) {

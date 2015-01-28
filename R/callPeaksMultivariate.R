@@ -2,16 +2,17 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 
 	## Intercept user input
 	if (check.univariate.modellist(modellist)!=0) {
-		cat("Loading univariate HMMs from files ...")
+		message("Loading univariate HMMs from files ...", appendLF=F)
 		ptm <- proc.time()
 		mlist <- NULL
 		for (modelfile in modellist) {
 			mlist[[length(mlist)+1]] <- get(load(modelfile))
+class(mlist[[length(mlist)]]) <- class.univariate.hmm
 		}
 		modellist <- mlist
 		remove(mlist)
 		time <- proc.time() - ptm
-		cat(paste0(" ",round(time[3],2),"s\n"))
+		message(" ",round(time[3],2),"s")
 		if (check.univariate.modellist(modellist)!=0) stop("argument 'modellist' expects a list of univariate hmms or a list of files that contain univariate hmms")
 	}
 	if (!is.null(use.states)) {
@@ -61,8 +62,8 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 	on.exit(.C("R_multivariate_cleanup", as.integer(nummod)))
 
 	## Starting multivariate HMM
-	cat("\nStarting multivariate HMM\n")
-	cat("Using the following combinatorial states, covering", mean(comb.states.per.bin %in% comb.states2use)*100, "% of the bins:\n", paste(comb.states2use, collapse=" "),"\n")
+	message("\nStarting multivariate HMM")
+	message("Using the following combinatorial states, covering ", mean(comb.states.per.bin %in% comb.states2use)*100, "% of the bins:\n", paste(comb.states2use, collapse=" "),"\n", appendLF=F)
 
 	# Prepare input for C function
 	rs <- unlist(lapply(distributions,"[",2:3,'size'))
@@ -84,7 +85,7 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 		}
 	}
 	if (checkpoint.file.exists & checkpoint.use.existing) {
-		cat("Loading checkpoint file ",checkpoint.file,"\n")
+		message("Loading checkpoint file ",checkpoint.file)
 		hmm <- get(load(checkpoint.file))
 		A.initial <- hmm$transitionProbs
 		proba.initial <- hmm$startProbs
@@ -161,7 +162,7 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 			result$bins <- bins
 			result$bins$reads <- reads
 			if (!is.null(FDR)) {
-				cat("Calculating states from posteriors ...")
+				message("Calculating states from posteriors ...", appendLF=F)
 				hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
 				colnames(hmm$posteriors) <- paste0("P(",hmm$comb.states,")")
 				ptm <- proc.time()
@@ -176,7 +177,7 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 					result$bins$posteriors <- hmm$posteriors
 				}
 				time <- proc.time() - ptm
-				cat(paste0(" ",round(time[3],2),"s\n"))
+				message(" ",round(time[3],2),"s")
 			} else {
 				result$bins$state <- factor(hmm$states, levels=hmm$comb.states)
 				if (keep.posteriors) {
@@ -185,7 +186,7 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 				}
 			}
 		## Segmentation
-			cat("Making segmentation ...")
+			message("Making segmentation ...", appendLF=F)
 			ptm <- proc.time()
 			gr <- result$bins
 			red.gr.list <- GRangesList()
@@ -198,7 +199,7 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 			result$segments <- red.gr
 			seqlengths(result$segments) <- seqlengths(result$bins)
 			time <- proc.time() - ptm
-			cat(paste0(" ",round(time[3],2),"s\n"))
+			message(" ",round(time[3],2),"s")
 		## Parameters
 			# Weights
 			tstates <- table(hmm$states)
@@ -248,16 +249,16 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 		# Save checkpoint
 		hmm.checkpoint <- result
 		if (checkpoint.overwrite) {
-			cat("Saving checkpoint to file ",checkpoint.file,"\n")
+			message("Saving checkpoint to file ",checkpoint.file)
 			save(hmm.checkpoint, file=checkpoint.file)
 		} else {
 			cfile <- paste(checkpoint.file,"_iteration_",iteration.total, sep="")
-			cat("Saving checkpoint to file ",cfile,"\n")
+			message("Saving checkpoint to file ",cfile)
 			save(hmm.checkpoint, file=cfile)
 		}
-		cat("\nTotal time: ", time.total)
-		cat("\nTotal iterations: ", iteration.total)
-		cat("\n\nRestarting HMM\n")
+		message("Total time: ", time.total)
+		message("Total iterations: ", iteration.total)
+		message("\nRestarting HMM")
 	}
 	
 	## Check convergence

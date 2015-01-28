@@ -13,7 +13,7 @@ simulateUnivariate = function(bins, transition, emission, initial=1) {
 	# Integrate transition matrix by row and add -1 in front
 	cumtransition = cbind(rep(-1,numstates), t(apply(transition, 1, cumsum)))
 	# Generate the state vector by going through each state
-	cat("Generating states from transition matrix...")
+	message("Generating states from transition matrix...", appendLF=F)
 	states = matrix(rep(NA,numstates*numbins), ncol=numstates)
 	for (irow in 1:numstates) {
 		states[,irow] = findInterval(rsample, cumtransition[irow,], rightmost.closed=TRUE)
@@ -23,11 +23,11 @@ simulateUnivariate = function(bins, transition, emission, initial=1) {
 	for (ibin in 2:numbins) {
 		statevec[ibin] = states[ibin,statevec[ibin-1]]
 	}
-	cat(" done\n")
+	message(" done")
 
 	## Make reads from state vector and distributions
 	# Generate the read counts by drawing from distribution
-	cat("Generating reads from emission parameters and states...")
+	message("Generating reads from emission parameters and states...", appendLF=F)
 	reads = rep(NA, numbins)
 	numbins.in.state = aggregate(rep(1,length(statevec)), list(state=statevec), sum)
 	reads[statevec==1] = 0
@@ -37,7 +37,7 @@ simulateUnivariate = function(bins, transition, emission, initial=1) {
 	if (!is.na(numbins.in.state[3,'x'])) {
 		reads[statevec==3] = rnbinom(numbins.in.state[3,'x'], size=emission[3,'size'], prob=emission[3,'prob'])
 	}
-	cat(" done\n")
+	message(" done")
 
 	## Combine in GRanges
 	bins.out <- bins
@@ -74,7 +74,7 @@ simulateMultivariate = function(coordinates, transition, emissions, weights, sig
 	# Integrate transition matrix by row and add -1 in front
 	cumtransition = cbind(rep(-1,numstates), t(apply(transition, 1, cumsum)))
 	# Generate the state vector by going through each state
-	cat("Generating states from transition matrix...")
+	message("Generating states from transition matrix...", appendLF=F)
 	states = matrix(rep(NA,numstates*numbins), ncol=numstates)
 	for (irow in 1:numstates) {
 		states[,irow] = findInterval(rsample, cumtransition[irow,], rightmost.closed=TRUE)
@@ -86,7 +86,7 @@ simulateMultivariate = function(coordinates, transition, emissions, weights, sig
 	}
 	# Replace the states by combinatorial states
 	statevec = use.states[statevec]
-	cat(" done\n")
+	message(" done")
 
 	## Make reads from state vector and emission distributions
 	reads = matrix(rep(NA, nummod*numbins), ncol=nummod)
@@ -96,7 +96,7 @@ simulateMultivariate = function(coordinates, transition, emissions, weights, sig
 	probs = unlist(lapply(emissions, "[", 2:3, 'prob'))
 	ws = unlist(lapply(weights, "[", 1))
 	for (istate in use.states) {
-		cat("Generating reads for state ",istate,"\n")
+		message("Generating reads for state ",istate)
 		i = which(use.states==istate)
 		
 		# Convert istate to binary representation
@@ -106,13 +106,13 @@ simulateMultivariate = function(coordinates, transition, emissions, weights, sig
 		# Draw from the multivariate normal
 		n = length(which(statevec==istate))
 		if (n == 0) next
-		cat("drawing from multivariate normal...             \r")
+		message("drawing from multivariate normal...             \r", appendLF=F)
 		z = matrix(rmvnorm(n, mean=rep(0,nummod), sigma=sigma[,,i]), ncol=nummod)
 		# Transform to uniform space
-		cat("transforming to uniform space...                \r")
+		message("transforming to uniform space...                \r", appendLF=F)
 		u = matrix(apply(z, 2, pnorm), ncol=nummod)
 		# Transform to count space using marginals
-		cat("transform to count space...                     \r")
+		message("transform to count space...                     \r", appendLF=F)
 		isizes = sizes[binary_stateTF]
 		iprobs = probs[binary_stateTF]
 		for (imod in 1:nummod) {
@@ -123,7 +123,7 @@ simulateMultivariate = function(coordinates, transition, emissions, weights, sig
 				reads[mask,imod] = qnbinom(u[,imod], size=isizes[imod], prob=iprobs[imod])
 			}
 		}
-		cat("                                                \r")
+		message("                                                \r", appendLF=F)
 			
 	}
 
@@ -176,11 +176,11 @@ simulateMultivariate = function(coordinates, transition, emissions, weights, sig
 # 	# Go through each chromosome
 # 	icount <- 1
 # 	for (ichrom in chroms) {
-# 		cat(ichrom,"\n")
+# 		message(ichrom)
 # 		imask <- binned.data$chrom==ichrom
 # 		inumreads <- sum(binned.data$reads[imask])
 # 		# Generate SAM columns for chromosome
-# 		cat("\rgenerating reads ...        ")
+# 		message("\rgenerating reads ...        ", appendLF=F)
 # 		samcol <- data.frame(qname = qname[icount:(icount+inumreads-1)],
 # 												flag = sample(flag.labels, inumreads, replace=T),
 # 												rname = rep(ichrom, inumreads),
@@ -195,17 +195,16 @@ simulateMultivariate = function(coordinates, transition, emissions, weights, sig
 # 											)
 # 		icount <- icount + inumreads
 # 		samcol$pos <- unlist(apply(binned.data[imask,2:4], 1, function(row) { row<-as.integer(row); as.integer(runif(row[3], row[1]+1, row[2]+1-fragment.length)) } ))
-# 		cat("\rsorting reads ...         ")
+# 		message("\rsorting reads ...         ", appendLF=F)
 # 		samcol <- samcol[order(samcol$pos),]
 # 		# Removing pos=NA reads, happens when fragment.length is bigger than bin (e.g. in last bin)
 # 		if (any(is.na(samcol$pos))) {
 # 			samcol <- samcol[-which(is.na(samcol$pos)),]
 # 		}
-# 		cat("\rwriting to file ...       ")
+# 		message("\rwriting to file ...       ", appendLF=F)
 # 		write.table(format(samcol, scientific=F, trim=T), quote=F, sep="\t", row.names=F, col.names=F, append=T, file=file)
-# 		cat("\r                          ")
+# 		message("\r                          ", appendLF=F)
 # 	}
-# 	cat("\rdone\n")
 # }
 # 
 # simulateBinned2bed <- function(binned.data, file="simulated", fragment.length=1) {
@@ -225,11 +224,11 @@ simulateMultivariate = function(coordinates, transition, emissions, weights, sig
 # 	# Go through each chromosome
 # 	icount <- 1
 # 	for (ichrom in chroms) {
-# 		cat(ichrom,"\n")
+# 		message(ichrom)
 # 		imask <- binned.data$chrom==ichrom
 # 		inumreads <- sum(binned.data$reads[imask])
 # 		# Generate BED columns for chromosome
-# 		cat("\rgenerating reads ...        ")
+# 		message("\rgenerating reads ...        ", appendLF=F)
 # 		bedcol <- data.frame(chrom = rep(ichrom, inumreads),
 # 												chromStart = rep(0, inumreads),
 # 												chromEnd = rep(0, inumreads),
@@ -240,15 +239,14 @@ simulateMultivariate = function(coordinates, transition, emissions, weights, sig
 # 		icount <- icount + inumreads
 # 		bedcol$chromStart <- unlist(apply(binned.data[imask,2:4], 1, function(row) { row<-as.integer(row); as.integer(runif(row[3], row[1]+1, row[2]+1-fragment.length)) } ))
 # 		bedcol$chromEnd <- bedcol$chromStart + fragment.length
-# 		cat("\rsorting reads ...         ")
+# 		message("\rsorting reads ...         ", appendLF=F)
 # 		bedcol <- bedcol[order(bedcol$chromStart),]
 # 		# Removing pos=NA reads, happens when fragment.length is bigger than bin (e.g. in last bin)
 # 		if (any(is.na(bedcol$chromStart))) {
 # 			bedcol <- bedcol[-which(is.na(bedcol$chromStart)),]
 # 		}
-# 		cat("\rwriting to file ...       ")
+# 		message("\rwriting to file ...       ", appendLF=F)
 # 		write.table(format(bedcol, scientific=F, trim=T), quote=F, sep="\t", row.names=F, col.names=F, append=T, file=file)
-# 		cat("\r                          ")
+# 		message("\r                          ", appendLF=F)
 # 	}
-# 	cat("\rdone\n")
 # }

@@ -10,7 +10,7 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE) {
 	### Univariate HMM ###
 	if (is(model,class.univariate.hmm)) {
 		## Calculate states
-		cat("Calculating states from posteriors ...")
+		message("Calculating states from posteriors ...", appendLF=F)
 		ptm <- proc.time()
 		states <- rep(NA,length(model$bins))
 		if (separate.zeroinflation) {
@@ -24,9 +24,9 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE) {
 		}
 		model$bins$state <- states
 		time <- proc.time() - ptm
-		cat(paste0(" ",round(time[3],2),"s\n"))
+		message(" ",round(time[3],2),"s")
 		## Redo segmentation
-		cat("Making segmentation ...")
+		message("Making segmentation ...", appendLF=F)
 		ptm <- proc.time()
 		gr <- model$bins
 		red.gr.list <- GRangesList()
@@ -39,13 +39,13 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE) {
 		model$segments <- red.gr
 		seqlengths(model$segments) <- seqlengths(model$bins)
 		time <- proc.time() - ptm
-		cat(paste0(" ",round(time[3],2),"s\n"))
+		message(" ",round(time[3],2),"s")
 # 		## Redo weights
 # 		model$weights <- table(model$bins$state) / length(model$bins)
 
 	### Multivariate HMM ###
 	} else if (is(model,class.multivariate.hmm)) {
-		cat("Calculating states from posteriors ...")
+		message("Calculating states from posteriors ...", appendLF=F)
 		ptm <- proc.time()
 		if (is.null(FDR)) {
 			states <- factor(levels(model$bins$state)[apply(model$bins$posteriors, 1, which.max)], levels=levels(model$bins$state))
@@ -65,9 +65,9 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE) {
 		}
 		model$bins$state <- states
 		time <- proc.time() - ptm
-		cat(paste0(" ",round(time[3],2),"s\n"))
+		message(" ",round(time[3],2),"s")
 		## Redo segmentation
-		cat("Making segmentation ...")
+		message("Making segmentation ...", appendLF=F)
 		ptm <- proc.time()
 		gr <- model$bins
 		red.gr.list <- GRangesList()
@@ -80,7 +80,7 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE) {
 		model$segments <- red.gr
 		seqlengths(model$segments) <- seqlengths(model$bins)
 		time <- proc.time() - ptm
-		cat(paste0(" ",round(time[3],2),"s\n"))
+		message(" ",round(time[3],2),"s")
 # 		## Redo weights
 # 		model$weights <- table(model$bins$state) / length(model$bins)
 	} else {
