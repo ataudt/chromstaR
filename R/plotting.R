@@ -1,55 +1,81 @@
 # =================================================================
-# Plot a list of uni.hmms or a matrix with uni.hmm filenames to pdf
+# Define plotting methods for the generic
 # =================================================================
-plot.distributions.to.pdf <- function(uni.hmms, file='distribution-plots') {
-
-	## Preprocess input
-	uni.hmms <- as.matrix(uni.hmms) # TODO: include handling when only one hmm is given
-
-	## Set up the page
-	library(ggplot2)
-	library(grid)
-	ncols <- ncol(uni.hmms)
-	nrows <- nrow(uni.hmms)
-	pdf(file=file, width=8*ncols, height=7*nrows)
-	numPlots <- length(uni.hmms)
-	grid.newpage()
-	layout <- matrix(seq(1, ncols * nrows), ncol = ncols, nrow = nrows, byrow = TRUE)
-	pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
-
-	## Plot
-	ptm = proc.time()
-	for (irow in 1:nrows) {
-		for (icol in 1:ncols) {
-			uni.hmm <- uni.hmms[irow,icol]
-			if (class(uni.hmm)=='character') {
-				if (uni.hmm!='' & uni.hmm!='NA') {
-					uni.hmm <- loadHmmsFromFiles(list(uni.hmm))[[1]]
-					ggplt <- plot.distribution(uni.hmm)
-				} else {
-					ggplt <- ggplot(data=data.frame(x=0:10, y=0:10)) + geom_line(aes(x=x,y=y))
-				}
-			} else if (class(uni.hmm)==class.univariate.hmm) {
-				ggplt <- plot.distribution(uni.hmm)
-			}
-				
-			# Get the i,j matrix positions of the regions that contain this subplot
-			i <- (which(irow==1:nrows)-1) * ncols + which(icol==1:ncols)
-			matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
-			print(ggplt, vp = viewport(layout.pos.row = matchidx$row, layout.pos.col = matchidx$col))
-		}
+plot.chromstaR_univariateHMM <- function(x, type='histogram', ...) {
+	
+	if (type == 'histogram') {
+		plotUnivariateHistogram(x, ...)
+	} else if (type == 'boxplot') {
+		plotUnivariateBoxplot(x, ...)
+	} else if (type == 'normalTransformation') {
+		plotUnivariateNormalTransformation(x, ...)
 	}
-
-	d <- dev.off()
-	print("Time for plotting to file")
-	print(proc.time() - ptm)
 
 }
 
-# ============================================================
+plot.chromstaR_multivariateHMM <- function(x, type='transitionMatrix', ...) {
+
+	if (type == 'transitionMatrix') {
+		plotMultivariateTransition(x, ...)
+	} else if (type == 'histograms') {
+		plotMultivariateHistograms(x, ...)
+	}
+
+}
+
+
+# # =================================================================
+# # Plot a list of uni.hmms or a matrix with uni.hmm filenames to pdf
+# # =================================================================
+# plot.distributions.to.pdf <- function(uni.hmms, file='distribution-plots') {
+# 
+# 	## Preprocess input
+# 	uni.hmms <- as.matrix(uni.hmms) # TODO: include handling when only one hmm is given
+# 
+# 	## Set up the page
+# 	library(ggplot2)
+# 	library(grid)
+# 	ncols <- ncol(uni.hmms)
+# 	nrows <- nrow(uni.hmms)
+# 	pdf(file=file, width=8*ncols, height=7*nrows)
+# 	numPlots <- length(uni.hmms)
+# 	grid.newpage()
+# 	layout <- matrix(seq(1, ncols * nrows), ncol = ncols, nrow = nrows, byrow = TRUE)
+# 	pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+# 
+# 	## Plot
+# 	ptm = proc.time()
+# 	for (irow in 1:nrows) {
+# 		for (icol in 1:ncols) {
+# 			uni.hmm <- uni.hmms[irow,icol]
+# 			if (class(uni.hmm)=='character') {
+# 				if (uni.hmm!='' & uni.hmm!='NA') {
+# 					uni.hmm <- loadHmmsFromFiles(list(uni.hmm))[[1]]
+# 					ggplt <- plot.distribution(uni.hmm)
+# 				} else {
+# 					ggplt <- ggplot(data=data.frame(x=0:10, y=0:10)) + geom_line(aes_string(x='x',y='y'))
+# 				}
+# 			} else if (class(uni.hmm)==class.univariate.hmm) {
+# 				ggplt <- plot.distribution(uni.hmm)
+# 			}
+# 				
+# 			# Get the i,j matrix positions of the regions that contain this subplot
+# 			i <- (which(irow==1:nrows)-1) * ncols + which(icol==1:ncols)
+# 			matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+# 			print(ggplt, vp = viewport(layout.pos.row = matchidx$row, layout.pos.col = matchidx$col))
+# 		}
+# 	}
+# 
+# 	d <- dev.off()
+# 	print("Time for plotting to file")
+# 	print(proc.time() - ptm)
+# 
+# }
+
+# =================================================================
 # Plot a read histogram with univariate fits for a multivariate HMM
-# ============================================================
-plot.distributions.multi <- function(multi.hmm) {
+# =================================================================
+plotMultivariateHistograms <- function(multi.hmm) {
 
 	## Make fake uni.hmm and plot
 	ggplts <- list()
@@ -60,7 +86,8 @@ plot.distributions.multi <- function(multi.hmm) {
 		uni.hmm$reads <- multi.hmm$bins$reads[,i1]
 		uni.hmm$weights <- multi.hmm$weights.univariate[[i1]]
 		uni.hmm$distributions <- multi.hmm$distributions[[i1]]
-		ggplts[[i1]] <- plot.distribution(uni.hmm)
+		class(uni.hmm) <- class.univariate.hmm
+		ggplts[[i1]] <- plotUnivariateHistogram(uni.hmm)
 	}
 	
 	return(ggplts)
@@ -70,7 +97,7 @@ plot.distributions.multi <- function(multi.hmm) {
 # ============================================================
 # Plot a read histogram with univariate fits
 # ============================================================
-plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NULL) {
+plotUnivariateHistogram <- function(model, state=NULL, chrom=NULL, start=NULL, end=NULL) {
 
 	## Check user input
 	if (check.univariate.model(model)!=0) {
@@ -137,7 +164,7 @@ plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NUL
 	rightxlim <- get_rightxlim(histdata, reads)
 
 	# Plot the histogram
-	ggplt <- ggplot(data.frame(reads)) + geom_histogram(aes(x=reads, y=..density..), binwidth=1, color='black', fill='white') + coord_cartesian(xlim=c(0,rightxlim)) + theme_bw() + xlab("read count")
+	ggplt <- ggplot(data.frame(reads)) + geom_histogram(aes_string(x='reads', y='..density..'), binwidth=1, color='black', fill='white') + coord_cartesian(xlim=c(0,rightxlim)) + theme_bw() + xlab("read count")
 
 	### Add fits to the histogram
 	x <- 0:max(reads)
@@ -164,15 +191,15 @@ plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NUL
 
 	### Plot the distributions
 	if (is.null(state)) {
-		ggplt <- ggplt + geom_line(data=df, aes(x=x, y=y, col=state))
+		ggplt <- ggplt + geom_line(data=df, aes_string(x='x', y='y', col='state'))
 		ggplt <- ggplt + scale_color_manual(name="components", values=state.colors[c('unmodified','modified','total')], labels=legend) + theme(legend.justification=c(1,1), legend.position=c(1,1))
 	} else {
 		if (state=="unmodified") {
-			ggplt <- ggplt + geom_line(data=df[df$state=='unmodified',], aes(x=x, y=y, col=state))
+			ggplt <- ggplt + geom_line(data=df[df$state=='unmodified',], aes_string(x='x', y='y', col='state'))
 			ggplt <- ggplt + scale_color_manual(name="components", values=state.colors[c('unmodified')], labels=legend[1]) + theme(legend.justification=c(1,1), legend.position=c(1,1))
 		}
 		if (state=="modified") {
-			ggplt <- ggplt + geom_line(data=df[df$state=='modified',], aes(x=x, y=y, col=state))
+			ggplt <- ggplt + geom_line(data=df[df$state=='modified',], aes_string(x='x', y='y', col='state'))
 			ggplt <- ggplt + scale_color_manual(name="components", values=state.colors[c('modified')], labels=legend[2]) + theme(legend.justification=c(1,1), legend.position=c(1,1))
 		}
 	}
@@ -184,23 +211,20 @@ plot.distribution <- function(model, state=NULL, chrom=NULL, start=NULL, end=NUL
 # ============================================================
 # Plot a read histogram in normal space of the given state
 # ============================================================
-plot.distribution.normal <- function(model, state=0) {
+plotUnivariateNormalTransformation <- function(model, state='unmodified') {
 
 	## Load libraries
 	library(ggplot2)
-
-	## Intercept user input
-	if (state!=0 & state!=1) { stop("state has to be either 0 or 1") }
 
 	## Plot settings
 	cols <- state.colors[c("unmodified","modified")]
 
 	## Transform the reads
-	states <- get.states(model)
-	df <- data.frame(bin=1:length(model$reads), reads=model$reads, state=as.factor(states))
+	df <- as.data.frame(model$bins)[,c('reads','state')]
 	# Transform to uniform space
-	df$ureads[df$state==0] <- pzinbinom(df$reads[df$state==0], model$weights[1], model$distributions[2,'size'], model$distributions[2,'prob'])
-	df$ureads[df$state==1] <- pnbinom(df$reads[df$state==1], model$distributions[3,'size'], model$distributions[3,'prob'])
+	mask <- df$state=='modified'
+	df$ureads[!mask] <- pzinbinom(df$reads[!mask], model$weights[1], model$distributions[2,'size'], model$distributions[2,'prob'])
+	df$ureads[mask] <- pnbinom(df$reads[mask], model$distributions[3,'size'], model$distributions[3,'prob'])
 	# Transform to normal space
 	df$nreads <- qnorm(df$ureads)
 
@@ -208,8 +232,8 @@ plot.distribution.normal <- function(model, state=0) {
 	subset <- df$nreads[df$state==state]
 	breaks <- c(-Inf,sort(as.numeric(names(table(subset)))))
 	x <- seq(-4,4,0.1)
-	title <- paste("Transformed emission density for state ",state, sep="")
-	ggplt <- ggplot() + geom_histogram(data=data.frame(ureads=subset), aes(x=ureads, y=..density..), breaks=breaks, right=TRUE, col='black', fill=cols[state+1]) + theme_bw() + geom_line(data=data.frame(x=x, y=dnorm(x, mean=0, sd=1)), aes(x=x, y=y)) + xlab("transformed reads") + ylim(0,0.5) + labs(title=title)
+	title <- paste0("Transformed emission density for state ",state)
+	ggplt <- ggplot() + geom_histogram(data=data.frame(ureads=subset), aes_string(x='ureads', y='..density..'), breaks=breaks, right=TRUE, col='black', fill=cols[state]) + theme_bw() + geom_line(data=data.frame(x=x, y=dnorm(x, mean=0, sd=1)), aes_string(x='x', y='y')) + xlab("transformed reads") + ylim(0,0.5) + labs(title=title)
 	return(ggplt)
 
 }
@@ -217,18 +241,14 @@ plot.distribution.normal <- function(model, state=0) {
 # ============================================================
 # Plot a boxplot of the univariate calls
 # ============================================================
-plot.boxplot <- function(model) {
+plotUnivariateBoxplot <- function(model) {
 
 	## Load libraries
 	library(ggplot2)
 
-	## Plot settings
-	cols <- state.colors[c("unmodified","modified")]
-
 	## Boxplot
-	components <- c("unmodified","modified")[as.factor(get.states(model))]
-	df <- data.frame(component=components, reads=model$reads)
-	ggplt <- ggplot() + theme_bw() + geom_boxplot(data=df, aes(x=component, y=reads, fill=component)) + scale_fill_manual(values=cols)
+	df <- as.data.frame(model$bins)[,c('state','reads')]
+	ggplt <- ggplot() + theme_bw() + geom_boxplot(data=df, aes_string(x='state', y='reads', fill='state')) + scale_fill_manual(values=state.colors)
 	return(ggplt)
 
 }
@@ -236,15 +256,15 @@ plot.boxplot <- function(model) {
 # ============================================================
 # Plot a heat map of the transition probabilities
 # ============================================================
-plot.transition <- function(multi.hmm) {
+plotMultivariateTransition <- function(multi.hmm) {
 
 	library(ggplot2)
 	library(reshape2)
 
-	A <- melt(multi.hmm$A, varnames=c('from','to'), value.name='prob')
+	A <- melt(multi.hmm$transitionProbs, varnames=c('from','to'), value.name='prob')
 	A$from <- factor(A$from, levels=stateorderByTransition(multi.hmm))
 	A$to <- factor(A$to, levels=stateorderByTransition(multi.hmm))
-	ggplt <- ggplot(data=A) + geom_tile(aes(x=to, y=from, fill=prob)) + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + scale_fill_gradient(low="white", high="blue")
+	ggplt <- ggplot(data=A) + geom_tile(aes_string(x='to', y='from', fill='prob')) + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + scale_fill_gradient(low="white", high="blue")
 
 	return(ggplt)
 

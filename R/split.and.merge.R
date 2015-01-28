@@ -1,4 +1,4 @@
-split.per.chrom <- function(uni.hmm, filename=NULL) {
+splitUnivariateIntoChromosomes <- function(uni.hmm, filename=NULL) {
 
 	## Check user input
 	if (check.univariate.model(uni.hmm)!=0) {
@@ -28,10 +28,10 @@ split.per.chrom <- function(uni.hmm, filename=NULL) {
 
 }
 
-merge.chroms <- function(multi.hmm.list, filename=NULL) {
+mergeChromsFromMultivariates <- function(multi.hmm.list, filename=NULL) {
 
 	## Check user input
-	multi.hmm.list <- chromstar:::loadMultiHmmsFromFiles(multi.hmm.list)
+	multi.hmm.list <- loadMultiHmmsFromFiles(multi.hmm.list)
 		
 	## Check if posteriors are present everywhere and adjust number of columns if necessary
 	num.models <- length(multi.hmm.list)

@@ -1,4 +1,4 @@
-call.peaks.univariate <- function(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.iter=-1, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff.quantile=0.999, max.mean=10, control=FALSE, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, FDR=0.5, keep.posteriors=FALSE) {
+callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.iter=-1, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff.quantile=0.999, max.mean=10, FDR=0.5, keep.posteriors=FALSE, control=FALSE, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE) {
 
 	### Define cleanup behaviour ###
 	on.exit(.C("R_univariate_cleanup"))
@@ -81,7 +81,7 @@ call.peaks.univariate <- function(binned.data, ID, eps=0.001, init="standard", m
 		index.filtered <- which(reads>0 & reads<=read.counts.to.remove)
 		reads[index.filtered] <- 0
 		if (length(index.filtered)>0) {
-			warning(paste0("Replaced read counts <= ",read.counts.to.remove," by 0. This was done because the selected bin size is considered too big for this dataset: The mean of the read counts (zeros removed) is bigger than the specified max.mean = ",max.mean,". However, the results should be good now."))
+			warning(paste0("Replaced read counts <= ",read.counts.to.remove," by 0. This was done because the selected bin size is considered too big for this dataset: The mean of the read counts (zeros removed) is bigger than the specified max.mean = ",max.mean,". Check the fits (plot.distribution)!"))
 		}
 	}
 	

@@ -1,4 +1,7 @@
-useDynLib(chromstar)
+useDynLib(chromstaR)
+
+S3method(plot, chromstaR_univariateHMM)
+S3method(plot, chromstaR_multivariateHMM)
 
 # Export all names
 # exportPattern(".")
@@ -8,19 +11,14 @@ bam2binned,
 bedGraph2binned,
 get.chrom.lengths,
 
-call.peaks.univariate,
+callPeaksUnivariate,
 prepare.multivariate,
-call.peaks.multivariate,
+callPeaksMultivariate,
 unis2pseudomulti,
-split.per.chrom,
-merge.chroms,
+splitUnivariateIntoChromosomes,
+mergeChromsFromMultivariates,
 
-plot.distribution,
-plot.distributions.multi,
-plot.distributions.to.pdf,
-plot.distribution.normal,
-plot.boxplot,
-plot.transition,
+# plot.distributions.to.pdf,
 stateorderByTransition,
 
 export.unihmm2bed,
@@ -30,16 +28,14 @@ export.multihmm2wiggle,
 export.GRanges2bed,
 export.binned2bedGraph,
 export.binned2wiggle,
-binned2GRanges,
-hmm2GRanges,
 bed2GRanges,
 
-change.FDR,
+changeFDR,
 combinatorial.states,
-collapse.bins,
+collapseBins,
 dec2bin,
 bin2dec,
-state.brewer,
+stateBrewer,
 mixedsort,
 mixedorder,
 estimate.RAM.consumption,
@@ -52,8 +48,8 @@ enrichment.from.annotation,
 enrichment.from.expression,
 correlation.analysis,
 gwasCatalog2GRanges,
-plot.fractionOfSegmentation,
-plot.heatmapFoldEnrichment,
+plotFractionOfSegmentation,
+plotHeatmapFoldEnrichment,
 cross.correlation,
 summarize,
 
@@ -62,16 +58,12 @@ pzinbinom,
 qzinbinom,
 rzinbinom,
 
-simulate.univariate,
-simulate.multivariate,
-simulate.binned2sam,
-simulate.binned2bed,
-find.optimal.binsize,
-bernoulli.from.univariate.results,
-rescale.univariate.model
+simulateUnivariate,
+simulateMultivariate,
+find.optimal.binsize
 )
 
 # Import all packages listed as Imports or Depends
 import(
-	GenomicRanges, IRanges, Rsamtools
+	GenomicRanges, IRanges, Rsamtools, BiocGenerics, GenomicAlignments
 )

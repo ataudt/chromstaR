@@ -2,7 +2,7 @@ combinatorial.variance <- function(multi.hmm, groups, file='combinatorial_varian
 
 	## Transform to GRanges
 	if (class(multi.hmm) == class.multivariate.hmm) {
-		multi.gr <- hmm2GRanges(multi.hmm, reduce=F)
+		multi.gr <- multi.hmm$bins
 	} else if (class(multi.hmm) == 'GRanges') {
 		multi.gr <- multi.hmm
 	} else {
@@ -24,17 +24,10 @@ combinatorial.variance <- function(multi.hmm, groups, file='combinatorial_varian
 	multi.gr$var.mean <- var.mean
 
 	## Select upper quantile
-# 	cutoff <- quantile(multi.gr$var.mean, quantile)
-# 	mask <- multi.gr$var.mean >= cutoff
-	mask <- multi.gr$diff > 0
+	cutoff <- quantile(multi.gr$var.mean, quantile)
+	mask <- multi.gr$var.mean >= cutoff
 	gr <- multi.gr[mask]
 	gr <- reduce(gr)
-
-	## Write genes to list
-	ind <- findOverlaps(gr, anno.data)
-	genes <- unique(anno.data[subjectHits(ind)]$gene_id)
-	filename <- paste0(file, '_genes.txt')
-	write.table(genes, row.names=F, col.names=F, quote=F, file=filename)
 
 	## Export regions with variance in upper quantile to BED
 	# Variables

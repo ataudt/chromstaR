@@ -1,5 +1,5 @@
-\name{collapse.bins}
-\alias{collapse.bins}
+\name{collapseBins}
+\alias{collapseBins}
 \title{
 Collapse consecutive bins
 }
@@ -7,7 +7,7 @@ Collapse consecutive bins
 The function will collapse consecutive bins which have, for example, the same combinatorial state.
 }
 \usage{
-collapse.bins(data, column2collapseBy=NULL, columns2sumUp=NULL)
+collapseBins(data, column2collapseBy=NULL, columns2sumUp=NULL)
 }
 \arguments{
 \item{data}{
@@ -48,22 +48,6 @@ An aggregated data.frame with the same format as the input data.frame will be gi
 \keyword{clustering}
 \keyword{collapsing}
 \keyword{aggregating}
-\references{}
 \author{Aaron Taudt}
-\note{}
-\seealso{}
 \examples{
-# Load example datasets and do univariate HMMs
-data(binned.data.example.1)
-data(binned.data.example.2)
-model1 = univariate.from.binned.data(binned.data.example.1, eps=1, max.time=60)
-model2 = univariate.from.binned.data(binned.data.example.2, eps=1, max.time=60)
-# We have 2 models and therefore 4 possible combinatorial states (0,1,2,3)
-combstates = combinatorial.states(list(model1,model2))
-# Use these states to reduce the size of the coordinates
-df = data.frame(model1$coordinates,combstates)
-collapsed.bins = collapse.bins(df,column2collapseBy=4)
-# Have a look at the output
-head(collapsed.bins)
-
 }

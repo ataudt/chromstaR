@@ -1,10 +1,10 @@
-plot.fractionOfSegmentation <- function(multi.hmm) {
+plotFractionOfSegmentation <- function(multi.hmm) {
 
 	# Convert to GRanges if not already GRanges
 	if (class(multi.hmm)=="GRanges") {
 		gr <- multi.hmm
 	} else if (class(multi.hmm)==class.multivariate.hmm) {
-		gr <- hmm2GRanges(multi.hmm, reduce=TRUE)
+		gr <- multi.hmm$segments
 	} else {
 		stop("argument 'multi.hmm' expects either a multivariate hmm object (type ?multi.hmm for help) or a derived GRanges object")
 	}
@@ -23,14 +23,14 @@ plot.fractionOfSegmentation <- function(multi.hmm) {
 	dfplot <- melt(df, id.vars='state', variable.name='category', value.name='fraction')
 # 	dfplot$state <- factor(dfplot$state, levels=df$state[rev(order(df$bases))])
 	dfplot$state <- factor(dfplot$state, levels=levels(mcols(gr)$state))
-	ggplt <- ggplot(data=dfplot) + theme_bw() + geom_bar(aes(x=state, y=fraction, fill=category), position='dodge', stat='identity') + scale_fill_discrete(guide = guide_legend(reverse=TRUE, title=NULL)) + theme(legend.position='top') + ylab('fraction of segmentation') + xlab('combinatorial state') + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+	ggplt <- ggplot(data=dfplot) + theme_bw() + geom_bar(aes_string(x='state', y='fraction', fill='category'), position='dodge', stat='identity') + scale_fill_discrete(guide = guide_legend(reverse=TRUE, title=NULL)) + theme(legend.position='top') + ylab('fraction of segmentation') + xlab('combinatorial state') + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 	
 	return(ggplt)
 
 }
 
 
-plot.heatmapFoldEnrichment <- function(enrichment.table) {
+plotHeatmapFoldEnrichment <- function(enrichment.table) {
 
 	library(ggplot2)
 	library(reshape2)
@@ -58,7 +58,7 @@ plot.heatmapFoldEnrichment <- function(enrichment.table) {
 	## Heatmap
 	df.feat$state <- factor(df.feat$state, levels=fe$state)
 	df.feat$feature <- factor(df.feat$feature, levels=mixedsort(unique(df.feat$feature)))
-	ggplt <- ggplot(data=df.feat) + geom_tile(aes(y=feature, x=state, fill=fold.enrichment)) + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + scale_fill_gradient2(low='blue', mid='yellow', high='red', na.value='white') + geom_text(aes(y=feature, x=state, label=significant), size=3)
+	ggplt <- ggplot(data=df.feat) + geom_tile(aes_string(y='feature', x='state', fill='fold.enrichment')) + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + scale_fill_gradient2(low='blue', mid='yellow', high='red', na.value='white') + geom_text(aes_string(y='feature', x='state', label='significant'), size=3)
 
 	return(ggplt)
 }

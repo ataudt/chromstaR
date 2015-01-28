@@ -411,7 +411,7 @@ void ScaleHMM::check_for_state_swap()
 		std::vector<double> cutoff_logdens(this->N);
 
 		// calculate weights, maxdens and logdens at cutoff
-		this->calc_weights(weights);
+		weights = this->calc_weights();
 		maxdens[0] = weights[0];
 		maxdens[1] = weights[1] * Max(this->densities[1], this->T);
 		maxdens[2] = weights[2] * Max(this->densities[2], this->T);
@@ -480,7 +480,7 @@ void ScaleHMM::check_for_state_swap()
 			R_CheckUserInterrupt();
 			
 			// recalculate weight, maxdens and logdens at cutoff
-			this->calc_weights(weights);
+			weights = this->calc_weights();
 			maxdens[0] = weights[0];
 			maxdens[1] = weights[1] * Max(this->densities[1], this->T);
 			maxdens[2] = weights[2] * Max(this->densities[2], this->T);
@@ -500,8 +500,9 @@ void ScaleHMM::check_for_state_swap()
 	}
 }
 
-void ScaleHMM::calc_weights(std::vector<double> weights)
+std::vector<double> ScaleHMM::calc_weights()
 {
+	std::vector<double> weights(this->N);
 	#pragma omp parallel for
 	for (int iN=0; iN<this->N; iN++)
 	{
@@ -513,6 +514,7 @@ void ScaleHMM::calc_weights(std::vector<double> weights)
 		}
 		weights[iN] = sum_over_gammas_per_state / this->T;
 	}
+	return(weights);
 }
 
 void ScaleHMM::calc_weights(double* weights)

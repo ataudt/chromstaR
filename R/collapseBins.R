@@ -1,4 +1,4 @@
-collapse.bins = function(data, column2collapseBy=NULL, columns2sumUp=NULL) {
+collapseBins = function(data, column2collapseBy=NULL, columns2sumUp=NULL) {
 
 	# Indexing stuff
 	ind_coords = 1:3
@@ -28,7 +28,7 @@ collapse.bins = function(data, column2collapseBy=NULL, columns2sumUp=NULL) {
 	# Combine the vectors
 	compare <- compare_custom | compare_chrom
 	compare[1] = TRUE
-	numcollapsedbins = length(which(compare==TRUE))
+	numcollapseBins = length(which(compare==TRUE))
 	numbins = nrow(data)
 
 	# Select the collapsed rows
@@ -47,7 +47,7 @@ collapse.bins = function(data, column2collapseBy=NULL, columns2sumUp=NULL) {
 	# Sum up columns
 	if (!is.null(columns2sumUp)) {
 		sumcols = as.matrix(data[,columns2sumUp])
-		collapsed_sumcols = matrix(rep(NA,numcollapsedbins*length(columns2sumUp)), ncol=length(columns2sumUp))
+		collapsed_sumcols = matrix(rep(NA,numcollapseBins*length(columns2sumUp)), ncol=length(columns2sumUp))
 		pb = txtProgressBar(min=1, max=length(compare), style=3)
 		icount = 1
 		i1_lasttrue = 1

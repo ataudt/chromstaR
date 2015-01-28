@@ -25,7 +25,7 @@ class ScaleHMM  {
 		void initialize_proba(double* initial_proba, bool use_initial_params);
 		void baumWelch(int* maxiter, int* maxtime, double* eps);
 		void check_for_state_swap();
-		void calc_weights(std::vector<double> weights);
+		std::vector<double> calc_weights();
 		void calc_weights(double* weights);
 
 		// Getters and Setters

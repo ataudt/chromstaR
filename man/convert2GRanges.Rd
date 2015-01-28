@@ -1,26 +1,25 @@
 \name{Convert to GenomicRanges}
-\alias{hmm2GRanges}
-\alias{binned2GRanges}
+\alias{bed2GRanges}
 
 \title{
-Convert various \code{\link{chromstar}} objects into \code{\link{GenomicRanges}} objects.
+Convert contents of a BED file to \link{GenomicRanges} objects.
 }
 \description{
-Convert \code{\link{binned.data}}, \code{\link{uni.hmm}}s and \code{\link{multi.hmm}}s to GRanges objects. Only coordinates and information per position (e.g. reads, posteriors) are converted, other information specific to the HMM (e.g. loglikelihood, model parameters) are not converted.
+Convert contents of a BED file to GRanges objects. Only coordinates and information per position (e.g. reads, posteriors) are converted, other information specific to the HMM (e.g. loglikelihood, model parameters) are not converted.
 }
 \usage{
-binned2GRanges(binned.data)
-
-hmm2GRanges(hmm, reduce=TRUE)
+bed2GRanges(bedfile, chrom.length.file, skip=1, binsize=NULL)
 }
 \arguments{
-\item{binned.data}{A data.frame with coordinates and binned read counts (see \code{\link{binned.data}}).}
-\item{hmm}{Either a \code{\link{uni.hmm}} or \code{\link{multi.hmm}} object, produced by \code{\link{univariate.from.binned.data}} or \code{\link{multivariate.from.univariate.results}}, respectively.}
-\item{reduce}{Either TRUE or FALSE, indicating whether consecutive bins with the same state should be merged into bigger regions.}
+\item{bedfile}{A BED file.}
+\item{chrom.length.file}{
+A file which contains the chromosome lengths in basepairs. The first column contains the chromosome name and the second column the length (see also \code{\link{chrom.length.file}}.}
+\item{skip}{Number of lines to skip in BED file.}
+\item{binsize}{Force the resulting \link{GRanges} to have this bin size.}
 }
 
 \value{
-A GRanges object is returned.
+A \link{GRanges} object.
 }
 \keyword{GRanges}
 \author{Aaron Taudt}

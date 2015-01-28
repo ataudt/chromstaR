@@ -1,11 +1,11 @@
-simulate.univariate = function(coordinates, transition, emission, initial=1) {
+simulateUnivariate = function(bins, transition, emission, initial=1) {
 
 	# Calculate some variables
 	numstates = ncol(transition)
 	if (numstates!=3) {
 		stop("The transition matrix is expected to have 3 columns and 3 rows")
 	}
-	numbins = nrow(coordinates)
+	numbins = length(bins)
 
 	## Make state vector from transition matrix
 	# Generate sample of random numbers
@@ -39,10 +39,13 @@ simulate.univariate = function(coordinates, transition, emission, initial=1) {
 	}
 	cat(" done\n")
 
+	## Combine in GRanges
+	bins.out <- bins
+	bins.out$reads <- reads
+	bins.out$state <- statevec
+
 	# Return the output
-	out = list(coordinates = coordinates,
-				states = statevec,
-				reads = reads,
+	out = list(bins = bins.out,
 				transition = transition,
 				emission = emission
 				)
@@ -52,7 +55,7 @@ simulate.univariate = function(coordinates, transition, emission, initial=1) {
 
 
 
-simulate.multivariate = function(coordinates, transition, emissions, weights, sigma, use.states, IDs, initial=1) {
+simulateMultivariate = function(coordinates, transition, emissions, weights, sigma, use.states, IDs, initial=1) {
 
 	lib = require(mvtnorm)
 	if (lib == FALSE) {
@@ -139,113 +142,113 @@ simulate.multivariate = function(coordinates, transition, emissions, weights, si
 
 }
 
-simulate.binned2sam <- function(binned.data, chrom.length.file=NULL, file="simulated", fragment.length=1) {
-	
-	## Assign variables
-	names(binned.data) <- binned.data.names
-	numbins <- nrow(binned.data)
-	numreads <- sum(binned.data$reads)
-	flag.labels <- c(0,16)
-	chroms <- unique(binned.data$chrom)
-	file <- paste(file,"sam", sep=".")
-	# Chromosome lengths
-	if (!is.null(chrom.length.file)) {
-		chrom.lengths.df <- read.table(chrom.length.file)
-		chrom.lengths <- chrom.lengths.df[,2]
-		names(chrom.lengths) <- chrom.lengths.df[,1]
-	} else {
-		chrom.lengths <- rep(NA, length(chroms))
-		names(chrom.lengths) <- chroms
-		for (ichrom in chroms) {
-			iends <- binned.data$end[binned.data$chrom==ichrom]
-			chrom.lengths[ichrom] <- iends[length(iends)]
-		}
-	}
-
-	## Write header
-	cat("@PG\tID:chromstar\tVN:0\tCL:simulate.binned2sam()\n", file=file)
-	for (ichrom in names(chrom.lengths)) {
-		cat(paste("@SQ\tSN:",ichrom,"\tLN:",chrom.lengths[ichrom],"\n", sep=""), file=file, append=T)
-	}
-
-	## Make columns for SAM file
-	qname <- 1:numreads
-	# Go through each chromosome
-	icount <- 1
-	for (ichrom in chroms) {
-		cat(ichrom,"\n")
-		imask <- binned.data$chrom==ichrom
-		inumreads <- sum(binned.data$reads[imask])
-		# Generate SAM columns for chromosome
-		cat("\rgenerating reads ...        ")
-		samcol <- data.frame(qname = qname[icount:(icount+inumreads-1)],
-												flag = sample(flag.labels, inumreads, replace=T),
-												rname = rep(ichrom, inumreads),
-												pos = rep(0, inumreads),
-												mapq = rep(255, inumreads),
-												cigar = rep(paste(fragment.length,"M", sep=""), inumreads),
-												rnext = rep("*", inumreads),
-												pnext = rep(0, inumreads),
-												tlen = rep(0, inumreads),
-												seq = rep("*", inumreads),
-												qual = rep("*", inumreads)
-											)
-		icount <- icount + inumreads
-		samcol$pos <- unlist(apply(binned.data[imask,2:4], 1, function(row) { row<-as.integer(row); as.integer(runif(row[3], row[1]+1, row[2]+1-fragment.length)) } ))
-		cat("\rsorting reads ...         ")
-		samcol <- samcol[order(samcol$pos),]
-		# Removing pos=NA reads, happens when fragment.length is bigger than bin (e.g. in last bin)
-		if (any(is.na(samcol$pos))) {
-			samcol <- samcol[-which(is.na(samcol$pos)),]
-		}
-		cat("\rwriting to file ...       ")
-		write.table(format(samcol, scientific=F, trim=T), quote=F, sep="\t", row.names=F, col.names=F, append=T, file=file)
-		cat("\r                          ")
-	}
-	cat("\rdone\n")
-}
-
-simulate.binned2bed <- function(binned.data, file="simulated", fragment.length=1) {
-	
-	## Assign variables
-	names(binned.data) <- binned.data.names
-	numbins <- nrow(binned.data)
-	numreads <- sum(binned.data$reads)
-	chroms <- unique(binned.data$chrom)
-	file <- paste(file,"bed", sep=".")
-
-	## Write header
-	# no header
-
-	## Make columns for BED file
-	qname <- 1:numreads
-	# Go through each chromosome
-	icount <- 1
-	for (ichrom in chroms) {
-		cat(ichrom,"\n")
-		imask <- binned.data$chrom==ichrom
-		inumreads <- sum(binned.data$reads[imask])
-		# Generate BED columns for chromosome
-		cat("\rgenerating reads ...        ")
-		bedcol <- data.frame(chrom = rep(ichrom, inumreads),
-												chromStart = rep(0, inumreads),
-												chromEnd = rep(0, inumreads),
-												name = rep("N", inumreads),
-												score = rep(1000, inumreads),
-												strand = sample(c("+","-"), inumreads, replace=T)
-											)
-		icount <- icount + inumreads
-		bedcol$chromStart <- unlist(apply(binned.data[imask,2:4], 1, function(row) { row<-as.integer(row); as.integer(runif(row[3], row[1]+1, row[2]+1-fragment.length)) } ))
-		bedcol$chromEnd <- bedcol$chromStart + fragment.length
-		cat("\rsorting reads ...         ")
-		bedcol <- bedcol[order(bedcol$chromStart),]
-		# Removing pos=NA reads, happens when fragment.length is bigger than bin (e.g. in last bin)
-		if (any(is.na(bedcol$chromStart))) {
-			bedcol <- bedcol[-which(is.na(bedcol$chromStart)),]
-		}
-		cat("\rwriting to file ...       ")
-		write.table(format(bedcol, scientific=F, trim=T), quote=F, sep="\t", row.names=F, col.names=F, append=T, file=file)
-		cat("\r                          ")
-	}
-	cat("\rdone\n")
-}
+# simulateBinned2sam <- function(binned.data, chrom.length.file=NULL, file="simulated", fragment.length=1) {
+# 	
+# 	## Assign variables
+# # 	names(binned.data) <- binned.data.names
+# 	numbins <- nrow(binned.data)
+# 	numreads <- sum(binned.data$reads)
+# 	flag.labels <- c(0,16)
+# 	chroms <- unique(binned.data$chrom)
+# 	file <- paste(file,"sam", sep=".")
+# 	# Chromosome lengths
+# 	if (!is.null(chrom.length.file)) {
+# 		chrom.lengths.df <- read.table(chrom.length.file)
+# 		chrom.lengths <- chrom.lengths.df[,2]
+# 		names(chrom.lengths) <- chrom.lengths.df[,1]
+# 	} else {
+# 		chrom.lengths <- rep(NA, length(chroms))
+# 		names(chrom.lengths) <- chroms
+# 		for (ichrom in chroms) {
+# 			iends <- binned.data$end[binned.data$chrom==ichrom]
+# 			chrom.lengths[ichrom] <- iends[length(iends)]
+# 		}
+# 	}
+# 
+# 	## Write header
+# 	cat("@PG\tID:chromstaR\tVN:0\tCL:simulate.binned2sam()\n", file=file)
+# 	for (ichrom in names(chrom.lengths)) {
+# 		cat(paste("@SQ\tSN:",ichrom,"\tLN:",chrom.lengths[ichrom],"\n", sep=""), file=file, append=T)
+# 	}
+# 
+# 	## Make columns for SAM file
+# 	qname <- 1:numreads
+# 	# Go through each chromosome
+# 	icount <- 1
+# 	for (ichrom in chroms) {
+# 		cat(ichrom,"\n")
+# 		imask <- binned.data$chrom==ichrom
+# 		inumreads <- sum(binned.data$reads[imask])
+# 		# Generate SAM columns for chromosome
+# 		cat("\rgenerating reads ...        ")
+# 		samcol <- data.frame(qname = qname[icount:(icount+inumreads-1)],
+# 												flag = sample(flag.labels, inumreads, replace=T),
+# 												rname = rep(ichrom, inumreads),
+# 												pos = rep(0, inumreads),
+# 												mapq = rep(255, inumreads),
+# 												cigar = rep(paste(fragment.length,"M", sep=""), inumreads),
+# 												rnext = rep("*", inumreads),
+# 												pnext = rep(0, inumreads),
+# 												tlen = rep(0, inumreads),
+# 												seq = rep("*", inumreads),
+# 												qual = rep("*", inumreads)
+# 											)
+# 		icount <- icount + inumreads
+# 		samcol$pos <- unlist(apply(binned.data[imask,2:4], 1, function(row) { row<-as.integer(row); as.integer(runif(row[3], row[1]+1, row[2]+1-fragment.length)) } ))
+# 		cat("\rsorting reads ...         ")
+# 		samcol <- samcol[order(samcol$pos),]
+# 		# Removing pos=NA reads, happens when fragment.length is bigger than bin (e.g. in last bin)
+# 		if (any(is.na(samcol$pos))) {
+# 			samcol <- samcol[-which(is.na(samcol$pos)),]
+# 		}
+# 		cat("\rwriting to file ...       ")
+# 		write.table(format(samcol, scientific=F, trim=T), quote=F, sep="\t", row.names=F, col.names=F, append=T, file=file)
+# 		cat("\r                          ")
+# 	}
+# 	cat("\rdone\n")
+# }
+# 
+# simulateBinned2bed <- function(binned.data, file="simulated", fragment.length=1) {
+# 	
+# 	## Assign variables
+# # 	names(binned.data) <- binned.data.names
+# 	numbins <- nrow(binned.data)
+# 	numreads <- sum(binned.data$reads)
+# 	chroms <- unique(binned.data$chrom)
+# 	file <- paste(file,"bed", sep=".")
+# 
+# 	## Write header
+# 	# no header
+# 
+# 	## Make columns for BED file
+# 	qname <- 1:numreads
+# 	# Go through each chromosome
+# 	icount <- 1
+# 	for (ichrom in chroms) {
+# 		cat(ichrom,"\n")
+# 		imask <- binned.data$chrom==ichrom
+# 		inumreads <- sum(binned.data$reads[imask])
+# 		# Generate BED columns for chromosome
+# 		cat("\rgenerating reads ...        ")
+# 		bedcol <- data.frame(chrom = rep(ichrom, inumreads),
+# 												chromStart = rep(0, inumreads),
+# 												chromEnd = rep(0, inumreads),
+# 												name = rep("N", inumreads),
+# 												score = rep(1000, inumreads),
+# 												strand = sample(c("+","-"), inumreads, replace=T)
+# 											)
+# 		icount <- icount + inumreads
+# 		bedcol$chromStart <- unlist(apply(binned.data[imask,2:4], 1, function(row) { row<-as.integer(row); as.integer(runif(row[3], row[1]+1, row[2]+1-fragment.length)) } ))
+# 		bedcol$chromEnd <- bedcol$chromStart + fragment.length
+# 		cat("\rsorting reads ...         ")
+# 		bedcol <- bedcol[order(bedcol$chromStart),]
+# 		# Removing pos=NA reads, happens when fragment.length is bigger than bin (e.g. in last bin)
+# 		if (any(is.na(bedcol$chromStart))) {
+# 			bedcol <- bedcol[-which(is.na(bedcol$chromStart)),]
+# 		}
+# 		cat("\rwriting to file ...       ")
+# 		write.table(format(bedcol, scientific=F, trim=T), quote=F, sep="\t", row.names=F, col.names=F, append=T, file=file)
+# 		cat("\r                          ")
+# 	}
+# 	cat("\rdone\n")
+# }

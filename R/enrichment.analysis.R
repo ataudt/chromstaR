@@ -26,7 +26,7 @@ enrichment.from.expression <- function(multi.hmm, bamfile, bamindex=bamfile, per
 	}
 
 	## Convert hmm to GRanges
-	gr <- hmm2GRanges(multi.hmm, reduce=FALSE)
+	gr <- multi.hmm$bins
 
 	## Read in BAM file
 	align <- GenomicAlignments::readGAlignmentsFromBam(bamfile, index=bamindex, param=Rsamtools::ScanBamParam(what=c("pos"),which=range(gr)))
@@ -38,7 +38,7 @@ enrichment.from.expression <- function(multi.hmm, bamfile, bamindex=bamfile, per
 	### Categorize the read count
 	# To get a good categorization, split the bins into unexpressed (zero-inflation + unmodified) and expressed (modified) bins with our HMM
 	mcols(anno)$reads <- countOverlaps(anno, align)
-	expr.hmm <- univariate.from.binned.data(anno, ID="expr", max.iter=100, eps=1, output.if.not.converged=TRUE)
+	expr.hmm <- callPeaksUnivariate(anno, ID="expr", max.iter=100, eps=1)
 	## Set the categories based on the expressed bins
 	expr.breaks <- quantile(expr.hmm$reads[expr.hmm$states=='modified'], 0:10/11)
 	# Insert interval [0,1) into breaks if not there
@@ -96,7 +96,7 @@ enrichment.from.annotation <- function(multi.hmm, annotation.file.gtf, per.mark=
 	cat(" done\n")
 
 	## Convert hmm to GRanges
-	gr <- hmm2GRanges(multi.hmm, reduce=FALSE)
+	gr <- multi.hmm$bins
 
 	## Do the enrichment analysis
 	cat("Doing enrichment analysis ...")

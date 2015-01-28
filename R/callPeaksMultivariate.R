@@ -1,4 +1,4 @@
-call.peaks.multivariate <- function(modellist, use.states=NULL, num.states=NULL, eps=0.001, num.threads=1, max.time=-1, max.iter=-1, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file=NULL, checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL, FDR=NULL, keep.posteriors=FALSE) {
+callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, eps=0.001, FDR=NULL, keep.posteriors=FALSE, num.threads=1, max.time=-1, max.iter=-1, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file=NULL, checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL) {
 
 	## Intercept user input
 	if (check.univariate.modellist(modellist)!=0) {
@@ -171,7 +171,7 @@ call.peaks.multivariate <- function(modellist, use.states=NULL, num.states=NULL,
 					binstate.matrix <- matrix(rep(binstates[icol,], hmm$num.bins), nrow=hmm$num.bins, byrow=T)
 					post.per.track <- post.per.track + binstate.matrix * hmm$posteriors[,icol]
 				}
-				result$bins$state <- factor(bin2dec(post.per.track >= threshold), levels=hmm$comb.states)
+				result$bins$state <- factor(bin2dec(post.per.track >= 1-FDR), levels=hmm$comb.states)
 				if (keep.posteriors) {
 					result$bins$posteriors <- hmm$posteriors
 				}
@@ -203,6 +203,7 @@ call.peaks.multivariate <- function(modellist, use.states=NULL, num.states=NULL,
 			# Weights
 			tstates <- table(hmm$states)
 			result$weights <- sort(tstates/sum(tstates), decreasing=T)
+			result$weights.univariate <- weights
 			# Transition matrices
 			result$transitionProbs <- matrix(hmm$A, ncol=numstates2use, byrow=TRUE)
 			colnames(result$transitionProbs) <- comb.states2use

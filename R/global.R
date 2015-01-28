@@ -3,10 +3,8 @@
 # =======================================================
 state.labels <- factor(c("zero-inflation","unmodified","modified"), levels=c("zero-inflation","unmodified","modified"))
 state.distributions <- factor(c('delta','dnbinom','dnbinom'), levels=c('delta','dnbinom'))
-coordinate.names <- c("chrom","start","end")
-binned.data.names <- c(coordinate.names,"reads")
-class.univariate.hmm <- "chromstar.univariate.hmm"
-class.multivariate.hmm <- "chromstar.multivariate.hmm"
+class.univariate.hmm <- "chromstaR_univariateHMM"
+class.multivariate.hmm <- "chromstaR_multivariateHMM"
 state.colors <- c("zero-inflation"="gray30","unmodified"="gray48","modified"="orangered3", "total"="black")
 get.state.labels <- function() { return(state.labels) }
 get.state.colors <- function() { return(state.colors[state.labels]) }

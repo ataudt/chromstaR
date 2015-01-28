@@ -1,4 +1,4 @@
-change.FDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, control=FALSE) {
+changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE) {
 
 	## Check if posteriors are present
 	if (is.null(model$bins$posteriors)) stop("Cannot recalculate states because posteriors are missing. Run 'call.peaks.univariate' again with option 'keep.posteriors' set to TRUE.")
@@ -13,10 +13,7 @@ change.FDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, control=FALS
 		cat("Calculating states from posteriors ...")
 		ptm <- proc.time()
 		states <- rep(NA,length(model$bins))
-		if (control) {
-			states <- ifelse(model$bins$posteriors[,2]>threshold, 2, 1)
-			states <- factor(state.labels[1:2], levels=states.labels[1:2])[states]
-		} else if (separate.zeroinflation) {
+		if (separate.zeroinflation) {
 			states[ model$bins$posteriors[,3]<threshold & model$bins$posteriors[,2]<=model$bins$posteriors[,1] ] <- 1
 			states[ model$bins$posteriors[,3]<threshold & model$bins$posteriors[,2]>model$bins$posteriors[,1] ] <- 2
 			states[ model$bins$posteriors[,3]>=threshold ] <- 3
@@ -87,7 +84,7 @@ change.FDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, control=FALS
 # 		## Redo weights
 # 		model$weights <- table(model$bins$state) / length(model$bins)
 	} else {
-		stop("Supply either a univariate or multivariate chromstar model")
+		stop("Supply either a univariate or multivariate chromstaR model")
 	}
 	## Return model
 	return(model)

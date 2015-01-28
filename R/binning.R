@@ -1,16 +1,16 @@
-bedGraph2binned <- function(bedGraphfile, assembly, chrom.length.file=NULL, outputfolder="binned_data", binsizes=200, chromosomes=NULL, separate.chroms=FALSE, save.as.RData=TRUE) {
+bedGraph2binned <- function(bedGraphfile, assembly, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, separate.chroms=FALSE, save.as.RData=TRUE) {
 	return(align2binned(bedGraphfile, format="bedGraph", assembly=assembly, chrom.length.file=chrom.length.file, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, separate.chroms=separate.chroms, save.as.RData=save.as.RData))
 }
 
-bam2binned <- function(bamfile, bamindex=bamfile, outputfolder="binned_data", binsizes=200, chromosomes=NULL, separate.chroms=FALSE, save.as.RData=TRUE) {
+bam2binned <- function(bamfile, bamindex=bamfile, outputfolder="binned_data", binsizes=500, chromosomes=NULL, separate.chroms=FALSE, save.as.RData=TRUE) {
 	return(align2binned(bamfile, format="bam", index=bamindex, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, separate.chroms=separate.chroms, save.as.RData=save.as.RData))
 }
 
-bed2binned <- function(bedfile, assembly, chrom.length.file=NULL, outputfolder="binned_data", binsizes=200, chromosomes=NULL, separate.chroms=FALSE, save.as.RData=TRUE) {
+bed2binned <- function(bedfile, assembly, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, separate.chroms=FALSE, save.as.RData=TRUE) {
 	return(align2binned(bedfile, format="bed", assembly=assembly, chrom.length.file=chrom.length.file, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, separate.chroms=separate.chroms, save.as.RData=save.as.RData))
 }
 
-align2binned <- function(file, format, assembly, index=file, chrom.length.file=NULL, outputfolder="binned_data", binsizes=200, chromosomes=NULL, separate.chroms=FALSE, save.as.RData=TRUE) {
+align2binned <- function(file, format, assembly, index=file, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, separate.chroms=FALSE, save.as.RData=TRUE) {
 
 	## Check user input
 	if (save.as.RData==FALSE) {
@@ -56,8 +56,6 @@ align2binned <- function(file, format, assembly, index=file, chrom.length.file=N
 		chroms.in.data <- seqlevels(data)
 	## BAM (1-based)
 	} else if (format == "bam") {
-		library(Rsamtools) # TODO: put this in Imports in finished package
-		library(GenomicAlignments) # TODO: put this in Imports in finished package
 		cat("Reading header of",basename(file),"...")
 		file.header <- Rsamtools::scanBamHeader(file)[[1]]
 		chrom.lengths <- file.header$targets
@@ -193,4 +191,5 @@ align2binned <- function(file, format, assembly, index=file, chrom.length.file=N
 
 	}
 
+	return(0)
 }

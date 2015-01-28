@@ -2,10 +2,8 @@ plot.cross.correlation <- function(hmm, annotation, bp.around.annotation=10000) 
 
 	## Debugging
 	library(biomaRt)
-	library(GenomicRanges)
 	library(ggplot2)
 	library(reshape2)
-	library(chromstar)
 	bp.around.annotation=10000
 # 	hg19 <- useMart('ENSEMBL_MART_ENSEMBL', host='grch37.ensembl.org', dataset='hsapiens_gene_ensembl')
 # 	filters <- listFilters(hg19)
@@ -148,9 +146,9 @@ plot.cross.correlation <- function(hmm, annotation, bp.around.annotation=10000) 
 	reads.around$positions.plot <- positions.plot
 	
 	df <- melt(reads.around, varnames=c('pos','track'), id.vars=c('positions','positions.plot'), variable.name='track')
-	ggplt.reads <- ggplot(df) + geom_line(aes(x=positions.plot, y=value, col=track))
+	ggplt.reads <- ggplot(df) + geom_line(aes_string(x='positions.plot', y='value', col='track'))
 	df <- melt(binstates.around, varnames=c('pos','track'), id.vars=c('positions','positions.plot'), variable.name='track')
-	ggplt.binstates <- ggplot(df) + geom_line(aes(x=positions.plot, y=value, col=track))
+	ggplt.binstates <- ggplot(df) + geom_line(aes_string(x='positions.plot', y='value', col='track'))
 
 
 	
@@ -166,7 +164,7 @@ cross.correlation <- function(multi.hmm, annotation.file, grouping=NULL, lag.in.
 	## Convert multi.hmm to GRanges
 	if (class(multi.hmm) == class.multivariate.hmm) {
 		cat("converting multi.hmm to GRanges...")
-		multi.gr <- hmm2GRanges(multi.hmm, reduce=F)
+		multi.gr <- multi.hmm$bins
 		cat(" done\n")
 	} else if (class(multi.hmm) == 'GRanges') {
 		multi.gr <- multi.hmm
@@ -176,7 +174,7 @@ cross.correlation <- function(multi.hmm, annotation.file, grouping=NULL, lag.in.
 
 	## Calculate variables
 	features <- levels(anno.data$type)
-	binsize <- width(multi.gr[1])
+	binsize <- width(multi.gr)[1]
 	lag <- round(lag.in.bp/binsize)
 	if (is.null(grouping)) {
 		grouping <- rep(0,ncol(multi.gr$reads))
@@ -234,18 +232,18 @@ cross.correlation <- function(multi.hmm, annotation.file, grouping=NULL, lag.in.
 		df$lag.in.bp <- df$lag * binsize
 		df$comb.state <- factor(df$comb.state, levels=levels(multi.gr$state))
 		df$group <- factor(df$group, levels=levels.group)
-		ggplts[[as.character(feature)]][['comb.state']][['start']] <- ggplot(df) + geom_line(aes(x=lag.in.bp, y=value, col=comb.state, linetype=group)) + geom_text(data=df[seq(1,nrow(df),60),], aes(x=lag.in.bp, y=value, label=comb.state))
+		ggplts[[as.character(feature)]][['comb.state']][['start']] <- ggplot(df) + geom_line(aes_string(x='lag.in.bp', y='value', col='comb.state', linetype='group')) + geom_text(data=df[seq(1,nrow(df),60),], aes_string(x='lag.in.bp', y='value', label='comb.state'))
 		df <- melt(tables.end)
 		df$lag.in.bp <- df$lag * binsize
 		df$comb.state <- factor(df$comb.state, levels=levels(multi.gr$state))
-		ggplts[[as.character(feature)]][['comb.state']][['end']] <- ggplot(df) + geom_line(aes(x=lag.in.bp, y=value, col=comb.state)) + geom_text(data=df[seq(1,nrow(df),10),], aes(x=lag.in.bp, y=value, label=comb.state))
+		ggplts[[as.character(feature)]][['comb.state']][['end']] <- ggplot(df) + geom_line(aes_string(x='lag.in.bp', y='value', col='comb.state')) + geom_text(data=df[seq(1,nrow(df),10),], aes_string(x='lag.in.bp', y='value', label='comb.state'))
 		# Tracks
 		df <- melt(tracks.start)
 		df$lag.in.bp <- df$lag * binsize
-		ggplts[[as.character(feature)]][['tracks']][['start']] <- ggplot(df) + geom_line(aes(x=lag.in.bp, y=value, col=track))
+		ggplts[[as.character(feature)]][['tracks']][['start']] <- ggplot(df) + geom_line(aes_string(x='lag.in.bp', y='value', col='track'))
 		df <- melt(tracks.end)
 		df$lag.in.bp <- df$lag * binsize
-		ggplts[[as.character(feature)]][['tracks']][['end']] <- ggplot(df) + geom_line(aes(x=lag.in.bp, y=value, col=track))
+		ggplts[[as.character(feature)]][['tracks']][['end']] <- ggplot(df) + geom_line(aes_string(x='lag.in.bp', y='value', col='track'))
 
 	}
 	

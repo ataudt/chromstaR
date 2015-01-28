@@ -27,7 +27,7 @@ correlation.analysis <- function(multi.hmm, IDs=NULL, plot=TRUE) {
 		library(ggplot2)
 		library(reshape2)
 		mcor <- melt(cor.matrix, varnames=c("x","y"), value.name="correlation")
-		ggplt <- ggplot() + geom_tile(data=mcor, mapping=aes(x=x, y=y, fill=correlation)) + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + scale_fill_gradient2()
+		ggplt <- ggplot() + geom_tile(data=mcor, mapping=aes_string(x='x', y='y', fill='correlation')) + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + scale_fill_gradient2()
 		return(ggplt)
 	}
 

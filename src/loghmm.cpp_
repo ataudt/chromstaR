@@ -282,7 +282,7 @@ void LogHMM::backward()
 		for (int iN=0; iN<this->N; iN++)
 		{
 			FILE_LOG(logDEBUG4) << "Calculating backward variable for state " << iN;
-			double tempvec [this->N];
+			std::vector<double> tempvec(this->N);
 			for(int jN=0; jN<this->N; jN++)
 			{
 				tempvec[jN] = this->logA[iN][jN] + this->logdensities[jN][t+1] + this->logbeta[t+1][jN];
@@ -334,7 +334,7 @@ void LogHMM::calc_loglikelihood()
 
 	double helpsum = 0.0;
 	double temp;
-	double tempvec [this->N];
+	std::vector<double> tempvec(this->N);
 	
 	for (int iN=0; iN<this->N; iN++)
 	{
@@ -374,6 +374,21 @@ void LogHMM::get_posteriors(double** post)
 		{
 			post[iN][t] = this->gamma[iN][t];
 		}
+	}
+}
+
+void LogHMM::calc_weights(std::vector<double> weights)
+{
+	#pragma omp parallel for
+	for (int iN=0; iN<this->N; iN++)
+	{
+		// Do not use weights[iN] = ( this->sumgamma[iN] + this->gamma[iN][T-1] ) / this->T; here, since states are swapped and gammas not
+		double sum_over_gammas_per_state = 0;
+		for (int t=0; t<this->T; t++)
+		{
+			sum_over_gammas_per_state += this->gamma[iN][t];
+		}
+		weights[iN] = sum_over_gammas_per_state / this->T;
 	}
 }
 
@@ -579,7 +594,7 @@ void LogHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 		}
 
 // 		// Re-Initialize the sparsity exploit variables
-// 		int nonzero_counter [this->N];
+// 		std::vector<int> nonzero_counter(this->N);
 // 		for (int iN=0; iN<this->N; iN++)
 // 		{
 // 			this->num_nonzero_A_into_state[iN] = 0;
@@ -680,8 +695,8 @@ void LogHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 
 void LogHMM::check_for_state_swap()
 {
-	double weights [this->N];
-	double maxdens [this->N];
+	std::vector<double> weights(this->N);
+	std::vector<double> maxdens(this->N);
 	this->calc_weights(weights);
 	maxdens[0] = weights[0];
 	maxdens[1] = exp(log(weights[1]) + Max(this->logdensities[1], this->T));

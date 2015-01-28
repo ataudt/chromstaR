@@ -32,6 +32,7 @@ class LogHMM
 		void get_posteriors(double** post);
 		void baumWelch(int* maxiter, int* maxtime, double* eps);
 		void check_for_state_swap();
+		void calc_weights(std::vector<double> weights);
 		void calc_weights(double* weights);
 // 		void viterbi(int* path, int recompute);
 		double get_proba(int i);

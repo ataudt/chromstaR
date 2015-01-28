@@ -1,4 +1,4 @@
-state.brewer <- function(statespec, diffstatespec=NULL) {
+stateBrewer <- function(statespec, diffstatespec=NULL) {
 
 	## Check user input
 	for (spec in statespec) {
