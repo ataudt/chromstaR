@@ -46,7 +46,7 @@ Output is a \code{\link{chromstaR_multivariateHMM}} list object.
 \keyword{Hidden Markov Model}
 \keyword{Baum-Welch}
 \keyword{multivariate}
-\references{}
+\references{TODO:insert paper}
 \author{Aaron Taudt and Maria Colome Tatche}
 \seealso{\code{\link{chromstaR_multivariateHMM}}, \code{\link{callPeaksUnivariate}}}
 \examples{

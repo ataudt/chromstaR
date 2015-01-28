@@ -1,13 +1,8 @@
 #ifndef UTILITY_H
 #define UTILITY_H
 
-// #include <iostream>
-// using std::cerr;
-// using std::cout;
-// using std::endl;
 #include <exception> // error handling
 #include <cstdlib> // calloc() etc.
-// #include <cstring> // for memcpy() in printDoubleAsBinary()
 #include "logging.h" // FILE_LOG() capability
 #include <R.h> // Calloc() etc.
 #include <algorithm> // max_element
