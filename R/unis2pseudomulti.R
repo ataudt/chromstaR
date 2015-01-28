@@ -26,7 +26,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
 
 	## Get combinatorial states
 	cat("Getting combinatorial states...")
-	combstates.per.bin = combinatorial.states(uni.hmm.list)
+	combstates.per.bin = combinatorialStates(uni.hmm.list)
 	comb.states.table = table(combstates.per.bin)
 	comb.states = as.numeric(names(sort(comb.states.table, decreasing=TRUE)))
 	numstates <- length(comb.states)

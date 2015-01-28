@@ -26,6 +26,7 @@ splitUnivariateIntoChromosomes <- function(uni.hmm, filename=NULL) {
 		return(hmm.list)
 	}
 
+	return(NULL)
 }
 
 mergeChromsFromMultivariates <- function(multi.hmm.list, filename=NULL) {
@@ -118,4 +119,5 @@ mergeChromsFromMultivariates <- function(multi.hmm.list, filename=NULL) {
 		time <- proc.time() - ptm; cat(paste0(" ",round(time[3],2),"s\n"))
 	}
 
+	return(NULL)
 }

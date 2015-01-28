@@ -12,6 +12,9 @@ stateBrewer <- function(statespec, diffstatespec=NULL) {
 				stop("argument 'diffstatespec' expects a vector composed of any combination of the following entries: 'x','d[]', where [] can be any string.")
 			}
 		}
+		if (length(statespec)!=length(diffstatespec)) {
+			stop("argument 'diffstatespec' must have the same number of elements as 'statespec'")
+		}
 	}
 
 	## Variables
@@ -26,14 +29,14 @@ stateBrewer <- function(statespec, diffstatespec=NULL) {
 	for (group in groups) {
 		track.index <- which(statespec==group)
 		if (group == 0) {
-			mask <- !apply(binstates[,track.index], 1, function(x) { Reduce('|', x) })
+			mask <- !apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('|', x) })
 		} else if (group == 1) {
-			mask <- apply(binstates[,track.index], 1, function(x) { Reduce('&', x) })
+			mask <- apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('&', x) })
 		} else if (group == 'x') {
 			mask <- rep(T, nrow(binstates))
 		} else if (grepl('^r', group)) {
-			mask0 <- !apply(binstates[,track.index], 1, function(x) { Reduce('|', x) })
-			mask1 <- apply(binstates[,track.index], 1, function(x) { Reduce('&', x) })
+			mask0 <- !apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('|', x) })
+			mask1 <- apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('&', x) })
 			mask <- mask0 | mask1
 		}
 		binstates <- binstates[mask,]
@@ -42,8 +45,8 @@ stateBrewer <- function(statespec, diffstatespec=NULL) {
 	for (diffgroup in diffgroups) {
 		track.index <- which(diffstatespec==diffgroup)
 		if (grepl('^d', diffgroup)) {
-			mask0 <- !apply(binstates[,track.index], 1, function(x) { Reduce('|', x) })
-			mask1 <- apply(binstates[,track.index], 1, function(x) { Reduce('&', x) })
+			mask0 <- !apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('|', x) })
+			mask1 <- apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('&', x) })
 			mask <- !(mask0 | mask1)
 		} else if (diffgroup == 'x') {
 			mask <- rep(T, nrow(binstates))

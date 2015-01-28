@@ -1,0 +1,33 @@
+\name{scanBinsizes}
+\alias{scanBinsizes}
+\title{
+Find the best bin size for a given dataset
+}
+\description{
+Use simulations to find the best bin size among a set of input files. There is no guarantee that the bin size will be the best for your data, since it is only "best" in terms of fewest miscalls for simulated data. However, it can give you a hint what bin size to choose.
+}
+\usage{
+scanBinsizes(files.binned, outputfolder, chromosomes="chr10", eps=0.01, max.iter=100, max.time=300, repetitions=3, plot.progress=FALSE)
+}
+\arguments{
+\item{files.binned}{A vector with files that contain \code{\link{chromstaR_binnedData}} in different bin sizes.}
+\item{outputfolder}{Name of the folder where all files will be written to.}
+\item{chromosomes}{A vector of chromosomes to use for the simulation.}
+\item{eps}{Convergence threshold for the Baum-Welch algorithm.}
+\item{max.iter}{The maximum number of iterations for the Baum-Welch algorithm. The default -1 is no limit.}
+\item{max.time}{The maximum running time in seconds for the Baum-Welch algorithm. If this time is reached, the Baum-Welch will terminate after the current iteration finishes. The default -1 is no limit.}
+\item{repetitions}{Number of repetitions for each simulation.}
+\item{plot.progress}{If TRUE, the plot will be updated each time a simulation has finished. If FALSE, the plot will be returned only at the end.}
+}
+
+\details{
+The function first runs \code{\link{callPeaksUnivariate}} on the given binned.data files. From the estimated parameters it generates simulated data and calls the peaks on this simulated data. Because the data is simulated, the fraction of miscalls can be precisely calculated.
+}
+\value{
+A \code{\link[ggplot2:ggplot]{ggplot}} object with a bar plot of the number of miscalls dependent on the bin size.
+}
+\keyword{binsize}
+\author{Aaron Taudt}
+\examples{
+}
+

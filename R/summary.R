@@ -1,4 +1,4 @@
-summarize <- function(multi.hmm) {
+summary.chromstaR_multivariateHMM <- function(multi.hmm) {
 
 	## Get differential states
 	states <- levels(multi.hmm$bins$state)
