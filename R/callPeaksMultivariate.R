@@ -7,7 +7,6 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 		mlist <- NULL
 		for (modelfile in modellist) {
 			mlist[[length(mlist)+1]] <- get(load(modelfile))
-class(mlist[[length(mlist)]]) <- class.univariate.hmm
 		}
 		modellist <- mlist
 		remove(mlist)

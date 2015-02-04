@@ -42,7 +42,8 @@ scanBinsizes = function(files.binned, outputfolder, chromosomes="chr10", eps=0.0
 				# Save to separate binfiles
 				binsize = width(sim.data$bins)[1]
 				simulated.binned.data <- sim.data$bins
-				save(simulated.binned.data, file=file.path(path.sim.bin, paste0("simulated_",basename(binfile))))
+				sim.binfile <- file.path(path.sim.bin, paste0("simulated_",basename(binfile)))
+				save(simulated.binned.data, file=sim.binfile)
 			}
 			# Save with states
 			save(sim.data.list, file=simfile)
@@ -52,42 +53,42 @@ scanBinsizes = function(files.binned, outputfolder, chromosomes="chr10", eps=0.0
 		# Get simulated original states
 		message("Getting simulated original states...", appendLF=F)
 		sim.states.list = lapply(lapply(sim.data.list, "[[", 'bins'), function(gr) { return(gr$state) } )
-		for (i1 in 1:length(sim.states.list)) {
-			sim.states.list[[i1]] = state.labels[sim.states.list[[i1]]]
+		for (binfile in files.binned) {
+			sim.states.list[[basename(binfile)]] = state.labels[sim.states.list[[basename(binfile)]]]
 		}
 		message(" done")
 
 		## Univariate (simulated)
 		path.sim.uni = file.path(outputfolder, paste0("simulated_rep_",irep,"_results_univariate"))
 		if (!file.exists(path.sim.uni)) dir.create(path.sim.uni)
-		sim.binfiles = list.files(path.sim.bin, full.names=TRUE, pattern="simulated_")
 
-		# Go through binsizes
+		# Go through binsizes (=binfiles)
 		uni.states.list = list()
 		binsizes <- vector()
-		for (binfile in sim.binfiles) {
-			unifile = file.path(path.sim.uni, paste0("univariate_",basename(binfile)))
-			if (!file.exists(unifile)) {
-				binned.data <- get(load(binfile))
+		for (binfile in files.binned) {
+			sim.binfile <- file.path(path.sim.bin, paste0('simulated_',basename(binfile)))
+			sim.unifile = file.path(path.sim.uni, paste0("univariate_simulated_",basename(binfile)))
+			if (!file.exists(sim.unifile)) {
+				binned.data <- get(load(sim.binfile))
 				if (!is.null(chromosomes)) {
 					binned.data <- binned.data[seqnames(binned.data) %in% chromosomes]
 				}
-				unimodel = callPeaksUnivariate(binned.data, ID=basename(binfile), eps=eps, max.iter=max.iter, max.time=max.time)
-				save(unimodel, file=unifile)
+				unimodel = callPeaksUnivariate(binned.data, ID=basename(sim.binfile), eps=eps, max.iter=max.iter, max.time=max.time)
+				save(unimodel, file=sim.unifile)
 			} else {
-				unimodel <- get(load(unifile))
+				unimodel <- get(load(sim.unifile))
 			}
 			# Get univariate predicted states
 			message("Getting predicted univariate states...", appendLF=F)
-			uni.states.list[[i1]] = unimodel$bins$state
-			binsizes[i1] <- width(unimodel$bins)[1]
+			uni.states.list[[basename(binfile)]] = unimodel$bins$state
+			binsizes[basename(binfile)] <- width(unimodel$bins)[1]
 			message(" done")
 
 			# Performance
 			message("Calculating performance...", appendLF=F)
-			mask = sim.states.list[[i1]] != uni.states.list[[i1]]
-			miscalls = length(which(mask)) / length(sim.states.list[[i1]])
-			performance = rbind(performance, data.frame(binsize=binsizes[i1], miscalls, state1weight=unimodel$weights[3]))
+			mask = sim.states.list[[basename(binfile)]] != uni.states.list[[basename(binfile)]]
+			miscalls = length(which(mask)) / length(sim.states.list[[basename(binfile)]])
+			performance = rbind(performance, data.frame(simulation=paste0('simulation',irep), binsize=binsizes[basename(binfile)], miscalls, state1weight=unimodel$weights[3]))
 			message(" done")
 
 			## Plot miscalls
