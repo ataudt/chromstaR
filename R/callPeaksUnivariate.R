@@ -332,7 +332,9 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 		for (state in state.labels) {
 			red.gr <- GenomicRanges::reduce(gr[states==state])
 			mcols(red.gr)$state <- rep(factor(state, levels=levels(state.labels)),length(red.gr))
-			red.gr.list[[length(red.gr.list)+1]] <- red.gr
+			if (length(red.gr)>0) {
+				red.gr.list[[length(red.gr.list)+1]] <- red.gr
+			}
 		}
 		red.gr <- GenomicRanges::sort(GenomicRanges::unlist(red.gr.list))
 		result$segments <- red.gr

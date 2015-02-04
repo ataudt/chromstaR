@@ -192,7 +192,9 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 			for (state in hmm$comb.states) {
 				red.gr <- GenomicRanges::reduce(gr[gr$state==state])
 				mcols(red.gr)$state <- rep(factor(state, levels=levels(gr$state)),length(red.gr))
-				red.gr.list[[length(red.gr.list)+1]] <- red.gr
+				if (length(red.gr)>0) {
+					red.gr.list[[length(red.gr.list)+1]] <- red.gr
+				}
 			}
 			red.gr <- GenomicRanges::sort(GenomicRanges::unlist(red.gr.list))
 			result$segments <- red.gr
