@@ -25,4 +25,15 @@ The input object is returned with adjusted peak calls.
 \keyword{fdr}
 \author{Aaron Taudt}
 \examples{
+## Get an example BED-file with ChIP-seq reads for H3K36me3 in brain tissue (chr22)
+bedfile <- system.file("extdata/brain/BI.Brain_Angular_Gyrus.H3K36me3.112.chr22.bed.gz", package="chromstaR")
+## Bin the BED files into three different bin sizes
+binned.data <- bed2binned(bedfile, assembly='hg19', binsize=800, save.as.RData=FALSE)
+## Fit the univariate Hidden Markov Model (and keep posteriors!)
+hmm <- callPeaksUnivariate(binned.data, ID='example_H3K36me3', max.time=60, FDR=0.5, keep.posteriors=TRUE)
+## Adjust the FDR
+hmm.adjusted <- changeFDR(hmm, FDR=0.01)
+## Compare the state calls
+table(hmm$bins$state)
+table(hmm.adjusted$bins$state)
 }

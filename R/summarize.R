@@ -9,9 +9,9 @@ summarizePeaks <- function(multi.hmm) {
 	stats$total$mean.len.peaks <- vector()
 	stats$total$var.len.peaks <- vector()
 	binstates <- dec2bin(multi.hmm$segments$state)
-	colnames(binstates) <- multi.hmm$IDs.univariate
+	colnames(binstates) <- multi.hmm$IDs
 	segments <- multi.hmm$segments
-	for (sample in multi.hmm$IDs.univariate) {
+	for (sample in multi.hmm$IDs) {
 		stats$total$ID[sample] <- sample
 		stats$total$num.peaks[sample] <- sum(binstates[,sample])
 		stats$total$frac.in.peaks[sample] <- sum(as.numeric(width(segments)[binstates[,sample]])) / sum(as.numeric(seqlengths(segments)))
@@ -31,7 +31,7 @@ summarizePeaks <- function(multi.hmm) {
 		chrstats$mean.len.peaks <- vector()
 		chrstats$var.len.peaks <- vector()
 		chrsegments <- multi.hmm$segments[mask]
-		for (sample in multi.hmm$IDs.univariate) {
+		for (sample in multi.hmm$IDs) {
 			chrstats$ID[sample] <- sample
 			chrstats$num.peaks[sample] <- sum(binstates[mask,sample])
 			chrstats$frac.in.peaks[sample] <- sum(as.numeric(width(chrsegments)[binstates[mask,sample]])) / seqlengths(chrsegments)[names(seqlengths(chrsegments))==chrom]

@@ -10,6 +10,8 @@ dec2bin = function(dec, ndigits=NULL, names=NULL) {
 		} else {
 			ndigits = length(names)
 		}
+	} else {
+		if (check.positive.integer(ndigits)!=0) stop("argument 'ndigits' expects a positive integer")
 	}
 	if (!is.null(names)) {
 		if (maxdec >= 2^length(names)) {

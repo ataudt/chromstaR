@@ -38,4 +38,16 @@ Output is a vector of integers representing the combinatorial state of each bin.
 \keyword{binary}
 \author{Aaron Taudt}
 \examples{
+## Get example BED-files with ChIP-seq reads for H3K36me3 in 7 different brain tissues (chr22)
+bedfiles <- list.files(system.file("extdata/brain/", package="chromstaR"), full=T)
+## Bin the data into bin size 800bp and build the univariate Hidden Markov Model (HMM)
+uni.HMMs <- list()
+for (bedfile in bedfiles) {
+  binned.data <- bed2binned(bedfile, assembly='hg19', binsize=800, save.as.RData=F)
+  uni.HMMs[[bedfile]] <- callPeaksUnivariate(binned.data, ID=basename(bedfile), max.time=30, eps=0.01)
+}
+## Get the decimal representation of the combinatorial state of this combination of models
+states <- combinatorialStates(uni.HMMs, binary=FALSE)
+## Show number of each state
+table(states)
 }

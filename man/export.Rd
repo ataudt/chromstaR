@@ -17,17 +17,11 @@ Export peak calls or read counts as genome browser viewable files.
 }
 \usage{
 export.unihmm2bed(hmm.list, only.modified=TRUE, filename="view_me_in_genome_browser")
-
 export.unihmm2wiggle(hmm.list, filename="view_me_in_genome_browser")
-
 export.multihmm2bed(multi.hmm, separate.tracks=TRUE, exclude.states=0, include.states=NULL, filename="view_me_in_genome_browser")
-
 export.multihmm2wiggle(multi.hmm, filename="view_me_in_genome_browser")
-
 export.GRanges2bed(gr, filename="view_me_in_genome_browser", separate.tracks=FALSE)
-
 export.binned2bedGraph(binned.data.list, filename="view_me_in_genome_browser")
-
 export.binned2wiggle(binned.data.list, filename="view_me_in_genome_browser")
 }
 \arguments{
@@ -55,4 +49,27 @@ A file which can be uploaded into a genome browser.
 \keyword{bed}
 \author{Aaron Taudt}
 \examples{
+### Univariate peak calling ###
+  ## Get example BED-files with ChIP-seq reads for H3K36me3 in 7 different brain tissues (chr22)
+  bedfiles <- list.files(system.file("extdata/brain/", package="chromstaR"), full=T)
+  ## Bin the data into bin size 800bp and build the univariate Hidden Markov Model (HMM)
+	binned.data.list <- list()
+  uni.HMMs <- list()
+  for (bedfile in bedfiles) {
+    binned.data <- bed2binned(bedfile, assembly='hg19', binsize=800, save.as.RData=F)
+		binned.data.list[[bedfile]] <- binned.data
+    uni.HMMs[[bedfile]] <- callPeaksUnivariate(binned.data, ID=basename(bedfile), max.time=30, eps=0.01)
+  }
+  ## Export the binned read counts
+  \donttest{export.binned2wiggle(binned.data.list, filename='chromstaR-example_binned_read_counts')}
+  ## Export the univariate calls
+  \donttest{export.unihmm2bed(uni.HMMs, filename='chromstaR-example_state_calls_univariate.HMMs')}
+
+### Multivariate peak calling ###
+  ## Load example multivariate Hidden Markov Model
+  data(example.multi.HMM)
+  ## Export the binned read counts
+  \donttest{export.multihmm2wiggle(example.multi.HMM, filename='chromstaR-example_read_counts_example.multi.HMM')}
+  ## Export the state calls for each sample
+  \donttest{export.multihmm2bed(example.multi.HMM, separate.tracks=TRUE, exclude.states=c(0), filename='chromstaR-example_state_calls_example.multi.HMM')}
 }

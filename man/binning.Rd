@@ -52,4 +52,8 @@ The function produces a \link{GenomicRanges} object with one meta data column 'r
 \author{Aaron Taudt}
 \seealso{\link{chromstaR_binnedData}}
 \examples{
+## Get an example BED-file with ChIP-seq reads for H3K36me3 in brain tissue
+bedfile <- system.file("extdata/brain/BI.Brain_Angular_Gyrus.H3K36me3.112.bed_chr22.gz", package="chromstaR")
+## Bin the BED files into bin size 800bp
+binned.data <- bed2binned(bedfile, assembly='hg19', binsize=800, save.as.RData=FALSE)
 }

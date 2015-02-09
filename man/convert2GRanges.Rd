@@ -1,11 +1,11 @@
-\name{Convert to GenomicRanges}
+\name{bed2GRanges}
 \alias{bed2GRanges}
 
 \title{
-Convert contents of a BED file to \link{GenomicRanges} objects.
+Read a BED file into a \link{GRanges} objects.
 }
 \description{
-Convert contents of a BED file to GRanges objects. Only coordinates and information per position (e.g. reads, posteriors) are converted, other information specific to the HMM (e.g. loglikelihood, model parameters) are not converted.
+Read a BED file into a \link{GRanges} object. Only coordinates are read.
 }
 \usage{
 bed2GRanges(bedfile, chrom.length.file, skip=1, binsize=NULL)
@@ -24,4 +24,8 @@ A \link{GRanges} object.
 \keyword{GRanges}
 \author{Aaron Taudt}
 \examples{
+## Get an example BED-file with ChIP-seq reads for H3K36me3 in brain tissue (chr22)
+bedfile <- system.file("extdata/brain/BI.Brain_Angular_Gyrus.H3K36me3.112.chr22.bed.gz", package="chromstaR")
+## Read as GRanges
+gr <- bed2GRanges(bedfile)
 }

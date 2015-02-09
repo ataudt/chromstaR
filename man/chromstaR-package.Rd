@@ -26,29 +26,6 @@ Built: \tab R 3.0.2; x86_64-pc-linux-gnu; 2014-01-31 10:10:41 UTC; unix\cr
 }
 \section{Index}{
 \preformatted{
-binned.data.example.1   Example datasets for demonstrating the workflow
-                        of a \pkg{chromstaR} script
-collapseBins           Collapse consecutive bins
-combinatorial.states    Get the (decimal) combinatorial states of a
-                        list of HMM models
-histoneHMM-package      Analysis of histone modification data using a
-                        HMM
-make.ucsc.file.combinatorial
-                        Convert univariate HMM models for upload to the
-                        UCSC genome browser
-make.ucsc.file.multivariate
-                        Convert a multivariate HMM model for upload to
-                        the UCSC genome browser
-make.ucsc.file.univariate
-                        Convert univariate HMM models for upload to the
-                        UCSC genome browser
-multivariate.from.univariate.results
-                        Perform the multivariate HMM with univariate
-                        results
-plot.distribution       Plot the emission distributions that were
-                        fitted to the read data
-callPeaksUnivariate
-                        Perform the univariate HMM with binned data
 }
 ~~ An overview of how to use the package, including the most important ~~
 ~~ functions ~~

@@ -79,9 +79,9 @@ plotMultivariateHistograms <- function(multi.hmm) {
 
 	## Make fake uni.hmm and plot
 	ggplts <- list()
-	for (i1 in 1:length(multi.hmm$IDs.univariate)) {
+	for (i1 in 1:length(multi.hmm$IDs)) {
 		uni.hmm <- list()
-		uni.hmm$ID <- multi.hmm$IDs.univariate[i1]
+		uni.hmm$ID <- multi.hmm$IDs[i1]
 		uni.hmm$bins <- multi.hmm$bins
 		uni.hmm$reads <- multi.hmm$bins$reads[,i1]
 		uni.hmm$weights <- multi.hmm$weights.univariate[[i1]]

@@ -56,7 +56,7 @@ enrichment.from.expression <- function(multi.hmm, bamfile, bamindex=bamfile, per
 		mcols(gr.mark) <- NULL
 		# Convert combinatorial states (factors) to binary representation
 		binary.states <- dec2bin(as.integer(as.character(mcols(gr)$state)))
-		colnames(binary.states) <- multi.hmm$IDs.univariate
+		colnames(binary.states) <- multi.hmm$IDs
 		# Do enrichment analysis for every mark
 		for (col in 1:ncol(binary.states)) {
 			mcols(gr.mark)$state <- as.integer(binary.states[,col])
@@ -107,7 +107,7 @@ enrichment.from.annotation <- function(multi.hmm, annotation.file.gtf, per.mark=
 		mcols(gr.mark) <- NULL
 		# Convert combinatorial states (factors) to binary representation
 		binary.states <- dec2bin(as.integer(as.character(mcols(gr)$state)))
-		colnames(binary.states) <- multi.hmm$IDs.univariate
+		colnames(binary.states) <- multi.hmm$IDs
 		# Do enrichment analysis for every mark
 		for (col in 1:ncol(binary.states)) {
 			mcols(gr.mark)$state <- as.integer(binary.states[,col])

@@ -45,6 +45,4 @@ A \link[ggplot2:ggplot]{ggplot} object or a list of such objects.
 \keyword{histogram}
 \keyword{distributions}
 \author{Aaron Taudt}
-\examples{
-}
 

@@ -3,6 +3,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 	nummod <- length(modellist)
 	numbins <- length(modellist[[1]]$bins)
 	IDs <- unlist(lapply(modellist, "[[", "ID"))
+	names(IDs) <- NULL
 
 	### Extract the reads ###
 	message("Extracting reads from modellist...", appendLF=F)

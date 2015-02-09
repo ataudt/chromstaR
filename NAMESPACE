@@ -28,7 +28,7 @@ export.multihmm2wiggle,
 export.GRanges2bed,
 export.binned2bedGraph,
 export.binned2wiggle,
-bed2GRanges,
+# bed2GRanges,
 
 changeFDR,
 combinatorialStates,

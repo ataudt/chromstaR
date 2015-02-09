@@ -64,5 +64,9 @@ rzinbinom(n, w, size, prob, mu)
   is a special case of the negative binomial.
 }
 \examples{
+## Plot a zero-inflated negative binomial distribution
+x <- 0:20
+y <- dzinbinom(x, w=0.1, size=5, mu=12)
+plot(x, y)
 }
 \keyword{distribution}

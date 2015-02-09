@@ -22,7 +22,7 @@ export.unihmm2bed <- function(hmm.list, only.modified=TRUE, filename="view_me_in
 
 	# Variables
 	nummod <- length(hmm.list)
-	filename <- paste0(file,".bed.gz")
+	filename <- paste0(filename,".bed.gz")
 	filename.gz <- gzfile(filename, 'w')
 
 	# Generate the colors
@@ -52,7 +52,11 @@ export.unihmm2bed <- function(hmm.list, only.modified=TRUE, filename="view_me_in
 		if (only.modified) {
 			df <- df[df$state=='modified',]
 		}
-		write.table(format(df, scientific=FALSE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
+		if (nrow(df) == 0) {
+			warning('hmm ',imod,' does not contain any \'modified\' calls')
+		} else {
+			write.table(format(df, scientific=FALSE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
+		}
 	}
 	close(filename.gz)
 	message('')
@@ -152,13 +156,16 @@ export.multihmm2bed <- function(multi.hmm, separate.tracks=TRUE, exclude.states=
 		mask <- mask | istate==collapsed.calls$state
 	}
 	collapsed.calls <- collapsed.calls[mask,]
+	if (nrow(collapsed.calls) == 0) {
+		stop("No regions to export!")
+	}
 
 	## Write to file
 	message('writing to file ',filename)
 	cat("", file=filename.gz)
 	if (separate.tracks) {
-		bin <- dec2bin(collapsed.calls$state, ndigits=length(multi.hmm$IDs.univariate))
-		colnames(bin) <- multi.hmm$IDs.univariate
+		bin <- dec2bin(collapsed.calls$state, ndigits=length(multi.hmm$IDs))
+		colnames(bin) <- multi.hmm$IDs
 		for (icol in 1:ncol(bin)) {
 			numsegments <- length(which(bin[,icol]))
 			priority <- 52 + 3*icol
@@ -221,7 +228,7 @@ export.multihmm2wiggle <- function(multi.hmm, filename="view_me_in_genome_browse
 	## Variables
 	filename <- paste0(filename,".wiggle.gz")
 	filename.gz <- gzfile(filename, 'w')
-	nummod <- length(multi.hmm$IDs.univariate)
+	nummod <- length(multi.hmm$IDs)
 
 	## Write first line to file
 	message('writing to file ',filename)
@@ -230,7 +237,7 @@ export.multihmm2wiggle <- function(multi.hmm, filename="view_me_in_genome_browse
 	### Write every model to file ###
 	for (imod in 1:nummod) {
 		message('writing hmm ',imod,' / ',nummod,'\r', appendLF=F)
-		ID <- multi.hmm$IDs.univariate[imod]
+		ID <- multi.hmm$IDs[imod]
 		priority <- 50 + 3*imod
 		binsize <- width(multi.hmm$bins[1])
 		cat(paste0("track type=wiggle_0 name=\"read count for ",ID,"\" description=\"read count for ",ID,"\" visibility=full autoScale=on color=90,90,90 maxHeightPixels=100:50:20 graphType=bar priority=",priority,"\n"), file=filename.gz, append=TRUE)

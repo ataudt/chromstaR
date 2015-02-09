@@ -10,6 +10,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
 	bins$state <- NULL
 	numbins = length(uni.hmm.list[[1]]$bins)
 	IDs <- unlist(lapply(uni.hmm.list, "[[", "ID"))
+	names(IDs) <- NULL
 	distributions = lapply(uni.hmm.list,"[[","distributions")
 	weights = lapply(uni.hmm.list,"[[","weights")
 
@@ -50,7 +51,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
 
 	## Return multi.hmm
 	multi.hmm <- list()
-	multi.hmm$IDs.univariate <- IDs
+	multi.hmm$IDs <- IDs
 	multi.hmm$bins <- bins
 	## Segmentation
 		message("Making segmentation ...", appendLF=F)

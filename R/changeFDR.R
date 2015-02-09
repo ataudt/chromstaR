@@ -1,7 +1,7 @@
 changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE) {
 
 	## Check if posteriors are present
-	if (is.null(model$bins$posteriors)) stop("Cannot recalculate states because posteriors are missing. Run 'call.peaks.univariate' again with option 'keep.posteriors' set to TRUE.")
+	if (is.null(model$bins$posteriors)) stop("Cannot recalculate states because posteriors are missing. Run 'callPeaksUnivariate' again with option 'keep.posteriors' set to TRUE.")
 
 	## Get the states
 	threshold <- 1-FDR

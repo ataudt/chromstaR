@@ -7,7 +7,7 @@
 The multivariate HMM object is output of the function \code{\link{callPeaksMultivariate}} and is basically a list with various entries. The class() attribute of this list was set to "chromstaR_multivariateHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' and 'hmm$'.
 }
 \value{
-\item{IDs.univariate}{IDs of the input univariate HMMs.}
+\item{IDs}{IDs of the input univariate HMMs.}
 \item{bins}{
 A \link{GenomicRanges} object containing the genomic bin coordinates, their read count, (optional) posteriors and state classification.
 }

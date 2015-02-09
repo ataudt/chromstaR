@@ -50,4 +50,8 @@ An aggregated data.frame with the same format as the input data.frame will be gi
 \keyword{aggregating}
 \author{Aaron Taudt}
 \examples{
+## Load example data
+data(example.multi.HMM)
+df <- as.data.frame(example.multi.HMM$bins)
+shortdf <- collapseBins(df, column2collapseBy=13, columns2sumUp=c(4,6:12))
 }

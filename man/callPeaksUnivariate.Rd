@@ -52,4 +52,12 @@ Output is a \code{\link{chromstaR_univariateHMM}} list object.
 \author{Aaron Taudt and Maria Colome Tatche}
 \seealso{\code{\link{chromstaR_univariateHMM}}, \code{\link{callPeaksMultivariate}}}
 \examples{
+## Get an example BED-file with ChIP-seq reads for H3K36me3 in brain tissue (chr22)
+bedfile <- system.file("extdata/brain/BI.Brain_Angular_Gyrus.H3K36me3.112.chr22.bed.gz", package="chromstaR")
+## Bin the BED file into bin size 800bp
+binned.data <- bed2binned(bedfile, assembly='hg19', binsize=800, save.as.RData=FALSE)
+## Fit the univariate Hidden Markov Model
+hmm <- callPeaksUnivariate(binned.data, ID='example_H3K36me3', max.time=60)
+## Check if the fit is ok
+plot(hmm, type='histogram')
 }

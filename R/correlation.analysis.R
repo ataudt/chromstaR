@@ -8,7 +8,7 @@ correlation.analysis <- function(multi.hmm, IDs=NULL, plot=TRUE) {
 		if (check.multivariate.model(multi.hmm)!=0) stop("argument 'multi.hmm' expects a multivariate hmm object or a file that contains a multivariate hmm (type ?multi.hmm for help)")
 	}
 	if (is.null(IDs)) {
-		IDs <- multi.hmm$IDs.univariate
+		IDs <- multi.hmm$IDs
 	} else {
 		if (length(IDs) != multi.hmm$num.modifications) {
 			stop("argument 'IDs' needs one element for each mark in 'multi.hmm' (", multi.hmm$num.modifications, ")")

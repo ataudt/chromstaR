@@ -30,5 +30,11 @@ A vector of integers for \code{bin2dec} and a matrix of logicals with one state 
 \keyword{conversion}
 \author{Aaron Taudt}
 \examples{
+## Load example multivariate Hidden Markov Model
+data(example.multi.HMM)
+## Get the (decimal) combinatorial states
+states.decimal <- example.multi.HMM$bins$state
+## Transform them to binary representation
+states.binary <- dec2bin(states.decimal, ndigits=length(example.multi.HMM$IDs))
 }
 

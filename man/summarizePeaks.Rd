@@ -19,4 +19,8 @@ A list object with various entries.
 \keyword{summary}
 \author{Aaron Taudt}
 \examples{
+## Load example multivariate Hidden Markov Model
+data(example.multi.HMM)
+## Summary information about peaks
+summarizePeaks(example.multi.HMM)
 }
