@@ -391,6 +391,7 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 	//FILE_LOG(logDEBUG1) << "Computing states from posteriors";
 // 	if (*fdr == -1)
 // 	{
+		int ind_max;
 		std::vector<double> posterior_per_t(*N);
 		for (int t=0; t<*T; t++)
 		{
@@ -398,7 +399,9 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 			{
 				posterior_per_t[iN] = hmm->get_posterior(iN, t);
 			}
-			states[t] = comb_states[(int)*std::max_element(posterior_per_t.begin(), posterior_per_t.end())];
+			ind_max = std::distance(posterior_per_t.begin(), std::max_element(posterior_per_t.begin(), posterior_per_t.end()));
+			states[t] = comb_states[ind_max];
+// 			Rprintf("comb_states[t=%d, ind_max=%d] = %d\n", t, ind_max, states[t]);
 		}
 // 	}
 // 	else

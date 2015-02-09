@@ -33,7 +33,6 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 		if (FDR>1 | FDR<0) stop("argument 'FDR' has to be between 0 and 1 if specified")
 		get.posteriors <- TRUE
 	} else {
-		FDR <- -1
 		get.posteriors <- keep.posteriors
 	}
 
@@ -109,7 +108,7 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 	time.total <- 0
 	repeat{
 		# Determine runtime
-		if (max.iter > 0) {
+		if (max.iter >= 0) {
 			max.iter.temp <- min(checkpoint.after.iter, max.iter-iteration.total)
 		} else {
 			max.iter.temp <- checkpoint.after.iter
@@ -156,7 +155,7 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 
 		### Make return object ###
 			result <- list()
-			result$IDs.univariate <- IDs
+			result$IDs <- IDs
 		## Bin coordinates, posteriors and states
 			result$bins <- bins
 			result$bins$reads <- reads
@@ -222,11 +221,7 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 			result$distributions <- distributions
 			names(result$distributions) <- IDs
 			# FDR
-			if (FDR == -1) {
-				result$FDR <- NULL
-			} else {
-				result$FDR <- hmm$FDR
-			}
+			result$FDR <- FDR
 		## Convergence info
 			convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec)
 			result$convergenceInfo <- convergenceInfo
@@ -244,7 +239,7 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 		time.total <- time.total + hmm$time.sec
 		result$convergenceInfo$time.sec <- time.total
 		# Test if terminating condition has been reached
-		if (result$convergenceInfo$loglik.delta <= result$convergenceInfo$eps | (time.total >= max.time & max.time > 0) | (iteration.total >= max.iter & max.iter > 0)) break
+		if (result$convergenceInfo$loglik.delta <= result$convergenceInfo$eps | (time.total >= max.time & max.time >= 0) | (iteration.total >= max.iter & max.iter >= 0)) break
 		# Reduce the hmm for checkpointing
 		result[c('bins','segments')] <- NULL
 		# Save checkpoint
