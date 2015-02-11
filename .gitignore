@@ -20,4 +20,8 @@
 !libgslcblas.a
 !libgsl.dll
 !libgslcblas.dll
-
+# Ignore data and inst
+data
+inst
+# Ignore
+chromstaR.pdf

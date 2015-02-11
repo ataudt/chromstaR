@@ -51,7 +51,7 @@ Output is a \code{\link{chromstaR_multivariateHMM}} list object.
 \seealso{\code{\link{chromstaR_multivariateHMM}}, \code{\link{callPeaksUnivariate}}}
 \examples{
 ## Get example BED-files with ChIP-seq reads for H3K36me3 in 7 different brain tissues (chr22)
-bedfiles <- list.files(system.file("extdata/brain/", package="chromstaR"), full=T)
+bedfiles <- list.files(system.file(file.path("extdata","brain"), package="chromstaR"), full=T)
 ## Bin the data into bin size 800bp and build the univariate Hidden Markov Model (HMM)
 uni.HMMs <- list()
 for (bedfile in bedfiles) {

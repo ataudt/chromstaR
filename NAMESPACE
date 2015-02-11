@@ -17,6 +17,8 @@ callPeaksMultivariate,
 unis2pseudomulti,
 splitUnivariateIntoChromosomes,
 mergeChromsFromMultivariates,
+loadHmmsFromFiles,
+loadMultiHmmsFromFiles,
 
 # plot.distributions.to.pdf,
 # stateorderByTransition,
