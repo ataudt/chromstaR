@@ -11,9 +11,11 @@ loadHmmsFromFiles <- function(filenames) {
 		time <- proc.time() - ptm
 		message(" ",round(time[3],2),"s")
 		if (check.univariate.modellist(mlist)!=0) stop("argument 'filenames' expects a list of univariate hmms or a list of files that contain univariate hmms")
+		return(mlist)
+	} else {
+		return(filenames)
 	}
 	
-	return(filenames)
 
 }
 
@@ -30,9 +32,10 @@ loadMultiHmmsFromFiles <- function(filenames) {
 		time <- proc.time() - ptm
 		message(" ",round(time[3],2),"s")
 		if (check.multivariate.modellist(mlist)!=0) stop("argument 'filenames' expects a list of multivariate hmms or a list of files that contain multivariate hmms")
+		return(mlist)
+	} else {
+		return(filenames)
 	}
-	
-	return(filenames)
 
 }
 
