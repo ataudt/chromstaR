@@ -3,11 +3,11 @@
 # =================================================================
 plot.chromstaR_univariateHMM <- function(x, type='histogram', ...) {
 	
-	if (type == 'histogram') {
+	if (type == 'histogram' | type==1) {
 		plotUnivariateHistogram(x, ...)
-	} else if (type == 'boxplot') {
+	} else if (type == 'boxplot' | type==2) {
 		plotUnivariateBoxplot(x, ...)
-	} else if (type == 'normalTransformation') {
+	} else if (type == 'normalTransformation' | type==3) {
 		plotUnivariateNormalTransformation(x, ...)
 	}
 
@@ -15,9 +15,9 @@ plot.chromstaR_univariateHMM <- function(x, type='histogram', ...) {
 
 plot.chromstaR_multivariateHMM <- function(x, type='transitionMatrix', ...) {
 
-	if (type == 'transitionMatrix') {
+	if (type == 'transitionMatrix' | type==1) {
 		plotMultivariateTransition(x, ...)
-	} else if (type == 'histograms') {
+	} else if (type == 'histograms' | type==2) {
 		plotMultivariateHistograms(x, ...)
 	}
 
@@ -83,7 +83,8 @@ plotMultivariateHistograms <- function(multi.hmm) {
 		uni.hmm <- list()
 		uni.hmm$ID <- multi.hmm$IDs[i1]
 		uni.hmm$bins <- multi.hmm$bins
-		uni.hmm$reads <- multi.hmm$bins$reads[,i1]
+		uni.hmm$bins$state <- NULL
+		uni.hmm$bins$reads <- multi.hmm$bins$reads[,i1]
 		uni.hmm$weights <- multi.hmm$weights.univariate[[i1]]
 		uni.hmm$distributions <- multi.hmm$distributions[[i1]]
 		class(uni.hmm) <- class.univariate.hmm
@@ -122,16 +123,12 @@ plotUnivariateHistogram <- function(model, state=NULL, chrom=NULL, start=NULL, e
 
 	# Select the rows to plot
 	selectmask <- rep(TRUE,length(model$bins))
-	numchrom <- length(table(seqnames(model$bins)))
 	if (!is.null(chrom)) {
 		if (! chrom %in% levels(seqnames(model$bins))) {
 			stop(chrom," can't be found in the model coordinates.")
 		}
 		selectchrom <- as.logical(seqnames(model$bins) == chrom)
 		selectmask <- selectmask & selectchrom
-		numchrom <- 1
-	}
-	if (numchrom == 1) {
 		if (!is.null(start)) {
 			selectstart <- as.logical(start(ranges(model$bins)) >= start)
 			selectmask <- selectmask & selectstart
@@ -233,7 +230,7 @@ plotUnivariateNormalTransformation <- function(model, state='unmodified') {
 	breaks <- c(-Inf,sort(as.numeric(names(table(subset)))))
 	x <- seq(-4,4,0.1)
 	title <- paste0("Transformed emission density for state ",state)
-	ggplt <- ggplot() + geom_histogram(data=data.frame(ureads=subset), aes_string(x='ureads', y='..density..'), breaks=breaks, right=TRUE, col='black', fill=cols[state]) + theme_bw() + geom_line(data=data.frame(x=x, y=dnorm(x, mean=0, sd=1)), aes_string(x='x', y='y')) + xlab("transformed reads") + ylim(0,0.5) + labs(title=title)
+	ggplt <- ggplot() + geom_histogram(data=data.frame(ureads=subset), aes_string(x='ureads', y='..density..'), breaks=breaks, right=TRUE, col='black', fill=cols[state]) + theme_bw() + geom_line(data=data.frame(x=x, y=dnorm(x, mean=0, sd=1)), aes_string(x='x', y='y')) + xlab("transformed reads") + labs(title=title)
 	return(ggplt)
 
 }

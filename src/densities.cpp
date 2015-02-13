@@ -35,7 +35,7 @@ ZiNB::ZiNB(int* observations, int T, double size, double prob, double w)
 ZiNB::~ZiNB()
 {
 	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	if (this->obs != NULL)
+	if (this->lxfactorials != NULL)
 	{
 		Free(this->lxfactorials);
 	}
@@ -796,18 +796,6 @@ double ZeroInflation::getLogDensityAt(int x)
 {
 	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	double logdens;
-	// Calculate variance
-	double mean = 0, variance = 0;
-	for(int t=0; t<this->T; t++)
-	{
-		mean += obs[t];
-	}
-	mean = mean / this->T;
-	for(int t=0; t<this->T; t++)
-	{
-		variance += pow(obs[t] - mean, 2);
-	}
-	variance = variance / this->T;
 	// Calculate logdensity
 	if (x == 0)
 	{
@@ -815,7 +803,7 @@ double ZeroInflation::getLogDensityAt(int x)
 	}
 	else
 	{
-		logdens = -100;
+		logdens = -INFINITY;
 	}
 	
 	return(logdens);

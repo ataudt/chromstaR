@@ -7,11 +7,12 @@
 // Public =====================================================
 
 // Constructor and Destructor ---------------------------------
-ScaleHMM::ScaleHMM(int T, int N)
+ScaleHMM::ScaleHMM(int T, int N, int verbosity)
 {
 	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	//FILE_LOG(logDEBUG2) << "Initializing univariate ScaleHMM";
 	this->xvariate = UNIVARIATE;
+	this->verbosity = verbosity;
 	this->T = T;
 	this->N = N;
 	this->A = CallocDoubleMatrix(N, N);
@@ -34,11 +35,12 @@ ScaleHMM::ScaleHMM(int T, int N)
 
 }
 
-ScaleHMM::ScaleHMM(int T, int N, int Nmod)
+ScaleHMM::ScaleHMM(int T, int N, int Nmod, int verbosity)
 {
 	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	//FILE_LOG(logDEBUG2) << "Initializing multivariate ScaleHMM";
 	this->xvariate = MULTIVARIATE;
+	this->verbosity = verbosity;
 	this->T = T;
 	this->N = N;
 	this->A = CallocDoubleMatrix(N, N);
@@ -180,7 +182,7 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 		this->print_multi_iteration(0);
 		//FILE_LOG(logDEBUG2) << "Calling calc_densities() from baumWelch()";
 		//FILE_LOG(logINFO) << "Precomputing densities ...";
-		Rprintf("Precomputing densities ...\n");
+		if (this->verbosity>=1) Rprintf("HMM: Precomputing densities ...\n");
 		try { this->calc_densities(); } catch(...) { throw; }
 		this->print_multi_iteration(0);
 		// Print densities
@@ -202,6 +204,7 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 
 	R_CheckUserInterrupt();
 	// Do the Baum-Welch
+	this->baumWelchTime_real = difftime(time(NULL),this->baumWelchStartTime_sec);
 	int iteration = 0;
 	while (((this->baumWelchTime_real < *maxtime) or (*maxtime < 0)) and ((iteration < *maxiter) or (*maxiter < 0)))
 	{
@@ -280,7 +283,7 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 		if(this->dlogP < *eps) //it has converged
 		{
 			//FILE_LOG(logINFO) << "Convergence reached!\n";
-			Rprintf("Convergence reached!\n");
+			if (this->verbosity>=1) Rprintf("HMM: Convergence reached!\n");
 			if (this->xvariate == UNIVARIATE) this->check_for_state_swap();
 			break;
 		} else {// not converged
@@ -288,13 +291,13 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 			if (iteration == *maxiter)
 			{
 				//FILE_LOG(logINFO) << "Maximum number of iterations reached!";
-				Rprintf("Maximum number of iterations reached!\n");
+				if (this->verbosity>=1) Rprintf("HMM: Maximum number of iterations reached!\n");
 				if (this->xvariate == UNIVARIATE) this->check_for_state_swap();
 			}
 			else if ((this->baumWelchTime_real >= *maxtime) and (*maxtime >= 0))
 			{
 				//FILE_LOG(logINFO) << "Exceeded maximum time!";
-				Rprintf("Exceeded maximum time!\n");
+				if (this->verbosity>=1) Rprintf("HMM: Exceeded maximum time!\n");
 				if (this->xvariate == UNIVARIATE) this->check_for_state_swap();
 			}
 			logPold = logPnew;
@@ -561,6 +564,12 @@ double ScaleHMM::get_posterior(int iN, int t)
 {
 	//FILE_LOG(logDEBUG3) << __PRETTY_FUNCTION__;
 	return(this->gamma[iN][t]);
+}
+
+double ScaleHMM::get_density(int iN, int t)
+{
+	//FILE_LOG(logDEBUG3) << __PRETTY_FUNCTION__;
+	return(this->densities[iN][t]);
 }
 
 double ScaleHMM::get_proba(int i)
@@ -964,149 +973,158 @@ void ScaleHMM::calc_densities()
 void ScaleHMM::print_uni_iteration(int iteration)
 {
 	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	this->baumWelchTime_real = difftime(time(NULL),this->baumWelchStartTime_sec);
-	int bs = 106;
-	char buffer [106];
-	if (iteration % 20 == 0)
+	if (this->verbosity>=1)
 	{
-		snprintf(buffer, bs, "%10s%20s%20s%19s%d%15s", "Iteration", "log(P)", "dlog(P)", "Diff in state ",this->N-1, "Time in sec");
+		this->baumWelchTime_real = difftime(time(NULL),this->baumWelchStartTime_sec);
+		int bs = 106;
+		char buffer [106];
+		if (iteration % 20 == 0)
+		{
+			snprintf(buffer, bs, "%10s%20s%20s%19s%d%15s", "Iteration", "log(P)", "dlog(P)", "Diff in state ",this->N-1, "Time in sec");
+			//FILE_LOG(logITERATION) << buffer;
+			Rprintf("%s\n", buffer);
+		}
+		if (iteration == 0)
+		{
+			snprintf(buffer, bs, "%10s%20s%20s%20s%*d", "0", "-inf", "-", "-", 15, this->baumWelchTime_real);
+		}
+		else if (iteration == 1)
+		{
+			snprintf(buffer, bs, "%*d%*f%20s%*d%*d", 10, iteration, 20, this->logP, "inf", 20, this->sumdiff_state_last, 15, this->baumWelchTime_real);
+		}
+		else
+		{
+			snprintf(buffer, bs, "%*d%*f%*f%*d%*d", 10, iteration, 20, this->logP, 20, this->dlogP, 20, this->sumdiff_state_last, 15, this->baumWelchTime_real);
+		}
 		//FILE_LOG(logITERATION) << buffer;
 		Rprintf("%s\n", buffer);
-	}
-	if (iteration == 0)
-	{
-		snprintf(buffer, bs, "%10s%20s%20s%20s%*d", "0", "-inf", "-", "-", 15, this->baumWelchTime_real);
-	}
-	else if (iteration == 1)
-	{
-		snprintf(buffer, bs, "%*d%*f%20s%*d%*d", 10, iteration, 20, this->logP, "inf", 20, this->sumdiff_state_last, 15, this->baumWelchTime_real);
-	}
-	else
-	{
-		snprintf(buffer, bs, "%*d%*f%*f%*d%*d", 10, iteration, 20, this->logP, 20, this->dlogP, 20, this->sumdiff_state_last, 15, this->baumWelchTime_real);
-	}
-	//FILE_LOG(logITERATION) << buffer;
-	Rprintf("%s\n", buffer);
 
-	// Flush Rprintf statements to R console
-	R_FlushConsole();
+		// Flush Rprintf statements to R console
+		R_FlushConsole();
+	}
 }
 
 void ScaleHMM::print_multi_iteration(int iteration)
 {
 	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	this->baumWelchTime_real = difftime(time(NULL),this->baumWelchStartTime_sec);
-	int bs = 86;
-	char buffer [86];
-	if (iteration % 20 == 0)
+	if (this->verbosity>=1)
 	{
-		snprintf(buffer, bs, "%10s%20s%20s%15s", "Iteration", "log(P)", "dlog(P)", "Time in sec");
+		this->baumWelchTime_real = difftime(time(NULL),this->baumWelchStartTime_sec);
+		int bs = 86;
+		char buffer [86];
+		if (iteration % 20 == 0)
+		{
+			snprintf(buffer, bs, "%10s%20s%20s%15s", "Iteration", "log(P)", "dlog(P)", "Time in sec");
+			//FILE_LOG(logITERATION) << buffer;
+			Rprintf("%s\n", buffer);
+		}
+		if (iteration == 0)
+		{
+			snprintf(buffer, bs, "%10s%20s%20s%*d", "0", "-inf", "-", 15, this->baumWelchTime_real);
+		}
+		else if (iteration == 1)
+		{
+			snprintf(buffer, bs, "%*d%*f%20s%*d", 10, iteration, 20, this->logP, "inf", 15, this->baumWelchTime_real);
+		}
+		else
+		{
+			snprintf(buffer, bs, "%*d%*f%*f%*d", 10, iteration, 20, this->logP, 20, this->dlogP, 15, this->baumWelchTime_real);
+		}
 		//FILE_LOG(logITERATION) << buffer;
 		Rprintf("%s\n", buffer);
-	}
-	if (iteration == 0)
-	{
-		snprintf(buffer, bs, "%10s%20s%20s%*d", "0", "-inf", "-", 15, this->baumWelchTime_real);
-	}
-	else if (iteration == 1)
-	{
-		snprintf(buffer, bs, "%*d%*f%20s%*d", 10, iteration, 20, this->logP, "inf", 15, this->baumWelchTime_real);
-	}
-	else
-	{
-		snprintf(buffer, bs, "%*d%*f%*f%*d", 10, iteration, 20, this->logP, 20, this->dlogP, 15, this->baumWelchTime_real);
-	}
-	//FILE_LOG(logITERATION) << buffer;
-	Rprintf("%s\n", buffer);
 
-	// Flush Rprintf statements to R console
-	R_FlushConsole();
+		// Flush Rprintf statements to R console
+		R_FlushConsole();
+	}
 }
 
 void ScaleHMM::print_uni_params()
 {
 	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	int bs = 82;
-	char buffer [82];
-	int cx;
-	snprintf(buffer, bs, " -------------------------------------------------------------------------------");
-	//FILE_LOG(logINFO) << buffer;
-// 	Rprintf("%s\n", buffer);
-	snprintf(buffer, bs, "|%80s", "|");
-	//FILE_LOG(logINFO) << buffer;
-// 	Rprintf("%s\n", buffer);
-	// print loglik
-	snprintf(buffer, bs, "| log(P) = %*.6f%54s", 16, this->logP, "|");
-	//FILE_LOG(logINFO) << buffer;
-// 	Rprintf("%s\n", buffer);
-	snprintf(buffer, bs, "|%80s", "|");
-	//FILE_LOG(logINFO) << buffer;
-// 	Rprintf("%s\n", buffer);
-	// print initial probabilities
-	cx = snprintf(buffer, bs, "|%7s", "");
-	for (int iN=0; iN<this->N; iN++)
+	if (this->verbosity>=2)
 	{
-		cx += snprintf(buffer+cx, bs-cx, "proba[%d] = %.6f    ", iN, this->proba[iN]);
-	}
-	cx += snprintf(buffer+cx, bs-cx, "   |");
-	//FILE_LOG(logINFO) << buffer;
-// 	Rprintf("%s\n", buffer);
-	snprintf(buffer, bs, "|%80s", "|");
-	//FILE_LOG(logINFO) << buffer;
-// 	Rprintf("%s\n", buffer);
-	// print transition probabilities
-	for (int iN=0; iN<this->N; iN++)
-	{
-		cx = snprintf(buffer, bs, "|%7s", "");
-		for (int jN=0; jN<this->N; jN++)
-		{
-			cx += snprintf(buffer+cx, bs-cx, "A[%d][%d] = %.6f    ", iN, jN, this->A[iN][jN]);
-		}
-		cx += snprintf(buffer+cx, bs-cx, "      |");
+		int bs = 82;
+		char buffer [82];
+		int cx;
+		snprintf(buffer, bs, " -------------------------------------------------------------------------------");
 		//FILE_LOG(logINFO) << buffer;
-// 		Rprintf("%s\n", buffer);
-	}
-	// print emission parameters
-	snprintf(buffer, bs, "|%80s", "|");
-	//FILE_LOG(logINFO) << buffer;
-// 	Rprintf("%s\n", buffer);
-	for (int iN=0; iN<this->N; iN++)
-	{
-		if (iN == 1)
+	 	Rprintf("%s\n", buffer);
+		snprintf(buffer, bs, "|%80s", "|");
+		//FILE_LOG(logINFO) << buffer;
+	 	Rprintf("%s\n", buffer);
+		// print loglik
+		snprintf(buffer, bs, "| log(P) = %*.6f%54s", 16, this->logP, "|");
+		//FILE_LOG(logINFO) << buffer;
+	 	Rprintf("%s\n", buffer);
+		snprintf(buffer, bs, "|%80s", "|");
+		//FILE_LOG(logINFO) << buffer;
+	 	Rprintf("%s\n", buffer);
+		// print initial probabilities
+		cx = snprintf(buffer, bs, "|%7s", "");
+		for (int iN=0; iN<this->N; iN++)
 		{
-			snprintf(buffer, bs, "| unmodified component%59s", "|");
-			//FILE_LOG(logINFO) << buffer;
-// 			Rprintf("%s\n", buffer);
+			cx += snprintf(buffer+cx, bs-cx, "proba[%d] = %.6f    ", iN, this->proba[iN]);
 		}
-		if (iN == 2)
+		cx += snprintf(buffer+cx, bs-cx, "   |");
+		//FILE_LOG(logINFO) << buffer;
+	 	Rprintf("%s\n", buffer);
+		snprintf(buffer, bs, "|%80s", "|");
+		//FILE_LOG(logINFO) << buffer;
+	 	Rprintf("%s\n", buffer);
+		// print transition probabilities
+		for (int iN=0; iN<this->N; iN++)
 		{
-			snprintf(buffer, bs, "| modified component%61s", "|");
+			cx = snprintf(buffer, bs, "|%7s", "");
+			for (int jN=0; jN<this->N; jN++)
+			{
+				cx += snprintf(buffer+cx, bs-cx, "A[%d][%d] = %.6f    ", iN, jN, this->A[iN][jN]);
+			}
+			cx += snprintf(buffer+cx, bs-cx, "      |");
 			//FILE_LOG(logINFO) << buffer;
-// 			Rprintf("%s\n", buffer);
+	 		Rprintf("%s\n", buffer);
 		}
-		if (this->densityFunctions[iN]->get_name() == NEGATIVE_BINOMIAL)
+		// print emission parameters
+		snprintf(buffer, bs, "|%80s", "|");
+		//FILE_LOG(logINFO) << buffer;
+	 	Rprintf("%s\n", buffer);
+		for (int iN=0; iN<this->N; iN++)
 		{
-			NegativeBinomial* temp = (NegativeBinomial*)this->densityFunctions[iN];
-			double curR = temp->get_size();
-			double curP = temp->get_prob();
-			double curMean = temp->get_mean();
-			double curVar = temp->get_variance();
-			snprintf(buffer, bs, "| r = %*.6f, p = %*.6f, mean = %*.2f, var = %*.2f%20s", 9, curR, 9, curP, 6, curMean, 8, curVar, "|");
-			//FILE_LOG(logINFO) << buffer;
-// 			Rprintf("%s\n", buffer);
+			if (iN == 1)
+			{
+				snprintf(buffer, bs, "| unmodified component%59s", "|");
+				//FILE_LOG(logINFO) << buffer;
+	 			Rprintf("%s\n", buffer);
+			}
+			if (iN == 2)
+			{
+				snprintf(buffer, bs, "| modified component%61s", "|");
+				//FILE_LOG(logINFO) << buffer;
+	 			Rprintf("%s\n", buffer);
+			}
+			if (this->densityFunctions[iN]->get_name() == NEGATIVE_BINOMIAL)
+			{
+				NegativeBinomial* temp = (NegativeBinomial*)this->densityFunctions[iN];
+				double curR = temp->get_size();
+				double curP = temp->get_prob();
+				double curMean = temp->get_mean();
+				double curVar = temp->get_variance();
+				snprintf(buffer, bs, "| r = %*.6f, p = %*.6f, mean = %*.2f, var = %*.2f%20s", 9, curR, 9, curP, 6, curMean, 8, curVar, "|");
+				//FILE_LOG(logINFO) << buffer;
+	 			Rprintf("%s\n", buffer);
+			}
 		}
-	}
-	
-	snprintf(buffer, bs, "|%80s", "|");
-	//FILE_LOG(logINFO) << buffer;
-// 	Rprintf("%s\n", buffer);
-	snprintf(buffer, bs, " -------------------------------------------------------------------------------");
-	//FILE_LOG(logINFO) << buffer;
-// 	Rprintf("%s\n", buffer);
-	//FILE_LOG(logINFO) << "";
-// 	Rprintf("\n");
+		
+		snprintf(buffer, bs, "|%80s", "|");
+		//FILE_LOG(logINFO) << buffer;
+	 	Rprintf("%s\n", buffer);
+		snprintf(buffer, bs, " -------------------------------------------------------------------------------");
+		//FILE_LOG(logINFO) << buffer;
+	 	Rprintf("%s\n", buffer);
+		//FILE_LOG(logINFO) << "";
+	 	Rprintf("\n");
 
-	// Flush Rprintf statements to R console
-// 	R_FlushConsole();
+		// Flush Rprintf statements to R console
+	 	R_FlushConsole();
+	}
 }
 

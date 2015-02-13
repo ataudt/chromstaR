@@ -7,7 +7,7 @@ Fit a Hidden Markov Model to a ChIP-seq sample.
 Fit a HMM to a ChIP-seq sample to determine the modification state of genomic regions, e.g. call peaks in the sample.
 }
 \usage{
-callPeaksUnivariate(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.iter=-1, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff.quantile=0.999, max.mean=10, FDR=0.5, keep.posteriors=FALSE, control=FALSE, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE)
+callPeaksUnivariate(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.iter=-1, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff.quantile=0.999, max.mean=10, FDR=0.5, keep.posteriors=FALSE, control=FALSE, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, keep.densities=FALSE, verbosity=1)
 }
 \arguments{
 \item{binned.data}{A \link{GRanges} object with binned read counts.}
@@ -37,6 +37,8 @@ callPeaksUnivariate(binned.data, ID, eps=0.001, init="standard", max.time=-1, ma
 If set to TRUE, only one checkpoint file will be written. If set to FALSE, a new checkpoint file will be written at each checkpoint with the total number of iterations appended.
 }
 \item{checkpoint.use.existing}{If set to TRUE, the Baum-Welch fitting procedure will be continued from the HMM in the \code{checkpoint.file}.}
+\item{keep.densities}{If set to TRUE (default=FALSE), densities will be available in the output. This should only be needed debugging.}
+\item{verbosity}{Verbosity level for the fitting procedure. 0 - No output, 1 - Iterations are printed.}
 }
 
 \details{

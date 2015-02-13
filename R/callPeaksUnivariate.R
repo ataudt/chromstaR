@@ -1,4 +1,4 @@
-callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.iter=-1, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff.quantile=0.999, max.mean=10, FDR=0.5, keep.posteriors=FALSE, control=FALSE, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE) {
+callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.iter=-1, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff.quantile=0.999, max.mean=10, FDR=0.5, keep.posteriors=FALSE, control=FALSE, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, keep.densities=FALSE, verbosity=1) {
 
 	### Define cleanup behaviour ###
 	on.exit(.C("R_univariate_cleanup"))
@@ -18,6 +18,8 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 	if (check.logical(checkpoint.overwrite)!=0) stop("argument 'checkpoint.overwrite' expects a logical (TRUE or FALSE)")
 	if (FDR>1 | FDR<0) stop("argument 'FDR' has to be between 0 and 1 if specified")
 	if (check.logical(keep.posteriors)!=0) stop("argument 'keep.posteriors' expects a logical (TRUE or FALSE)")
+	if (check.logical(keep.densities)!=0) stop("argument 'keep.densities' expects a logical (TRUE or FALSE)")
+	if (check.integer(verbosity)!=0) stop("argument 'verbosity' expects an integer")
 	war <- NULL
 	if (is.null(eps.try)) eps.try <- eps
 	## Load binned.data and reuse values if present
@@ -53,6 +55,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 	reads <- mcols(binned.data)$reads
 	iniproc <- which(init==c("standard","random","empiric")) # transform to int
 	mean.reads <- mean(reads[reads>0])
+	if (keep.densities) { lenDensities <- numbins * numstates } else { lenDensities <- 1 }
 
 	### Check if there are reads in the data, otherwise HMM will blow up ###
 	if (!any(reads!=0)) {
@@ -67,7 +70,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 	reads[mask] <- read.cutoff
 	numfiltered <- length(which(mask))
 	if (numfiltered > 0) {
-		message("\nReplaced read counts > ",read.cutoff," (",names.read.cutoff," quantile) by ",read.cutoff," in ",numfiltered," bins. Set option 'read.cutoff.quantile=1' to disable this filtering. This filtering was done to increase the speed of the HMM and should not affect the results.\n")
+		message("Replaced read counts > ",read.cutoff," (",names.read.cutoff," quantile) by ",read.cutoff," in ",numfiltered," bins. Set option 'read.cutoff.quantile=1' to disable this filtering. This filtering was done to increase the speed of the HMM and should not affect the results.")
 	}
 
 	### Filter out low read counts that arise when the bin size is larger than optimal (should correct the result to near optimal again) ###
@@ -81,7 +84,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 		index.filtered <- which(reads>0 & reads<=read.counts.to.remove)
 		reads[index.filtered] <- 0
 		if (length(index.filtered)>0) {
-			warning(paste0("Replaced read counts <= ",read.counts.to.remove," by 0. This was done because the selected bin size is considered too big for this dataset: The mean of the read counts (zeros removed) is bigger than the specified max.mean = ",max.mean,". Check the fits (plot.distribution)!"))
+			message(paste0("Replaced read counts <= ",read.counts.to.remove," by 0. This was done because the selected bin size is considered too big for this dataset: The mean of the read counts (zeros removed) is bigger than the specified max.mean = ",max.mean,". Check the fits!"))
 		}
 	}
 	
@@ -112,7 +115,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 		### Run univariate HMM ###
 		iteration.total <- 0
 		time.total <- 0
-		message("------------------------------------ Try ",1," of ",1," -------------------------------------")
+		if (verbosity>=1) message("------------------------------------ Try ",1," of ",1," -------------------------------------")
 		repeat {
 			## Determine runtime
 			if (max.iter > 0) {
@@ -136,6 +139,8 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 				time.sec = as.integer(max.time.temp), # double* maxtime
 				loglik.delta = as.double(eps.try), # double* eps
 				posteriors = double(length=numbins * numstates), # double* posteriors
+				densities = double(length=lenDensities), # double* densities
+				keep.densities = as.logical(keep.densities), # bool* keep_densities
 				A = double(length=numstates*numstates), # double* A
 				proba = double(length=numstates), # double* proba
 				loglik = double(length=1), # double* loglik
@@ -148,7 +153,8 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 				use.initial.params = as.logical(use.initial), # bool* use_initial_params
 				num.threads = as.integer(num.threads), # int* num_threads
 				error = as.integer(0), # int* error (error handling)
-				read.cutoff = as.integer(read.cutoff) # int* read_cutoff
+				read.cutoff = as.integer(read.cutoff), # int* read_cutoff
+				verbosity = as.integer(verbosity) # int* verbosity
 			)
 			## Adjust parameters for the next round
 			A.initial <- hmm$A
@@ -219,7 +225,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 		## Call univariate in a for loop to enable multiple trials
 		modellist <- list()
 		for (i_try in 1:num.trials) {
-			message("------------------------------------ Try ",i_try," of ",num.trials," -------------------------------------")
+			if (verbosity>=1) message("------------------------------------ Try ",i_try," of ",num.trials," -------------------------------------")
 			hmm <- .C("R_univariate_hmm",
 				reads = as.integer(reads), # double* O
 				num.bins = as.integer(numbins), # int* T
@@ -230,6 +236,8 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 				time.sec = as.integer(max.time), # double* maxtime
 				loglik.delta = as.double(eps.try), # double* eps
 				posteriors = double(length=numbins * numstates), # double* posteriors
+				densities = double(length=lenDensities), # double* densities
+				keep.densities = as.logical(keep.densities), # bool* keep_densities
 				A = double(length=numstates*numstates), # double* A
 				proba = double(length=numstates), # double* proba
 				loglik = double(length=1), # double* loglik
@@ -242,7 +250,8 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 				use.initial.params = as.logical(0), # bool* use_initial_params
 				num.threads = as.integer(num.threads), # int* num_threads
 				error = as.integer(0), # int* error (error handling)
-				read.cutoff = as.integer(read.cutoff) # int* read_cutoff
+				read.cutoff = as.integer(read.cutoff), # int* read_cutoff
+				verbosity = as.integer(verbosity) # int* verbosity
 			)
 
 			hmm$eps <- eps.try
@@ -261,7 +270,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 		hmm <- modellist[[indexmax]]
 
 		# Rerun the HMM with different epsilon and initial parameters from trial run
-		message("------------------------- Rerunning try ",indexmax," with eps = ",eps," -------------------------")
+		if (verbosity>=1) message("------------------------- Rerunning try ",indexmax," with eps = ",eps," -------------------------")
 		hmm <- .C("R_univariate_hmm",
 			reads = as.integer(reads), # double* O
 			num.bins = as.integer(numbins), # int* T
@@ -272,6 +281,8 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 			time.sec = as.integer(max.time), # double* maxtime
 			loglik.delta = as.double(eps), # double* eps
 			posteriors = double(length=numbins * numstates), # double* posteriors
+			densities = double(length=lenDensities), # double* densities
+			keep.densities = as.logical(keep.densities), # bool* keep_densities
 			A = double(length=numstates*numstates), # double* A
 			proba = double(length=numstates), # double* proba
 			loglik = double(length=1), # double* loglik
@@ -284,7 +295,8 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 			use.initial.params = as.logical(1), # bool* use_initial_params
 			num.threads = as.integer(num.threads), # int* num_threads
 			error = as.integer(0), # int* error (error handling)
-			read.cutoff = as.integer(read.cutoff) # int* read_cutoff
+			read.cutoff = as.integer(read.cutoff), # int* read_cutoff
+			verbosity = as.integer(verbosity) # int* verbosity
 		)
 	}
 
@@ -320,6 +332,9 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 														state=states) 
 		if (keep.posteriors) {
 			result$bins$posteriors <- hmm$posteriors
+		}
+		if (keep.densities) {
+			result$bins$densities <- matrix(hmm$densities, ncol=hmm$num.states)
 		}
 		seqlengths(result$bins) <- seqlengths(binned.data)
 		time <- proc.time() - ptm

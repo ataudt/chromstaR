@@ -2,7 +2,6 @@
 #define UTILITY_H
 
 #include <exception> // error handling
-#include <cstdlib> // calloc() etc.
 #include "logging.h" // FILE_LOG() capability
 #include <R.h> // Calloc() etc.
 #include <algorithm> // max_element

@@ -53,11 +53,11 @@ A file which can be uploaded into a genome browser.
   ## Get example BED-files with ChIP-seq reads for H3K36me3 in 7 different brain tissues (chr22)
   bedfiles <- list.files(system.file(file.path("extdata","brain"), package="chromstaR"), full=T)
   ## Bin the data into bin size 800bp and build the univariate Hidden Markov Model (HMM)
-	binned.data.list <- list()
+  binned.data.list <- list()
   uni.HMMs <- list()
   for (bedfile in bedfiles) {
     binned.data <- bed2binned(bedfile, assembly='hg19', binsize=800, save.as.RData=F)
-		binned.data.list[[bedfile]] <- binned.data
+    binned.data.list[[bedfile]] <- binned.data
     uni.HMMs[[bedfile]] <- callPeaksUnivariate(binned.data, ID=basename(bedfile), max.time=30, eps=0.01)
   }
   ## Export the binned read counts

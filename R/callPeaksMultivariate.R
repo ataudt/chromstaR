@@ -1,4 +1,4 @@
-callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, eps=0.001, FDR=NULL, keep.posteriors=FALSE, num.threads=1, max.time=-1, max.iter=-1, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file=NULL, checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL) {
+callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, eps=0.001, FDR=NULL, keep.posteriors=FALSE, num.threads=1, max.time=-1, max.iter=-1, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file=NULL, checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL, keep.densities=FALSE, verbosity=1) {
 
 	## Intercept user input
 	if (check.univariate.modellist(modellist)!=0) {
@@ -29,6 +29,8 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 	if (check.integer(checkpoint.after.time)!=0) stop("argument 'checkpoint.after.time' expects an integer")
 	if (check.logical(checkpoint.overwrite)!=0) stop("argument 'checkpoint.overwrite' expects a logical (TRUE or FALSE)")
 	if (check.logical(keep.posteriors)!=0) stop("argument 'keep.posteriors' expects a logical (TRUE or FALSE)")
+	if (check.logical(keep.densities)!=0) stop("argument 'keep.densities' expects a logical (TRUE or FALSE)")
+	if (check.integer(verbosity)!=0) stop("argument 'verbosity' expects an integer")
 	if (!is.null(FDR)) {
 		if (FDR>1 | FDR<0) stop("argument 'FDR' has to be between 0 and 1 if specified")
 		get.posteriors <- TRUE
@@ -71,6 +73,7 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 	ws3 <- unlist(lapply(weights,"[",3))
 	ws <- ws1 / (ws2+ws1)
 	if (get.posteriors) { lenPosteriors <- numbins * numstates2use } else { lenPosteriors <- 1 }
+	if (keep.densities) { lenDensities <- numbins * numstates2use } else { lenDensities <- 1 }
 
 	# Load checkpoint file if it exists and if desired
 	if (is.null(checkpoint.file)) {
@@ -135,6 +138,8 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 			loglik.delta = as.double(eps), # double* eps
 			posteriors = double(length=lenPosteriors), # double* posteriors
 			get.posteriors = as.logical(get.posteriors), # bool* keep_posteriors
+			densities = double(length=lenDensities), # double* densities
+			keep.densities = as.logical(keep.densities), # bool* keep_densities
 			states = integer(length=numbins), # int* states
 			A = double(length=numstates2use*numstates2use), # double* A
 			proba = double(length=numstates2use), # double* proba
@@ -143,7 +148,8 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 			proba.initial = as.double(proba.initial), # double* initial proba
 			use.initial.params = as.logical(use.initial), # bool* use_initial_params
 			num.threads = as.integer(num.threads), # int* num_threads
-			error = as.integer(0) # error handling
+			error = as.integer(0), # error handling
+			verbosity = as.integer(verbosity) # int* verbosity
 			)
 			
 		### Check convergence ###
@@ -183,6 +189,10 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 					colnames(result$bins$posteriors) <- paste0("P(",hmm$comb.states,")")
 				}
 			}
+			if (keep.densities) {
+				result$bins$densities <- matrix(hmm$densities, ncol=hmm$num.states)
+			}
+			
 		## Segmentation
 			message("Making segmentation ...", appendLF=F)
 			ptm <- proc.time()

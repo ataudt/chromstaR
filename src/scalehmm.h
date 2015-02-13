@@ -13,8 +13,8 @@ class ScaleHMM  {
 	public:
 		// Constructor and Destructor
 		ScaleHMM();
-		ScaleHMM(int T, int N);
-		ScaleHMM(int T, int N, int Nmod);
+		ScaleHMM(int T, int N, int verbosity);
+		ScaleHMM(int T, int N, int Nmod, int verbosity);
 		~ScaleHMM();
 
 		// Member variables
@@ -33,6 +33,7 @@ class ScaleHMM  {
 		int get_T();
 		void get_posteriors(double** post);
 		double get_posterior(int iN, int t);
+		double get_density(int iN, int t);
 		double get_proba(int i);
 		double get_A(int i, int j);
 		double get_logP();
@@ -40,6 +41,7 @@ class ScaleHMM  {
 
 	private:
 		// Member variables
+		int verbosity; ///< verbosity level
 		int T; ///< length of observed sequence
 		int N; ///< number of states
 		int cutoff; ///< a cutoff for observations
