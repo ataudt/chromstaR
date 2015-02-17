@@ -434,7 +434,6 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 			}
 			ind_max = std::distance(posterior_per_t.begin(), std::max_element(posterior_per_t.begin(), posterior_per_t.end()));
 			states[t] = comb_states[ind_max];
-// 			if (*verbosity>=1) Rprintf("HMM: comb_states[t=%d, ind_max=%d] = %d\n", t, ind_max, states[t]);
 		}
 // 	}
 // 	else
