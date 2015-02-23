@@ -7,11 +7,13 @@
 #' @return A list() containing all loaded \code{\link{chromstaR_univariateHMM}} objects.
 #' @author Aaron Taudt
 #' @examples
+#'\donttest{
 #'## Not run:
 #'files.with.hmms <- list.files(folder.with.hmms, full=TRUE,
 #'                              pattern='binsize_1000')
 #'uni.HMMs <- loadHmmsFromFiles(files.with.hmms)
 #'## End(Not run)
+#'}
 #' @seealso loadMultiHmmsFromFiles
 #' @export
 loadHmmsFromFiles <- function(hmm.list, strict=FALSE) {
@@ -65,11 +67,13 @@ is.hmm <- function(hmm) {
 #' @return A list() containing all loaded \code{\link{chromstaR_multivariateHMM}} objects.
 #' @author Aaron Taudt
 #' @examples
+#'\donttest{
 #'## Not run:
 #'files.with.hmms <- list.files(folder.with.hmms, full=TRUE,
 #'                              pattern='binsize_1000')
 #'multi.HMMs <- loadMultiHmmsFromFiles(files.with.hmms)
 #'## End(Not run)
+#'}
 #' @seealso loadHmmsFromFiles
 #' @export
 loadMultiHmmsFromFiles <- function(hmm.list, strict=FALSE) {

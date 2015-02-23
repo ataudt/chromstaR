@@ -356,7 +356,8 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 #'## Bin the data into bin size 1000bp
 #'binned.data.list <- list()
 #'for (bedfile in bedfiles) {
-#'  binned.data.list[[bedfile]] <- bed2binned(bedfile, assembly='hg19', binsize=1000, save.as.RData=FALSE)
+#'  binned.data.list[[bedfile]] <- bed2binned(bedfile, assembly='hg19', binsize=1000,
+#'                                            save.as.RData=FALSE)
 #'}
 #'## Export the binned read counts
 #'\donttest{exportBinnedData(binned.data.list, filename='chromstaR-example_binned.data')}

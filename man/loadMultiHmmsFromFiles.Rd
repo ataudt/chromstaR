@@ -18,11 +18,13 @@ A list() containing all loaded \code{\link{chromstaR_multivariateHMM}} objects.
 Load \code{\link{chromstaR_multivariateHMM}} objects from file into a list.
 }
 \examples{
+\donttest{
 ## Not run:
 files.with.hmms <- list.files(folder.with.hmms, full=TRUE,
                              pattern='binsize_1000')
 multi.HMMs <- loadMultiHmmsFromFiles(files.with.hmms)
 ## End(Not run)
+}
 }
 \author{
 Aaron Taudt
