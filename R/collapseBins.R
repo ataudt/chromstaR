@@ -1,3 +1,36 @@
+#' Collapse consecutive bins
+#'
+#' The function will collapse consecutive bins which have, for example, the same CNV-state.
+#'
+#' The following tables illustrate the principle of the collapsing:
+#'
+#' Input data:
+#' \tabular{rrrrrr}{
+#' chrom \tab start \tab end \tab column2collapseBy \tab moreColumns \tab columns2sumUp \cr
+#' chr1  \tab     0 \tab 199 \tab                 2 \tab        1 10 \tab           1 3 \cr
+#' chr1  \tab   200 \tab 399 \tab                 2 \tab        2 11 \tab           0 3 \cr
+#' chr1  \tab   400 \tab 599 \tab                 2 \tab        3 12 \tab           1 3 \cr
+#' chr1  \tab   600 \tab 799 \tab                 1 \tab        4 13 \tab           0 3 \cr
+#' chr1  \tab   800 \tab 999 \tab                 1 \tab        5 14 \tab           1 3 \cr
+#' }
+#' Output data:
+#' \tabular{rrrrrr}{
+#' chrom \tab start \tab end \tab column2collapseBy \tab moreColumns \tab columns2sumUp \cr
+#' chr1  \tab     0 \tab 599 \tab                 2 \tab        1 10 \tab           2 9 \cr
+#' chr1  \tab   600 \tab 999 \tab                 1 \tab        4 13 \tab           1 6 \cr
+#' }
+#' 
+#' @param data A data.frame containing the genomic coordinates in the first three columns.
+#' @param column2collapseBy The number of the column which will be used to collapse all other inputs. If a set of consecutive bins has the same value in this column, they will be aggregated into one bin with adjusted genomic coordinates.
+#' @param columns2sumUp Numbers of columns that will be summed during the aggregation process.
+#' @return An aggregated data.frame with the same format as the input data.frame will be given as output.
+#' @examples
+#'## Load example data
+#'data(example.multi.HMM)
+#'df <- as.data.frame(example.multi.HMM$bins)
+#'shortdf <- collapseBins(df, column2collapseBy=13, columns2sumUp=c(4,6:12))
+#' @author Aaron Taudt
+#' @export
 collapseBins = function(data, column2collapseBy=NULL, columns2sumUp=NULL) {
 
 	# Indexing stuff
@@ -28,7 +61,7 @@ collapseBins = function(data, column2collapseBy=NULL, columns2sumUp=NULL) {
 	# Combine the vectors
 	compare <- compare_custom | compare_chrom
 	compare[1] = TRUE
-	numcollapseBins = length(which(compare==TRUE))
+	numcollapsedbins = length(which(compare==TRUE))
 	numbins = nrow(data)
 
 	# Select the collapsed rows
@@ -47,7 +80,7 @@ collapseBins = function(data, column2collapseBy=NULL, columns2sumUp=NULL) {
 	# Sum up columns
 	if (!is.null(columns2sumUp)) {
 		sumcols = as.matrix(data[,columns2sumUp])
-		collapsed_sumcols = matrix(rep(NA,numcollapseBins*length(columns2sumUp)), ncol=length(columns2sumUp))
+		collapsed_sumcols = matrix(rep(NA,numcollapsedbins*length(columns2sumUp)), ncol=length(columns2sumUp))
 # 		pb = txtProgressBar(min=1, max=length(compare), style=3)
 		icount = 1
 		i1_lasttrue = 1

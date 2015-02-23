@@ -1,3 +1,28 @@
+#' Combine univariate HMMs to a multivariate HMM
+#'
+#' Combine multiple \code{\link{chromstaR_univariateHMM}}s to a \code{\link{chromstaR_multivariateHMM}} without running \code{\link{callPeaksMultivariate}}. This should only be done for comparison purposes.
+#'
+#' Use this function if you want to combine ChIP-seq samples without actually running a multivariate Hidden Markov Model. The resulting object will be of class \code{\link{chromstaR_multivariateHMM}} but will not be truly multivariate.
+#'
+#' @author Aaron Taudt
+#' @param uni.hmm.list A list of \code{\link{chromstaR_univariateHMM}}s, e.g. \code{list(hmm1, hmm2, ...)}.
+#' @return A \code{\link{chromstaR_multivariateHMM}} object.
+#' @examples
+#'## Get example BED-files with ChIP-seq reads for H3K36me3
+#' # in 7 different brain tissues (chr22)
+#'path.to.example <- system.file(file.path("extdata","brain"), package="chromstaR")
+#'bedfiles <- list.files(path.to.example, full=TRUE)
+#'## Bin the data into bin size 1000bp and build the univariate HMM
+#'uni.HMMs <- list()
+#'for (bedfile in bedfiles) {
+#'  binned.data <- bed2binned(bedfile, assembly='hg19', binsize=1000,
+#'                            save.as.RData=FALSE)
+#'  uni.HMMs[[bedfile]] <- callPeaksUnivariate(binned.data, ID=basename(bedfile),
+#'                                             max.time=30, eps=0.01)
+#'}
+#'## Combine the univariate HMMs without fitting a multivariate HMM
+#'pseudo.multi.HMM <- unis2pseudomulti(uni.HMMs)
+#' @export
 unis2pseudomulti <- function(uni.hmm.list) {
 
 	# Load models

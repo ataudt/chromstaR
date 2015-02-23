@@ -1,0 +1,12 @@
+\contentsline {section}{\numberline {1}Introduction}{1}{section.1}
+\contentsline {section}{\numberline {2}Outline of workflow}{2}{section.2}
+\contentsline {section}{\numberline {3}Univariate analysis}{2}{section.3}
+\contentsline {subsection}{\numberline {3.1}Task 1: Peak calling for a narrow histone modification}{2}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}Task 2: Peak calling for a broad histone modification}{2}{subsection.3.2}
+\contentsline {subsection}{\numberline {3.3}Task 3: Peak calling for a transcription factor}{3}{subsection.3.3}
+\contentsline {section}{\numberline {4}Multivariate analysis}{3}{section.4}
+\contentsline {subsection}{\numberline {4.1}Task 1: Integrating multiple replicates}{3}{subsection.4.1}
+\contentsline {subsection}{\numberline {4.2}Task 2: Differential analysis}{3}{subsection.4.2}
+\contentsline {subsection}{\numberline {4.3}Task 3: Combinatorial chromatin state mapping}{3}{subsection.4.3}
+\contentsline {section}{\numberline {5}Example workflows}{3}{section.5}
+\contentsline {section}{\numberline {6}Session Info}{3}{section.6}

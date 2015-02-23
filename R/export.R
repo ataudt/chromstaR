@@ -1,7 +1,48 @@
-# ==============================================
-# Write color-coded tracks with states from HMMs
-# ==============================================
-export.unihmm2bed <- function(hmm.list, only.modified=TRUE, filename="view_me_in_genome_browser") {
+#=====================================================
+# Export univariate HMMs
+#=====================================================
+#' Export genome browser viewable files
+#'
+#' Export univariate peak-calls and read counts as genome browser viewable file
+#'
+#' Export \code{\link{chromstaR_univariateHMM}} objects as files which can be uploaded into a genome browser. Peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wiggle.gz).
+#'
+#' @author Aaron Taudt
+#' @param hmm.list A list of \code{\link{chromstaR_univariateHMM}} objects or files that contain such objects.
+#' @param filename The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for peak-calls or ".wiggle.gz" for read counts. Any existing file will be overwritten.
+#' @param what A character vector specifying what will be exported. Supported are \code{c('peaks', 'reads')}.
+#' @seealso \code{\link{exportBinnedData}}, \code{\link{exportMultivariate}}
+#' @examples
+#'### Univariate peak calling ###
+#'## Get example BED-files with ChIP-seq reads for H3K36me3
+#' # in 7 different brain tissues (chr22)
+#'bedfiles <- list.files(system.file(file.path("extdata","brain"),
+#'                       package="chromstaR"), full=TRUE)
+#'## Bin the data into bin size 1000bp and build the univariate Hidden Markov Model (HMM)
+#'binned.data.list <- list()
+#'uni.HMMs <- list()
+#'for (bedfile in bedfiles) {
+#'  binned.data <- bed2binned(bedfile, assembly='hg19', binsize=1000, save.as.RData=FALSE)
+#'  binned.data.list[[bedfile]] <- binned.data
+#'  uni.HMMs[[bedfile]] <- callPeaksUnivariate(binned.data, ID=basename(bedfile),
+#'                                             max.time=30, eps=0.01)
+#'}
+#'## Export the binned read counts and peaks
+#'\donttest{exportUnivariates(uni.HMMs, filename='chromstaR-example_univariate.HMMs', what=c('reads','peaks'))}
+#' @export
+exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'reads')) {
+	if ('peaks' %in% what) {
+		exportUnivariatePeaks(hmm.list, filename)
+	}
+	if ('reads' %in% what) {
+		exportUnivariateReadCounts(hmm.list, filename)
+	}
+}
+
+#----------------------------------------------------
+# Export peak-calls from univariate HMMs
+#----------------------------------------------------
+exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCalls") {
 
 	## Function definitions
 	insertchr <- function(hmm.gr) {
@@ -49,9 +90,7 @@ export.unihmm2bed <- function(hmm.list, only.modified=TRUE, filename="view_me_in
 		# Convert from 1-based closed to 0-based half open
 		df$start <- df$start - 1
 		df$thickStart <- df$thickStart - 1
-		if (only.modified) {
-			df <- df[df$state=='modified',]
-		}
+		df <- df[df$state=='modified',]
 		if (nrow(df) == 0) {
 			warning('hmm ',imod,' does not contain any \'modified\' calls')
 		} else {
@@ -64,10 +103,10 @@ export.unihmm2bed <- function(hmm.list, only.modified=TRUE, filename="view_me_in
 }
 
 
-# =============================
-# Write signal tracks from HMMs
-# =============================
-export.unihmm2wiggle <- function(hmm.list, filename="view_me_in_genome_browser") {
+#----------------------------------------------------
+# Export read counts from univariate HMMs
+#----------------------------------------------------
+exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateReadCounts") {
 
 	## Function definitions
 	insertchr <- function(hmm.gr) {
@@ -114,10 +153,49 @@ export.unihmm2wiggle <- function(hmm.list, filename="view_me_in_genome_browser")
 }
 
 
-# ===============================================================
-# Write color-coded tracks with multivariate combinatorial states
-# ===============================================================
-export.multihmm2bed <- function(multi.hmm, separate.tracks=TRUE, exclude.states=0, include.states=NULL, filename="view_me_in_genome_browser") {
+#=====================================================
+# Export multivariate HMMs
+#=====================================================
+#' Export genome browser viewable files
+#'
+#' Export multivariate calls and read counts as genome browser viewable file
+#'
+#' Export \code{\link{chromstaR_univariateHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states and peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wiggle.gz).
+#'
+#' @author Aaron Taudt
+#' @param multi.hmm A \code{\link{chromstaR_multivariateHMM}} object or file that contains such an object.
+#' @param filename The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for combinatorial states and peak-calls or ".wiggle.gz" for read counts. Any existing file will be overwritten.
+#' @param what A character vector specifying what will be exported. Supported are \code{c('combstates', 'peaks', 'reads')}.
+#' @param exclude.states A vector of combinatorial states that will be excluded from export.
+#' @param include.states A vector of combinatorial states that will be exported. If specified, \code{exclude.states} is ignored.
+#' @seealso \code{\link{exportUnivariates}}, \code{\link{exportBinnedData}}
+#' @examples
+#'### Multivariate peak calling ###
+#'## Load example multivariate Hidden Markov Model
+#'data(example.multi.HMM)
+#'## Export the binned read counts and peaks for each track
+#'\donttest{
+#'exportMultivariate(example.multi.HMM, exclude.states=c(0),
+#'                   filename='chromstaR_example.multi.HMM',
+#'                   what=c('reads','peaks'))
+#'}
+#' @export
+exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks', 'reads'), exclude.states=0, include.states=NULL) {
+	if ('combstates' %in% what) {
+		exportMultivariateCalls(multi.hmm, filename, separate.tracks=FALSE, exclude.states, include.states)
+	}
+	if ('peaks' %in% what) {
+		exportMultivariateCalls(multi.hmm, filename, separate.tracks=TRUE, exclude.states, include.states)
+	}
+	if ('reads' %in% what) {
+		exportMultivariateReadCounts(multi.hmm, filename)
+	}
+}
+
+#----------------------------------------------------
+# Export combinatorial states or peak-calls from multivariate HMMs
+#----------------------------------------------------
+exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateCalls", separate.tracks=TRUE, exclude.states=0, include.states=NULL) {
 
 	if (class(multi.hmm)!=class.multivariate.hmm) {
 		multi.hmm <- get(load(multi.hmm))
@@ -203,10 +281,10 @@ export.multihmm2bed <- function(multi.hmm, separate.tracks=TRUE, exclude.states=
 }
 
 
-# ===================================================
-# Write tracks with read counts from multivariate HMM
-# ===================================================
-export.multihmm2wiggle <- function(multi.hmm, filename="view_me_in_genome_browser") {
+#----------------------------------------------------
+# Export read counts from multivariate HMMs
+#----------------------------------------------------
+exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivariateReadCounts") {
 
 	if (class(multi.hmm)!=class.multivariate.hmm) {
 		multi.hmm <- get(load(multi.hmm))
@@ -257,103 +335,33 @@ export.multihmm2wiggle <- function(multi.hmm, filename="view_me_in_genome_browse
 }
 
 
-# =====================
-# Export GRanges to bed
-# =====================
-export.GRanges2bed <- function(gr, filename="view_me_in_genome_browser", separate.tracks=FALSE) {
-
-	# Variables
-	filename <- paste0(filename,".bed.gz")
-	filename.gz <- gzfile(filename, 'w')
-	numstates <- length(unique(gr$state))
-
-	# Generate the colors for each combinatorial state
-	colors <- colors()[grep(colors(), pattern="white|grey|gray|snow|aliceblue|azure", invert=T)]
-	step <- length(colors) %/% numstates
-	colors <- colors[seq(1,by=step,length=numstates)]
-	RGBs <- t(col2rgb(colors))
-	RGBs <- apply(RGBs,1,paste,collapse=",")
-	itemRgb <- RGBs[as.integer(factor(gr$state))]
-
-	# Write to file
-	message('writing to file ',filename)
-	cat("", file=filename.gz)
-	numsegments <- length(gr)
-	df <- cbind(as.data.frame(gr)[,c(1:3,6)], score=rep(0,numsegments), strand=rep(".",numsegments), thickStart=start(ranges(gr)), thickEnd=end(ranges(gr)), itemRgb=itemRgb)
-	# Adjust coordinates to BED format
-	df$start <- df$start - 1
-
-	if (separate.tracks) {
-		for (istate in unique(gr$state)) {
-			priority <- 100 + which(istate==unique(gr$state))
-			cat(paste0("track name=\"combinatorial state ",istate,"\" description=\"combinatorial state ",istate,"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
-			write.table(format(df[df$name==istate,], scientific=FALSE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
-		}
-	} else {
-		cat(paste0("track name=\"combinatorial states\" description=\"combinatorial states\" visibility=1 itemRgb=On priority=100\n"), file=filename.gz, append=TRUE)
-		write.table(format(df, scientific=FALSE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
-	}
-	close(filename.gz)
-
-}
-
-
-# =================================
-# Export binned GRanges to bedGraph
-# =================================
-export.binned2bedGraph <- function(binned.data.list, filename="view_me_in_genome_browser") {
-
-	## Function definitions
-	insertchr <- function(hmm.gr) {
-		# Change chromosome names from '1' to 'chr1' if necessary
-		mask <- which(!grepl('chr', seqnames(hmm.gr)))
-		mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
-		mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
-		mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
-		return(hmm.gr)
-	}
-
-	## Variables
-	nummod <- length(binned.data.list)
-	filename <- paste0(filename,".bedGraph.gz")
-	filename.gz <- gzfile(filename, 'w')
-
-	## Load data
-	for (imod in 1:nummod) {
-		if (class(binned.data.list[[imod]])!='GRanges') {
-			binned.data.list[[imod]] <- get(load(binned.data.list[[imod]]))
-			if (class(binned.data.list[[imod]])!='GRanges') stop("argument 'binned.data.list' expects a list with GRanges objects with meta column 'reads'")
-		}
-	}
-
-	# Write first line to file
-	message('writing to file ',filename)
-	cat("", file=filename.gz)
-	
-	### Write every model to file ###
-	for (imod in 1:nummod) {
-		message('writing binned.data ',imod,' / ',nummod,'\r', appendLF=F)
-		gr <- binned.data.list[[imod]]
-		df <- as.data.frame(gr)[,c(1,2,3,6)]
-		df <- df[df$reads>0,]
-		# Convert from 1-based closed to 0-based half open
-		df$start <- df$start - 1
-		priority <- 50 + 3*imod
-		name <- names(binned.data.list)[imod]
-		cat(paste0("track type=bedGraph name=\"read count for ",name,"\" description=\"read count for ",name,"\" visibility=full autoScale=on color=90,90,90 maxHeightPixels=100:50:20 graphType=bar priority=",priority,"\n"), file=filename.gz, append=TRUE)
-		# Write read data
-		write.table(format(df, scientific=F), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=F)
-	}
-	close(filename.gz)
-	message('')
-
-}
-
-
-# ====================================
-# Write signal tracks from binned data
-# ====================================
-export.binned2wiggle <- function(binned.data.list, filename="view_me_in_genome_browser") {
+#=====================================================
+# Export binned data
+#=====================================================
+#' Export genome browser viewable files
+#'
+#' Export read counts as genome browser viewable file
+#'
+#' Export read counts from \code{\link{binned.data}} as a file which can be uploaded into a genome browser. Read counts are exported in WIGGLE format (.wiggle.gz).
+#'
+#' @author Aaron Taudt
+#' @param binned.data.list A list of \code{\link{binned.data}} objects or files that contain such objects.
+#' @param filename The name of the file that will be written. The ending ".wiggle.gz" for read counts will be appended. Any existing file will be overwritten.
+#' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
+#' @examples
+#'## Get example BED-files with ChIP-seq reads for H3K36me3
+#' # in 7 different brain tissues (chr22)
+#'bedfiles <- list.files(system.file(file.path("extdata","brain"),
+#'                       package="chromstaR"), full=TRUE)
+#'## Bin the data into bin size 1000bp
+#'binned.data.list <- list()
+#'for (bedfile in bedfiles) {
+#'  binned.data.list[[bedfile]] <- bed2binned(bedfile, assembly='hg19', binsize=1000, save.as.RData=FALSE)
+#'}
+#'## Export the binned read counts
+#'\donttest{exportBinnedData(binned.data.list, filename='chromstaR-example_binned.data')}
+#' @export
+exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts") {
 
 	## Function definitions
 	insertchr <- function(hmm.gr) {

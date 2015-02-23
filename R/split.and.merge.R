@@ -1,3 +1,29 @@
+#' Split a \code{\link{chromstaR_univariateHMM}} into chromosomes
+#'
+#' Split a \code{\link{chromstaR_univariateHMM}} object into chromosomes to enable parallelized fitting of the multivariate Hidden Markov Model on separate chromosomes instead of fitting on the full genome. This is mainly done for performance reasons.
+#'
+#' @author Aaron Taudt
+#' @param uni.hmm A \code{\link{chromstaR_univariateHMM}} object.
+#' @param filename The file name where the split objects will be stored. Each chromosome is saved in a separate file, with the chromosome name appended to the file name. If \code{filename} is not specified, a list of \code{\link{chromstaR_univariateHMM}}s is returned.
+#' @return A list of \code{\link{chromstaR_univariateHMM}} objects or NULL, depending on option \code{filename}.
+#' @seealso \code{\link{mergeChromsFromMultivariates}}
+#' @examples
+#'## Get an example BED-file with ChIP-seq reads for H3K36me3 in brain tissue
+#'bedfile <- system.file(
+#'      "extdata/brain/BI.Brain_Angular_Gyrus.H3K36me3.112.chr22.bed.gz",
+#'      package="chromstaR")
+#'## Bin the BED file into bin size 1000bp
+#'binned.data <- bed2binned(bedfile, assembly='hg19', binsize=1000, save.as.RData=FALSE)
+#'## Fit the univariate Hidden Markov Model (HMM)
+#'hmm <- callPeaksUnivariate(binned.data, ID='example_H3K36me3', max.time=60)
+#'## Check if the fit is ok
+#'plot(hmm, type='histogram')
+#'## Split the fitted HMM into separate chromosomes (not useful here because
+#' # the example dataset consists only of 1 chromosome)
+#'\donttest{
+#'splitUnivariateIntoChromosomes(hmm, filename='chromstaR-example_H3K36me3')
+#'}
+#' @export
 splitUnivariateIntoChromosomes <- function(uni.hmm, filename=NULL) {
 
 	## Check user input
@@ -29,6 +55,16 @@ splitUnivariateIntoChromosomes <- function(uni.hmm, filename=NULL) {
 	return(NULL)
 }
 
+#' Merge several \code{\link{chromstaR_multivariateHMM}}s into one object
+#'
+#' Merge several \code{\link{chromstaR_multivariateHMM}}s into one object. This can be done to merge fits for separate chromosomes into one object for easier handling.
+#'
+#' @author Aaron Taudt
+#' @param multi.hmm.list A list of \code{\link{chromstaR_multivariateHMM}} objects.
+#' @param filename The file name where the merged object will be stored. If \code{filename} is not specified, a \code{\link{chromstaR_multivariateHMM}} is returned.
+#' @return A \code{\link{chromstaR_multivariateHMM}} object or NULL, depending on option \code{filename}.
+#' @seealso \code{\link{splitUnivariateIntoChromosomes}}
+#' @export
 mergeChromsFromMultivariates <- function(multi.hmm.list, filename=NULL) {
 
 	## Check user input

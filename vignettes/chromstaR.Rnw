@@ -1,0 +1,145 @@
+%\VignetteIndexEntry{The chromstaR users guide}
+%\VignetteDepends{chromstaR}
+%\VignetteKeywords{ChIP-seq}
+%\VignettePackage{chromstaR}
+\documentclass[11pt]{article}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage[authoryear,round]{natbib}
+\bibliographystyle{plainnat}
+
+\newcommand{\scscst}{\scriptscriptstyle}
+\newcommand{\scst}{\scriptstyle}
+
+\newcommand{\Rfunction}[1]{{\texttt{#1}}}
+\newcommand{\Robject}[1]{{\texttt{#1}}}
+\newcommand{\Rpackage}[1]{{\textit{#1}}}
+
+\author{Aaron Taudt\footnote{a.s.taudt@umcg.nl}}
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+\title{The chromstaR user's guide}
+
+\maketitle
+
+\tableofcontents
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+
+ChIP-seq has become the standard technique for assessing the genome-wide chromatin state of DNA. \Rpackage{chromstaR} provides functions for the joint analysis of multiple ChIP-seq samples. It allows peak calling for transcription factor binding and histone modifications with a narrow (e.g. H3K4me3, H3K27ac,~...) or broad (e.g. H3K36me3, H3K27me3,~...) profile. All analysis can be performed on each sample individually (=univariate), or in a joint analysis considering all samples simultaneously (=multivariate).
+
+<<annotate,echo=FALSE>>=
+options(width=120)
+@
+
+\section{Outline of workflow}
+
+Every analysis with the \Rpackage{chromstaR} package starts from aligned reads in either BAM or BED format. The first step is to bin the genome into non-overlapping, equidistant bins and count the reads that fall into each bin. These read counts serve as the basis for both the univariate and the multivariate peak- and broad-region calling. Univariate peak-calling is done by fitting a three-state Hidden Markov Model to the binned read counts. Multivariate peak-calling for $\mathcal{S}$ samples is done by fitting a $2^\mathcal{S}$-state Hidden Markov Model to all binned read counts.
+
+\section{Univariate analysis}
+
+\subsection{Task 1: Peak calling for a narrow histone modification}
+
+\subsection{Task 2: Peak calling for a broad histone modification}
+
+Examples for histone modifications that usually have a broad profile are H3K9me3, H3K27me3, H3K36me3, H4K20me1. Peak calling for a broad histone modification works in the same way as peak calling for a narrow histone modification, except that the bin size is usually bigger. A good rule of thumb is to select a bin size of 500bp - 2000bp.
+
+First, we get an example dataset shipped with the \Rpackage{chromstaR} package. In the second step, we obtain the binned read counts with a bin size of 1000bp. The third step is the actual peak calling. It is now very important to check the obtained fit! For a broad histone modification, one would expect that the tail of the read count distribution is fitted by the 'modified' component, while the low read counts are fitted by the 'unmodified' component. Finally, we can export the peaks and read counts for manual inspection in a genome browser.
+
+\begin{scriptsize}
+<<peak_calling_broad_histone_1, results=hide, eval=F>>=
+# Get an example BED-file with ChIP-seq reads for H3K36me3 in brain tissue (chr22)
+library(chromstaR)
+bedfile <- system.file("extdata/brain/BI.Brain_Angular_Gyrus.H3K36me3.112.chr22.bed.gz", package="chromstaR")
+@
+\end{scriptsize}
+
+\begin{scriptsize}
+<<peak_calling_broad_histone_1, results=hide, eval=F>>=
+# Bin the BED file into bin size 1000bp
+binned.data <- bed2binned(bedfile, assembly='hg19', binsize=1000, save.as.RData=FALSE)
+@
+\end{scriptsize}
+
+\begin{scriptsize}
+<<peak_calling_broad_histone_1, results=hide, eval=F>>=
+# Fit the univariate Hidden Markov Model
+hmm <- callPeaksUnivariate(binned.data, ID='example_H3K36me3', max.time=60)
+@
+\end{scriptsize}
+
+\begin{scriptsize}
+<<peak_calling_broad_histone_1, results=hide, eval=F, fig=T>>=
+# Check if the fit is ok
+print(plot(hmm))
+@
+\end{scriptsize}
+
+\begin{scriptsize}
+<<peak_calling_broad_histone_1, results=hide, eval=F>>=
+# Export the result for visual inspection in the genome browser
+export.unihmm2bed(hmm, file='peak_calls_example_H3K36me3')
+export.binned2wiggle(binned.data, file='read_counts_example_H3K36me3')
+@
+\end{scriptsize}
+
+
+\subsection{Task 3: Peak calling for a transcription factor}
+
+\section{Multivariate analysis}
+\subsection{Task 1: Integrating multiple replicates}
+
+\subsection{Task 2: Differential analysis}
+
+\Rpackage{chromstaR} is very powerful in detecting differentially modified regions (DMRs). The following example uses ChIP-seq data for H3K36me3 in 7 different brain tissues to find DMRs\footnote{we use only chr22 to keep the file size small and the runtime short}. With 7 samples we can have $2^7 = 128$ combinatorial states, which can be readily interpreted as '0: all samples unmodified', '1-126: DMR' and '127: all samples modified'.
+\begin{scriptsize}
+<<differential_analysis_1, eval=F>>=
+## Get example BED-files with ChIP-seq reads for H3K36me3 in 7 different brain tissues (chr22)
+library(chromstaR)
+bedfiles <- list.files(system.file(file.path("extdata","brain"), package="chromstaR"), full=T)
+@
+\end{scriptsize}
+
+\begin{scriptsize}
+<<differential_analysis_1, eval=F>>=
+## Bin the data into bin size 1000bp and build the univariate Hidden Markov Model (HMM)
+binned.data.list <- list()
+uni.HMMs <- list()
+for (bedfile in bedfiles) {
+  binned.data.list[[bedfile]] <- bed2binned(bedfile, assembly='hg19', binsize=1000, save.as.RData=F)
+  uni.HMMs[[bedfile]] <- callPeaksUnivariate(binned.data.list[[bedfile]], ID=basename(bedfile), 
+                                             max.time=30, eps=0.01)
+}
+@
+\end{scriptsize}
+
+\begin{scriptsize}
+<<differential_analysis_1, eval=F>>=
+## Build the multivariate Hidden Markov Model from the list of univariate fits
+multi.hmm <- callPeaksMultivariate(uni.HMMs, eps=0.1, max.time=300)
+@
+\end{scriptsize}
+
+\begin{scriptsize}
+<<differential_analysis_1, eval=FALSE>>=
+# Export differentially modified regions for visual inspection in the genome browser
+export.multihmm2bed(multi.hmm, file='multivariate_peak_calls_example_H3K36me3', exclude.states=c(0,127))
+export.binned2wiggle(binned.data.list, file='read_counts_example_H3K36me3')
+@
+\end{scriptsize}
+
+
+\subsection{Task 3: Combinatorial chromatin state mapping}
+
+\section{Example workflows}
+
+\section{Session Info}
+\begin{scriptsize}
+<<>>=
+sessionInfo()
+warnings()
+@
+\end{scriptsize}
+
+\end{document}
+

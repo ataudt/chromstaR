@@ -2,8 +2,6 @@ plot.cross.correlation <- function(hmm, annotation, bp.around.annotation=10000) 
 
 	## Debugging
 	library(biomaRt)
-	library(ggplot2)
-	library(reshape2)
 	bp.around.annotation=10000
 # 	hg19 <- useMart('ENSEMBL_MART_ENSEMBL', host='grch37.ensembl.org', dataset='hsapiens_gene_ensembl')
 # 	filters <- listFilters(hg19)
@@ -24,10 +22,6 @@ plot.cross.correlation <- function(hmm, annotation, bp.around.annotation=10000) 
 	file <- 'multiresults/euratrans_lv_binsize_1000.RData'
 	hmm <- get(load(file))
 	annotation <- genes
-
-	## Libraries
-	library(ggplot2)
-	library(reshape2)
 
 	## Variables
 	binsize <- width(hmm$bins)[1]
@@ -225,8 +219,6 @@ cross.correlation <- function(multi.hmm, annotation.file, grouping=NULL, lag.in.
 		}
 
 		## Plot cross-correlations
-		library(ggplot2)
-		library(reshape2)
 		# Combinatorial states
 		df <- melt(tables.start)
 		df$lag.in.bp <- df$lag * binsize

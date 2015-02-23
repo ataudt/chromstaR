@@ -18,8 +18,6 @@ plotFractionOfSegmentation <- function(multi.hmm) {
 	df$state <- rownames(df)
 
 	# Plot
-	library(ggplot2)
-	library(reshape2)
 	dfplot <- melt(df, id.vars='state', variable.name='category', value.name='fraction')
 # 	dfplot$state <- factor(dfplot$state, levels=df$state[rev(order(df$bases))])
 	dfplot$state <- factor(dfplot$state, levels=levels(mcols(gr)$state))
@@ -31,9 +29,6 @@ plotFractionOfSegmentation <- function(multi.hmm) {
 
 
 plotHeatmapFoldEnrichment <- function(enrichment.table) {
-
-	library(ggplot2)
-	library(reshape2)
 
 	et <- enrichment.table
 

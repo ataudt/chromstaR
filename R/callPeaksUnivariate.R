@@ -1,3 +1,48 @@
+#' Fit a Hidden Markov Model to a ChIP-seq sample.
+#'
+#' Fit a HMM to a ChIP-seq sample to determine the modification state of genomic regions, e.g. call peaks in the sample.
+#'
+#' The Hidden Markov Model which is used to classify the bins uses 3 states: state 'zero-inflation' with a delta function as emission densitiy (only zero read counts), 'unmodified' and 'modified' with Negative Binomials as emission densities. A Baum-Welch algorithm is employed to estimate the parameters of the distributions. See our paper TODO:insert paper for a detailed description of the method.
+#'
+#' @param binned.data A \link{GRanges} object with binned read counts.
+#' @param ID An identifier that will be used to identify this sample in various downstream functions. Could be the file name of the \code{binned.data} for example.
+#' @param eps Convergence threshold for the Baum-Welch algorithm.
+#' @param init One of the following initialization procedures:
+#' \describe{
+#' \item{\code{standard}}{The negative binomial of state 'unmodified' will be initialized with \code{mean=mean(reads)}, \code{var=var(reads)} and the negative binomial of state 'modified' with \code{mean=mean(reads)+1}, \code{var=var(reads)}. This procedure usually gives the fastest convergence.}
+#' \item{\code{random}}{Mean and variance of the negative binomials will be initialized with random values (in certain boundaries, see source code). Try this if the \code{'standard'} procedure fails to produce a good fit.}
+#' \item{\code{empiric}}{Yet another way to initialize the Baum-Welch. Try this if the other two methods fail to produce a good fit.}
+#' }
+#' @param max.time The maximum running time in seconds for the Baum-Welch algorithm. If this time is reached, the Baum-Welch will terminate after the current iteration finishes. The default -1 is no limit.
+#' @param max.iter The maximum number of iterations for the Baum-Welch algorithm. The default -1 is no limit.
+#' @param num.trials The number of trials to run the HMM. Each time, the HMM is seeded with different random initial values. The HMM with the best likelihood is given as output.
+#' @param eps.try If code num.trials is set to greater than 1, \code{eps.try} is used for the trial runs. If unset, \code{eps} is used.
+#' @param num.threads Number of threads to use. Setting this to >1 may give increased performance.
+#' @param read.cutoff.quantile A quantile between 0 and 1. Should be near 1. Read counts above this quantile will be set to the read count specified by this quantile. Filtering very high read counts increases the performance of the Baum-Welch fitting procedure. However, if your data contains very few peaks they might be filtered out. Set \code{read.cutoff.quantile=1} in this case.
+#' @param max.mean If \code{mean(reads)>max.mean}, bins with low read counts will be set to 0. This is a workaround to obtain good fits in the case of large bin sizes.
+#' @param FDR False discovery rate. code{NULL} means that the state with maximum posterior probability will be chosen, irrespective of its absolute probability (default=code{NULL}).
+#' @param keep.posteriors If set to \code{TRUE} (default=\code{FALSE}), posteriors will be available in the output. This is useful to change the FDR later, but increases the necessary disk space to store the result.
+#' @param control If set to \code{TRUE}, the binned data will be treated as control experiment. That means only state 'zero-inflation' and 'unmodified' will be used in the HMM.
+#' @param checkpoint.after.iter Write a checkpoint file every n iterations. The default -1 means no checkpointing for iterations.
+#' @param checkpoint.after.time Write a checkpoint file every t seconds. The default -1 means no checkpointing for time.
+#' @param checkpoint.file The name of the checkpoint file that will be written.
+#' @param checkpoint.overwrite If set to \code{TRUE}, only one checkpoint file will be written. If set to \code{FALSE}, a new checkpoint file will be written at each checkpoint with the total number of iterations appended.
+#' @param checkpoint.use.existing If set to \code{TRUE}, the Baum-Welch fitting procedure will be continued from the HMM in the \code{checkpoint.file}.
+#' @param keep.densities If set to \code{TRUE} (default=\code{FALSE}), densities will be available in the output. This should only be needed debugging.
+#' @param verbosity Verbosity level for the fitting procedure. 0 - No output, 1 - Iterations are printed.
+#' @author Aaron Taudt, Maria Coome Tatche
+#' @seealso \code{\link{chromstaR_univariateHMM}}, \code{\link{callPeaksMultivariate}}
+#' @examples
+#'## Get an example BED-file with ChIP-seq reads for H3K36me3 in brain tissue
+#'bedfile <- system.file("extdata/brain/BI.Brain_Angular_Gyrus.H3K36me3.112.chr22.bed.gz",
+#'                       package="chromstaR")
+#'## Bin the BED file into bin size 1000bp
+#'binned.data <- bed2binned(bedfile, assembly='hg19', binsize=1000, save.as.RData=FALSE)
+#'## Fit the univariate Hidden Markov Model
+#'hmm <- callPeaksUnivariate(binned.data, ID='example_H3K36me3', max.time=60)
+#'## Check if the fit is ok
+#'plot(hmm, type='histogram')
+#' @export
 callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.iter=-1, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff.quantile=0.999, max.mean=10, FDR=0.5, keep.posteriors=FALSE, control=FALSE, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, keep.densities=FALSE, verbosity=1) {
 
 	### Define cleanup behaviour ###

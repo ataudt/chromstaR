@@ -1,6 +1,43 @@
+#' @import ggplot2
+#' @import reshape2
+NULL
+
 # =================================================================
 # Define plotting methods for the generic
 # =================================================================
+#' Plotting function for binned read counts
+#'
+#' Make plots for binned read counts from \code{\link{binned.data}}
+#'
+#' @param x A \code{\link{GRanges}} object with binned read counts.
+#' @inheritParams plotBinnedDataHistogram
+#' @param ... Additional arguments not implemented.
+#' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
+#' @method plot GRanges
+#' @export
+plot.GRanges <- function(x, chromosome=NULL, start=NULL, end=NULL, ...) {
+	plotBinnedDataHistogram(x, chromosome=NULL, start=NULL, end=NULL, ...)
+}
+
+#' Plotting function for \code{\link{chromstaR_univariateHMM}} objects
+#'
+#' Make different types of plots for \code{\link{chromstaR_univariateHMM}} objects.
+#'
+#' @param x A \code{\link{chromstaR_univariateHMM}} object.
+#' @param type Type of the plot, one of \code{c('histogram', 'boxplot', 'normalTransformation')}. You can also specify the type with an integer number.
+#' \describe{
+#'   \item{\code{histogram}}{A histogram of binned read counts with fitted mixture distribution.}
+#'   \item{\code{boxplot}}{A boxplot of read counts for the different states.}
+#'   \item{\code{normalTransformation}}{A histogram of transformed read counts.}
+#' }
+#' @param ... Additional arguments for the different plot types.
+#' \describe{
+#'   \item{\code{state}}{Plot the \code{histogram}, \code{boxplot} or \code{normalTransformation} only for the specified state. One of \code{c('unmodified','modified')}.}
+#'   \item{\code{chromosome,start,end}}{Plot the \code{histogram} only for the specified chromosome, start and end position.}
+#' }
+#' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
+#' @method plot chromstaR_univariateHMM
+#' @export
 plot.chromstaR_univariateHMM <- function(x, type='histogram', ...) {
 	
 	if (type == 'histogram' | type==1) {
@@ -13,6 +50,20 @@ plot.chromstaR_univariateHMM <- function(x, type='histogram', ...) {
 
 }
 
+#' Plotting function for \code{\link{chromstaR_multivariateHMM}} objects
+#'
+#' Make different types of plots for \code{\link{chromstaR_multivariateHMM}} objects.
+#'
+#' @param x A \code{\link{chromstaR_multivariateHMM}} object.
+#' @param type Type of the plot, one of \code{c('transitionMatrix','histograms')}. You can also specify the type with an integer number.
+#' \describe{
+#'   \item{\code{transitionMatrix}}{A heatmap with entries of the transition matrix.}
+#'   \item{\code{histograms}}{Fitted histograms of all underlying univariate distributions.}
+#' }
+#' @param ... Additional arguments for the different plot types.
+#' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
+#' @method plot chromstaR_multivariateHMM
+#' @export
 plot.chromstaR_multivariateHMM <- function(x, type='transitionMatrix', ...) {
 
 	if (type == 'transitionMatrix' | type==1) {
@@ -23,54 +74,67 @@ plot.chromstaR_multivariateHMM <- function(x, type='transitionMatrix', ...) {
 
 }
 
+# ============================================================
+# Plot a read histogram
+# ============================================================
+#' Plot a histogram of binned read counts
+#'
+#' Plot a histogram of binned read counts from \code{\link{binned.data}}
+#'
+#' @param binned.data A \code{\link{binned.data}} object containing binned read counts in meta-column 'reads'.
+#' @param chromosome,start,end Plot the histogram only for the specified chromosome, start and end position.
+#' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
+plotBinnedDataHistogram <- function(binned.data, chromosome=NULL, start=NULL, end=NULL) {
 
-# # =================================================================
-# # Plot a list of uni.hmms or a matrix with uni.hmm filenames to pdf
-# # =================================================================
-# plot.distributions.to.pdf <- function(uni.hmms, file='distribution-plots') {
-# 
-# 	## Preprocess input
-# 	uni.hmms <- as.matrix(uni.hmms) # TODO: include handling when only one hmm is given
-# 
-# 	## Set up the page
-# 	library(ggplot2)
-# 	library(grid)
-# 	ncols <- ncol(uni.hmms)
-# 	nrows <- nrow(uni.hmms)
-# 	pdf(file=file, width=8*ncols, height=7*nrows)
-# 	numPlots <- length(uni.hmms)
-# 	grid.newpage()
-# 	layout <- matrix(seq(1, ncols * nrows), ncol = ncols, nrow = nrows, byrow = TRUE)
-# 	pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
-# 
-# 	## Plot
-# 	ptm = proc.time()
-# 	for (irow in 1:nrows) {
-# 		for (icol in 1:ncols) {
-# 			uni.hmm <- uni.hmms[irow,icol]
-# 			if (class(uni.hmm)=='character') {
-# 				if (uni.hmm!='' & uni.hmm!='NA') {
-# 					uni.hmm <- loadHmmsFromFiles(list(uni.hmm))[[1]]
-# 					ggplt <- plot.distribution(uni.hmm)
-# 				} else {
-# 					ggplt <- ggplot(data=data.frame(x=0:10, y=0:10)) + geom_line(aes_string(x='x',y='y'))
-# 				}
-# 			} else if (class(uni.hmm)==class.univariate.hmm) {
-# 				ggplt <- plot.distribution(uni.hmm)
-# 			}
-# 				
-# 			# Get the i,j matrix positions of the regions that contain this subplot
-# 			i <- (which(irow==1:nrows)-1) * ncols + which(icol==1:ncols)
-# 			matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
-# 			print(ggplt, vp = viewport(layout.pos.row = matchidx$row, layout.pos.col = matchidx$col))
-# 		}
-# 	}
-# 
-# 	d <- dev.off()
-# 	print("Time for plotting to file")
-# 	print(proc.time() - ptm)
-# 
-# }
+	# -----------------------------------------
+	# Get right x limit
+	get_rightxlim <- function(histdata, reads) {
+		rightxlim1 <- median(reads[reads>0])*7
+		breaks <- histdata$breaks[1:length(histdata$counts)]
+		counts <- histdata$counts
+		rightxlim2 <- breaks[counts<=5 & breaks>median(reads)*2][1]
+		rightxlim <- min(c(rightxlim1,rightxlim2), na.rm=TRUE)
+		return(rightxlim)
+	}
+
+	# Select the rows to plot
+	selectmask <- rep(TRUE,length(binned.data))
+	numchrom <- length(table(seqnames(binned.data)))
+	if (!is.null(chromosome)) {
+		if (! chromosome %in% levels(seqnames(binned.data))) {
+			stop(chromosome," can't be found in the binned data.")
+		}
+		selectchrom <- seqnames(binned.data) == chromosome
+		selectmask <- selectmask & selectchrom
+		numchrom <- 1
+	}
+	if (numchrom == 1) {
+		if (!is.null(start)) {
+			selectstart <- start(ranges(binned.data)) >= start
+			selectmask <- selectmask & selectstart
+		}
+		if (!is.null(end)) {
+			selectend <- end(ranges(binned.data)) <= end
+			selectmask <- selectmask & selectend
+		}
+	}
+	if (length(which(selectmask)) != length(binned.data$reads)) {
+		reads <- binned.data$reads[selectmask]
+	} else {
+		reads <- binned.data$reads
+	}
+
+	# Find the x limits
+	breaks <- max(reads)
+	if (max(reads)==0) { breaks <- 1 }
+	histdata <- hist(reads, right=FALSE, breaks=breaks, plot=FALSE)
+	rightxlim <- get_rightxlim(histdata, reads)
+
+	# Plot the histogram
+	ggplt <- ggplot(data.frame(reads)) + geom_histogram(aes_string(x='reads', y='..density..'), binwidth=1, color='black', fill='white') + coord_cartesian(xlim=c(0,rightxlim)) + theme_bw() + xlab("read count")
+	return(ggplt)
+
+}
 
 # =================================================================
 # Plot a read histogram with univariate fits for a multivariate HMM
@@ -98,17 +162,21 @@ plotMultivariateHistograms <- function(multi.hmm) {
 # ============================================================
 # Plot a read histogram with univariate fits
 # ============================================================
-plotUnivariateHistogram <- function(model, state=NULL, chrom=NULL, start=NULL, end=NULL) {
+#' Plot a histogram of binned read counts with fitted mixture distribution
+#'
+#' Plot a histogram of binned read counts from with fitted mixture distributions from a \code{\link{chromstaR_univariateHMM}} object.
+#'
+#' @param model A \code{\link{chromstaR_univariateHMM}} object.
+#' @param state Plot the histogram only for the specified state. One of \code{c('unmodified','modified')}.
+#' @param chromosome,start,end Plot the histogram only for the specified chromosome, start and end position.
+#' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
+plotUnivariateHistogram <- function(model, state=NULL, chromosome=NULL, start=NULL, end=NULL) {
 
 	## Check user input
 	if (check.univariate.model(model)!=0) {
 		model <- get(load(model))
 		if (check.univariate.model(model)!=0) stop("argument 'model' expects a univariate HMM or a file that contains a univariate HMM")
 	}
-
-	## Load libraries
-	library(ggplot2)
-	library(reshape2)
 
 	# -----------------------------------------
 	# Get right x limit
@@ -123,11 +191,11 @@ plotUnivariateHistogram <- function(model, state=NULL, chrom=NULL, start=NULL, e
 
 	# Select the rows to plot
 	selectmask <- rep(TRUE,length(model$bins))
-	if (!is.null(chrom)) {
-		if (! chrom %in% levels(seqnames(model$bins))) {
-			stop(chrom," can't be found in the model coordinates.")
+	if (!is.null(chromosome)) {
+		if (! chromosome %in% levels(seqnames(model$bins))) {
+			stop(chromosome," can't be found in the model coordinates.")
 		}
-		selectchrom <- as.logical(seqnames(model$bins) == chrom)
+		selectchrom <- as.logical(seqnames(model$bins) == chromosome)
 		selectmask <- selectmask & selectchrom
 		if (!is.null(start)) {
 			selectstart <- as.logical(start(ranges(model$bins)) >= start)
@@ -210,9 +278,6 @@ plotUnivariateHistogram <- function(model, state=NULL, chrom=NULL, start=NULL, e
 # ============================================================
 plotUnivariateNormalTransformation <- function(model, state='unmodified') {
 
-	## Load libraries
-	library(ggplot2)
-
 	## Plot settings
 	cols <- state.colors[c("unmodified","modified")]
 
@@ -240,9 +305,6 @@ plotUnivariateNormalTransformation <- function(model, state='unmodified') {
 # ============================================================
 plotUnivariateBoxplot <- function(model) {
 
-	## Load libraries
-	library(ggplot2)
-
 	## Boxplot
 	df <- as.data.frame(model$bins)[,c('state','reads')]
 	ggplt <- ggplot() + theme_bw() + geom_boxplot(data=df, aes_string(x='state', y='reads', fill='state')) + scale_fill_manual(values=state.colors)
@@ -254,9 +316,6 @@ plotUnivariateBoxplot <- function(model) {
 # Plot a heat map of the transition probabilities
 # ============================================================
 plotMultivariateTransition <- function(multi.hmm) {
-
-	library(ggplot2)
-	library(reshape2)
 
 	A <- melt(multi.hmm$transitionProbs, varnames=c('from','to'), value.name='prob')
 	A$from <- factor(A$from, levels=stateorderByTransition(multi.hmm))

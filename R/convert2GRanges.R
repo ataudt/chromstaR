@@ -1,3 +1,13 @@
+#' Read a BED file into a \link{GRanges} objects.
+#'
+#' Read a BED file into a \link{GRanges} object. Only coordinates are read.
+#'
+#' @param bedfile A BED file.
+#' @param chrom.length.file A file which contains the chromosome lengths in basepairs. The first column contains the chromosome name and the second column the length (see also \code{\link{chrom.length.file}}.
+#' @param skip Number of lines to skip in BED file.
+#' @param binsize Force the resulting \link{GRanges} to have this bin size.
+#' @return A \link{GRanges} object.
+#' @author Aaron Taudt
 bed2GRanges <- function(bedfile, chrom.length.file, skip=1, binsize=NULL) {
 
 	# File with chromosome lengths (1-based)

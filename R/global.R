@@ -1,3 +1,8 @@
+#' @useDynLib chromstaR
+#' @import GenomicRanges
+#' @import IRanges
+NULL
+
 # =======================================================
 # Some global variables that can be used in all functions
 # =======================================================

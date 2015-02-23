@@ -1,3 +1,30 @@
+#' Change the false discovery rate of a Hidden Markov Model
+#'
+#' Adjusts the peak calls of a \code{\link{chromstaR_univariateHMM}} or \code{\link{chromstaR_multivariateHMM}} object with the given false discovery rate (FDR).
+#'
+#' Peaks are called if the posterior for a state (univariate) or sample (multivariate) are \code{>= 1-FDR}.
+#'
+#' @author Aaron Taudt
+#' @param model A \code{\link{chromstaR_univariateHMM}} or \code{\link{chromstaR_multivariateHMM}} object with posteriors.
+#' @param FDR False discovery rate.
+#' @param separate.zeroinflation Only for \code{\link{chromstaR_univariateHMM}} objects: If set to TRUE, state 'zero-inflation' will be treated separately, otherwise it will be merged with state 'unmodified'.
+#' @return The input object is returned with adjusted peak calls.
+#' @examples
+#'## Get an example BED-file with ChIP-seq reads for H3K36me3 in brain tissue
+#'bedfile <- system.file("extdata/brain/BI.Brain_Angular_Gyrus.H3K36me3.112.chr22.bed.gz",
+#'                       package="chromstaR")
+#'## Bin the BED file into bin size 1000bp
+#'binned.data <- bed2binned(bedfile, assembly='hg19', binsize=1000,
+#'                          save.as.RData=FALSE)
+#'## Fit the univariate Hidden Markov Model (and keep posteriors!)
+#'hmm <- callPeaksUnivariate(binned.data, ID='example_H3K36me3', max.time=60,
+#'                           FDR=0.5, keep.posteriors=TRUE)
+#'## Adjust the FDR
+#'hmm.adjusted <- changeFDR(hmm, FDR=0.01)
+#'## Compare the state calls
+#'table(hmm$bins$state)
+#'table(hmm.adjusted$bins$state)
+#' @export
 changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE) {
 
 	## Check if posteriors are present

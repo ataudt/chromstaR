@@ -1,41 +1,117 @@
-loadHmmsFromFiles <- function(filenames) {
+#' Load HMMs from files
+#'
+#' Load \code{\link{chromstaR_univariateHMM}} objects from file into a list.
+#'
+#' @param hmm.list A list of files that contain \code{\link{chromstaR_univariateHMM}} objects.
+#' @param strict If any of the loaded objects is not a \code{\link{chromstaR_univariateHMM}} object, an error (\code{strict=TRUE}) or a warning (\code{strict=FALSE}) will be generated.
+#' @return A list() containing all loaded \code{\link{chromstaR_univariateHMM}} objects.
+#' @author Aaron Taudt
+#' @examples
+#'## Not run:
+#'files.with.hmms <- list.files(folder.with.hmms, full=TRUE,
+#'                              pattern='binsize_1000')
+#'uni.HMMs <- loadHmmsFromFiles(files.with.hmms)
+#'## End(Not run)
+#' @seealso loadMultiHmmsFromFiles
+#' @export
+loadHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 
-	## Intercept user input
-	if (check.univariate.modellist(filenames)!=0) {
-		message("loading univariate HMMs from files ...", appendLF=F)
-		ptm <- proc.time()
+	if (is.hmm(hmm.list)) {
+		return(hmm.list)
+	} else if (is.character(hmm.list)) {
+		message("loading univariate HMMs from files ...", appendLF=F); ptm <- proc.time()
 		mlist <- list()
-		for (modelfile in filenames) {
-			mlist[[length(mlist)+1]] <- get(load(modelfile))
+		for (modelfile in hmm.list) {
+			mlist[[modelfile]] <- get(load(modelfile))
+			if (!is.hmm(mlist[[modelfile]])) {
+				if (strict) {
+					time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+					stop("File ",modelfile," does not contain an ",class.univariate.hmm," object.")
+				} else {
+					class(modelfile) <- class.univariate.hmm
+					warning("File ",modelfile," does not contain a ",class.univariate.hmm," object. Class attribute corrected.")
+				}
+			}
 		}
-		time <- proc.time() - ptm
-		message(" ",round(time[3],2),"s")
-		if (check.univariate.modellist(mlist)!=0) stop("argument 'filenames' expects a list of univariate hmms or a list of files that contain univariate hmms")
+		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 		return(mlist)
-	} else {
-		return(filenames)
+	} else if (is.list(hmm.list)) {
+		index <- which(unlist(lapply(hmm.list, function(hmm) { !is.hmm(hmm) })))
+		if (length(index)>0) {
+			if (strict) {
+				stop("The following list entries do not contain ",class.univariate.hmm," objects: ", paste(index, collapse=' '))
+			} else {
+				for (ind in index) {
+					class(hmm.list[[ind]]) <- class.univariate.hmm
+				}
+				warning("The following list entries do not contain ",class.univariate.hmm," objects: ", paste(index, collapse=' '),". Class attributes corrected.")
+			}
+		}
+		return(hmm.list)
 	}
-	
-
 }
 
-loadMultiHmmsFromFiles <- function(filenames) {
-
-	## Intercept user input
-	if (check.multivariate.modellist(filenames)!=0) {
-		message("loading multivariate HMMs from files ...", appendLF=F)
-		ptm <- proc.time()
-		mlist <- list()
-		for (modelfile in filenames) {
-			mlist[[length(mlist)+1]] <- get(load(modelfile))
-		}
-		time <- proc.time() - ptm
-		message(" ",round(time[3],2),"s")
-		if (check.multivariate.modellist(mlist)!=0) stop("argument 'filenames' expects a list of multivariate hmms or a list of files that contain multivariate hmms")
-		return(mlist)
-	} else {
-		return(filenames)
-	}
-
+is.hmm <- function(hmm) {
+	if (class(hmm)==class.univariate.hmm) return(TRUE)
+	return(FALSE)
 }
+
+#' Load multivariate HMMs from files
+#'
+#' Load \code{\link{chromstaR_multivariateHMM}} objects from file into a list.
+#'
+#' @param hmm.list A list of files that contain \code{\link{chromstaR_multivariateHMM}} objects.
+#' @param strict If any of the loaded objects is not a \code{\link{chromstaR_multivariateHMM}} object, an error (\code{strict=TRUE}) or a warning (\code{strict=FALSE}) will be generated.
+#' @return A list() containing all loaded \code{\link{chromstaR_multivariateHMM}} objects.
+#' @author Aaron Taudt
+#' @examples
+#'## Not run:
+#'files.with.hmms <- list.files(folder.with.hmms, full=TRUE,
+#'                              pattern='binsize_1000')
+#'multi.HMMs <- loadMultiHmmsFromFiles(files.with.hmms)
+#'## End(Not run)
+#' @seealso loadHmmsFromFiles
+#' @export
+loadMultiHmmsFromFiles <- function(hmm.list, strict=FALSE) {
+
+	if (is.multi.hmm(hmm.list)) {
+		return(hmm.list)
+	} else if (is.character(hmm.list)) {
+		message("loading multivariate HMMs from files ...", appendLF=F); ptm <- proc.time()
+		mlist <- list()
+		for (modelfile in hmm.list) {
+			mlist[[modelfile]] <- get(load(modelfile))
+			if (!is.hmm(mlist[[modelfile]])) {
+				if (strict) {
+					time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+					stop("File ",modelfile," does not contain a ",class.multivariate.hmm," object.")
+				} else {
+					class(modelfile) <- class.multivariate.hmm
+					warning("File ",modelfile," does not contain an ",class.multivariate.hmm," object. Class attribute corrected.")
+				}
+			}
+		}
+		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		return(mlist)
+	} else if (is.list(hmm.list)) {
+		index <- which(unlist(lapply(hmm.list, function(hmm) { !is.multi.hmm(hmm) })))
+		if (length(index)>0) {
+			if (strict) {
+				stop("The following list entries do not contain ",class.multivariate.hmm," objects: ", paste(index, collapse=' '))
+			} else {
+				for (ind in index) {
+					class(hmm.list[[ind]]) <- class.multivariate.hmm
+				}
+				warning("The following list entries do not contain ",class.multivariate.hmm," objects: ", paste(index, collapse=' '),". Class attributes corrected.")
+			}
+		}
+		return(hmm.list)
+	}
+}
+
+is.multi.hmm <- function(hmm) {
+	if (class(hmm)==class.multivariate.hmm) return(TRUE)
+	return(FALSE)
+}
+
 

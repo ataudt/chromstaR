@@ -1,7 +1,21 @@
+#' Find the best bin size for a given dataset
+#'
+#' Use simulations to find the best bin size among a set of input files. There is no guarantee that the bin size will be the best for your data, since it is only "best" in terms of fewest miscalls for simulated data. However, it can give you a hint what bin size to choose.
+#'
+#' The function first runs \code{\link{callPeaksUnivariate}} on the given binned.data files. From the estimated parameters it generates simulated data and calls the peaks on this simulated data. Because the data is simulated, the fraction of miscalls can be precisely calculated.
+#'
+#' @author Aaron Taudt
+#' @param files.binned A vector with files that contain \code{\link{binned.data}} in different bin sizes.
+#' @param outputfolder Name of the folder where all files will be written to.
+#' @param chromosomes A vector of chromosomes to use for the simulation.
+#' @param eps Convergence threshold for the Baum-Welch algorithm.
+#' @param max.iter The maximum number of iterations for the Baum-Welch algorithm. The default -1 is no limit.
+#' @param max.time The maximum running time in seconds for the Baum-Welch algorithm. If this time is reached, the Baum-Welch will terminate after the current iteration finishes. The default -1 is no limit.
+#' @param repetitions Number of repetitions for each simulation.
+#' @param plot.progress If TRUE, the plot will be updated each time a simulation has finished. If FALSE, the plot will be returned only at the end.
+#' @return A \code{\link[ggplot2:ggplot]{ggplot}} object with a bar plot of the number of miscalls dependent on the bin size.
+#' @export
 scanBinsizes = function(files.binned, outputfolder, chromosomes="chr10", eps=0.01, max.iter=100, max.time=300, repetitions=3, plot.progress=FALSE) {
-
-	## Load libraries
-	library(ggplot2)
 
 	## Create outputfolder if not existent
 	if (!file.exists(outputfolder)) dir.create(outputfolder)
