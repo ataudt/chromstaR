@@ -75,10 +75,8 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 	if (check.integer(verbosity)!=0) stop("argument 'verbosity' expects an integer")
 	if (!is.null(FDR)) {
 		if (FDR>1 | FDR<0) stop("argument 'FDR' has to be between 0 and 1 if specified")
-		get.posteriors <- TRUE
-	} else {
-		get.posteriors <- keep.posteriors
 	}
+	get.posteriors <- TRUE
 
 	## Prepare the HMM
 	params <- prepare.multivariate(modellist, use.states=use.states, num.states=num.states, num.threads=num.threads)
@@ -207,51 +205,50 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 		## Bin coordinates, posteriors and states
 			result$bins <- bins
 			result$bins$reads <- reads
-			if (!is.null(FDR)) {
-				message("Calculating states from posteriors ...", appendLF=F)
+			if (get.posteriors) {
+				message("Transforming posteriors to `per sample` representation ...", appendLF=F); ptm <- proc.time()
 				hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
 				colnames(hmm$posteriors) <- paste0("P(",hmm$comb.states,")")
-				ptm <- proc.time()
 				post.per.track <- matrix(0, ncol=hmm$num.modifications, nrow=hmm$num.bins)
+				colnames(post.per.track) <- result$IDs
 				binstates <- dec2bin(hmm$comb.states, ndigits=hmm$num.modifications)
 				for (icol in 1:ncol(post.per.track)) {
 					binstate.matrix <- matrix(rep(binstates[icol,], hmm$num.bins), nrow=hmm$num.bins, byrow=T)
 					post.per.track <- post.per.track + binstate.matrix * hmm$posteriors[,icol]
 				}
-				result$bins$state <- factor(bin2dec(post.per.track >= 1-FDR), levels=hmm$comb.states)
-				if (keep.posteriors) {
-					result$bins$posteriors <- hmm$posteriors
-				}
-				time <- proc.time() - ptm
-				message(" ",round(time[3],2),"s")
+				result$bins$posteriors <- post.per.track
+				time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+			}
+			message("Calculating states from posteriors ...", appendLF=F); ptm <- proc.time()
+			if (!is.null(FDR)) {
+				result$bins$state <- factor(bin2dec(result$bins$posteriors >= 1-FDR), levels=hmm$comb.states)
 			} else {
 				result$bins$state <- factor(hmm$states, levels=hmm$comb.states)
-				if (keep.posteriors) {
-					result$bins$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
-					colnames(result$bins$posteriors) <- paste0("P(",hmm$comb.states,")")
-				}
 			}
+			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 			if (keep.densities) {
 				result$bins$densities <- matrix(hmm$densities, ncol=hmm$num.states)
 			}
 			
 		## Segmentation
-			message("Making segmentation ...", appendLF=F)
-			ptm <- proc.time()
-			gr <- result$bins
-			red.gr.list <- GRangesList()
-			for (state in hmm$comb.states) {
-				red.gr <- GenomicRanges::reduce(gr[gr$state==state])
-				mcols(red.gr)$state <- rep(factor(state, levels=levels(gr$state)),length(red.gr))
-				if (length(red.gr)>0) {
-					red.gr.list[[length(red.gr.list)+1]] <- red.gr
-				}
-			}
-			red.gr <- GenomicRanges::sort(GenomicRanges::unlist(red.gr.list))
+			message("Making segmentation ...", appendLF=F); ptm <- proc.time()
+			df <- as.data.frame(result$bins)
+			ind.readcols <- which(grepl('^reads', names(df)))
+			ind.postcols <- which(grepl('^posteriors', names(df)))
+			red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c(ind.readcols, ind.postcols), columns2drop=c('width')))
+			mean.reads <- matrix(unlist(red.df[,grepl('^mean.reads',names(red.df))]), ncol=length(result$IDs))
+			colnames(mean.reads) <- colnames(result$IDs)
+			mean.posteriors <- matrix(unlist(red.df[,grepl('^mean.posteriors',names(red.df))]), ncol=length(result$IDs))
+			colnames(mean.posteriors) <- colnames(result$IDs)
+			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'])
+			red.gr$mean.reads <- mean.reads
+			red.gr$mean.posteriors <- mean.posteriors
 			result$segments <- red.gr
 			seqlengths(result$segments) <- seqlengths(result$bins)
-			time <- proc.time() - ptm
-			message(" ",round(time[3],2),"s")
+			if (!keep.posteriors) {
+				result$bins$posteriors <- NULL
+			}
+			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 		## Parameters
 			# Weights
 			tstates <- table(hmm$states)

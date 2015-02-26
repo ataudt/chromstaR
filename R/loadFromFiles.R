@@ -18,14 +18,14 @@
 #' @export
 loadHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 
-	if (is.hmm(hmm.list)) {
+	if (is(hmm.list, class.univariate.hmm)) {
 		return(hmm.list)
 	} else if (is.character(hmm.list)) {
 		message("loading univariate HMMs from files ...", appendLF=F); ptm <- proc.time()
 		mlist <- list()
 		for (modelfile in hmm.list) {
 			mlist[[modelfile]] <- get(load(modelfile))
-			if (!is.hmm(mlist[[modelfile]])) {
+			if (!is(mlist[[modelfile]], class.univariate.hmm)) {
 				if (strict) {
 					time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 					stop("File ",modelfile," does not contain an ",class.univariate.hmm," object.")
@@ -38,7 +38,7 @@ loadHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 		return(mlist)
 	} else if (is.list(hmm.list)) {
-		index <- which(unlist(lapply(hmm.list, function(hmm) { !is.hmm(hmm) })))
+		index <- which(unlist(lapply(hmm.list, function(hmm) { !is(hmm, class.univariate.hmm) })))
 		if (length(index)>0) {
 			if (strict) {
 				stop("The following list entries do not contain ",class.univariate.hmm," objects: ", paste(index, collapse=' '))
@@ -51,11 +51,6 @@ loadHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 		}
 		return(hmm.list)
 	}
-}
-
-is.hmm <- function(hmm) {
-	if (class(hmm)==class.univariate.hmm) return(TRUE)
-	return(FALSE)
 }
 
 #' Load multivariate HMMs from files
@@ -78,14 +73,14 @@ is.hmm <- function(hmm) {
 #' @export
 loadMultiHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 
-	if (is.multi.hmm(hmm.list)) {
+	if (is(hmm.list, class.multivariate.hmm)) {
 		return(hmm.list)
 	} else if (is.character(hmm.list)) {
 		message("loading multivariate HMMs from files ...", appendLF=F); ptm <- proc.time()
 		mlist <- list()
 		for (modelfile in hmm.list) {
 			mlist[[modelfile]] <- get(load(modelfile))
-			if (!is.hmm(mlist[[modelfile]])) {
+			if (!is(mlist[[modelfile]], class.multivariate.hmm)) {
 				if (strict) {
 					time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 					stop("File ",modelfile," does not contain a ",class.multivariate.hmm," object.")
@@ -98,7 +93,7 @@ loadMultiHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 		return(mlist)
 	} else if (is.list(hmm.list)) {
-		index <- which(unlist(lapply(hmm.list, function(hmm) { !is.multi.hmm(hmm) })))
+		index <- which(unlist(lapply(hmm.list, function(hmm) { !is(hmm, class.multivariate.hmm) })))
 		if (length(index)>0) {
 			if (strict) {
 				stop("The following list entries do not contain ",class.multivariate.hmm," objects: ", paste(index, collapse=' '))
@@ -112,10 +107,4 @@ loadMultiHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 		return(hmm.list)
 	}
 }
-
-is.multi.hmm <- function(hmm) {
-	if (class(hmm)==class.multivariate.hmm) return(TRUE)
-	return(FALSE)
-}
-
 

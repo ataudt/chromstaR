@@ -1,6 +1,6 @@
 #' Collapse consecutive bins
 #'
-#' The function will collapse consecutive bins which have, for example, the same CNV-state.
+#' The function will collapse consecutive bins which have, for example, the same combinatorial state.
 #'
 #' The following tables illustrate the principle of the collapsing:
 #'
@@ -22,109 +22,139 @@
 #' 
 #' @param data A data.frame containing the genomic coordinates in the first three columns.
 #' @param column2collapseBy The number of the column which will be used to collapse all other inputs. If a set of consecutive bins has the same value in this column, they will be aggregated into one bin with adjusted genomic coordinates.
-#' @param columns2sumUp Numbers of columns that will be summed during the aggregation process.
-#' @return An aggregated data.frame with the same format as the input data.frame will be given as output.
+#' @param columns2sumUp Column numbers that will be summed during the aggregation process.
+#' @param columns2average Column numbers that will be averaged during the aggregation process.
+#' @param columns2getMax Column numbers where the maximum will be chosen during the aggregation process.
+#' @param columns2drop Column numbers that will be dropped after the aggregation process.
+#' @return A data.frame.
 #' @examples
 #'## Load example data
 #'data(example.multi.HMM)
 #'df <- as.data.frame(example.multi.HMM$bins)
-#'shortdf <- collapseBins(df, column2collapseBy=13, columns2sumUp=c(4,6:12))
+#'shortdf <- collapseBins(df, column2collapseBy='state', columns2sumUp='width', columns2average=6:12)
 #' @author Aaron Taudt
 #' @export
-collapseBins = function(data, column2collapseBy=NULL, columns2sumUp=NULL) {
+collapseBins = function(data, column2collapseBy=NULL, columns2sumUp=NULL, columns2average=NULL, columns2getMax=NULL, columns2drop=NULL) {
 
-	# Indexing stuff
-	ind_coords = 1:3
-	ind_morecols = setdiff(1:ncol(data), c(ind_coords,columns2sumUp))
-	ind_sumcols = columns2sumUp
+	## Name to index
+	if (is.character(column2collapseBy)) {
+		column2collapseBy <- which(column2collapseBy == names(data))
+	}
+	if (is.character(columns2sumUp)) {
+		columns2sumUp <- unlist(lapply(columns2sumUp, function(x) { which(x == names(data)) }))
+	}
+	if (is.character(columns2average)) {
+		columns2average <- unlist(lapply(columns2average, function(x) { which(x == names(data)) }))
+	}
+	if (is.character(columns2getMax)) {
+		columns2getMax <- unlist(lapply(columns2getMax, function(x) { which(x == names(data)) }))
+	}
+	if (is.character(columns2drop)) {
+		columns2drop <- unlist(lapply(columns2drop, function(x) { which(x == names(data)) }))
+	}
+	## Indices
+	ind_coords <- 1:3
+	ind_morecols <- setdiff(1:ncol(data), c(ind_coords, columns2sumUp, columns2average, columns2getMax, columns2drop))
+	ind_sumcols <- columns2sumUp
+	ind_meancols <- columns2average
+	ind_maxcols <- columns2getMax
 
-	# Make the comparison vector
+	## Make the comparison vector
+	message('Making comparison vector ...', appendLF=F); ptm <- proc.time()
 	if (is.null(column2collapseBy)) {
-		c = data$start
-		cShift1 = rep(NA,length(c))
-		cShift1[2:length(cShift1)] = data$end[-length(c)] + 1
+		c <- data$start
+		cShift1 <- rep(NA,length(c))
+		cShift1[2:length(cShift1)] <- data$end[-length(c)] + 1
 	} else {
 		if (is(data[,column2collapseBy], "factor")) {
 			c <- as.integer(data[,column2collapseBy])
 		} else {
-			c = data[,column2collapseBy]
+			c <- data[,column2collapseBy]
 		}
-		cShift1 = rep(NA,length(c))
-		cShift1[-1] = c[-length(c)]
+		cShift1 <- rep(NA,length(c))
+		cShift1[-1] <- c[-length(c)]
 	}
-	compare_custom = c != cShift1
-	# Make the comparison vector to separate chromosomes
+	compare_custom <- c != cShift1
+	## Make the comparison vector to separate chromosomes
 	c <- as.integer(data[,1])
-	cShift1 = rep(NA,length(c))
-	cShift1[-1] = c[-length(c)]
-	compare_chrom = c != cShift1
-	# Combine the vectors
+	cShift1 <- rep(NA,length(c))
+	cShift1[-1] <- c[-length(c)]
+	compare_chrom <- c != cShift1
+	## Combine the vectors
 	compare <- compare_custom | compare_chrom
-	compare[1] = TRUE
-	numcollapsedbins = length(which(compare==TRUE))
-	numbins = nrow(data)
+	compare[1] <- TRUE
+	numcollapsedbins <- length(which(compare==TRUE))
+	numbins <- nrow(data)
+	time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 
-	# Select the collapsed rows
-	collapsed.bins = NULL
-	collapsed.bins$chrom = data[compare,1]
-	collapsed.bins$start = data[compare,2]
-	collapsed.bins$end = data[c((which(compare==TRUE)-1)[-1],numbins), 3]
+	## Select the collapsed rows
+	message('Selecting rows ...', appendLF=F); ptm <- proc.time()
+	collapsed.bins <- list()
+	collapsed.bins[[names(data)[1]]] <- data[compare,1]
+	collapsed.bins[[names(data)[2]]] <- data[compare,2]
+	collapsed.bins[[names(data)[3]]] <- data[c((which(compare==TRUE)-1)[-1],numbins), 3]
 	if (length(ind_morecols)==1) {
-		collapsed.bins[[4]] = data[compare, ind_morecols]
+		collapsed.bins[[names(data)[column2collapseBy]]] <- data[compare, ind_morecols]
 	} else if (length(ind_morecols)>1) {
-		lcb = length(collapsed.bins)
-		lmc = length(ind_morecols)
-		collapsed.bins[(lcb+1):(lcb+lmc)] = data[compare, ind_morecols]
+		lcb <- length(collapsed.bins)
+		lmc <- length(ind_morecols)
+		collapsed.bins[(lcb+1):(lcb+lmc)] <- data[compare, ind_morecols]
+		names(collapsed.bins)[(lcb+1):(lcb+lmc)] <- names(data)[ind_morecols]
 	}
+	time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 
-	# Sum up columns
-	if (!is.null(columns2sumUp)) {
-		sumcols = as.matrix(data[,columns2sumUp])
-		collapsed_sumcols = matrix(rep(NA,numcollapsedbins*length(columns2sumUp)), ncol=length(columns2sumUp))
-# 		pb = txtProgressBar(min=1, max=length(compare), style=3)
-		icount = 1
-		i1_lasttrue = 1
-		for (i1 in 1:length(compare)) {
-			if (compare[i1]==TRUE) {
-				if (length(columns2sumUp)==1) {
-					collapsed_sumcols[icount-1] = sum(sumcols[i1_lasttrue:(i1-1),])
-				} else {
-					if (i1_lasttrue==i1-1 | i1==1) {
-						collapsed_sumcols[icount-1,] = as.numeric(sumcols[i1_lasttrue,])
-					} else {
-						collapsed_sumcols[icount-1,] = apply(sumcols[i1_lasttrue:(i1-1),],2,sum)
+	## Sum up columns
+	xfuns <- list(sum, mean, max)
+	xstrings <- list('sum', 'mean', 'max')
+	columns2xs <- list(columns2sumUp, columns2average, columns2getMax)
+	inds_xcols <- list(ind_sumcols, ind_meancols, ind_maxcols)
+	for (ix in 1:length(xfuns)) {
+		xfun <- xfuns[[ix]]
+		xstring <- xstrings[[ix]]
+		columns2x <- columns2xs[[ix]]
+		ind_xcols <- inds_xcols[[ix]]
+		if (!is.null(columns2x)) {
+			message('Calculating ',xstring,' ...', appendLF=F); ptm <- proc.time()
+			xcols <- as.matrix(data[,columns2x])
+			collapsed.xcols <- matrix(NA, nrow=numcollapsedbins, ncol=length(columns2x))
+			icount <- 1
+			i1_lasttrue <- 1
+			for (i1 in 1:length(compare)) {
+				if (compare[i1]==TRUE) {
+					if (length(columns2x)==1) {
+						collapsed.xcols[icount-1] <- xfun(xcols[i1_lasttrue:(i1-1),])
+					} else if (length(columns2x) > 1) {
+						if (i1_lasttrue==i1-1 | i1==1) {
+							collapsed.xcols[icount-1,] <- as.numeric(xcols[i1_lasttrue,])
+						} else {
+							collapsed.xcols[icount-1,] <- apply(xcols[i1_lasttrue:(i1-1),],2,xfun)
+						}
 					}
+					icount <- icount+1
+					i1_lasttrue <- i1
 				}
-					
-				icount = icount+1
-				i1_lasttrue = i1
-# 				setTxtProgressBar(pb, i1)
 			}
-		}
-		i1 = i1+1
-		if (length(columns2sumUp)==1) {
-			collapsed_sumcols[icount-1] = sum(sumcols[i1_lasttrue:(i1-1),])
-		} else {
-			if (i1_lasttrue==i1-1 | i1==1) {
-				collapsed_sumcols[icount-1,] = as.numeric(sumcols[i1_lasttrue,])
-			} else {
-				collapsed_sumcols[icount-1,] = apply(sumcols[i1_lasttrue:(i1-1),],2,sum)
+			i1 = i1+1
+			if (length(columns2x)==1) {
+				collapsed.xcols[icount-1] <- xfun(xcols[i1_lasttrue:(i1-1),])
+			} else if (length(columns2x) > 1) {
+				if (i1_lasttrue==i1-1 | i1==1) {
+					collapsed.xcols[icount-1,] <- as.numeric(xcols[i1_lasttrue,])
+				} else {
+					collapsed.xcols[icount-1,] <- apply(xcols[i1_lasttrue:(i1-1),],2,xfun)
+				}
 			}
+			if (length(ind_xcols) > 0) {
+				lcb <- length(collapsed.bins)
+				lsc <- length(ind_xcols)
+				collapsed.bins[(lcb+1):(lcb+lsc)] <- as.data.frame(collapsed.xcols)
+				names(collapsed.bins)[(lcb+1):(lcb+lsc)] <- paste(xstring, names(data)[ind_xcols], sep='.')
+			}
+			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 		}
-# 		setTxtProgressBar(pb, length(compare))
-# 		close(pb)
-
-		lcb = length(collapsed.bins)
-		lsc = length(ind_sumcols)
-		collapsed.bins[(lcb+1):(lcb+lsc)] = as.data.frame(collapsed_sumcols)
 	}
 
-	# Create the return data.frame with same order as input data.frame
-	collapsed.bins.reordered = NULL
-	collapsed.bins.reordered[c(ind_coords,ind_morecols,ind_sumcols)] = collapsed.bins
-	names(collapsed.bins.reordered) = names(data)
-
-	return(as.data.frame(collapsed.bins.reordered))
+	return(as.data.frame(collapsed.bins))
 
 }
 

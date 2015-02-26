@@ -4,20 +4,27 @@
 \alias{collapseBins}
 \title{Collapse consecutive bins}
 \usage{
-collapseBins(data, column2collapseBy = NULL, columns2sumUp = NULL)
+collapseBins(data, column2collapseBy = NULL, columns2sumUp = NULL,
+  columns2average = NULL, columns2getMax = NULL, columns2drop = NULL)
 }
 \arguments{
 \item{data}{A data.frame containing the genomic coordinates in the first three columns.}
 
 \item{column2collapseBy}{The number of the column which will be used to collapse all other inputs. If a set of consecutive bins has the same value in this column, they will be aggregated into one bin with adjusted genomic coordinates.}
 
-\item{columns2sumUp}{Numbers of columns that will be summed during the aggregation process.}
+\item{columns2sumUp}{Column numbers that will be summed during the aggregation process.}
+
+\item{columns2average}{Column numbers that will be averaged during the aggregation process.}
+
+\item{columns2getMax}{Column numbers where the maximum will be chosen during the aggregation process.}
+
+\item{columns2drop}{Column numbers that will be dropped after the aggregation process.}
 }
 \value{
-An aggregated data.frame with the same format as the input data.frame will be given as output.
+A data.frame.
 }
 \description{
-The function will collapse consecutive bins which have, for example, the same CNV-state.
+The function will collapse consecutive bins which have, for example, the same combinatorial state.
 }
 \details{
 The following tables illustrate the principle of the collapsing:
@@ -42,7 +49,7 @@ chr1  \tab   600 \tab 999 \tab                 1 \tab        4 13 \tab          
 ## Load example data
 data(example.multi.HMM)
 df <- as.data.frame(example.multi.HMM$bins)
-shortdf <- collapseBins(df, column2collapseBy=13, columns2sumUp=c(4,6:12))
+shortdf <- collapseBins(df, column2collapseBy='state', columns2sumUp='width', columns2average=6:12)
 }
 \author{
 Aaron Taudt

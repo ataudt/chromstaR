@@ -4,7 +4,8 @@
 \alias{changeFDR}
 \title{Change the false discovery rate of a Hidden Markov Model}
 \usage{
-changeFDR(model, FDR = 0.5, separate.zeroinflation = TRUE)
+changeFDR(model, FDR = 0.5, separate.zeroinflation = TRUE,
+  averages = TRUE)
 }
 \arguments{
 \item{model}{A \code{\link{chromstaR_univariateHMM}} or \code{\link{chromstaR_multivariateHMM}} object with posteriors.}
@@ -12,6 +13,8 @@ changeFDR(model, FDR = 0.5, separate.zeroinflation = TRUE)
 \item{FDR}{False discovery rate.}
 
 \item{separate.zeroinflation}{Only for \code{\link{chromstaR_univariateHMM}} objects: If set to TRUE, state 'zero-inflation' will be treated separately, otherwise it will be merged with state 'unmodified'.}
+
+\item{averages}{Whether or not averaged read counts and posteriors should appear in the segmentation.}
 }
 \value{
 The input object is returned with adjusted peak calls.

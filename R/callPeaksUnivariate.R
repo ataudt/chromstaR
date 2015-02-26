@@ -360,8 +360,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 		result <- list()
 		result$ID <- ID
 	## Get states
-		message("Calculating states from posteriors ...", appendLF=F)
-		ptm <- proc.time()
+		message("Calculating states from posteriors ...", appendLF=F); ptm <- proc.time()
 		hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
 		colnames(hmm$posteriors) <- paste0("P(",state.labels,")")
 		threshold <- 1-FDR
@@ -375,32 +374,23 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 														ranges=ranges(binned.data),
 														reads=hmm$reads,
 														state=states) 
-		if (keep.posteriors) {
-			result$bins$posteriors <- hmm$posteriors
-		}
+		result$bins$posteriors <- hmm$posteriors
 		if (keep.densities) {
 			result$bins$densities <- matrix(hmm$densities, ncol=hmm$num.states)
 		}
 		seqlengths(result$bins) <- seqlengths(binned.data)
-		time <- proc.time() - ptm
-		message(" ",round(time[3],2),"s")
+		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 	## Segmentation
-		message("Making segmentation ...", appendLF=F)
-		ptm <- proc.time()
+		message("Making segmentation ...", appendLF=F); ptm <- proc.time()
 		gr <- result$bins
-		red.gr.list <- GRangesList()
-		for (state in state.labels) {
-			red.gr <- GenomicRanges::reduce(gr[states==state])
-			mcols(red.gr)$state <- rep(factor(state, levels=levels(state.labels)),length(red.gr))
-			if (length(red.gr)>0) {
-				red.gr.list[[length(red.gr.list)+1]] <- red.gr
-			}
-		}
-		red.gr <- GenomicRanges::sort(GenomicRanges::unlist(red.gr.list))
+		red.df <- suppressMessages(collapseBins(as.data.frame(gr), column2collapseBy='state', columns2average=c('reads','posteriors.P.modified.'), columns2drop=c('width','posteriors.P.zero.inflation.','posteriors.P.unmodified.')))
+		red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], mean.reads=red.df[,'mean.reads'], mean.posterior.modified=red.df[,'mean.posteriors.P.modified.'])
 		result$segments <- red.gr
 		seqlengths(result$segments) <- seqlengths(binned.data)
-		time <- proc.time() - ptm
-		message(" ",round(time[3],2),"s")
+		if (!keep.posteriors) {
+			result$bins$posteriors <- NULL
+		}
+		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 	## Parameters
 		# Weights
 		result$weights <- hmm$weights

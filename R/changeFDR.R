@@ -8,6 +8,7 @@
 #' @param model A \code{\link{chromstaR_univariateHMM}} or \code{\link{chromstaR_multivariateHMM}} object with posteriors.
 #' @param FDR False discovery rate.
 #' @param separate.zeroinflation Only for \code{\link{chromstaR_univariateHMM}} objects: If set to TRUE, state 'zero-inflation' will be treated separately, otherwise it will be merged with state 'unmodified'.
+#' @param averages Whether or not averaged read counts and posteriors should appear in the segmentation.
 #' @return The input object is returned with adjusted peak calls.
 #' @examples
 #'## Get an example BED-file with ChIP-seq reads for H3K36me3 in brain tissue
@@ -25,10 +26,7 @@
 #'table(hmm$bins$state)
 #'table(hmm.adjusted$bins$state)
 #' @export
-changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE) {
-
-	## Check if posteriors are present
-	if (is.null(model$bins$posteriors)) stop("Cannot recalculate states because posteriors are missing. Run 'callPeaksUnivariate' again with option 'keep.posteriors' set to TRUE.")
+changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, averages=TRUE) {
 
 	## Get the states
 	threshold <- 1-FDR
@@ -36,9 +34,9 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE) {
 
 	### Univariate HMM ###
 	if (is(model,class.univariate.hmm)) {
+		if (is.null(model$bins$posteriors)) stop("Cannot recalculate states because posteriors are missing. Run 'callPeaksUnivariate' again with option 'keep.posteriors' set to TRUE.")
 		## Calculate states
-		message("Calculating states from posteriors ...", appendLF=F)
-		ptm <- proc.time()
+		message("Calculating states from posteriors ...", appendLF=F); ptm <- proc.time()
 		states <- rep(NA,length(model$bins))
 		if (separate.zeroinflation) {
 			states[ model$bins$posteriors[,3]<threshold & model$bins$posteriors[,2]<=model$bins$posteriors[,1] ] <- 1
@@ -50,68 +48,53 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE) {
 			states <- state.labels[2:3][states]
 		}
 		model$bins$state <- states
-		time <- proc.time() - ptm
-		message(" ",round(time[3],2),"s")
+		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 		## Redo segmentation
-		message("Making segmentation ...", appendLF=F)
-		ptm <- proc.time()
+		message("Making segmentation ...", appendLF=F); ptm <- proc.time()
 		gr <- model$bins
-		red.gr.list <- GRangesList()
-		for (state in state.labels) {
-			red.gr <- GenomicRanges::reduce(gr[states==state])
-			mcols(red.gr)$state <- rep(factor(state, levels=levels(state.labels)),length(red.gr))
-			if (length(red.gr)>0) {
-				red.gr.list[[length(red.gr.list)+1]] <- red.gr
-			}
-		}
-		red.gr <- GenomicRanges::sort(GenomicRanges::unlist(red.gr.list))
+		df <- as.data.frame(gr)
+		if (averages==TRUE) {
+			red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c('reads','posteriors.P.modified.'), columns2drop=c('width','posteriors.P.zero.inflation.','posteriors.P.unmodified.')))
+			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], mean.reads=red.df[,'mean.reads'], mean.posterior.modified=red.df[,'mean.posteriors.P.modified.'])
+		} else {
+			red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2drop=c('width','posteriors.P.zero.inflation.','posteriors.P.unmodified.','posteriors.P.modified.','reads')))
+			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'])
+		}	
 		model$segments <- red.gr
 		seqlengths(model$segments) <- seqlengths(model$bins)
-		time <- proc.time() - ptm
-		message(" ",round(time[3],2),"s")
+		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 # 		## Redo weights
 # 		model$weights <- table(model$bins$state) / length(model$bins)
 
 	### Multivariate HMM ###
 	} else if (is(model,class.multivariate.hmm)) {
-		message("Calculating states from posteriors ...", appendLF=F)
-		ptm <- proc.time()
-		if (is.null(FDR)) {
-			states <- factor(levels(model$bins$state)[apply(model$bins$posteriors, 1, which.max)], levels=levels(model$bins$state))
-		} else {
-			post.per.track <- matrix(0, ncol=ncol(model$bins$reads), nrow=nrow(model$bins$reads))
-			binstates <- dec2bin(levels(model$bins$state), ndigits=ncol(model$bins$reads))
-			for (icol in 1:ncol(post.per.track)) {
-				binstate.matrix <- matrix(rep(binstates[icol,], nrow(model$bins$reads)), nrow=nrow(model$bins$reads), byrow=T)
-				post.per.track <- post.per.track + binstate.matrix * model$bins$posteriors[,icol]
-			}
-			states <- factor(bin2dec(post.per.track >= threshold), levels=levels(model$bins$state))
-# 			max.index <- apply(model$bins$posteriors, 1, which.max)
-# 			max.states <- factor(levels(model$bins$state)[max.index], levels=levels(model$bins$state))
-# 			above.threshold <- apply(model$bins$posteriors, 1, function(x) { any(x>=threshold) })
-# 			states <- factor(rep(0, length(model$bins)), levels=unique(c(0,levels(model$bins$state))))
-# 			states[above.threshold] <- max.states[above.threshold]
-		}
+		if (is.null(model$bins$posteriors)) stop("Cannot recalculate states because posteriors are missing. Run 'callPeaksMultivariate' again with option 'keep.posteriors' set to TRUE.")
+		## Calculate states
+		message("Calculating states from posteriors ...", appendLF=F); ptm <- proc.time()
+		states <- factor(bin2dec(model$bins$posteriors >= threshold), levels=levels(model$bins$state))
 		model$bins$state <- states
-		time <- proc.time() - ptm
-		message(" ",round(time[3],2),"s")
+		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 		## Redo segmentation
-		message("Making segmentation ...", appendLF=F)
-		ptm <- proc.time()
-		gr <- model$bins
-		red.gr.list <- GRangesList()
-		for (state in levels(model$bins$state)) {
-			red.gr <- GenomicRanges::reduce(gr[gr$state==state])
-			mcols(red.gr)$state <- rep(factor(state, levels=levels(gr$state)),length(red.gr))
-			if (length(red.gr)>0) {
-				red.gr.list[[length(red.gr.list)+1]] <- red.gr
-			}
+		message("Making segmentation ...", appendLF=F); ptm <- proc.time()
+		df <- as.data.frame(model$bins)
+		ind.readcols <- which(grepl('^reads', names(df)))
+		ind.postcols <- which(grepl('^posteriors', names(df)))
+		if (averages==TRUE) {
+			red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c(ind.readcols, ind.postcols), columns2drop=c('width')))
+			mean.reads <- matrix(unlist(red.df[,grepl('^mean.reads',names(red.df))]), ncol=length(model$IDs))
+			colnames(mean.reads) <- colnames(model$IDs)
+			mean.posteriors <- matrix(unlist(red.df[,grepl('^mean.posteriors',names(red.df))]), ncol=length(model$IDs))
+			colnames(mean.posteriors) <- colnames(model$IDs)
+			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'])
+			red.gr$mean.reads <- mean.reads
+			red.gr$mean.posteriors <- mean.posteriors
+		} else {
+			red.df <- suppressMessages(collapseBins(df[,-c(4, ind.readcols, ind.postcols)], column2collapseBy='state'))
+			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'])
 		}
-		red.gr <- GenomicRanges::sort(GenomicRanges::unlist(red.gr.list))
 		model$segments <- red.gr
 		seqlengths(model$segments) <- seqlengths(model$bins)
-		time <- proc.time() - ptm
-		message(" ",round(time[3],2),"s")
+		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 # 		## Redo weights
 # 		model$weights <- table(model$bins$state) / length(model$bins)
 	} else {
