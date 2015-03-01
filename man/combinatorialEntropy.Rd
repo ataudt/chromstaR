@@ -4,18 +4,23 @@
 \alias{combinatorialEntropy}
 \title{Combinatorial entropy}
 \usage{
-combinatorialEntropy(multi.hmm.list, direction.of.adding = "between.hmms")
+combinatorialEntropy(multi.hmm.list, window.size.bp = NULL,
+  direction.of.adding = "between.hmms")
 }
 \arguments{
 \item{multi.hmm.list}{A list of \code{\link{chromstaR_multivariateHMM}} objects or a vector of files that contain such objects.}
 
-\item{direction.of.adding}{One of \code{c('between.hmms','between.samples')}.}
+\item{window.size.bp}{Window size in base-pairs that will be used to average the results.}
+
+\item{direction.of.adding}{One of \code{c('between.hmms','inside.hmms')}. Choose 'between.hmms' if your input objects contain combinatorial states from a differential analysis. Choose 'inside.hmms' if your input objects contain combinatorial states from different modifications.}
 }
 \description{
 Calculate the combinatorial entropy along the genome for a set of \code{\link{chromstaR_multivariateHMM}}s.
 }
 \details{
-The combinatorial entropy is calculated as ...
+The combinatorial entropy describes the variation between samples. For each genomic position, it is defined as
+\deqn{ log( choose(n,x) ) }
+where \eqn{n} is the number of samples and \eqn{x} the number of samples that are in state 'modified'. Calculation of this entropy measure only makes sense for samples with the same modification (e.g. 7 samples of H3K36me3 in different tissues). For multiple modifications, the entropy can be calculated for each modification separately and then added.
 }
 \author{
 Aaron Taudt

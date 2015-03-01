@@ -5,10 +5,10 @@
 \title{Fit a Hidden Markov Model to a ChIP-seq sample.}
 \usage{
 callPeaksUnivariate(binned.data, ID, eps = 0.001, init = "standard",
-  max.time = -1, max.iter = -1, num.trials = 1, eps.try = NULL,
+  max.time = NULL, max.iter = NULL, num.trials = 1, eps.try = NULL,
   num.threads = 1, read.cutoff.quantile = 0.999, max.mean = 10,
   FDR = 0.5, keep.posteriors = FALSE, control = FALSE,
-  checkpoint.after.iter = -1, checkpoint.after.time = -1,
+  checkpoint.after.iter = NULL, checkpoint.after.time = NULL,
   checkpoint.file = paste0("chromstaR_checkpoint_", ID, ".cpt"),
   checkpoint.overwrite = TRUE, checkpoint.use.existing = FALSE,
   keep.densities = FALSE, verbosity = 1)
@@ -27,9 +27,9 @@ callPeaksUnivariate(binned.data, ID, eps = 0.001, init = "standard",
 \item{\code{empiric}}{Yet another way to initialize the Baum-Welch. Try this if the other two methods fail to produce a good fit.}
 }}
 
-\item{max.time}{The maximum running time in seconds for the Baum-Welch algorithm. If this time is reached, the Baum-Welch will terminate after the current iteration finishes. The default -1 is no limit.}
+\item{max.time}{The maximum running time in seconds for the Baum-Welch algorithm. If this time is reached, the Baum-Welch will terminate after the current iteration finishes. The default \code{NULL} is no limit.}
 
-\item{max.iter}{The maximum number of iterations for the Baum-Welch algorithm. The default -1 is no limit.}
+\item{max.iter}{The maximum number of iterations for the Baum-Welch algorithm. The default \code{NULL} is no limit.}
 
 \item{num.trials}{The number of trials to run the HMM. Each time, the HMM is seeded with different random initial values. The HMM with the best likelihood is given as output.}
 
@@ -47,9 +47,9 @@ callPeaksUnivariate(binned.data, ID, eps = 0.001, init = "standard",
 
 \item{control}{If set to \code{TRUE}, the binned data will be treated as control experiment. That means only state 'zero-inflation' and 'unmodified' will be used in the HMM.}
 
-\item{checkpoint.after.iter}{Write a checkpoint file every n iterations. The default -1 means no checkpointing for iterations.}
+\item{checkpoint.after.iter}{Write a checkpoint file every n iterations. The default \code{NULL} means no checkpointing for iterations.}
 
-\item{checkpoint.after.time}{Write a checkpoint file every t seconds. The default -1 means no checkpointing for time.}
+\item{checkpoint.after.time}{Write a checkpoint file every t seconds. The default \code{NULL} means no checkpointing for time.}
 
 \item{checkpoint.file}{The name of the checkpoint file that will be written.}
 

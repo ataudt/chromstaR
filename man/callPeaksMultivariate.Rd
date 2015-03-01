@@ -6,8 +6,8 @@
 \usage{
 callPeaksMultivariate(modellist, use.states = NULL, num.states = NULL,
   eps = 0.001, FDR = NULL, keep.posteriors = FALSE, num.threads = 1,
-  max.time = -1, max.iter = -1, checkpoint.after.iter = -1,
-  checkpoint.after.time = -1, checkpoint.file = NULL,
+  max.time = NULL, max.iter = NULL, checkpoint.after.iter = NULL,
+  checkpoint.after.time = NULL, checkpoint.file = NULL,
   checkpoint.overwrite = TRUE, checkpoint.use.existing = FALSE,
   A.initial = NULL, keep.densities = FALSE, verbosity = 1)
 }
@@ -26,13 +26,13 @@ callPeaksMultivariate(modellist, use.states = NULL, num.states = NULL,
 
 \item{num.threads}{Number of threads to use. Setting this to >1 may give increased performance.}
 
-\item{max.time}{The maximum running time in seconds for the Baum-Welch algorithm. If this time is reached, the Baum-Welch will terminate after the current iteration finishes. The default -1 is no limit.}
+\item{max.time}{The maximum running time in seconds for the Baum-Welch algorithm. If this time is reached, the Baum-Welch will terminate after the current iteration finishes. The default \code{NULL} is no limit.}
 
-\item{max.iter}{The maximum number of iterations for the Baum-Welch algorithm. The default -1 is no limit.}
+\item{max.iter}{The maximum number of iterations for the Baum-Welch algorithm. The default \code{NULL} is no limit.}
 
-\item{checkpoint.after.iter}{Write a checkpoint file every n iterations. The default -1 means no checkpointing for iterations.}
+\item{checkpoint.after.iter}{Write a checkpoint file every n iterations. The default \code{NULL} means no checkpointing for iterations.}
 
-\item{checkpoint.after.time}{Write a checkpoint file every t seconds. The default -1 means no checkpointing for time.}
+\item{checkpoint.after.time}{Write a checkpoint file every t seconds. The default \code{NULL} means no checkpointing for time.}
 
 \item{checkpoint.file}{The name of the checkpoint file that will be written.}
 

@@ -5,6 +5,13 @@ check.positive.integer = function(testvar) {
 	if (testvar != as.integer(testvar)) return(4)
 	return(0)
 }
+check.nonnegative.integer = function(testvar) {
+	if (!is(testvar,"numeric") & !is(testvar,"integer")) return(1)
+	if (length(testvar)>1) return(2)
+	if (testvar < 0) return(3)
+	if (testvar != as.integer(testvar)) return(4)
+	return(0)
+}
 check.positive.integer.vector = function(testvec) {
 	if (!is(testvec,"numeric") & !is(testvec,"integer")) return(1)
 	for (elem in testvec) {

@@ -13,8 +13,8 @@
 #' \item{\code{random}}{Mean and variance of the negative binomials will be initialized with random values (in certain boundaries, see source code). Try this if the \code{'standard'} procedure fails to produce a good fit.}
 #' \item{\code{empiric}}{Yet another way to initialize the Baum-Welch. Try this if the other two methods fail to produce a good fit.}
 #' }
-#' @param max.time The maximum running time in seconds for the Baum-Welch algorithm. If this time is reached, the Baum-Welch will terminate after the current iteration finishes. The default -1 is no limit.
-#' @param max.iter The maximum number of iterations for the Baum-Welch algorithm. The default -1 is no limit.
+#' @param max.time The maximum running time in seconds for the Baum-Welch algorithm. If this time is reached, the Baum-Welch will terminate after the current iteration finishes. The default \code{NULL} is no limit.
+#' @param max.iter The maximum number of iterations for the Baum-Welch algorithm. The default \code{NULL} is no limit.
 #' @param num.trials The number of trials to run the HMM. Each time, the HMM is seeded with different random initial values. The HMM with the best likelihood is given as output.
 #' @param eps.try If code num.trials is set to greater than 1, \code{eps.try} is used for the trial runs. If unset, \code{eps} is used.
 #' @param num.threads Number of threads to use. Setting this to >1 may give increased performance.
@@ -23,8 +23,8 @@
 #' @param FDR False discovery rate. code{NULL} means that the state with maximum posterior probability will be chosen, irrespective of its absolute probability (default=code{NULL}).
 #' @param keep.posteriors If set to \code{TRUE} (default=\code{FALSE}), posteriors will be available in the output. This is useful to change the FDR later, but increases the necessary disk space to store the result.
 #' @param control If set to \code{TRUE}, the binned data will be treated as control experiment. That means only state 'zero-inflation' and 'unmodified' will be used in the HMM.
-#' @param checkpoint.after.iter Write a checkpoint file every n iterations. The default -1 means no checkpointing for iterations.
-#' @param checkpoint.after.time Write a checkpoint file every t seconds. The default -1 means no checkpointing for time.
+#' @param checkpoint.after.iter Write a checkpoint file every n iterations. The default \code{NULL} means no checkpointing for iterations.
+#' @param checkpoint.after.time Write a checkpoint file every t seconds. The default \code{NULL} means no checkpointing for time.
 #' @param checkpoint.file The name of the checkpoint file that will be written.
 #' @param checkpoint.overwrite If set to \code{TRUE}, only one checkpoint file will be written. If set to \code{FALSE}, a new checkpoint file will be written at each checkpoint with the total number of iterations appended.
 #' @param checkpoint.use.existing If set to \code{TRUE}, the Baum-Welch fitting procedure will be continued from the HMM in the \code{checkpoint.file}.
@@ -43,7 +43,7 @@
 #'## Check if the fit is ok
 #'plot(hmm, type='histogram')
 #' @export
-callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max.time=-1, max.iter=-1, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff.quantile=0.999, max.mean=10, FDR=0.5, keep.posteriors=FALSE, control=FALSE, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, keep.densities=FALSE, verbosity=1) {
+callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff.quantile=0.999, max.mean=10, FDR=0.5, keep.posteriors=FALSE, control=FALSE, checkpoint.after.iter=NULL, checkpoint.after.time=NULL, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, keep.densities=FALSE, verbosity=1) {
 
 	### Define cleanup behaviour ###
 	on.exit(.C("R_univariate_cleanup"))
@@ -51,15 +51,15 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 	### Intercept user input ###
 	IDcheck <- ID  #trigger error if not defined
 	if (check.positive(eps)!=0) stop("argument 'eps' expects a positive numeric")
-	if (check.integer(max.time)!=0) stop("argument 'max.time' expects an integer")
-	if (check.integer(max.iter)!=0) stop("argument 'max.iter' expects an integer")
+	if (is.null(max.time)) { max.time <- -1 } else if (check.nonnegative.integer(max.time)!=0) { stop("argument 'max.time' expects a non-negative integer") }
+	if (is.null(max.iter)) { max.iter <- -1 } else if (check.nonnegative.integer(max.iter)!=0) { stop("argument 'max.iter' expects a non-negative integer") }
 	if (check.positive.integer(num.trials)!=0) stop("argument 'num.trials' expects a positive integer")
 	if (!is.null(eps.try)) {
 		if (check.positive(eps.try)!=0) stop("argument 'eps.try' expects a positive numeric")
 	}
 	if (check.positive.integer(num.threads)!=0) stop("argument 'num.threads' expects a positive integer")
-	if (check.integer(checkpoint.after.iter)!=0) stop("argument 'checkpoint.after.iter' expects an integer")
-	if (check.integer(checkpoint.after.time)!=0) stop("argument 'checkpoint.after.time' expects an integer")
+	if (is.null(checkpoint.after.time)) { checkpoint.after.time <- -1 } else if (check.positive.integer(checkpoint.after.time)!=0) { stop("argument 'checkpoint.after.time' expects a positive integer") }
+	if (is.null(checkpoint.after.iter)) { checkpoint.after.iter <- -1 } else if (check.positive.integer(checkpoint.after.iter)!=0) { stop("argument 'checkpoint.after.iter' expects a positive integer") }
 	if (check.logical(checkpoint.overwrite)!=0) stop("argument 'checkpoint.overwrite' expects a logical (TRUE or FALSE)")
 	if (FDR>1 | FDR<0) stop("argument 'FDR' has to be between 0 and 1 if specified")
 	if (check.logical(keep.posteriors)!=0) stop("argument 'keep.posteriors' expects a logical (TRUE or FALSE)")
@@ -211,7 +211,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 			hmm$num.iterations <- iteration.total
 			time.total <- time.total + hmm$time.sec
 			hmm$time.sec <- time.total
-			if (hmm$loglik.delta <= eps | (time.total >= max.time & max.time > 0) | (iteration.total >= max.iter & max.iter > 0)) break
+			if (hmm$loglik.delta <= eps | (time.total >= max.time & max.time >= 0) | (iteration.total >= max.iter & max.iter >= 0)) break
 
 			### Save checkpoint ###
 				result <- list()

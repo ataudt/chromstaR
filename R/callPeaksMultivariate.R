@@ -12,10 +12,10 @@
 #' @param FDR False discovery rate. code{NULL} means that the state with maximum posterior probability will be chosen, irrespective of its absolute probability.
 #' @param keep.posteriors If set to \code{TRUE}, posteriors will be available in the output. This is useful to change the FDR later, but increases the necessary disk space to store the result immense.
 #' @param num.threads Number of threads to use. Setting this to >1 may give increased performance.
-#' @param max.time The maximum running time in seconds for the Baum-Welch algorithm. If this time is reached, the Baum-Welch will terminate after the current iteration finishes. The default -1 is no limit.
-#' @param max.iter The maximum number of iterations for the Baum-Welch algorithm. The default -1 is no limit.
-#' @param checkpoint.after.iter Write a checkpoint file every n iterations. The default -1 means no checkpointing for iterations.
-#' @param checkpoint.after.time Write a checkpoint file every t seconds. The default -1 means no checkpointing for time.
+#' @param max.time The maximum running time in seconds for the Baum-Welch algorithm. If this time is reached, the Baum-Welch will terminate after the current iteration finishes. The default \code{NULL} is no limit.
+#' @param max.iter The maximum number of iterations for the Baum-Welch algorithm. The default \code{NULL} is no limit.
+#' @param checkpoint.after.iter Write a checkpoint file every n iterations. The default \code{NULL} means no checkpointing for iterations.
+#' @param checkpoint.after.time Write a checkpoint file every t seconds. The default \code{NULL} means no checkpointing for time.
 #' @param checkpoint.file The name of the checkpoint file that will be written.
 #' @param checkpoint.overwrite If set to \code{TRUE}, only one checkpoint file will be written. If set to \code{FALSE}, a new checkpoint file will be written at each checkpoint with the total number of iterations appended.
 #' @param checkpoint.use.existing If set to \code{TRUE}, the Baum-Welch fitting procedure will be continued from the HMM in the \code{checkpoint.file}.
@@ -40,7 +40,7 @@
 #'## Build the multivariate Hidden Markov Model from the list of univariate fits
 #'multi.hmm <- callPeaksMultivariate(uni.HMMs, eps=0.1, max.time=300)
 #' @export
-callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, eps=0.001, FDR=NULL, keep.posteriors=FALSE, num.threads=1, max.time=-1, max.iter=-1, checkpoint.after.iter=-1, checkpoint.after.time=-1, checkpoint.file=NULL, checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL, keep.densities=FALSE, verbosity=1) {
+callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, eps=0.001, FDR=NULL, keep.posteriors=FALSE, num.threads=1, max.time=NULL, max.iter=NULL, checkpoint.after.iter=NULL, checkpoint.after.time=NULL, checkpoint.file=NULL, checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL, keep.densities=FALSE, verbosity=1) {
 
 	## Intercept user input
 	if (check.univariate.modellist(modellist)!=0) {
@@ -65,10 +65,10 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 	}
 	if (check.positive(eps)!=0) stop("argument 'eps' expects a positive numeric")
 	if (check.positive.integer(num.threads)!=0) stop("argument 'num.threads' expects a positive integer")
-	if (check.integer(max.time)!=0) stop("argument 'max.time' expects an integer")
-	if (check.integer(max.iter)!=0) stop("argument 'max.iter' expects an integer")
-	if (check.integer(checkpoint.after.iter)!=0) stop("argument 'checkpoint.after.iter' expects an integer")
-	if (check.integer(checkpoint.after.time)!=0) stop("argument 'checkpoint.after.time' expects an integer")
+	if (is.null(max.time)) { max.time <- -1 } else if (check.nonnegative.integer(max.time)!=0) { stop("argument 'max.time' expects a non-negative integer") }
+	if (is.null(max.iter)) { max.iter <- -1 } else if (check.nonnegative.integer(max.iter)!=0) { stop("argument 'max.iter' expects a non-negative integer") }
+	if (is.null(checkpoint.after.time)) { checkpoint.after.time <- -1 } else if (check.positive.integer(checkpoint.after.time)!=0) { stop("argument 'checkpoint.after.time' expects a positive integer") }
+	if (is.null(checkpoint.after.iter)) { checkpoint.after.iter <- -1 } else if (check.positive.integer(checkpoint.after.iter)!=0) { stop("argument 'checkpoint.after.iter' expects a positive integer") }
 	if (check.logical(checkpoint.overwrite)!=0) stop("argument 'checkpoint.overwrite' expects a logical (TRUE or FALSE)")
 	if (check.logical(keep.posteriors)!=0) stop("argument 'keep.posteriors' expects a logical (TRUE or FALSE)")
 	if (check.logical(keep.densities)!=0) stop("argument 'keep.densities' expects a logical (TRUE or FALSE)")
@@ -151,7 +151,7 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 	time.total <- 0
 	repeat{
 		# Determine runtime
-		if (max.iter >= 0) {
+		if (max.iter > 0) {
 			max.iter.temp <- min(checkpoint.after.iter, max.iter-iteration.total)
 		} else {
 			max.iter.temp <- checkpoint.after.iter
