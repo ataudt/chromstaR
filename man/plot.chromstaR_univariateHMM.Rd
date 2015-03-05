@@ -9,9 +9,10 @@
 \arguments{
 \item{x}{A \code{\link{chromstaR_univariateHMM}} object.}
 
-\item{type}{Type of the plot, one of \code{c('histogram', 'boxplot', 'normalTransformation')}. You can also specify the type with an integer number.
+\item{type}{Type of the plot, one of \code{c('histogram', 'karyogram', 'boxplot', 'normalTransformation')}. You can also specify the type with an integer number.
 \describe{
   \item{\code{histogram}}{A histogram of binned read counts with fitted mixture distribution.}
+  \item{\code{karyogram}}{A karyogram with binned read counts and peak calls. This uses the \pkg{\link{ggbio}} package and is very slow!}
   \item{\code{boxplot}}{A boxplot of read counts for the different states.}
   \item{\code{normalTransformation}}{A histogram of transformed read counts.}
 }}

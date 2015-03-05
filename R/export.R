@@ -129,6 +129,7 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 	nummod <- length(hmm.list)
 	filename <- paste0(filename,".wiggle.gz")
 	filename.gz <- gzfile(filename, 'w')
+	readcol <- paste(col2rgb(state.colors['reads']), collapse=',')
 
 	# Write first line to file
 	message('writing to file ',filename)
@@ -141,7 +142,7 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 		hmm.gr <- hmm.grl[[imod]]
 		priority <- 50 + 3*imod
 		binsize <- width(hmm.gr[1])
-		cat(paste0("track type=wiggle_0 name=\"read count for ",hmm$ID,"\" description=\"read count for ",hmm$ID,"\" visibility=full autoScale=on color=90,90,90 maxHeightPixels=100:50:20 graphType=bar priority=",priority,"\n"), file=filename.gz, append=TRUE)
+		cat(paste0('track type=wiggle_0 name="read count for ',hmm$ID,'" description="read count for ',hmm$ID,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
 		# Write read data
 		for (chrom in unique(hmm.gr$chromosome)) {
 			cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
@@ -227,7 +228,7 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 	numstates <- length(combstates2use)
 
 	## Collapse the calls
-	collapsed.calls <- as.data.frame(insertchr(multi.hmm$segments))[,c(7,2:3,6)]
+	collapsed.calls <- as.data.frame(insertchr(multi.hmm$segments))[,c('chromosome','start','end','state')]
 	# Select only desired states
 	mask <- rep(FALSE,nrow(collapsed.calls))
 	for (istate in combstates2use) {
@@ -260,9 +261,7 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 		}
 	} else {
 		# Generate the colors for each combinatorial state
-		colors <- colors()[grep(colors(), pattern="white|grey|gray|snow|aliceblue|azure", invert=T)]
-		step <- length(colors) %/% numstates
-		colors <- colors[seq(1,by=step,length=numstates)]
+		colors <- rainbow(numstates)
 		RGBs <- t(col2rgb(colors))
 		RGBs <- apply(RGBs,1,paste,collapse=",")
 		itemRgb <- RGBs[as.integer(factor(as.character(collapsed.calls$state)))]
@@ -307,6 +306,7 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 	filename <- paste0(filename,".wiggle.gz")
 	filename.gz <- gzfile(filename, 'w')
 	nummod <- length(multi.hmm$IDs)
+	readcol <- paste(col2rgb(state.colors['reads']), collapse=',')
 
 	## Write first line to file
 	message('writing to file ',filename)
@@ -318,7 +318,7 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 		ID <- multi.hmm$IDs[imod]
 		priority <- 50 + 3*imod
 		binsize <- width(multi.hmm$bins[1])
-		cat(paste0("track type=wiggle_0 name=\"read count for ",ID,"\" description=\"read count for ",ID,"\" visibility=full autoScale=on color=90,90,90 maxHeightPixels=100:50:20 graphType=bar priority=",priority,"\n"), file=filename.gz, append=TRUE)
+		cat(paste0('track type=wiggle_0 name="read count for ',ID,'" description="read count for ',ID,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
 		# Write read data
 		for (chrom in seqlevels(multi.hmm$bins)) {
 			if (!grepl('chr', chrom)) {
@@ -364,6 +364,17 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 #' @export
 exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts") {
 
+	## Load data
+	if (is.character(binned.data.list)) {
+		message('Loading binned.data from files ...', appendLF=F); ptm <- proc.time()
+		binfiles <- binned.data.list
+		binned.data.list <- list()
+		for (binfile in binfiles) {
+			binned.data.list[[binfile]] <- get(load(binfile))
+		}
+		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+	}
+
 	## Function definitions
 	insertchr <- function(hmm.gr) {
 		# Change chromosome names from '1' to 'chr1' if necessary
@@ -381,6 +392,7 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts") 
 	nummod <- length(binned.data.list)
 	filename <- paste0(filename,".wiggle.gz")
 	filename.gz <- gzfile(filename, 'w')
+	readcol <- paste(col2rgb(state.colors['reads']), collapse=',')
 
 	# Write first line to file
 	message('writing to file ',filename)
@@ -393,7 +405,7 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts") 
 		priority <- 50 + 3*imod
 		binsize <- width(b[1])
 		name <- names(binned.data.list)[imod]
-		cat(paste0("track type=wiggle_0 name=\"read count for ",name,"\" description=\"read count for ",name,"\" visibility=full autoScale=on color=90,90,90 maxHeightPixels=100:50:20 graphType=bar priority=",priority,"\n"), file=filename.gz, append=TRUE)
+		cat(paste0('track type=wiggle_0 name="read count for ',name,'" description="read count for ',name,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
 		# Write read data
 		for (chrom in unique(b$chromosome)) {
 			cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
@@ -402,6 +414,66 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts") 
 	}
 	close(filename.gz)
 	message('')
+}
+
+
+#====================================================
+# Export regions from GRanges
+#====================================================
+#' Export genome browser viewable files
+#'
+#' Export GRanges as genome browser viewable file
+#'
+#' Export regions from \code{\link{GRanges}} as a file which can be uploaded into a genome browser. Regions are exported in BED format (.bed.gz).
+#'
+#' @author Aaron Taudt
+#' @param gr A \code{\link{GRanges}} object.
+#' @param filename The name of the file that will be written. The ending ".bed.gz". Any existing file will be overwritten.
+#' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
+#' @export
+exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions") {
+
+	## Function definitions
+	insertchr <- function(hmm.gr) {
+		# Change chromosome names from '1' to 'chr1' if necessary
+		mask <- which(!grepl('chr', seqnames(hmm.gr)))
+		mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
+		mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
+		mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
+		return(hmm.gr)
+	}
+
+	## Transform to GRanges
+	gr <- insertchr(gr)
+
+	# Variables
+	filename <- paste0(filename,".bed.gz")
+	filename.gz <- gzfile(filename, 'w')
+
+	# Write first line to file
+	message('writing to file ',filename)
+	cat("", file=filename.gz)
+	
+	### Write every model to file ###
+	cat(paste0("track name=\"",trackname,"\" description=\"",trackname,"\" visibility=1 itemRgb=Off\n"), file=filename.gz, append=TRUE)
+	regions <- as.data.frame(gr)[c('chromosome','start','end','score')]
+	regions$score <- as.integer(regions$score)
+	regions$name <- paste0(trackname, 1:nrow(regions))
+	regions <- regions[c('chromosome','start','end','name','score')]
+	numsegments <- nrow(regions)
+	df <- cbind(regions, strand=rep(".",numsegments), thickStart=regions$start, thickEnd=regions$end)
+	# Convert from 1-based closed to 0-based half open
+	df$start <- df$start - 1
+	df$thickStart <- df$thickStart - 1
+	if (nrow(df) == 0) {
+		warning('No regions in input')
+	} else {
+		write.table(format(df, scientific=FALSE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
+	}
+
+	close(filename.gz)
+	message('')
+
 }
 
 

@@ -77,16 +77,14 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, averages=TRUE
 		## Redo segmentation
 		message("Making segmentation ...", appendLF=F); ptm <- proc.time()
 		df <- as.data.frame(model$bins)
-		ind.readcols <- which(grepl('^reads', names(df)))
-		ind.postcols <- which(grepl('^posteriors', names(df)))
+		ind.readcols <- grep('^reads', names(df))
+		ind.postcols <- grep('^posteriors', names(df))
+		ind.widthcol <- grep('width', names(df))
 		if (averages==TRUE) {
-			red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c(ind.readcols, ind.postcols), columns2drop=c('width')))
-			mean.reads <- matrix(unlist(red.df[,grepl('^mean.reads',names(red.df))]), ncol=length(model$IDs))
-			colnames(mean.reads) <- colnames(model$IDs)
+			red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=ind.postcols, columns2drop=c(ind.readcols, ind.widthcol)))
 			mean.posteriors <- matrix(unlist(red.df[,grepl('^mean.posteriors',names(red.df))]), ncol=length(model$IDs))
-			colnames(mean.posteriors) <- colnames(model$IDs)
+			colnames(mean.posteriors) <- model$IDs
 			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'])
-			red.gr$mean.reads <- mean.reads
 			red.gr$mean.posteriors <- mean.posteriors
 		} else {
 			red.df <- suppressMessages(collapseBins(df[,-c(4, ind.readcols, ind.postcols)], column2collapseBy='state'))

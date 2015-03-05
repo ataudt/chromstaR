@@ -24,9 +24,10 @@ plot.GRanges <- function(x, chromosome=NULL, start=NULL, end=NULL, ...) {
 #' Make different types of plots for \code{\link{chromstaR_univariateHMM}} objects.
 #'
 #' @param x A \code{\link{chromstaR_univariateHMM}} object.
-#' @param type Type of the plot, one of \code{c('histogram', 'boxplot', 'normalTransformation')}. You can also specify the type with an integer number.
+#' @param type Type of the plot, one of \code{c('histogram', 'karyogram', 'boxplot', 'normalTransformation')}. You can also specify the type with an integer number.
 #' \describe{
 #'   \item{\code{histogram}}{A histogram of binned read counts with fitted mixture distribution.}
+#'   \item{\code{karyogram}}{A karyogram with binned read counts and peak calls. This uses the \pkg{\link{ggbio}} package and is very slow!}
 #'   \item{\code{boxplot}}{A boxplot of read counts for the different states.}
 #'   \item{\code{normalTransformation}}{A histogram of transformed read counts.}
 #' }
@@ -42,9 +43,11 @@ plot.chromstaR_univariateHMM <- function(x, type='histogram', ...) {
 	
 	if (type == 'histogram' | type==1) {
 		plotUnivariateHistogram(x, ...)
-	} else if (type == 'boxplot' | type==2) {
+	} else if (type == 'karyogram' | type==2) {
+		plotUnivariateKaryogram(x)
+	} else if (type == 'boxplot' | type==3) {
 		plotUnivariateBoxplot(x, ...)
-	} else if (type == 'normalTransformation' | type==3) {
+	} else if (type == 'normalTransformation' | type==4) {
 		plotUnivariateNormalTransformation(x, ...)
 	}
 
@@ -271,6 +274,35 @@ plotUnivariateHistogram <- function(model, state=NULL, chromosome=NULL, start=NU
 		
 	return(ggplt)
 
+}
+
+# ============================================================
+# Plot a karyogram with reads and univariate calls
+# ============================================================
+#' Plot a karyogram with read counts and univariate peak calls
+#'
+#' Plot a karyogram with read counts and peak calls from a \code{\link{chromstaR_univariateHMM}} object.
+#'
+#' @author Aaron Taudt
+#' @param mode A \code{\link{chromstaR_univariateHMM}} object or file that contains such an object.
+#' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
+#' @export
+plotUnivariateKaryogram <- function(model) {
+
+	## Check user input
+	if (check.univariate.model(model)!=0) {
+		model <- get(load(model))
+		if (check.univariate.model(model)!=0) stop("argument 'model' expects a univariate HMM or a file that contains a univariate HMM")
+	}
+
+	# Plot the peaks
+	ggplt <- ggbio::autoplot(model$segments[model$segments$state=='modified'], layout='karyogram', color=state.colors['modified'])
+
+	# Plot the read counts
+	ggplt <- ggplt + ggbio::layout_karyogram(model$bins, aes_string(x='start', y='reads'), ylim=c(10,40), geom='line', color=state.colors['reads'])
+	ggplt <- ggplt + theme(axis.text.y=element_blank(), panel.background=element_blank())
+
+	return(ggplt)
 }
 
 # ============================================================

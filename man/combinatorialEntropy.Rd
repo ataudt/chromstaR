@@ -12,7 +12,7 @@ combinatorialEntropy(multi.hmm.list, window.size.bp = NULL,
 
 \item{window.size.bp}{Window size in base-pairs that will be used to average the results.}
 
-\item{direction.of.adding}{One of \code{c('between.hmms','inside.hmms')}. Choose 'between.hmms' if your input objects contain combinatorial states from a differential analysis. Choose 'inside.hmms' if your input objects contain combinatorial states from different modifications.}
+\item{direction.of.adding}{Calculation of the combinatorial entropy only makes sense between different modifications. Choose 'between.hmms' if you have one modification per HMM, which is the case in a differential analysis. Choose 'inside.hmms' if you have multiple modifications per HMM, which is the case in a combinatorial analysis. In this case it is up to the user to make sure that the \code{IDs} between HMMs are identical.}
 }
 \description{
 Calculate the combinatorial entropy along the genome for a set of \code{\link{chromstaR_multivariateHMM}}s.

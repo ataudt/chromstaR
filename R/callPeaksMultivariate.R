@@ -209,13 +209,9 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 				message("Transforming posteriors to `per sample` representation ...", appendLF=F); ptm <- proc.time()
 				hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
 				colnames(hmm$posteriors) <- paste0("P(",hmm$comb.states,")")
-				post.per.track <- matrix(0, ncol=hmm$num.modifications, nrow=hmm$num.bins)
-				colnames(post.per.track) <- result$IDs
 				binstates <- dec2bin(hmm$comb.states, ndigits=hmm$num.modifications)
-				for (icol in 1:ncol(post.per.track)) {
-					binstate.matrix <- matrix(rep(binstates[icol,], hmm$num.bins), nrow=hmm$num.bins, byrow=T)
-					post.per.track <- post.per.track + binstate.matrix * hmm$posteriors[,icol]
-				}
+				post.per.track <- hmm$posteriors %*% binstates
+				colnames(post.per.track) <- result$IDs
 				result$bins$posteriors <- post.per.track
 				time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 			}
@@ -233,15 +229,13 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 		## Segmentation
 			message("Making segmentation ...", appendLF=F); ptm <- proc.time()
 			df <- as.data.frame(result$bins)
-			ind.readcols <- which(grepl('^reads', names(df)))
-			ind.postcols <- which(grepl('^posteriors', names(df)))
-			red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c(ind.readcols, ind.postcols), columns2drop=c('width')))
-			mean.reads <- matrix(unlist(red.df[,grepl('^mean.reads',names(red.df))]), ncol=length(result$IDs))
-			colnames(mean.reads) <- colnames(result$IDs)
+			ind.readcols <- grep('^reads', names(df))
+			ind.postcols <- grep('^posteriors', names(df))
+			ind.widthcol <- grep('width', names(df))
+			red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=ind.postcols, columns2drop=c(ind.readcols, ind.widthcol)))
 			mean.posteriors <- matrix(unlist(red.df[,grepl('^mean.posteriors',names(red.df))]), ncol=length(result$IDs))
-			colnames(mean.posteriors) <- colnames(result$IDs)
+			colnames(mean.posteriors) <- result$IDs
 			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'])
-			red.gr$mean.reads <- mean.reads
 			red.gr$mean.posteriors <- mean.posteriors
 			result$segments <- red.gr
 			seqlengths(result$segments) <- seqlengths(result$bins)

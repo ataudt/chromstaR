@@ -43,6 +43,10 @@ dec2bin = function(dec, ndigits=NULL) {
 #' @param bin A matrix with only 0 and 1 (or TRUE and FALSE) as entries. One combinatorial state per row.
 #' @export
 bin2dec = function(bin) {
+	if (!is.matrix(bin)) {
+		bin <- matrix(bin, nrow=1)
+		warning("Argument 'bin' is not a matrix. Interpreting 'bin' as matrix with one row.")
+	}
 	dec = rep(0,nrow(bin))
 	for (i1 in 1:ncol(bin)) {
 		dec = dec + 2^(ncol(bin)-i1) * bin[,i1]

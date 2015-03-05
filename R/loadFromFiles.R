@@ -19,7 +19,7 @@
 loadHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 
 	if (is(hmm.list, class.univariate.hmm)) {
-		return(hmm.list)
+		return(list(hmm.list))
 	} else if (is.character(hmm.list)) {
 		message("loading univariate HMMs from files ...", appendLF=F); ptm <- proc.time()
 		mlist <- list()
@@ -74,7 +74,7 @@ loadHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 loadMultiHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 
 	if (is(hmm.list, class.multivariate.hmm)) {
-		return(hmm.list)
+		return(list(hmm.list))
 	} else if (is.character(hmm.list)) {
 		message("loading multivariate HMMs from files ...", appendLF=F); ptm <- proc.time()
 		mlist <- list()
