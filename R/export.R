@@ -11,6 +11,7 @@
 #' @param hmm.list A list of \code{\link{chromstaR_univariateHMM}} objects or files that contain such objects.
 #' @param filename The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for peak-calls or ".wiggle.gz" for read counts. Any existing file will be overwritten.
 #' @param what A character vector specifying what will be exported. Supported are \code{c('peaks', 'reads')}.
+#' @param trackline A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @seealso \code{\link{exportBinnedData}}, \code{\link{exportMultivariate}}
 #' @examples
 #'### Univariate peak calling ###
@@ -30,19 +31,19 @@
 #'## Export the binned read counts and peaks
 #'\donttest{exportUnivariates(uni.HMMs, filename='chromstaR-example_univariate.HMMs', what=c('reads','peaks'))}
 #' @export
-exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'reads')) {
+exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'reads'), trackline=TRUE) {
 	if ('peaks' %in% what) {
-		exportUnivariatePeaks(hmm.list, filename)
+		exportUnivariatePeaks(hmm.list, filename, trackline=trackline)
 	}
 	if ('reads' %in% what) {
-		exportUnivariateReadCounts(hmm.list, filename)
+		exportUnivariateReadCounts(hmm.list, filename, trackline=trackline)
 	}
 }
 
 #----------------------------------------------------
 # Export peak-calls from univariate HMMs
 #----------------------------------------------------
-exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCalls") {
+exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCalls", trackline=TRUE) {
 
 	## Function definitions
 	insertchr <- function(hmm.gr) {
@@ -82,11 +83,13 @@ exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCa
 		hmm <- hmm.list[[imod]]
 		hmm.gr <- hmm.grl[[imod]]
 		priority <- 51 + 3*imod
-		cat(paste0("track name=\"univariate calls for ",hmm$ID,"\" description=\"univariate calls for ",hmm$ID,"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
-		collapsed.calls <- as.data.frame(hmm.gr)[c('chromosome','start','end','state')]
+		if (trackline) {
+			cat(paste0("track name=\"univariate calls for ",hmm$ID,"\" description=\"univariate calls for ",hmm$ID,"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
+		}
+		collapsed.calls <- as.data.frame(hmm.gr)[c('chromosome','start','end','state','mean.posterior.modified')]
 		itemRgb <- RGBs[as.character(collapsed.calls$state)]
 		numsegments <- nrow(collapsed.calls)
-		df <- cbind(collapsed.calls, score=rep(0,numsegments), strand=rep(".",numsegments), thickStart=collapsed.calls$start, thickEnd=collapsed.calls$end, itemRgb=itemRgb)
+		df <- cbind(collapsed.calls, strand=rep(".",numsegments), thickStart=collapsed.calls$start, thickEnd=collapsed.calls$end, itemRgb=itemRgb)
 		# Convert from 1-based closed to 0-based half open
 		df$start <- df$start - 1
 		df$thickStart <- df$thickStart - 1
@@ -106,7 +109,7 @@ exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCa
 #----------------------------------------------------
 # Export read counts from univariate HMMs
 #----------------------------------------------------
-exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateReadCounts") {
+exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateReadCounts", trackline=TRUE) {
 
 	## Function definitions
 	insertchr <- function(hmm.gr) {
@@ -142,7 +145,9 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 		hmm.gr <- hmm.grl[[imod]]
 		priority <- 50 + 3*imod
 		binsize <- width(hmm.gr[1])
-		cat(paste0('track type=wiggle_0 name="read count for ',hmm$ID,'" description="read count for ',hmm$ID,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
+		if (trackline) {
+			cat(paste0('track type=wiggle_0 name="read count for ',hmm$ID,'" description="read count for ',hmm$ID,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
+		}
 		# Write read data
 		for (chrom in unique(hmm.gr$chromosome)) {
 			cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
@@ -169,6 +174,7 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 #' @param what A character vector specifying what will be exported. Supported are \code{c('combstates', 'peaks', 'reads')}.
 #' @param exclude.states A vector of combinatorial states that will be excluded from export.
 #' @param include.states A vector of combinatorial states that will be exported. If specified, \code{exclude.states} is ignored.
+#' @param trackline A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportBinnedData}}
 #' @examples
 #'### Multivariate peak calling ###
@@ -181,22 +187,22 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 #'                   what=c('reads','peaks'))
 #'}
 #' @export
-exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks', 'reads'), exclude.states=0, include.states=NULL) {
+exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks', 'reads'), exclude.states=0, include.states=NULL, trackline=TRUE) {
 	if ('combstates' %in% what) {
-		exportMultivariateCalls(multi.hmm, filename, separate.tracks=FALSE, exclude.states, include.states)
+		exportMultivariateCalls(multi.hmm, filename, separate.tracks=FALSE, exclude.states, include.states, trackline=trackline)
 	}
 	if ('peaks' %in% what) {
-		exportMultivariateCalls(multi.hmm, filename, separate.tracks=TRUE, exclude.states, include.states)
+		exportMultivariateCalls(multi.hmm, filename, separate.tracks=TRUE, exclude.states, include.states, trackline=trackline)
 	}
 	if ('reads' %in% what) {
-		exportMultivariateReadCounts(multi.hmm, filename)
+		exportMultivariateReadCounts(multi.hmm, filename, trackline=trackline)
 	}
 }
 
 #----------------------------------------------------
 # Export combinatorial states or peak-calls from multivariate HMMs
 #----------------------------------------------------
-exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateCalls", separate.tracks=TRUE, exclude.states=0, include.states=NULL) {
+exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateCalls", separate.tracks=TRUE, exclude.states=0, include.states=NULL, trackline=TRUE) {
 
 	if (class(multi.hmm)!=class.multivariate.hmm) {
 		multi.hmm <- get(load(multi.hmm))
@@ -256,7 +262,9 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 			RGB <- t(col2rgb(state.colors['modified']))
 			RGB <- apply(RGB,1,paste,collapse=",")
 			df$itemRgb <- rep(RGB, numsegments)
-			cat(paste0("track name=\"multivariate calls for ",colnames(bin)[icol],"\" description=\"multivariate calls for ",colnames(bin)[icol],"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
+			if (trackline) {
+				cat(paste0("track name=\"multivariate calls for ",colnames(bin)[icol],"\" description=\"multivariate calls for ",colnames(bin)[icol],"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
+			}
 			write.table(format(df, scientific=FALSE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
 		}
 	} else {
@@ -272,7 +280,9 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 		# Convert from 1-based closed to 0-based half open
 		df$start <- df$start - 1
 		df$thickStart <- df$thickStart - 1
-		cat(paste0("track name=\"combinatorial state\" description=\"multivariate combinatorial states\" visibility=1 itemRgb=On priority=49\n"), file=filename.gz, append=TRUE)
+		if (trackline) {
+			cat(paste0("track name=\"combinatorial state\" description=\"multivariate combinatorial states\" visibility=1 itemRgb=On priority=49\n"), file=filename.gz, append=TRUE)
+		}
 		write.table(format(df, scientific=FALSE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
 	}
 	close(filename.gz)
@@ -283,7 +293,7 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 #----------------------------------------------------
 # Export read counts from multivariate HMMs
 #----------------------------------------------------
-exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivariateReadCounts") {
+exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivariateReadCounts", trackline=TRUE) {
 
 	if (class(multi.hmm)!=class.multivariate.hmm) {
 		multi.hmm <- get(load(multi.hmm))
@@ -318,7 +328,9 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 		ID <- multi.hmm$IDs[imod]
 		priority <- 50 + 3*imod
 		binsize <- width(multi.hmm$bins[1])
-		cat(paste0('track type=wiggle_0 name="read count for ',ID,'" description="read count for ',ID,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
+		if (trackline) {
+			cat(paste0('track type=wiggle_0 name="read count for ',ID,'" description="read count for ',ID,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
+		}
 		# Write read data
 		for (chrom in seqlevels(multi.hmm$bins)) {
 			if (!grepl('chr', chrom)) {
@@ -347,6 +359,7 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 #' @author Aaron Taudt
 #' @param binned.data.list A list of \code{\link{binned.data}} objects or files that contain such objects.
 #' @param filename The name of the file that will be written. The ending ".wiggle.gz" for read counts will be appended. Any existing file will be overwritten.
+#' @param trackline A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
 #' @examples
 #'## Get example BED-files with ChIP-seq reads for H3K36me3
@@ -362,7 +375,7 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 #'## Export the binned read counts
 #'\donttest{exportBinnedData(binned.data.list, filename='chromstaR-example_binned.data')}
 #' @export
-exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts") {
+exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", trackline=TRUE) {
 
 	## Load data
 	if (is.character(binned.data.list)) {
@@ -405,7 +418,9 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts") 
 		priority <- 50 + 3*imod
 		binsize <- width(b[1])
 		name <- names(binned.data.list)[imod]
-		cat(paste0('track type=wiggle_0 name="read count for ',name,'" description="read count for ',name,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
+		if (trackline) {
+			cat(paste0('track type=wiggle_0 name="read count for ',name,'" description="read count for ',name,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
+		}
 		# Write read data
 		for (chrom in unique(b$chromosome)) {
 			cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
@@ -429,9 +444,10 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts") 
 #' @author Aaron Taudt
 #' @param gr A \code{\link{GRanges}} object.
 #' @param filename The name of the file that will be written. The ending ".bed.gz". Any existing file will be overwritten.
+#' @param trackline A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
 #' @export
-exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions") {
+exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", trackline=TRUE) {
 
 	## Function definitions
 	insertchr <- function(hmm.gr) {
@@ -455,7 +471,12 @@ exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions") {
 	cat("", file=filename.gz)
 	
 	### Write every model to file ###
-	cat(paste0("track name=\"",trackname,"\" description=\"",trackname,"\" visibility=1 itemRgb=Off\n"), file=filename.gz, append=TRUE)
+	if (trackline) {
+		cat(paste0("track name=\"",trackname,"\" description=\"",trackname,"\" visibility=1 itemRgb=Off\n"), file=filename.gz, append=TRUE)
+	}
+	if (is.null(gr$score)) {
+		gr$score <- 0
+	}
 	regions <- as.data.frame(gr)[c('chromosome','start','end','score')]
 	regions$score <- as.integer(regions$score)
 	regions$name <- paste0(trackname, 1:nrow(regions))

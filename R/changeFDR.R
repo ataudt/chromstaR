@@ -8,7 +8,7 @@
 #' @param model A \code{\link{chromstaR_univariateHMM}} or \code{\link{chromstaR_multivariateHMM}} object with posteriors.
 #' @param FDR False discovery rate.
 #' @param separate.zeroinflation Only for \code{\link{chromstaR_univariateHMM}} objects: If set to TRUE, state 'zero-inflation' will be treated separately, otherwise it will be merged with state 'unmodified'.
-#' @param averages Whether or not averaged read counts and posteriors should appear in the segmentation.
+#' @param averages Whether or not averaged posteriors should appear in the segmentation.
 #' @return The input object is returned with adjusted peak calls.
 #' @examples
 #'## Get an example BED-file with ChIP-seq reads for H3K36me3 in brain tissue
