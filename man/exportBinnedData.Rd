@@ -4,12 +4,15 @@
 \alias{exportBinnedData}
 \title{Export genome browser viewable files}
 \usage{
-exportBinnedData(binned.data.list, filename = "chromstaR_ReadCounts")
+exportBinnedData(binned.data.list, filename = "chromstaR_ReadCounts",
+  trackline = TRUE)
 }
 \arguments{
 \item{binned.data.list}{A list of \code{\link{binned.data}} objects or files that contain such objects.}
 
 \item{filename}{The name of the file that will be written. The ending ".wiggle.gz" for read counts will be appended. Any existing file will be overwritten.}
+
+\item{trackline}{A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).}
 }
 \description{
 Export read counts as genome browser viewable file

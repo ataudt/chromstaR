@@ -4,12 +4,15 @@
 \alias{exportGRanges}
 \title{Export genome browser viewable files}
 \usage{
-exportGRanges(gr, trackname, filename = "chromstaR_GRanges_regions")
+exportGRanges(gr, trackname, filename = "chromstaR_GRanges_regions",
+  trackline = TRUE)
 }
 \arguments{
 \item{gr}{A \code{\link{GRanges}} object.}
 
 \item{filename}{The name of the file that will be written. The ending ".bed.gz". Any existing file will be overwritten.}
+
+\item{trackline}{A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).}
 }
 \description{
 Export GRanges as genome browser viewable file

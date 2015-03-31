@@ -5,6 +5,20 @@ NULL
 # =================================================================
 # Define plotting methods for the generic
 # =================================================================
+#' Plotting function for saved \pkg{\link{chromstaR}} objects
+#'
+#' Convenience function that loads and plots a \pkg{\link{chromstaR}} object in one step.
+#'
+#' @param x A filename that contains either \code{\link{binned.data}}, a \code{\link{chromstaR_univariateHMM}} or a \code{\link{chromstaR_multivariateHMM}}.
+#' @param ... Additional arguments.
+#' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
+#' @method plot character
+#' @export
+plot.character <- function(x, ...) {
+	x <- get(load(x))
+	plot(x, ...)
+}
+
 #' Plotting function for binned read counts
 #'
 #' Make plots for binned read counts from \code{\link{binned.data}}
@@ -15,8 +29,8 @@ NULL
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
 #' @method plot GRanges
 #' @export
-plot.GRanges <- function(x, chromosome=NULL, start=NULL, end=NULL, ...) {
-	plotBinnedDataHistogram(x, chromosome=NULL, start=NULL, end=NULL, ...)
+plot.GRanges <- function(x, chromosomes=NULL, start=NULL, end=NULL, ...) {
+	plotBinnedDataHistogram(x, chromosomes=NULL, start=NULL, end=NULL, ...)
 }
 
 #' Plotting function for \code{\link{chromstaR_univariateHMM}} objects
@@ -34,7 +48,7 @@ plot.GRanges <- function(x, chromosome=NULL, start=NULL, end=NULL, ...) {
 #' @param ... Additional arguments for the different plot types.
 #' \describe{
 #'   \item{\code{state}}{Plot the \code{histogram}, \code{boxplot} or \code{normalTransformation} only for the specified state. One of \code{c('unmodified','modified')}.}
-#'   \item{\code{chromosome,start,end}}{Plot the \code{histogram} only for the specified chromosome, start and end position.}
+#'   \item{\code{chromosomes,start,end}}{Plot the \code{histogram} only for the specified chromosomes, start and end position.}
 #' }
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
 #' @method plot chromstaR_univariateHMM
@@ -85,13 +99,16 @@ plot.chromstaR_multivariateHMM <- function(x, type='transitionMatrix', ...) {
 #' Plot a histogram of binned read counts from \code{\link{binned.data}}
 #'
 #' @param binned.data A \code{\link{binned.data}} object containing binned read counts in meta-column 'reads'.
-#' @param chromosome,start,end Plot the histogram only for the specified chromosome, start and end position.
+#' @param chromosomes,start,end Plot the histogram only for the specified chromosomes, start and end position.
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
-plotBinnedDataHistogram <- function(binned.data, chromosome=NULL, start=NULL, end=NULL) {
+plotBinnedDataHistogram <- function(binned.data, chromosomes=NULL, start=NULL, end=NULL) {
 
 	# -----------------------------------------
 	# Get right x limit
 	get_rightxlim <- function(histdata, reads) {
+		if (!any(!reads==0)) {
+			return(rightxlim=10)
+		}
 		rightxlim1 <- median(reads[reads>0])*7
 		breaks <- histdata$breaks[1:length(histdata$counts)]
 		counts <- histdata$counts
@@ -103,11 +120,11 @@ plotBinnedDataHistogram <- function(binned.data, chromosome=NULL, start=NULL, en
 	# Select the rows to plot
 	selectmask <- rep(TRUE,length(binned.data))
 	numchrom <- length(table(seqnames(binned.data)))
-	if (!is.null(chromosome)) {
-		if (! chromosome %in% levels(seqnames(binned.data))) {
-			stop(chromosome," can't be found in the binned data.")
+	if (!is.null(chromosomes)) {
+		if (any(! chromosomes %in% levels(seqnames(binned.data)))) {
+			stop(chromosomes[! chromosomes %in% levels(seqnames(binned.data))]," can't be found in the binned data.")
 		}
-		selectchrom <- seqnames(binned.data) == chromosome
+		selectchrom <- seqnames(binned.data) %in% chromosomes
 		selectmask <- selectmask & selectchrom
 		numchrom <- 1
 	}
@@ -171,9 +188,9 @@ plotMultivariateHistograms <- function(multi.hmm) {
 #'
 #' @param model A \code{\link{chromstaR_univariateHMM}} object.
 #' @param state Plot the histogram only for the specified state. One of \code{c('unmodified','modified')}.
-#' @param chromosome,start,end Plot the histogram only for the specified chromosome, start and end position.
+#' @param chromosomes,start,end Plot the histogram only for the specified chromosomes, start and end position.
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
-plotUnivariateHistogram <- function(model, state=NULL, chromosome=NULL, start=NULL, end=NULL) {
+plotUnivariateHistogram <- function(model, state=NULL, chromosomes=NULL, start=NULL, end=NULL) {
 
 	## Check user input
 	if (check.univariate.model(model)!=0) {
@@ -184,6 +201,9 @@ plotUnivariateHistogram <- function(model, state=NULL, chromosome=NULL, start=NU
 	# -----------------------------------------
 	# Get right x limit
 	get_rightxlim <- function(histdata, reads) {
+		if (!any(!reads==0)) {
+			return(rightxlim=10)
+		}
 		rightxlim1 <- median(reads[reads>0])*7
 		breaks <- histdata$breaks[1:length(histdata$counts)]
 		counts <- histdata$counts
@@ -194,11 +214,11 @@ plotUnivariateHistogram <- function(model, state=NULL, chromosome=NULL, start=NU
 
 	# Select the rows to plot
 	selectmask <- rep(TRUE,length(model$bins))
-	if (!is.null(chromosome)) {
-		if (! chromosome %in% levels(seqnames(model$bins))) {
-			stop(chromosome," can't be found in the model coordinates.")
+	if (!is.null(chromosomes)) {
+		if (any(! chromosomes %in% levels(seqnames(model$bins)))) {
+			stop(chromosomes[! chromosomes %in% levels(seqnames(model$bins))]," can't be found in the binned data.")
 		}
-		selectchrom <- as.logical(seqnames(model$bins) == chromosome)
+		selectchrom <- as.logical(seqnames(model$bins) %in% chromosomes)
 		selectmask <- selectmask & selectchrom
 		if (!is.null(start)) {
 			selectstart <- as.logical(start(ranges(model$bins)) >= start)

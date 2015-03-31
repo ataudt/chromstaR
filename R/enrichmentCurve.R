@@ -1,3 +1,168 @@
+#' Enrichment of (combinatorial) states for genomic annotations
+#'
+#' The function calculates the enrichment of a genomic feature with peaks or combinatorial states. Input is a \code{\link{chromstaR_multivariateHMM}} object (containing the peak calls and combinatorial states) and a \code{\link{GRanges}} object containing the annotation of interest (e.g. transcription start sites or genes).
+#'
+#' @author Aaron Taudt
+#' @param hmm A \code{\link{chromstaR_multivariateHMM}} object.
+#' @param annotation A \code{\link{GRanges}} object with the annotation of interest.
+#' @param bp.around.annotation An integer specifying the number of basepairs up- and downstream of the annotation for which the enrichment will be calculated.
+#' @param region A combination of \code{c('start','inside','end')} specifying the region of the annotation for which the enrichment will be calculated.
+#' @return A \code{list()} containing \code{data.frame()}s for enrichment of combinatorial states, binary states and posterior probabilities at the start, end and inside of the annotation.
+#' @export
+enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=c('start','inside','end')) {
+
+	## Variables
+	binsize <- width(hmm$bins)[1]
+	lag <- round(bp.around.annotation/binsize)
+	eCurve <- list()
+	eCurve$combstates <- list()
+	eCurve$binstates <- list()
+	eCurve$posteriors <- list()
+	eCurve$reads <- list()
+
+	## Get combinatorial and binary states
+	combstates <- hmm$bins$state
+	binstates <- dec2bin(hmm$bins$state, colnames=hmm$IDs)
+
+	### Calculationg enrichment inside of annotation ###
+	if ('inside' %in% region) {
+		message("Enrichment inside of annotations")
+
+		# Get bins that overlap annotation
+		ind <- findOverlaps(hmm$bins, annotation)
+		bins.per.annotation <- table(subjectHits(ind))	# Table is sorted!
+		annotation$num.bins.spanning <- rep(0, length(annotation))
+		annotation$num.bins.spanning[as.numeric(names(bins.per.annotation))] <- bins.per.annotation
+		strand.per.annotation <- S4Vectors::as.factor(strand(annotation[as.numeric(names(bins.per.annotation))]))
+		names(strand.per.annotation) <- names(bins.per.annotation)
+		
+		# States, posteriors and strands per bin-that-overlaps-an-annotation
+		anno.binstates <- binstates[queryHits(ind),]
+		anno.combstates <- combstates[queryHits(ind)]
+		anno.post <- hmm$bins$posteriors[queryHits(ind),]
+		colnames(anno.post) <- NULL
+		anno.reads <- hmm$bins$reads[queryHits(ind),]
+		colnames(anno.reads) <- NULL
+		anno.strands <- strand(annotation)[subjectHits(ind)]
+
+		# Relative coordinate of every bin (TSS=0, TTS=1)
+		relcoord <- list()
+		for (i1 in 1:length(bins.per.annotation)) {
+			if (strand.per.annotation[i1]=='+' | strand.per.annotation[i1]=='*') {
+				relcoord[[length(relcoord)+1]] <- (1:bins.per.annotation[i1] - 1) / (bins.per.annotation[i1]-1)
+			} else if (strand.per.annotation[i1]=='-') {
+				relcoord[[length(relcoord)+1]] <- rev( (1:bins.per.annotation[i1] - 1) / (bins.per.annotation[i1]-1) )
+			}
+		}
+		relcoord <- unlist(relcoord)
+
+		# Collect in data.frame
+		anno.df <- data.frame(as.data.frame(ind), strand=anno.strands, binstate=anno.binstates, post=anno.post, reads=anno.reads, combstate=anno.combstates)
+		# Reorder to add stuff that was calculated from sorted table
+		anno.df <- cbind(anno.df[order(anno.df$subjectHits),], relcoord=relcoord)
+		# Annotations that only fall into 1 bin need to get both interval 0 (start) and 1 (end)
+		temp <- anno.df[is.nan(anno.df$relcoord),]
+		anno.df <- anno.df[!is.nan(anno.df$relcoord),]
+		anno.df <- rbind(anno.df, temp)
+		anno.df$relcoord[is.nan(anno.df$relcoord)] <- 0
+		anno.df <- rbind(anno.df, temp)
+		anno.df$relcoord[is.nan(anno.df$relcoord)] <- 1
+
+		# Interval
+		intervals <- sort(c(-0.1, seq(from=1e-9, to=1, length=11), 1.1))
+		intervals <- sort(seq(from=0, to=1, length=101))
+		anno.df$interval <- intervals[findInterval(anno.df$relcoord, intervals)]
+
+		# Mean over intervals
+		binstates.inside <- matrix(NA, nrow=length(intervals), ncol=ncol(anno.binstates), dimnames=list(interval=intervals, track=hmm$IDs))
+		combstates.inside <- matrix(NA, nrow=length(intervals), ncol=length(levels(anno.df$combstate)), dimnames=list(interval=intervals, state=levels(anno.df$combstate)))
+		posteriors.inside <- matrix(NA, nrow=length(intervals), ncol=ncol(anno.binstates), dimnames=list(interval=intervals, track=hmm$IDs))
+		reads.inside <- matrix(NA, nrow=length(intervals), ncol=ncol(anno.binstates), dimnames=list(interval=intervals, track=hmm$IDs))
+		for (interval in intervals) {
+			i1 <- which(interval==intervals)
+			mask <- anno.df$interval==interval
+			binstates.inside[i1,] <- colMeans(anno.df[,grepl('binstate',names(anno.df))][mask,], na.rm=T)
+			posteriors.inside[i1,] <- colMeans(anno.df[,grepl('post',names(anno.df))][mask,], na.rm=T)
+			reads.inside[i1,] <- colMeans(anno.df[,grepl('reads',names(anno.df))][mask,], na.rm=T)
+			combstates.inside[i1,] <- table(anno.df[grepl('combstate',names(anno.df))][mask,])
+		}
+
+		rownames(combstates.inside) <- as.numeric(rownames(combstates.inside)) * binsize
+		rownames(binstates.inside) <- as.numeric(rownames(binstates.inside)) * binsize
+		rownames(posteriors.inside) <- as.numeric(rownames(posteriors.inside)) * binsize
+		rownames(reads.inside) <- as.numeric(rownames(reads.inside)) * binsize
+		eCurve$combstates$inside <- combstates.inside
+		eCurve$binstates$inside <- binstates.inside
+		eCurve$posteriors$inside <- posteriors.inside
+		eCurve$reads$inside <- reads.inside
+	}
+	
+	### 10000 bp before and after annotation ###
+	if ('start' %in% region) {
+		message("Enrichment ",bp.around.annotation,"bp before annotations")
+		# Get bins that overlap the start of annotation
+		index.start.plus <- findOverlaps(annotation[strand(annotation)=='+' | strand(annotation)=='*'], hmm$bins, select="first")
+		index.start.minus <- findOverlaps(annotation[strand(annotation)=='-'], hmm$bins, select="last")
+		index.start.plus <- index.start.plus[!is.na(index.start.plus)]
+		index.start.minus <- index.start.minus[!is.na(index.start.minus)]
+		# Occurrences at every bin position relative to feature
+		binstates.start <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
+		combstates.start <- array(dim=c(length(-lag:lag), length(levels(hmm$bins$state))), dimnames=list(lag=-lag:lag, state=levels(hmm$bins$state)))
+		posteriors.start <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
+		reads.start <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
+		for (ilag in -lag:lag) {
+	# 		message("lag = ",ilag)
+			index <- c(index.start.plus+ilag, index.start.minus-ilag)
+			index <- index[index>0 & index<=nrow(binstates)]
+			binstates.start[as.character(ilag),] <- colMeans(binstates[index,])
+			combstates.start[as.character(ilag),] <- table(combstates[index])
+			posteriors.start[as.character(ilag),] <- colMeans(hmm$bins$posteriors[index,])
+			reads.start[as.character(ilag),] <- colMeans(hmm$bins$reads[index,])
+		}
+		rownames(combstates.start) <- as.numeric(rownames(combstates.start)) * binsize
+		rownames(binstates.start) <- as.numeric(rownames(binstates.start)) * binsize
+		rownames(posteriors.start) <- as.numeric(rownames(posteriors.start)) * binsize
+		rownames(reads.start) <- as.numeric(rownames(reads.start)) * binsize
+		eCurve$combstates$start <- combstates.start
+		eCurve$binstates$start <- binstates.start
+		eCurve$posteriors$start <- posteriors.start
+		eCurve$reads$start <- reads.start
+	}
+	if ('end' %in% region) {
+		message("Enrichment ",bp.around.annotation,"bp after annotations")
+		# Get bins that overlap the end of annotation
+		index.end.plus <- findOverlaps(annotation[strand(annotation)=='+' | strand(annotation)=='*'], hmm$bins, select="last")
+		index.end.minus <- findOverlaps(annotation[strand(annotation)=='-'], hmm$bins, select="first")
+		index.end.plus <- index.end.plus[!is.na(index.end.plus)]
+		index.end.minus <- index.end.minus[!is.na(index.end.minus)]
+		# Occurrences at every bin position relative to feature
+		binstates.end <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
+		combstates.end <- array(dim=c(length(-lag:lag), length(levels(hmm$bins$state))), dimnames=list(lag=-lag:lag, state=levels(hmm$bins$state)))
+		posteriors.end <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
+		reads.end <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
+		for (ilag in -lag:lag) {
+	# 		message("lag = ",ilag)
+			index <- c(index.end.plus+ilag, index.end.minus-ilag)
+			index <- index[index>0 & index<=nrow(binstates)]
+			binstates.end[as.character(ilag),] <- colMeans(binstates[index,])
+			combstates.end[as.character(ilag),] <- table(combstates[index])
+			posteriors.end[as.character(ilag),] <- colMeans(hmm$bins$posteriors[index,])
+			reads.end[as.character(ilag),] <- colMeans(hmm$bins$reads[index,])
+		}
+		rownames(combstates.end) <- as.numeric(rownames(combstates.end)) * binsize
+		rownames(binstates.end) <- as.numeric(rownames(binstates.end)) * binsize
+		rownames(posteriors.end) <- as.numeric(rownames(posteriors.end)) * binsize
+		rownames(reads.end) <- as.numeric(rownames(reads.end)) * binsize
+		eCurve$combstates$end <- combstates.end
+		eCurve$binstates$end <- binstates.end
+		eCurve$posteriors$end <- posteriors.end
+		eCurve$reads$end <- reads.end
+	}
+
+	return(eCurve)
+
+}
+
 plot.cross.correlation <- function(hmm, annotation, bp.around.annotation=10000) {
 
 	## Debugging

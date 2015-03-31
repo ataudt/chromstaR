@@ -79,7 +79,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 		binned.data <- hmm$bins
 		binned.data$state <- NULL
 		read.cutoff.quantile <- 1
-		max.mean <- Inf
+		max.mean <- hmm$convergenceInfo$max.mean
 		A.initial <- hmm$transitionProbs
 		proba.initial <- hmm$startProbs
 		size.initial <- hmm$distributions$size
@@ -420,7 +420,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 		# FDR
 		result$FDR <- FDR
 	## Convergence info
-		convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec)
+		convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec, max.mean=max.mean)
 		result$convergenceInfo <- convergenceInfo
 	## Add class
 		class(result) <- class.univariate.hmm

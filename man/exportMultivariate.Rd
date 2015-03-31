@@ -5,7 +5,7 @@
 \title{Export genome browser viewable files}
 \usage{
 exportMultivariate(multi.hmm, filename, what = c("combstates", "peaks",
-  "reads"), exclude.states = 0, include.states = NULL)
+  "reads"), exclude.states = 0, include.states = NULL, trackline = TRUE)
 }
 \arguments{
 \item{multi.hmm}{A \code{\link{chromstaR_multivariateHMM}} object or file that contains such an object.}
@@ -17,6 +17,8 @@ exportMultivariate(multi.hmm, filename, what = c("combstates", "peaks",
 \item{exclude.states}{A vector of combinatorial states that will be excluded from export.}
 
 \item{include.states}{A vector of combinatorial states that will be exported. If specified, \code{exclude.states} is ignored.}
+
+\item{trackline}{A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).}
 }
 \description{
 Export multivariate calls and read counts as genome browser viewable file

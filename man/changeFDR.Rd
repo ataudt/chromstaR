@@ -14,7 +14,7 @@ changeFDR(model, FDR = 0.5, separate.zeroinflation = TRUE,
 
 \item{separate.zeroinflation}{Only for \code{\link{chromstaR_univariateHMM}} objects: If set to TRUE, state 'zero-inflation' will be treated separately, otherwise it will be merged with state 'unmodified'.}
 
-\item{averages}{Whether or not averaged read counts and posteriors should appear in the segmentation.}
+\item{averages}{Whether or not averaged posteriors should appear in the segmentation.}
 }
 \value{
 The input object is returned with adjusted peak calls.

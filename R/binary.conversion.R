@@ -18,23 +18,29 @@ NULL
 #'
 #' @describeIn conversion Decimal to binary conversion.
 #' @param dec An integer vector.
+#' @param colnames The column names for the returned matrix. If specified, \code{ndigits} will be the length of \code{colnames}.
 #' @param ndigits The number of digits that the binary representation should have. If unspecified, the shortest possible representation will be chosen.
 #' @author Aaron Taudt
 #' @export
-dec2bin = function(dec, ndigits=NULL) {
+dec2bin = function(dec, colnames=NULL, ndigits=NULL) {
 
 	# Convert factor to integer
 	dec <- as.integer(as.character(dec))
 	# Check user input
 	maxdec = max(dec)
-	if (is.null(ndigits)) {
-		ndigits = max(which(as.logical(intToBits(maxdec))))
+	if (!is.null(colnames)) {
+		ndigits <- length(colnames)
 	} else {
-		if (check.positive.integer(ndigits)!=0) stop("argument 'ndigits' expects a positive integer")
+		if (is.null(ndigits)) {
+			ndigits <- max(which(as.logical(intToBits(maxdec))))
+		} else {
+			if (check.positive.integer(ndigits)!=0) stop("argument 'ndigits' expects a positive integer")
+		}
 	}
 
-	binary_states = matrix(as.logical(intToBits(dec)), nrow=length(dec), byrow=TRUE)
-	binary_states = binary_states[ ,ndigits:1]
+	binary_states <- matrix(as.logical(intToBits(dec)), nrow=length(dec), byrow=TRUE)
+	binary_states <- binary_states[ ,ndigits:1]
+	colnames(binary_states) <- colnames
 	return(binary_states)
 
 }
