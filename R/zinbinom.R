@@ -8,13 +8,13 @@
 #'  \code{prob} \eqn{= p} has density
 #'  \deqn{
 #'    p(x) = w + (1-w) \frac{\Gamma(x+n)}{\Gamma(n) x!} p^n (1-p)^x}{
-#'    \Gamma(x+n)/(\Gamma(n) x!) p^n (1-p)^x}
-#'  for \eqn{x = 0}, \eqn{n > 0} and \eqn{0 < p \le 1}.
+#'    w + (1-w) * \Gamma(x+n)/(\Gamma(n) x!) p^n (1-p)^x}
+#'  for \eqn{x = 0}, \eqn{n > 0}, \eqn{0 < p \le 1} and \eqn{0 \le w \le 1}.
 #'
 #'  \deqn{
 #'    p(x) = (1-w) \frac{\Gamma(x+n)}{\Gamma(n) x!} p^n (1-p)^x}{
-#'    \Gamma(x+n)/(\Gamma(n) x!) p^n (1-p)^x}
-#'  for \eqn{x = 1, 2, \ldots}, \eqn{n > 0} and \eqn{0 < p \le 1}.
+#'    (1-w) * \Gamma(x+n)/(\Gamma(n) x!) p^n (1-p)^x}
+#'  for \eqn{x = 1, 2, \ldots}, \eqn{n > 0}, \eqn{0 < p \le 1} and \eqn{0 \le w \le 1}.
 #'
 #' @name zinbinom
 #' @author Matthias Heinig, Aaron Taudt
@@ -22,11 +22,6 @@
 #'  \code{\link{dbinom}} for the binomial, \code{\link{dnbinom}} for the negative binomial, \code{\link{dpois}} for the
 #'  Poisson and \code{\link{dgeom}} for the geometric distribution, which
 #'  is a special case of the negative binomial.
-#' @examples
-#'## Plot a zero-inflated negative binomial distribution
-#'x <- 0:20
-#'y <- dzinbinom(x, w=0.1, size=5, mu=12)
-#'plot(x, y)
 NULL
 
 #' @describeIn zinbinom gives the density
@@ -35,7 +30,6 @@ NULL
 #' @param size Target for number of successful trials, or dispersion parameter (the shape parameter of the gamma mixing distribution). Must be strictly positive, need not be integer.
 #' @param prob Probability of success in each trial. \code{0 < prob <= 1}.
 #' @param mu Alternative parametrization via mean: see \sQuote{Details}.
-#' @export
 dzinbinom = function(x, w, size, prob, mu) {
 	if (w < 0 || w > 1) {
 		warning("NaNs returned, w needs to be between 0 and 1")
@@ -53,7 +47,6 @@ dzinbinom = function(x, w, size, prob, mu) {
 #' @inheritParams dzinbinom
 #' @param q Vector of quantiles.
 #' @param lower.tail logical; if TRUE (default), probabilities are \eqn{P[X \le x]}, otherwise, \eqn{P[X > x]}.
-#' @export
 pzinbinom = function(q, w, size, prob, mu, lower.tail=TRUE) {
 	if (w < 0 || w > 1) {
 		warning("NaNs returned, w needs to be between 0 and 1")
@@ -76,7 +69,6 @@ pzinbinom = function(q, w, size, prob, mu, lower.tail=TRUE) {
 #' @inheritParams dzinbinom
 #' @inheritParams pzinbinom
 #' @param p Vector of probabilities.
-#' @export
 qzinbinom = function(p, w, size, prob, mu, lower.tail=TRUE) {
 	if (w < 0 || w > 1) {
 		warning("NaNs returned, w needs to be between 0 and 1")
@@ -97,7 +89,6 @@ qzinbinom = function(p, w, size, prob, mu, lower.tail=TRUE) {
 #' @describeIn zinbinom random number generation
 #' @inheritParams dzinbinom
 #' @param n number of observations. If \code{length(n) > 1}, the length is taken to be the number required.
-#' @export
 rzinbinom = function(n, w, size, prob, mu) {
 	if (w < 0 || w > 1) {
 		warning("NaNs returned, w needs to be between 0 and 1")

@@ -562,7 +562,7 @@ void ScaleHMM::get_posteriors(double** post)
 
 double ScaleHMM::get_posterior(int iN, int t)
 {
-	//FILE_LOG(logDEBUG3) << __PRETTY_FUNCTION__;
+	//FILE_LOG(logDEBUG4) << __PRETTY_FUNCTION__;
 	return(this->gamma[iN][t]);
 }
 

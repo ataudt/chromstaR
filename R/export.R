@@ -82,7 +82,7 @@ exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCa
 		message('writing hmm ',imod,' / ',nummod,'\r', appendLF=F)
 		hmm <- hmm.list[[imod]]
 		hmm.gr <- hmm.grl[[imod]]
-		priority <- 51 + 3*imod
+		priority <- 51 + 4*imod
 		if (trackline) {
 			cat(paste0("track name=\"univariate calls for ",hmm$ID,"\" description=\"univariate calls for ",hmm$ID,"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
 		}
@@ -143,7 +143,7 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 		message('writing hmm ',imod,' / ',nummod,'\r', appendLF=F)
 		hmm <- hmm.list[[imod]]
 		hmm.gr <- hmm.grl[[imod]]
-		priority <- 50 + 3*imod
+		priority <- 50 + 4*imod
 		binsize <- width(hmm.gr[1])
 		if (trackline) {
 			cat(paste0('track type=wiggle_0 name="read count for ',hmm$ID,'" description="read count for ',hmm$ID,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
@@ -253,7 +253,7 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 		colnames(bin) <- multi.hmm$IDs
 		for (icol in 1:ncol(bin)) {
 			numsegments <- length(which(bin[,icol]))
-			priority <- 52 + 3*icol
+			priority <- 52 + 4*icol
 			df <- cbind(collapsed.calls[bin[,icol],], score=rep(0,numsegments), strand=rep(".",numsegments))
 			# Convert from 1-based closed to 0-based half open
 			df$start <- df$start - 1
@@ -326,7 +326,7 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 	for (imod in 1:nummod) {
 		message('writing hmm ',imod,' / ',nummod,'\r', appendLF=F)
 		ID <- multi.hmm$IDs[imod]
-		priority <- 50 + 3*imod
+		priority <- 50 + 4*imod
 		binsize <- width(multi.hmm$bins[1])
 		if (trackline) {
 			cat(paste0('track type=wiggle_0 name="read count for ',ID,'" description="read count for ',ID,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
@@ -415,7 +415,7 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", 
 	for (imod in 1:nummod) {
 		message('writing binned data ',imod,' / ',nummod,'\r', appendLF=F)
 		b <- binned.data.list[[imod]]
-		priority <- 50 + 3*imod
+		priority <- 50 + 4*imod
 		binsize <- width(b[1])
 		name <- names(binned.data.list)[imod]
 		if (trackline) {
@@ -479,7 +479,7 @@ exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", t
 	}
 	regions <- as.data.frame(gr)[c('chromosome','start','end','score')]
 	regions$score <- as.integer(regions$score)
-	regions$name <- paste0(trackname, 1:nrow(regions))
+	regions$name <- paste0('region_', 1:nrow(regions))
 	regions <- regions[c('chromosome','start','end','name','score')]
 	numsegments <- nrow(regions)
 	df <- cbind(regions, strand=rep(".",numsegments), thickStart=regions$start, thickEnd=regions$end)
