@@ -89,17 +89,7 @@ align2binned <- function(file, format, assembly, index=file, chrom.length.file=N
 		data <- read.table(file, colClasses=classes)
 		# Convert to GRanges object
 		data <- GenomicRanges::GRanges(seqnames=Rle(data[,1]), ranges=IRanges(start=data[,2]+1, end=data[,3]), strand=Rle(strand("*"), nrow(data)))	# start+1 to go from [0,x) -> [1,x]
-		tC <- tryCatch({
-			seqlengths(data) <- as.integer(chrom.lengths[names(seqlengths(data))])
-		}, warning = function(war) {
-			suppressWarnings(seqlengths(data) <- as.integer(chrom.lengths[names(seqlengths(data))]))
-			offending.chroms <- unique(names(which(end(data) > seqlengths(data)[as.character(seqnames(data))])))
-			if (war$message=="'ranges' contains values outside of sequence bounds. See ?trim to subset ranges.") {
-				warning(paste0("File \"",file,"\" contains reads outside of sequence bounds. The offending chromosomes were \"",paste(offending.chroms, collapse=', '),"\". Please consider using a different reference assembly."))
-			} else {
-				print(war)
-			}
-		})
+		seqlengths(data) <- as.integer(chrom.lengths[names(seqlengths(data))])
 		chroms.in.data <- seqlevels(data)
 	## BAM (1-based)
 	} else if (format == "bam") {
@@ -109,8 +99,12 @@ align2binned <- function(file, format, assembly, index=file, chrom.length.file=N
 		if (is.null(chromosomes)) {
 			chromosomes <- chroms.in.data
 		}
-		gr <- GenomicRanges::GRanges(seqnames=Rle(chromosomes),
-																ranges=IRanges(start=rep(1, length(chromosomes)), end=chrom.lengths[chromosomes]))
+		chroms2use <- intersect(chromosomes, chroms.in.data)
+		if (length(chroms2use)==0) {
+			chrstring <- paste0(chromosomes, collapse=', ')
+			stop('The specified chromosomes ', chrstring, ' do not exist in the data.')
+		}
+		gr <- GenomicRanges::GRanges(seqnames=Rle(chroms2use), ranges=IRanges(start=rep(1, length(chroms2use)), end=chrom.lengths[chroms2use]))
 		data <- GenomicAlignments::readGAlignmentsFromBam(file, index=index, param=ScanBamParam(which=range(gr)))
 	## BEDGraph (0-based)
 	} else if (format == "bedGraph") {
@@ -142,15 +136,19 @@ align2binned <- function(file, format, assembly, index=file, chrom.length.file=N
 	diff <- setdiff(chromosomes, chroms.in.data)
 	if (length(diff)>0) {
 		diffs <- paste0(diff, collapse=', ')
-		warning(paste0('Not using chromosomes ', diffs, ' because they are not in the data'))
+		warning(paste0('Not using chromosomes ', diffs, ' because they are not in the data.'))
 	}
 	diff <- setdiff(chromosomes, names(chrom.lengths))
 	if (length(diff)>0) {
 		diffs <- paste0(diff, collapse=', ')
-		warning(paste0('Not using chromosomes ', diffs, ' because no lengths could be found'))
+		warning(paste0('Not using chromosomes ', diffs, ' because no lengths could be found.'))
 	}
 	chroms2use <- intersect(chromosomes, chroms.in.data)
 	chroms2use <- intersect(chroms2use, names(chrom.lengths))
+	if (length(chroms2use)==0) {
+		chrstring <- paste0(chromosomes, collapse=', ')
+		stop('The specified chromosomes ', chrstring, ' do not exist in the data.')
+	}
  
 	### Do the loop for all binsizes
 	for (binsize in binsizes) {

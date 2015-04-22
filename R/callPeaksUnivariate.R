@@ -78,7 +78,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 		hmm <- binned.data
 		binned.data <- hmm$bins
 		binned.data$state <- NULL
-		read.cutoff.quantile <- 1
+		read.cutoff <- hmm$convergenceInfo$read.cutoff
 		max.mean <- hmm$convergenceInfo$max.mean
 		A.initial <- hmm$transitionProbs
 		proba.initial <- hmm$startProbs
@@ -108,14 +108,23 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 	}
 
 	### Filter high reads out, makes HMM faster ###
-	read.cutoff <- quantile(reads, read.cutoff.quantile)
-	names.read.cutoff <- names(read.cutoff)
-	read.cutoff <- as.integer(read.cutoff)
-	mask <- reads > read.cutoff
-	reads[mask] <- read.cutoff
-	numfiltered <- length(which(mask))
-	if (numfiltered > 0) {
-		message("Replaced read counts > ",read.cutoff," (",names.read.cutoff," quantile) by ",read.cutoff," in ",numfiltered," bins. Set option 'read.cutoff.quantile=1' to disable this filtering. This filtering was done to increase the speed of the HMM and should not affect the results.")
+	if (!continue.from.univariate.hmm) {
+		read.cutoff <- quantile(reads, read.cutoff.quantile)
+		names.read.cutoff <- names(read.cutoff)
+		read.cutoff <- as.integer(read.cutoff)
+		mask <- reads > read.cutoff
+		reads[mask] <- read.cutoff
+		numfiltered <- length(which(mask))
+		if (numfiltered > 0) {
+			message("Replaced read counts > ",read.cutoff," (",names.read.cutoff," quantile) by ",read.cutoff," in ",numfiltered," bins. Set option 'read.cutoff.quantile=1' to disable this filtering. This filtering was done to increase the speed of the HMM and should not affect the results.")
+		}
+	} else {
+		mask <- reads > read.cutoff
+		reads[mask] <- read.cutoff
+		numfiltered <- length(which(mask))
+		if (numfiltered > 0) {
+			message("Replaced read counts > ",read.cutoff," by ",read.cutoff," in ",numfiltered," bins. This filtering was done to increase the speed of the HMM and should not affect the results.")
+		}
 	}
 
 	### Filter out low read counts that arise when the bin size is larger than optimal (should correct the result to near optimal again) ###
@@ -245,7 +254,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 				# FDR
 				result$FDR <- FDR
 			## Convergence info
-				convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec)
+				convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec, read.cutoff=max(hmm$reads))
 				result$convergenceInfo <- convergenceInfo
 			## Add class
 				class(result) <- class.univariate.hmm
@@ -420,7 +429,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.001, init="standard", max
 		# FDR
 		result$FDR <- FDR
 	## Convergence info
-		convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec, max.mean=max.mean)
+		convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec, max.mean=max.mean, read.cutoff=max(hmm$reads))
 		result$convergenceInfo <- convergenceInfo
 	## Add class
 		class(result) <- class.univariate.hmm
