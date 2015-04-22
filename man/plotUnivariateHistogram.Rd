@@ -4,7 +4,7 @@
 \alias{plotUnivariateHistogram}
 \title{Plot a histogram of binned read counts with fitted mixture distribution}
 \usage{
-plotUnivariateHistogram(model, state = NULL, chromosome = NULL,
+plotUnivariateHistogram(model, state = NULL, chromosomes = NULL,
   start = NULL, end = NULL)
 }
 \arguments{
@@ -12,7 +12,7 @@ plotUnivariateHistogram(model, state = NULL, chromosome = NULL,
 
 \item{state}{Plot the histogram only for the specified state. One of \code{c('unmodified','modified')}.}
 
-\item{chromosome,start,end}{Plot the histogram only for the specified chromosome, start and end position.}
+\item{chromosomes,start,end}{Plot the histogram only for the specified chromosomes, start and end position.}
 }
 \value{
 A \code{\link[ggplot2:ggplot]{ggplot}} object.

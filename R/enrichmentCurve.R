@@ -8,6 +8,7 @@
 #' @param bp.around.annotation An integer specifying the number of basepairs up- and downstream of the annotation for which the enrichment will be calculated.
 #' @param region A combination of \code{c('start','inside','end')} specifying the region of the annotation for which the enrichment will be calculated.
 #' @return A \code{list()} containing \code{data.frame()}s for enrichment of combinatorial states, binary states and posterior probabilities at the start, end and inside of the annotation.
+#' @import S4Vectors
 #' @export
 enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=c('start','inside','end')) {
 

@@ -4,7 +4,8 @@
 \alias{enrichmentCurve}
 \title{Enrichment of (combinatorial) states for genomic annotations}
 \usage{
-enrichmentCurve(hmm, annotation, bp.around.annotation = 10000)
+enrichmentCurve(hmm, annotation, bp.around.annotation = 10000,
+  region = c("start", "inside", "end"))
 }
 \arguments{
 \item{hmm}{A \code{\link{chromstaR_multivariateHMM}} object.}
@@ -12,6 +13,8 @@ enrichmentCurve(hmm, annotation, bp.around.annotation = 10000)
 \item{annotation}{A \code{\link{GRanges}} object with the annotation of interest.}
 
 \item{bp.around.annotation}{An integer specifying the number of basepairs up- and downstream of the annotation for which the enrichment will be calculated.}
+
+\item{region}{A combination of \code{c('start','inside','end')} specifying the region of the annotation for which the enrichment will be calculated.}
 }
 \value{
 A \code{list()} containing \code{data.frame()}s for enrichment of combinatorial states, binary states and posterior probabilities at the start, end and inside of the annotation.

@@ -12,7 +12,7 @@
 \item{type}{Type of the plot, one of \code{c('histogram', 'karyogram', 'boxplot', 'normalTransformation')}. You can also specify the type with an integer number.
 \describe{
   \item{\code{histogram}}{A histogram of binned read counts with fitted mixture distribution.}
-  \item{\code{karyogram}}{A karyogram with binned read counts and peak calls. This uses the \pkg{\link{ggbio}} package and is very slow!}
+  \item{\code{karyogram}}{A karyogram with binned read counts and peak calls. This uses the \pkg{\link[ggbio]{ggbio}} package and is very slow!}
   \item{\code{boxplot}}{A boxplot of read counts for the different states.}
   \item{\code{normalTransformation}}{A histogram of transformed read counts.}
 }}
@@ -20,7 +20,7 @@
 \item{...}{Additional arguments for the different plot types.
 \describe{
   \item{\code{state}}{Plot the \code{histogram}, \code{boxplot} or \code{normalTransformation} only for the specified state. One of \code{c('unmodified','modified')}.}
-  \item{\code{chromosome,start,end}}{Plot the \code{histogram} only for the specified chromosome, start and end position.}
+  \item{\code{chromosomes,start,end}}{Plot the \code{histogram} only for the specified chromosomes, start and end position.}
 }}
 }
 \value{

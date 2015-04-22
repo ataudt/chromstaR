@@ -5,7 +5,7 @@
 \title{Export genome browser viewable files}
 \usage{
 exportUnivariates(hmm.list, filename, what = c("peaks", "reads"),
-  trackline = TRUE)
+  header = TRUE)
 }
 \arguments{
 \item{hmm.list}{A list of \code{\link{chromstaR_univariateHMM}} objects or files that contain such objects.}
@@ -14,7 +14,7 @@ exportUnivariates(hmm.list, filename, what = c("peaks", "reads"),
 
 \item{what}{A character vector specifying what will be exported. Supported are \code{c('peaks', 'reads')}.}
 
-\item{trackline}{A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).}
+\item{header}{A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).}
 }
 \description{
 Export univariate peak-calls and read counts as genome browser viewable file

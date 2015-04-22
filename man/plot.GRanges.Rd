@@ -4,17 +4,17 @@
 \alias{plot.GRanges}
 \title{Plotting function for binned read counts}
 \usage{
-\method{plot}{GRanges}(x, chromosome = NULL, start = NULL, end = NULL,
+\method{plot}{GRanges}(x, chromosomes = NULL, start = NULL, end = NULL,
   ...)
 }
 \arguments{
 \item{x}{A \code{\link{GRanges}} object with binned read counts.}
 
-\item{chromosome}{Plot the histogram only for the specified chromosome, start and end position.}
+\item{chromosomes}{Plot the histogram only for the specified chromosomes, start and end position.}
 
-\item{start}{Plot the histogram only for the specified chromosome, start and end position.}
+\item{start}{Plot the histogram only for the specified chromosomes, start and end position.}
 
-\item{end}{Plot the histogram only for the specified chromosome, start and end position.}
+\item{end}{Plot the histogram only for the specified chromosomes, start and end position.}
 
 \item{...}{Additional arguments not implemented.}
 }

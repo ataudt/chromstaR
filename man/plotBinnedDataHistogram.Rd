@@ -4,13 +4,13 @@
 \alias{plotBinnedDataHistogram}
 \title{Plot a histogram of binned read counts}
 \usage{
-plotBinnedDataHistogram(binned.data, chromosome = NULL, start = NULL,
+plotBinnedDataHistogram(binned.data, chromosomes = NULL, start = NULL,
   end = NULL)
 }
 \arguments{
 \item{binned.data}{A \code{\link{binned.data}} object containing binned read counts in meta-column 'reads'.}
 
-\item{chromosome,start,end}{Plot the histogram only for the specified chromosome, start and end position.}
+\item{chromosomes,start,end}{Plot the histogram only for the specified chromosomes, start and end position.}
 }
 \value{
 A \code{\link[ggplot2:ggplot]{ggplot}} object.

@@ -41,7 +41,7 @@ plot.GRanges <- function(x, chromosomes=NULL, start=NULL, end=NULL, ...) {
 #' @param type Type of the plot, one of \code{c('histogram', 'karyogram', 'boxplot', 'normalTransformation')}. You can also specify the type with an integer number.
 #' \describe{
 #'   \item{\code{histogram}}{A histogram of binned read counts with fitted mixture distribution.}
-#'   \item{\code{karyogram}}{A karyogram with binned read counts and peak calls. This uses the \pkg{\link{ggbio}} package and is very slow!}
+#'   \item{\code{karyogram}}{A karyogram with binned read counts and peak calls. This uses the \pkg{\link[ggbio]{ggbio}} package and is very slow!}
 #'   \item{\code{boxplot}}{A boxplot of read counts for the different states.}
 #'   \item{\code{normalTransformation}}{A histogram of transformed read counts.}
 #' }
@@ -304,7 +304,7 @@ plotUnivariateHistogram <- function(model, state=NULL, chromosomes=NULL, start=N
 #' Plot a karyogram with read counts and peak calls from a \code{\link{chromstaR_univariateHMM}} object.
 #'
 #' @author Aaron Taudt
-#' @param mode A \code{\link{chromstaR_univariateHMM}} object or file that contains such an object.
+#' @param model A \code{\link{chromstaR_univariateHMM}} object or file that contains such an object.
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
 #' @export
 plotUnivariateKaryogram <- function(model) {

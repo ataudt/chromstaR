@@ -7,7 +7,7 @@
 plotUnivariateKaryogram(model)
 }
 \arguments{
-\item{mode}{A \code{\link{chromstaR_univariateHMM}} object or file that contains such an object.}
+\item{model}{A \code{\link{chromstaR_univariateHMM}} object or file that contains such an object.}
 }
 \value{
 A \code{\link[ggplot2:ggplot]{ggplot}} object.

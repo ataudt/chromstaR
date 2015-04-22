@@ -6,12 +6,14 @@
 \alias{dec2bin}
 \title{Conversion of decimal and binary states}
 \usage{
-dec2bin(dec, ndigits = NULL)
+dec2bin(dec, colnames = NULL, ndigits = NULL)
 
 bin2dec(bin)
 }
 \arguments{
 \item{dec}{An integer vector.}
+
+\item{colnames}{The column names for the returned matrix. If specified, \code{ndigits} will be the length of \code{colnames}.}
 
 \item{ndigits}{The number of digits that the binary representation should have. If unspecified, the shortest possible representation will be chosen.}
 
