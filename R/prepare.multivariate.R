@@ -37,10 +37,13 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 		decimal_states <- decimal_states + 2^(nummod-imod) * binary_statesmatrix[,imod]
 	}
 	combstates.per.bin <- decimal_states
-	comb.states.table <- table(combstates.per.bin)
 	if (is.null(use.states)) {
-		comb.states <- as.numeric(names(sort(comb.states.table, decreasing=TRUE)))
+		comb.states.table <- sort(table(combstates.per.bin), decreasing=TRUE)
+		comb.states <- names(comb.states.table)
 	} else {
+		comb.states.table <- sort(table(combstates.per.bin)[as.character(use.states)], decreasing=TRUE)
+		comb.states <- names(comb.states.table)
+		use.states <- c(comb.states, setdiff(use.states, names(comb.states.table)))
 		comb.states <- use.states
 	}
 	time <- proc.time() - ptm
@@ -114,7 +117,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 		istate = which(comb.states==state)
 		mask = which(combstates.per.bin==state)
 		# Convert state to binary representation
-		binary_state = rev(as.integer(intToBits(state))[1:nummod])
+		binary_state = rev(as.integer(intToBits(as.integer(state)))[1:nummod])
 		# Subselect z
 		z.temp <- matrix(NA, ncol=nummod, nrow=length(mask))
 		for (i1 in 1:length(binary_state)) {
@@ -149,6 +152,9 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 # 			usestateTF[istate] <<- FALSE
 			err
 		})
+		if (any(is.na(correlationMatrixInverse[,,istate]))) {
+			correlationMatrixInverse[,,istate] <- solve(diag(nummod))
+		}
 	}
 	remove(z.per.bin)
 	time <- proc.time() - ptm
@@ -159,14 +165,16 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 	max.numstates = length(usestateTF)
 	if (is.null(use.states) & is.null(num.states)) {
 		numstates2use = ok.numstates
-	} else if (!is.null(use.states)) {
+	}
+	if (!is.null(use.states)) {
 		if (ok.numstates < length(use.states)) {
-			warning("Cannot use all of the specified states. The occurrence of the following states is too low: ",paste(use.states[!usestateTF], collapse=" "),". Continuing without them.")
+			warning("Cannot use all of the specified states. The occurrence of the following states is too low: ",paste(comb.states[!usestateTF], collapse=" "),". Continuing without them.")
 			numstates2use <- length(which(usestateTF))
 		} else {
 			numstates2use = length(use.states)
 		}
-	} else if (!is.null(num.states)) {
+	}
+	if (!is.null(num.states)) {
 		if (ok.numstates < num.states) {
 			if (ok.numstates < max.numstates) {
 				warning("Using only ",ok.numstates," states instead of desired ",num.states," states! More is not possible because the occurrence of the following states is too low: ",paste(comb.states[!usestateTF], collapse=" "))
@@ -188,7 +196,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 		correlationMatrixInverse2use = correlationMatrixInverse[,,usestateTF][,,1:numstates2use]
 	}
 	comb.states2use = comb.states[usestateTF][1:numstates2use]
-	comb.states.table2use = comb.states.table[as.character(comb.states2use)]
+	comb.states.table2use = comb.states.table[comb.states2use]
 	determinant2use = determinant[usestateTF][1:numstates2use]
 
 	# Return parameters

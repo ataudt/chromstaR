@@ -21,7 +21,7 @@ loadHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 	if (is(hmm.list, class.univariate.hmm)) {
 		return(list(hmm.list))
 	} else if (is.character(hmm.list)) {
-		message("loading univariate HMMs from files ...", appendLF=F); ptm <- proc.time()
+		message("Loading univariate HMMs from files ...", appendLF=F); ptm <- proc.time()
 		mlist <- list()
 		for (modelfile in hmm.list) {
 			mlist[[modelfile]] <- get(load(modelfile))

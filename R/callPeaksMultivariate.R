@@ -43,25 +43,17 @@
 callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, eps=0.001, FDR=NULL, keep.posteriors=FALSE, num.threads=1, max.time=NULL, max.iter=NULL, checkpoint.after.iter=NULL, checkpoint.after.time=NULL, checkpoint.file=NULL, checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL, keep.densities=FALSE, verbosity=1) {
 
 	## Intercept user input
-	if (check.univariate.modellist(modellist)!=0) {
-		message("Loading univariate HMMs from files ...", appendLF=F)
-		ptm <- proc.time()
-		mlist <- NULL
-		for (modelfile in modellist) {
-			mlist[[length(mlist)+1]] <- get(load(modelfile))
-		}
-		modellist <- mlist
-		remove(mlist)
-		time <- proc.time() - ptm
-		message(" ",round(time[3],2),"s")
-		if (check.univariate.modellist(modellist)!=0) stop("argument 'modellist' expects a list of univariate hmms or a list of files that contain univariate hmms")
-	}
 	if (!is.null(use.states)) {
 		if (check.nonnegative.integer.vector(use.states)!=0) stop("argument 'comb.states' expects a vector of positive integers")
-		num.states <- NULL
 	}
 	if (!is.null(num.states)) {
 		if (check.positive.integer(num.states)!=0) stop("argument 'num.states' expects a positive integer")
+	}
+	if (!is.null(use.states) & !is.null(num.states)) {
+		if (num.states > length(use.states)) {
+			warning("The specified number of states is larger than the number of specified states. Setting num.states = length(use.states).")
+			num.states <- length(use.states)
+		}
 	}
 	if (check.positive(eps)!=0) stop("argument 'eps' expects a positive numeric")
 	if (check.positive.integer(num.threads)!=0) stop("argument 'num.threads' expects a positive integer")
@@ -77,6 +69,8 @@ callPeaksMultivariate <- function(modellist, use.states=NULL, num.states=NULL, e
 		if (FDR>1 | FDR<0) stop("argument 'FDR' has to be between 0 and 1 if specified")
 	}
 	get.posteriors <- TRUE
+	modellist <- loadHmmsFromFiles(modellist)
+	if (check.univariate.modellist(modellist)!=0) stop("argument 'modellist' expects a list of univariate hmms or a list of files that contain univariate hmms")
 
 	## Prepare the HMM
 	params <- prepare.multivariate(modellist, use.states=use.states, num.states=num.states, num.threads=num.threads)
