@@ -190,7 +190,7 @@ plotMultivariateHistograms <- function(multi.hmm) {
 #' @param state Plot the histogram only for the specified state. One of \code{c('unmodified','modified')}.
 #' @param chromosomes,start,end Plot the histogram only for the specified chromosomes, start and end position.
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
-plotUnivariateHistogram <- function(model, state=NULL, chromosomes=NULL, start=NULL, end=NULL) {
+plotUnivariateHistogram <- function(model, state=NULL, chromosomes=NULL, start=NULL, end=NULL, linewidth=1) {
 
 	## Check user input
 	if (check.univariate.model(model)!=0) {
@@ -279,15 +279,15 @@ plotUnivariateHistogram <- function(model, state=NULL, chromosomes=NULL, start=N
 
 	### Plot the distributions
 	if (is.null(state)) {
-		ggplt <- ggplt + geom_line(data=df, aes_string(x='x', y='y', col='state'))
+		ggplt <- ggplt + geom_line(data=df, aes_string(x='x', y='y', col='state'), size=linewidth)
 		ggplt <- ggplt + scale_color_manual(name="components", values=state.colors[c('unmodified','modified','total')], labels=legend) + theme(legend.justification=c(1,1), legend.position=c(1,1))
 	} else {
 		if (state=="unmodified") {
-			ggplt <- ggplt + geom_line(data=df[df$state=='unmodified',], aes_string(x='x', y='y', col='state'))
+			ggplt <- ggplt + geom_line(data=df[df$state=='unmodified',], aes_string(x='x', y='y', col='state'), size=linewidth)
 			ggplt <- ggplt + scale_color_manual(name="components", values=state.colors[c('unmodified')], labels=legend[1]) + theme(legend.justification=c(1,1), legend.position=c(1,1))
 		}
 		if (state=="modified") {
-			ggplt <- ggplt + geom_line(data=df[df$state=='modified',], aes_string(x='x', y='y', col='state'))
+			ggplt <- ggplt + geom_line(data=df[df$state=='modified',], aes_string(x='x', y='y', col='state'), size=linewidth)
 			ggplt <- ggplt + scale_color_manual(name="components", values=state.colors[c('modified')], labels=legend[2]) + theme(legend.justification=c(1,1), legend.position=c(1,1))
 		}
 	}

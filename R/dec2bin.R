@@ -59,3 +59,5 @@ bin2dec = function(bin) {
 	}
 	return(dec)
 }
+
+

@@ -1,0 +1,7 @@
+install.packages('devtools')
+source("http://bioconductor.org/biocLite.R")
+biocLite("GenomicRanges")
+biocLite("GenomicAlignments")
+biocLite("BSgenome")
+library(devtools)
+install_bitbucket('chakalakka/chromstaR', username='chakalakka', password='chromstaR2015)

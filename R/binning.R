@@ -25,7 +25,7 @@ NULL
 #' @inheritParams align2binned
 #' @param bamindex BAM index file. Can be specified without the .bai ending.
 #' @export
-bam2binned <- function(bamfile, bamindex=bamfile, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=TRUE) {
+bam2binned <- function(bamfile, bamindex=bamfile, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE) {
 	return(align2binned(bamfile, format="bam", index=bamindex, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, save.as.RData=save.as.RData))
 }
 
@@ -33,7 +33,7 @@ bam2binned <- function(bamfile, bamindex=bamfile, outputfolder="binned_data", bi
 #' @param bedfile A file in BED format.
 #' @inheritParams align2binned
 #' @export
-bed2binned <- function(bedfile, assembly, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=TRUE) {
+bed2binned <- function(bedfile, assembly, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE) {
 	return(align2binned(bedfile, format="bed", assembly=assembly, chrom.length.file=chrom.length.file, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, save.as.RData=save.as.RData))
 }
 
@@ -41,7 +41,7 @@ bed2binned <- function(bedfile, assembly, chrom.length.file=NULL, outputfolder="
 #' @param bedGraphfile A file in bedGraph format.
 #' @inheritParams align2binned
 #' @export
-bedGraph2binned <- function(bedGraphfile, assembly, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=TRUE) {
+bedGraph2binned <- function(bedGraphfile, assembly, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE) {
 	return(align2binned(bedGraphfile, format="bedGraph", assembly=assembly, chrom.length.file=chrom.length.file, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, save.as.RData=save.as.RData))
 }
 
@@ -54,15 +54,15 @@ bedGraph2binned <- function(bedGraphfile, assembly, chrom.length.file=NULL, outp
 #' @param assembly An assembly to specify the chromosome lengths. One of \code{c('hg19','hg18')}.
 #' @param index Index file if \code{format='bam'} with or without the .bai ending.
 #' @param chrom.length.file A file which contains the chromosome lengths in basepairs. The first column contains the chromosome name and the second column the length (see also \code{\link{chrom.length.file}}.
-#' @param outputfolder Folder to which the binned data will be saved. If the specified folder does not exist, it will be created.
+#' @param outputfolder Folder to which the binned data will be saved if \code{save.as.RData=TRUE}. If the specified folder does not exist, it will be created.
 #' @param binsizes A vector with integer values which will be used for the binning. If more than one value is given, output files will be produced for each bin size.
 #' @param chromosomes If only a subset of the chromosomes should be binned, specify them here.
-#' @param save.as.RData If set to \code{FALSE}, no output file will be written. Instead, a \link{GenomicRanges} object containing the binned data will be returned. Only the first binsize will be processed in this case.
-#' @return The function produces a \link{GRanges} object with one meta data column 'reads' that contains the read count. This binned data will be either written to file (\code{save.as.RData=TRUE}) or given as return value (\code{save.as.RData=FALSE}).
+#' @param save.as.RData If set to \code{TRUE}, output will be written to file. The filename is generated from the input file and bin sizes. If set to \code{FALSE}, no output file will be written. Instead, a \link{GenomicRanges} object containing the binned data will be returned. Only the first binsize will be processed in this case.
+#' @return The function produces a \link{GRanges} object with one meta data column 'reads' that contains the read count. This binned data will be either written to file (\code{save.as.RData=FALSE}) or given as return value (\code{save.as.RData=FALSE}).
 #' @import Rsamtools
 #' @import GenomicAlignments
 #' @import BSgenome
-align2binned <- function(file, format, assembly, index=file, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=TRUE) {
+align2binned <- function(file, format, assembly, index=file, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE) {
 
 	## Create outputfolder if not exists
 	if (!file.exists(outputfolder) & save.as.RData==TRUE) {
@@ -93,6 +93,12 @@ align2binned <- function(file, format, assembly, index=file, chrom.length.file=N
 		chroms.in.data <- seqlevels(data)
 	## BAM (1-based)
 	} else if (format == "bam") {
+		## Check if bamindex exists
+		index.raw <- sub('\\.bai$', '', index)
+		bamindex <- paste0(index.raw,'.bai')
+		if (!file.exists(bamindex)) {
+			stop("Cannot find BAM index file ", bamindex)
+		}
 		file.header <- Rsamtools::scanBamHeader(file)[[1]]
 		chrom.lengths <- file.header$targets
 		chroms.in.data <- names(chrom.lengths)
