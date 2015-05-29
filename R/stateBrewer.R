@@ -82,14 +82,14 @@ stateBrewer <- function(statespec, diffstatespec=NULL, inverse=FALSE, sep='-') {
 	for (group in groups) {
 		track.index <- which(statespec==group)
 		if (grepl('^0\\.', group)) {
-			mask <- !apply(binstates[,track.index], 1, function(x) { Reduce('|', x) })
+			mask <- !apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('|', x) })
 		} else if (grepl('^1\\.', group)) {
-			mask <- apply(binstates[,track.index], 1, function(x) { Reduce('&', x) })
+			mask <- apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('&', x) })
 		} else if (grepl('^x\\.', group)) {
 			mask <- rep(T, nrow(binstates))
 		} else if (grepl('^r\\.', group)) {
-			mask0 <- !apply(binstates[,track.index], 1, function(x) { Reduce('|', x) })
-			mask1 <- apply(binstates[,track.index], 1, function(x) { Reduce('&', x) })
+			mask0 <- !apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('|', x) })
+			mask1 <- apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('&', x) })
 			mask <- mask0 | mask1
 		}
 		binstates <- binstates[mask,]
@@ -102,8 +102,8 @@ stateBrewer <- function(statespec, diffstatespec=NULL, inverse=FALSE, sep='-') {
 	for (diffgroup in diffgroups) {
 		track.index <- which(diffstatespec==diffgroup)
 		if (grepl('^d\\.', diffgroup)) {
-			mask0 <- !apply(binstates[,track.index], 1, function(x) { Reduce('|', x) })
-			mask1 <- apply(binstates[,track.index], 1, function(x) { Reduce('&', x) })
+			mask0 <- !apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('|', x) })
+			mask1 <- apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('&', x) })
 			mask <- !(mask0 | mask1)
 		} else if (grepl('^x\\.', diffgroup)) {
 			mask <- rep(T, nrow(binstates))

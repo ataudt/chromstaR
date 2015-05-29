@@ -50,6 +50,7 @@ library(chromstaR)
 
 <<univariate_narrow_binning, results='hide', message=FALSE, eval=TRUE>>=
 ## === Step 1: Binning ===
+# !!! Skip this step if you do not have package 'chromstaRExampleData' installed !!!
 # We use bin size 1000bp and chromosome 12 to keep the example quick
 library(chromstaRExampleData)
 bamfile <- getExampleFilesBAM('H3K4me3')[1]
@@ -92,6 +93,7 @@ library(chromstaR)
 
 <<univariate_broad_binning, results='hide', message=FALSE, eval=TRUE>>=
 ## === Step 1: Binning ===
+# !!! Skip this step if you do not have package 'chromstaRExampleData' installed !!!
 # We use bin size 1000bp and chromosome 12 to keep the example quick
 library(chromstaRExampleData)
 bamfile <- getExampleFilesBAM('H3K27me3')[4]
@@ -323,8 +325,8 @@ multi.model$bins
 <<multivariate_combinatorial_export, results='hide', message=FALSE, eval=FALSE>>=
 ## === Step 5: Export to genome browser ===
 # Export combinatorial states
-exportMultivariate(multi.model, filename='your-file',
-                   what=c('combstates','peaks','reads'))
+exportMultivariate(multi.model, filename='your-file', what=c('peaks','reads'))
+exportMultivariate(multi.model, filename='your-combstates', what=c('combstates'))
 @
 \end{scriptsize}
 

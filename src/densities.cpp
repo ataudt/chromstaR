@@ -858,6 +858,7 @@ MVCopulaApproximation::~MVCopulaApproximation()
 // Methods ----------------------------------------------------
 void MVCopulaApproximation::calc_logdensities(double* logdens)
 {
+// Rprintf("new state\n");
 	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	// Calculate logdensities for marginals
 	double** marginals_logdensities = CallocDoubleMatrix(this->Nmod, this->T);
@@ -887,6 +888,13 @@ void MVCopulaApproximation::calc_logdensities(double* logdens)
 				//FILE_LOG(logERROR) << "z[imod] = "<< z[imod];
 				throw nan_detected;
 			}
+// if (t==0)
+// {
+// 	Rprintf("\nmarginal_logdensities[imod=%d][%d] = %g\n", imod, t, marginals_logdensities[imod][t]);
+// 	Rprintf("sum = %g\n", sum);
+// 	Rprintf("uniform = %g\n", uniform);
+// 	Rprintf("z[imod=%d] = %g\n", imod, z[imod]);
+// }
 		}
 		exponent = 0.0;
 		for (int imod=0; imod<this->Nmod; imod++)
@@ -933,6 +941,14 @@ void MVCopulaApproximation::calc_logdensities(double* logdens)
 			//FILE_LOG(logERROR) << "logdens["<<t<<"] = " << logdens[t];
 			throw nan_detected;
 		}		
+// if (t==0)
+// {
+// 	Rprintf("\nlogdens[%d] = %g\n", t, logdens[t]);
+// 	Rprintf("-0.5*exponent = %g\n", -0.5*exponent);
+// 	Rprintf("sum = %g\n", sum);
+// 	Rprintf("cor_matrix_determinant = %g\n", this->cor_matrix_determinant);
+// 	Rprintf("-0.5*log(cor_matrix_determinant) = %g\n", -0.5*log(this->cor_matrix_determinant));
+// }
 	}
 
 	// Clean up

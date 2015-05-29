@@ -232,6 +232,7 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 			if (keep.densities) {
 				result$bins$densities <- matrix(hmm$densities, ncol=hmm$num.states)
+				colnames(result$bins$densities) <- hmm$comb.states
 			}
 			
 		## Segmentation

@@ -2,12 +2,12 @@
 \contentsline {section}{\numberline {2}Outline of workflow}{2}{section.2}
 \contentsline {section}{\numberline {3}Univariate analysis}{2}{section.3}
 \contentsline {subsection}{\numberline {3.1}Task 1: Peak calling for a narrow histone modification}{2}{subsection.3.1}
-\contentsline {subsection}{\numberline {3.2}Task 2: Peak calling for a broad histone modification}{6}{subsection.3.2}
-\contentsline {subsection}{\numberline {3.3}Task 3: Peak calling for ATAC-seq, DNase-seq, FAIRE-seq, ...}{10}{subsection.3.3}
-\contentsline {section}{\numberline {4}Multivariate analysis}{10}{section.4}
-\contentsline {subsection}{\numberline {4.1}Task 1: Integrating multiple replicates}{10}{subsection.4.1}
-\contentsline {subsection}{\numberline {4.2}Task 2: Detecting differentially modified regions}{11}{subsection.4.2}
-\contentsline {subsection}{\numberline {4.3}Task 3: Finding combinatorial chromatin states}{13}{subsection.4.3}
-\contentsline {section}{\numberline {5}Example workflows}{16}{section.5}
-\contentsline {section}{\numberline {6}FAQ}{16}{section.6}
-\contentsline {section}{\numberline {7}Session Info}{16}{section.7}
+\contentsline {subsection}{\numberline {3.2}Task 2: Peak calling for a broad histone modification}{4}{subsection.3.2}
+\contentsline {subsection}{\numberline {3.3}Task 3: Peak calling for ATAC-seq, DNase-seq, FAIRE-seq, ...}{7}{subsection.3.3}
+\contentsline {section}{\numberline {4}Multivariate analysis}{7}{section.4}
+\contentsline {subsection}{\numberline {4.1}Task 1: Integrating multiple replicates}{7}{subsection.4.1}
+\contentsline {subsection}{\numberline {4.2}Task 2: Detecting differentially modified regions}{8}{subsection.4.2}
+\contentsline {subsection}{\numberline {4.3}Task 3: Finding combinatorial chromatin states}{10}{subsection.4.3}
+\contentsline {section}{\numberline {5}Example workflows}{13}{section.5}
+\contentsline {section}{\numberline {6}FAQ}{13}{section.6}
+\contentsline {section}{\numberline {7}Session Info}{13}{section.7}

@@ -1,0 +1,13 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Outline of workflow}{}% 2
+\BOOKMARK [1][-]{section.3}{Univariate analysis}{}% 3
+\BOOKMARK [2][-]{subsection.3.1}{Task 1: Peak calling for a narrow histone modification}{section.3}% 4
+\BOOKMARK [2][-]{subsection.3.2}{Task 2: Peak calling for a broad histone modification}{section.3}% 5
+\BOOKMARK [2][-]{subsection.3.3}{Task 3: Peak calling for ATAC-seq, DNase-seq, FAIRE-seq, ...}{section.3}% 6
+\BOOKMARK [1][-]{section.4}{Multivariate analysis}{}% 7
+\BOOKMARK [2][-]{subsection.4.1}{Task 1: Integrating multiple replicates}{section.4}% 8
+\BOOKMARK [2][-]{subsection.4.2}{Task 2: Detecting differentially modified regions}{section.4}% 9
+\BOOKMARK [2][-]{subsection.4.3}{Task 3: Finding combinatorial chromatin states}{section.4}% 10
+\BOOKMARK [1][-]{section.5}{Example workflows}{}% 11
+\BOOKMARK [1][-]{section.6}{FAQ}{}% 12
+\BOOKMARK [1][-]{section.7}{Session Info}{}% 13

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2014.5.21)  28 MAY 2015 20:55
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2014.5.21)  28 MAY 2015 20:58
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -307,1457 +307,290 @@ Overfull \hbox (9.59705pt too wide) in paragraph at lines 127--127
  []
 
 
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
+Overfull \hbox (14.00537pt too wide) in paragraph at lines 145--145
 []\OT1/cmtt/m/n/8 ##  Iteration              log(P)             dlog(P)     Dif
 f in state 2    Time in sec[] 
  []
 
 
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
+Overfull \hbox (14.00537pt too wide) in paragraph at lines 145--145
 []\OT1/cmtt/m/n/8 ##          0                -inf                   -        
            -              0[] 
  []
 
 
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
+Overfull \hbox (14.00537pt too wide) in paragraph at lines 145--145
 []\OT1/cmtt/m/n/8 ##          1       -60305.655970                 inf        
        27150              0[] 
  []
 
 
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
+Overfull \hbox (14.00537pt too wide) in paragraph at lines 145--145
 []\OT1/cmtt/m/n/8 ##          2       -57564.343441         2741.312529        
         7264              0[] 
  []
 
 
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
+Overfull \hbox (14.00537pt too wide) in paragraph at lines 145--145
 []\OT1/cmtt/m/n/8 ##          3       -55096.051255         2468.292186        
        16265              1[] 
  []
 
 
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##          4       -52988.546150         2107.505105        
-       20857              1[] 
+Overfull \hbox (14.00537pt too wide) in paragraph at lines 145--145
+[]\OT1/cmtt/m/n/8 ##        ...                 ...                 ...        
+         ...            ...[] 
  []
 
 
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##          5       -51902.355623         1086.190527        
-       22596              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##          6       -51338.505648          563.849975        
-       23479              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##          7       -50973.526659          364.978988        
-       23880              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##          8       -50728.674826          244.851834        
-       24059              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##          9       -50564.458905          164.215921        
-       24127              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         10       -50452.182115          112.276790        
-       24142              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         11       -50372.874829           79.307286        
-       24146              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         12       -50314.763998           58.110831        
-       24143              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         13       -50270.651510           44.112488        
-       24131              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         14       -50236.102522           34.548987        
-       24123              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         15       -50208.329223           27.773299        
-       24113              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         16       -50185.529102           22.800121        
-       24094              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         17       -50166.497632           19.031470        
-       24080              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         18       -50150.401361           16.096271        
-       24058              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         19       -50136.643601           13.757760        
-       24047              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##  Iteration              log(P)             dlog(P)     Dif
-f in state 2    Time in sec[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         20       -50124.783554           11.860047        
-       24030              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         21       -50114.486497           10.297056        
-       24020              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         22       -50105.492269            8.994229        
-       24013              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         23       -50097.594721            7.897548        
-       24000              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         24       -50090.627913            6.966808        
-       23988              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         25       -50084.456538            6.171375        
-       23984              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         26       -50078.969086            5.487452        
-       23974              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         27       -50074.072840            4.896246        
-       23964              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         28       -50069.690119            4.382721        
-       23951              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         29       -50065.755412            3.934707        
-       23942              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         30       -50062.213144            3.542267        
-       23935              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         31       -50059.015925            3.197219        
-       23927              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         32       -50056.123147            2.892779        
-       23919              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         33       -50053.499857            2.623289        
-       23917              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         34       -50051.115853            2.384004        
-       23903              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         35       -50048.944929            2.170924        
-       23889              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         36       -50046.964269            1.980660        
-       23879              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         37       -50045.153939            1.810330        
-       23871              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         38       -50043.496467            1.657472        
-       23869              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         39       -50041.976491            1.519976        
-       23867              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##  Iteration              log(P)             dlog(P)     Dif
-f in state 2    Time in sec[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         40       -50040.580464            1.396027        
-       23859              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         41       -50039.296410            1.284054        
-       23853              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         42       -50038.113710            1.182700        
-       23851              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         43       -50037.022926            1.090784        
-       23846              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         44       -50036.015649            1.007277        
-       23842              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         45       -50035.084370            0.931278        
-       23836              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         46       -50034.222371            0.861999        
-       23830              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         47       -50033.423626            0.798746        
-       23824              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         48       -50032.682718            0.740908        
-       23818              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         49       -50031.994772            0.687946        
-       23817              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         50       -50031.355391            0.639381        
-       23813              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         51       -50030.760601            0.594790        
-       23811              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         52       -50030.206804            0.553796        
-       23811              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         53       -50029.690741            0.516064        
-       23809              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         54       -50029.209449            0.481292        
-       23806              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         55       -50028.760235            0.449214        
-       23801              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         56       -50028.340647            0.419588        
-       23796              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         57       -50027.948448            0.392199        
-       23795              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         58       -50027.581594            0.366854        
-       23793              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         59       -50027.238217            0.343377        
-       23788              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##  Iteration              log(P)             dlog(P)     Dif
-f in state 2    Time in sec[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         60       -50026.916606            0.321611        
-       23783              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         61       -50026.615192            0.301414        
-       23780              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         62       -50026.332535            0.282658        
-       23778              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         63       -50026.067310            0.265225        
-       23776              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         64       -50025.818300            0.249010        
-       23776              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         65       -50025.584381            0.233918        
-       23774              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         66       -50025.364519            0.219862        
-       23774              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         67       -50025.157756            0.206763        
-       23773              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         68       -50024.963208            0.194548        
-       23772              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         69       -50024.780055            0.183153        
-       23768              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         70       -50024.607537            0.172518        
-       23766              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         71       -50024.444948            0.162589        
-       23764              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         72       -50024.291631            0.153318        
-       23764              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         73       -50024.146972            0.144659        
-       23764              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         74       -50024.010399            0.136573        
-       23763              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         75       -50023.881376            0.129023        
-       23760              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         76       -50023.759399            0.121977        
-       23759              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         77       -50023.643994            0.115404        
-       23759              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         78       -50023.534715            0.109279        
-       23756              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         79       -50023.431137            0.103578        
-       23751              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##  Iteration              log(P)             dlog(P)     Dif
-f in state 2    Time in sec[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         80       -50023.332859            0.098278        
-       23749              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         81       -50023.239497            0.093361        
-       23745              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         82       -50023.150690            0.088808        
-       23745              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         83       -50023.066089            0.084600        
-       23744              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         84       -50022.985369            0.080720        
-       23744              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         85       -50022.908221            0.077149        
-       23741              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         86       -50022.834357            0.073864        
-       23741              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         87       -50022.763517            0.070841        
-       23740              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         88       -50022.695466            0.068051        
-       23740              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         89       -50022.630005            0.065461        
-       23740              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         90       -50022.566973            0.063033        
-       23740              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         91       -50022.506246            0.060727        
-       23739              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         92       -50022.447744            0.058502        
-       23738              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         93       -50022.391427            0.056317        
-       23738              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         94       -50022.337287            0.054140        
-       23738              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         95       -50022.285342            0.051945        
-       23736              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         96       -50022.235625            0.049717        
-       23736              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         97       -50022.188172            0.047453        
-       23735              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         98       -50022.143011            0.045161        
-       23735              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##         99       -50022.100153            0.042858        
-       23735              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##  Iteration              log(P)             dlog(P)     Dif
-f in state 2    Time in sec[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        100       -50022.059587            0.040567        
-       23734              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        101       -50022.021274            0.038312        
-       23733              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        102       -50021.985156            0.036118        
-       23732              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        103       -50021.951151            0.034005        
-       23731              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        104       -50021.919162            0.031989        
-       23731              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        105       -50021.889081            0.030081        
-       23731              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        106       -50021.860794            0.028287        
-       23729              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        107       -50021.834185            0.026608        
-       23729              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        108       -50021.809142            0.025044        
-       23729              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        109       -50021.785554            0.023588        
-       23728              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        110       -50021.763317            0.022236        
-       23728              2[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        111       -50021.742336            0.020981        
-       23725              2[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        112       -50021.722520            0.019816        
-       23725              2[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        113       -50021.703787            0.018733        
-       23724              2[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        114       -50021.686063            0.017724        
-       23722              2[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        115       -50021.669278            0.016785        
-       23722              2[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        116       -50021.653371            0.015907        
-       23722              2[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        117       -50021.638284            0.015087        
-       23720              2[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        118       -50021.623965            0.014318        
-       23719              2[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        119       -50021.610368            0.013597        
-       23719              2[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##  Iteration              log(P)             dlog(P)     Dif
-f in state 2    Time in sec[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        120       -50021.597449            0.012919        
-       23719              2[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        121       -50021.585168            0.012281        
-       23719              2[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        122       -50021.573488            0.011680        
-       23718              2[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
-[]\OT1/cmtt/m/n/8 ##        123       -50021.562375            0.011112        
-       23718              2[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
+Overfull \hbox (14.00537pt too wide) in paragraph at lines 145--145
 []\OT1/cmtt/m/n/8 ##        124       -50021.551800            0.010576        
        23718              2[] 
  []
 
 
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
+Overfull \hbox (14.00537pt too wide) in paragraph at lines 145--145
 []\OT1/cmtt/m/n/8 ##        125       -50021.541731            0.010068        
        23717              2[] 
  []
 
 
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 270--270
+Overfull \hbox (14.00537pt too wide) in paragraph at lines 145--145
 []\OT1/cmtt/m/n/8 ##        126       -50021.532143            0.009588        
        23715              2[] 
  []
 
-[2] [3]
-Underfull \vbox (badness 10000) detected at line 273
- []
-
-
-Underfull \vbox (badness 10000) detected at line 273
- []
-
-[4]
-Package color Info: Redefining color shadecolor on input line 277.
- <figure/univariate_narrow_plotting-1.pdf, id=101, 433.62pt x 289.08pt>
+[2]
+Package color Info: Redefining color shadecolor on input line 152.
+ <figure/univariate_narrow_plotting-1.pdf, id=93, 433.62pt x 289.08pt>
 File: figure/univariate_narrow_plotting-1.pdf Graphic file (type pdf)
 
 <use figure/univariate_narrow_plotting-1.pdf>
 Package pdftex.def Info: figure/univariate_narrow_plotting-1.pdf used on input 
-line 285.
+line 160.
 (pdftex.def)             Requested size: 360.0pt x 240.01132pt.
 
-Overfull \hbox (17.0pt too wide) in paragraph at lines 285--286
+Overfull \hbox (17.0pt too wide) in paragraph at lines 160--161
 [][] 
  []
 
-Package color Info: Redefining color shadecolor on input line 290.
-[5]
-Overfull \hbox (21.79053pt too wide) in paragraph at lines 302--303
+Package color Info: Redefining color shadecolor on input line 165.
+[3]
+Overfull \hbox (21.79053pt too wide) in paragraph at lines 177--178
 \OT1/cmr/m/n/10.95 Examples of hi-s-tone mod-i-fi-ca-tions with a broad pro-fil
 e are H3K9me3, H3K27me3,
  []
 
-Package color Info: Redefining color shadecolor on input line 308.
-Package color Info: Redefining color shadecolor on input line 316.
-Package color Info: Redefining color shadecolor on input line 329.
-[6 <./figure/univariate_narrow_plotting-1.pdf>]
-Overfull \hbox (59.99664pt too wide) in paragraph at lines 339--339
+Package color Info: Redefining color shadecolor on input line 183.
+Package color Info: Redefining color shadecolor on input line 191.
+Package color Info: Redefining color shadecolor on input line 204.
+[4 <./figure/univariate_narrow_plotting-1.pdf>]
+Overfull \hbox (59.99664pt too wide) in paragraph at lines 214--214
 []\OT1/cmtt/m/it/8 ## Replaced read counts > 70 (99.9% quantile) by 70 in 44 bi
 ns. Set option 'read.cutoff.quantile=1'
  []
 
 
-Overfull \hbox (9.59705pt too wide) in paragraph at lines 339--339
+Overfull \hbox (9.59705pt too wide) in paragraph at lines 214--214
 \OT1/cmtt/m/it/8 to disable this filtering. This filtering was done to increase
  the speed of the HMM and
  []
 
 
-Overfull \hbox (9.59705pt too wide) in paragraph at lines 339--339
+Overfull \hbox (9.59705pt too wide) in paragraph at lines 214--214
 \OT1/cmtt/m/it/8 ## ------------------------------------ Try 1 of 1 -----------
 --------------------------[] 
  []
 
 
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
+Overfull \hbox (14.00537pt too wide) in paragraph at lines 232--232
 []\OT1/cmtt/m/n/8 ##  Iteration              log(P)             dlog(P)     Dif
 f in state 2    Time in sec[] 
  []
 
 
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
+Overfull \hbox (14.00537pt too wide) in paragraph at lines 232--232
 []\OT1/cmtt/m/n/8 ##          0                -inf                   -        
            -              0[] 
  []
 
 
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
+Overfull \hbox (14.00537pt too wide) in paragraph at lines 232--232
 []\OT1/cmtt/m/n/8 ##          1      -145371.198541                 inf        
        26373              0[] 
  []
 
 
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
+Overfull \hbox (14.00537pt too wide) in paragraph at lines 232--232
 []\OT1/cmtt/m/n/8 ##          2      -138286.718658         7084.479883        
         4015              0[] 
  []
 
 
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
+Overfull \hbox (14.00537pt too wide) in paragraph at lines 232--232
 []\OT1/cmtt/m/n/8 ##          3      -135011.421891         3275.296767        
         3861              0[] 
  []
 
 
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##          4      -133645.293004         1366.128887        
-        3349              0[] 
+Overfull \hbox (14.00537pt too wide) in paragraph at lines 232--232
+[]\OT1/cmtt/m/n/8 ##        ...                 ...                 ...        
+         ...            ...[] 
  []
 
 
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##          5      -132693.106686          952.186318        
-        2935              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##          6      -132053.945399          639.161287        
-        2638              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##          7      -131618.103384          435.842015        
-        2443              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##          8      -131313.355266          304.748118        
-        2313              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##          9      -131094.488639          218.866627        
-        2234              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         10      -130933.648422          160.840217        
-        2154              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         11      -130813.261091          120.387331        
-        2110              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         12      -130721.783983           91.477108        
-        2067              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         13      -130651.375524           70.408459        
-        2045              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         14      -130596.576783           54.798740        
-        2036              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         15      -130553.513780           43.063004        
-        2024              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         16      -130519.389828           34.123952        
-        2021              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         17      -130492.153400           27.236428        
-        2027              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         18      -130470.277142           21.876257        
-        2013              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         19      -130452.608676           17.668467        
-        2008              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##  Iteration              log(P)             dlog(P)     Dif
-f in state 2    Time in sec[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         20      -130438.268226           14.340450        
-        2010              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         21      -130426.577202           11.691025        
-        2012              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         22      -130417.007491            9.569711        
-        1994              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         23      -130409.144899            7.862592        
-        1991              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         24      -130402.662365            6.482534        
-        1987              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         25      -130397.300088            5.362276        
-        1989              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         26      -130392.850605            4.449483        
-        1992              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         27      -130389.147463            3.703143        
-        1983              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         28      -130386.056541            3.090922        
-        1982              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         29      -130383.469355            2.587186        
-        1978              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         30      -130381.297844            2.171511        
-        1969              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         31      -130379.470292            1.827552        
-        1974              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         32      -130377.928115            1.542176        
-        1976              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         33      -130376.623323            1.304793        
-        1969              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         34      -130375.516493            1.106830        
-        1968              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         35      -130374.575161            0.941331        
-        1961              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         36      -130373.772528            0.802634        
-        1958              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         37      -130373.086413            0.686115        
-        1955              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         38      -130372.498423            0.587990        
-        1956              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         39      -130371.993265            0.505158        
-        1952              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##  Iteration              log(P)             dlog(P)     Dif
-f in state 2    Time in sec[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         40      -130371.558199            0.435066        
-        1948              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         41      -130371.182588            0.375611        
-        1944              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         42      -130370.857530            0.325058        
-        1944              0[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         43      -130370.575559            0.281971        
-        1942              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         44      -130370.330401            0.245158        
-        1941              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         45      -130370.116770            0.213630        
-        1937              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         46      -130369.930206            0.186564        
-        1933              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         47      -130369.766934            0.163272        
-        1930              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         48      -130369.623753            0.143181        
-        1928              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         49      -130369.497942            0.125811        
-        1928              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         50      -130369.387185            0.110758        
-        1927              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         51      -130369.289502            0.097683        
-        1925              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         52      -130369.203201            0.086301        
-        1924              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         53      -130369.126830            0.076371        
-        1923              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         54      -130369.059139            0.067690        
-        1923              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         55      -130368.999054            0.060085        
-        1921              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         56      -130368.945645            0.053409        
-        1918              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         57      -130368.898107            0.047538        
-        1919              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         58      -130368.855742            0.042364        
-        1917              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         59      -130368.817945            0.037798        
-        1917              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##  Iteration              log(P)             dlog(P)     Dif
-f in state 2    Time in sec[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         60      -130368.784185            0.033760        
-        1917              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         61      -130368.754001            0.030184        
-        1915              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         62      -130368.726988            0.027012        
-        1913              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         63      -130368.702793            0.024195        
-        1912              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         64      -130368.681104            0.021689        
-        1913              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         65      -130368.661646            0.019458        
-        1910              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         66      -130368.644178            0.017468        
-        1910              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         67      -130368.628487            0.015691        
-        1910              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         68      -130368.614382            0.014104        
-        1909              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
-[]\OT1/cmtt/m/n/8 ##         69      -130368.601698            0.012684        
-        1909              1[] 
- []
-
-
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
+Overfull \hbox (14.00537pt too wide) in paragraph at lines 232--232
 []\OT1/cmtt/m/n/8 ##         70      -130368.590285            0.011413        
         1908              1[] 
  []
 
 
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
+Overfull \hbox (14.00537pt too wide) in paragraph at lines 232--232
 []\OT1/cmtt/m/n/8 ##         71      -130368.580012            0.010274        
         1909              1[] 
  []
 
 
-Overfull \hbox (14.00537pt too wide) in paragraph at lines 425--425
+Overfull \hbox (14.00537pt too wide) in paragraph at lines 232--232
 []\OT1/cmtt/m/n/8 ##         72      -130368.570759            0.009252        
         1907              1[] 
  []
 
-[7]
-Package color Info: Redefining color shadecolor on input line 432.
- <figure/univariate_broad_plotting-1.pdf, id=122, 433.62pt x 289.08pt>
+Package color Info: Redefining color shadecolor on input line 239.
+<figure/univariate_broad_plotting-1.pdf, id=109, 433.62pt x 289.08pt>
 File: figure/univariate_broad_plotting-1.pdf Graphic file (type pdf)
 
 <use figure/univariate_broad_plotting-1.pdf>
 Package pdftex.def Info: figure/univariate_broad_plotting-1.pdf used on input l
-ine 440.
+ine 247.
 (pdftex.def)             Requested size: 360.0pt x 240.01132pt.
 
-Overfull \hbox (17.0pt too wide) in paragraph at lines 440--441
+Overfull \hbox (17.0pt too wide) in paragraph at lines 247--248
 [][] 
  []
 
-Package color Info: Redefining color shadecolor on input line 445.
-<figure/univariate_broad_H4K20me1-1.pdf, id=123, 433.62pt x 289.08pt> [8]
+Package color Info: Redefining color shadecolor on input line 252.
+<figure/univariate_broad_H4K20me1-1.pdf, id=110, 433.62pt x 289.08pt> [5]
 File: figure/univariate_broad_H4K20me1-1.pdf Graphic file (type pdf)
 
 <use figure/univariate_broad_H4K20me1-1.pdf>
 Package pdftex.def Info: figure/univariate_broad_H4K20me1-1.pdf used on input l
-ine 446.
+ine 253.
 (pdftex.def)             Requested size: 360.0pt x 240.01132pt.
 
-Overfull \hbox (17.0pt too wide) in paragraph at lines 446--447
+Overfull \hbox (17.0pt too wide) in paragraph at lines 253--254
 [][] 
  []
 
-Package color Info: Redefining color shadecolor on input line 451.
-[9 <./figure/univariate_broad_plotting-1.pdf> <./figure/univariate_broad_H4K20m
+Package color Info: Redefining color shadecolor on input line 258.
+[6 <./figure/univariate_broad_plotting-1.pdf> <./figure/univariate_broad_H4K20m
 e1-1.pdf>]
-Package color Info: Redefining color shadecolor on input line 472.
-Package color Info: Redefining color shadecolor on input line 480.
-LaTeX Font Info:    Try loading font information for OMS+cmtt on input line 492
+Package color Info: Redefining color shadecolor on input line 279.
+Package color Info: Redefining color shadecolor on input line 287.
+LaTeX Font Info:    Try loading font information for OMS+cmtt on input line 299
 .
- (/usr/share/R/share/texmf/tex/latex/omscmtt.fd
+ (/usr/share/texmf/tex/latex/R/tex/latex/omscmtt.fd
 File: omscmtt.fd 
 )
 LaTeX Font Info:    Font shape `OMS/cmtt/m/n' in size <8> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 492.
-Package color Info: Redefining color shadecolor on input line 501.
-Package color Info: Redefining color shadecolor on input line 517.
- [10]
-Overfull \hbox (1.25519pt too wide) in paragraph at lines 526--526
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 299.
+Package color Info: Redefining color shadecolor on input line 308.
+Package color Info: Redefining color shadecolor on input line 324.
+ [7]
+Overfull \hbox (1.25519pt too wide) in paragraph at lines 333--333
 []\OT1/cmtt/m/n/8 ## Warning in callPeaksReplicates(models, max.time = 60): You
 r replicates cluster in
  []
 
 
-Overfull \hbox (5.50525pt too wide) in paragraph at lines 526--526
+Overfull \hbox (5.50525pt too wide) in paragraph at lines 333--333
 \OT1/cmtt/m/n/8 2 groups. Consider redoing your analysis with only the group wi
 th the highest average
  []
 
-Package color Info: Redefining color shadecolor on input line 529.
-Package color Info: Redefining color shadecolor on input line 545.
-Package color Info: Redefining color shadecolor on input line 556.
-Package color Info: Redefining color shadecolor on input line 572.
-Package color Info: Redefining color shadecolor on input line 580.
-[11]
-Package color Info: Redefining color shadecolor on input line 598.
-Package color Info: Redefining color shadecolor on input line 615.
-Package color Info: Redefining color shadecolor on input line 648.
+Package color Info: Redefining color shadecolor on input line 336.
+Package color Info: Redefining color shadecolor on input line 352.
+Package color Info: Redefining color shadecolor on input line 363.
+Package color Info: Redefining color shadecolor on input line 379.
+Package color Info: Redefining color shadecolor on input line 387.
+[8]
+Package color Info: Redefining color shadecolor on input line 405.
+Package color Info: Redefining color shadecolor on input line 422.
+Package color Info: Redefining color shadecolor on input line 455.
 
-Overfull \hbox (5.39708pt too wide) in paragraph at lines 655--655
+Overfull \hbox (5.39708pt too wide) in paragraph at lines 462--462
 \OT1/cmtt/m/it/8 ## 0 16383 3072 16380 192 13116 16371 12 768 3264 12300 13308 
 3084 15375 3120 3840 4095
  []
 
 
-Overfull \hbox (5.39708pt too wide) in paragraph at lines 655--655
+Overfull \hbox (5.39708pt too wide) in paragraph at lines 462--462
 \OT1/cmtt/m/it/8 15420 16188 3075 16128 16191 3 48 960 3123 3315 3903 4092 1254
 0 15363 15612 16179 15 51
  []
 
 
-Overfull \hbox (9.59705pt too wide) in paragraph at lines 655--655
+Overfull \hbox (9.59705pt too wide) in paragraph at lines 462--462
 \OT1/cmtt/m/it/8 60 63 195 204 207 240 243 252 255 771 780 783 816 819 828 831 
 963 972 975 1008 1011 1020
  []
 
 
-Overfull \hbox (13.79701pt too wide) in paragraph at lines 655--655
+Overfull \hbox (13.79701pt too wide) in paragraph at lines 462--462
 \OT1/cmtt/m/it/8 1023 3087 3132 3135 3267 3276 3279 3312 3324 3327 3843 3852 38
 55 3888 3891 3900 4032 4035
  []
 
 
-Overfull \hbox (22.19695pt too wide) in paragraph at lines 655--655
+Overfull \hbox (22.19695pt too wide) in paragraph at lines 462--462
 \OT1/cmtt/m/it/8 4044 4047 4080 4083 12288 12291 12303 12336 12339 12348 12351 
 12480 12483 12492 12495 12528
  []
 
 
-Overfull \hbox (13.79701pt too wide) in paragraph at lines 655--655
+Overfull \hbox (13.79701pt too wide) in paragraph at lines 462--462
 \OT1/cmtt/m/it/8 12531 12543 13056 13059 13068 13071 13104 13107 13119 13248 13
 251 13260 13263 13296 13299
  []
 
 
-Overfull \hbox (13.79701pt too wide) in paragraph at lines 655--655
+Overfull \hbox (13.79701pt too wide) in paragraph at lines 462--462
 \OT1/cmtt/m/it/8 13311 15360 15372 15408 15411 15423 15552 15555 15564 15567 15
 600 15603 15615 16131 16140
  []
 
-[12]
-Package color Info: Redefining color shadecolor on input line 683.
-Package color Info: Redefining color shadecolor on input line 700.
- [13]
-Package color Info: Redefining color shadecolor on input line 708.
-Package color Info: Redefining color shadecolor on input line 726.
-Package color Info: Redefining color shadecolor on input line 743.
+[9]
+Package color Info: Redefining color shadecolor on input line 490.
+Package color Info: Redefining color shadecolor on input line 507.
+ [10]
+Package color Info: Redefining color shadecolor on input line 515.
+Package color Info: Redefining color shadecolor on input line 533.
+Package color Info: Redefining color shadecolor on input line 550.
 
-Overfull \hbox (2.586pt too wide) in paragraph at lines 750--750
+Overfull \hbox (2.586pt too wide) in paragraph at lines 557--557
 [][]\OT1/cmtt/m/it/8 # First, we get all the histone marks (we could specify th
 em by hand, but we are lazy)[][] 
  []
 
-Package color Info: Redefining color shadecolor on input line 769.
-[14] [15]
-Package color Info: Redefining color shadecolor on input line 843.
-Package color Info: Redefining color shadecolor on input line 861.
- [16]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 923.
- [17]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 923.
+Package color Info: Redefining color shadecolor on input line 576.
+[11] [12]
+Package color Info: Redefining color shadecolor on input line 650.
+Package color Info: Redefining color shadecolor on input line 668.
+ [13]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 730.
+ [14]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 730.
  (./chromstaR.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 923.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 923.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 730.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 730.
 Package rerunfilecheck Info: File `chromstaR.out' has not changed.
 (rerunfilecheck)             Checksum: 65B876A9F74360D6CF607EF98D0BA678;947.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 923.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 730.
  ) 
 Here is how much of TeX's memory you used:
- 5621 strings out of 495028
- 82795 string characters out of 6181497
- 241826 words of memory out of 5000000
+ 5618 strings out of 495028
+ 82786 string characters out of 6181497
+ 183019 words of memory out of 5000000
  8747 multiletter control sequences out of 15000+600000
  10573 words of font info for 38 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
@@ -1775,10 +608,10 @@ sfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts
 y8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb
 ></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr
 /share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt8.pfb>
-Output written on chromstaR.pdf (17 pages, 210496 bytes).
+Output written on chromstaR.pdf (14 pages, 205513 bytes).
 PDF statistics:
- 235 PDF objects out of 1000 (max. 8388607)
- 194 compressed objects within 2 object streams
- 32 named destinations out of 1000 (max. 500000)
+ 222 PDF objects out of 1000 (max. 8388607)
+ 184 compressed objects within 2 object streams
+ 29 named destinations out of 1000 (max. 500000)
  120 words of extra memory for PDF output out of 10000 (max. 10000000)
 

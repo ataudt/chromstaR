@@ -125,7 +125,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 		}
 		temp = tryCatch({
 # 			covarianceMatrix[,,istate] = cov(z_temp)
-			if (nrow(z.temp) > 1) {
+			if (nrow(z.temp) > 100) {
 				correlationMatrix[,,istate] = cor(z.temp)
 				determinant[istate] = det( correlationMatrix[,,istate] )
 				correlationMatrixInverse[,,istate] = solve(correlationMatrix[,,istate])

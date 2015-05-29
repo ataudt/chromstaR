@@ -234,7 +234,11 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 	numstates <- length(combstates2use)
 
 	## Collapse the calls
-	collapsed.calls <- as.data.frame(insertchr(multi.hmm$segments))[,c('chromosome','start','end','state')]
+	if (is.null(multi.hmm$segments$combination)) {
+		collapsed.calls <- as.data.frame(insertchr(multi.hmm$segments))[,c('chromosome','start','end','state')]
+	} else {
+		collapsed.calls <- as.data.frame(insertchr(multi.hmm$segments))[,c('chromosome','start','end','state','combination')]
+	}
 	# Select only desired states
 	mask <- rep(FALSE,nrow(collapsed.calls))
 	for (istate in combstates2use) {
@@ -249,12 +253,18 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 	message('writing to file ',filename)
 	cat("", file=filename.gz)
 	if (separate.tracks) {
+		## Export peak calls
 		bin <- dec2bin(collapsed.calls$state, ndigits=length(multi.hmm$IDs))
 		colnames(bin) <- multi.hmm$IDs
 		for (icol in 1:ncol(bin)) {
 			numsegments <- length(which(bin[,icol]))
 			priority <- 52 + 4*icol
-			df <- cbind(collapsed.calls[bin[,icol],], score=rep(0,numsegments), strand=rep(".",numsegments))
+			mask <- bin[,icol]
+			if (is.null(collapsed.calls$combination)) {
+				df <- cbind(collapsed.calls[mask,c('chromosome','start','end','state')], score=rep(0,numsegments), strand=rep(".",numsegments))
+			} else {
+				df <- cbind(collapsed.calls[mask,c('chromosome','start','end','combination')], score=rep(0,numsegments), strand=rep(".",numsegments))
+			}
 			# Convert from 1-based closed to 0-based half open
 			df$start <- df$start - 1
 			df$thickStart <- df$start
@@ -268,6 +278,7 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 			write.table(format(df, scientific=FALSE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
 		}
 	} else {
+		## Export combinatorial states
 		# Generate the colors for each combinatorial state
 		colors <- rainbow(numstates)
 		RGBs <- t(col2rgb(colors))
@@ -276,7 +287,11 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 
 		# Write to file
 		numsegments <- nrow(collapsed.calls)
-		df <- cbind(collapsed.calls, score=rep(0,numsegments), strand=rep(".",numsegments), thickStart=collapsed.calls$start, thickEnd=collapsed.calls$end, itemRgb=itemRgb)
+		if (is.null(collapsed.calls$combination)) {
+			df <- cbind(collapsed.calls[,c('chromosome','start','end','state')], score=rep(0,numsegments), strand=rep(".",numsegments), thickStart=collapsed.calls$start, thickEnd=collapsed.calls$end, itemRgb=itemRgb)
+		} else {
+			df <- cbind(collapsed.calls[,c('chromosome','start','end','combination')], score=rep(0,numsegments), strand=rep(".",numsegments), thickStart=collapsed.calls$start, thickEnd=collapsed.calls$end, itemRgb=itemRgb)
+		}
 		# Convert from 1-based closed to 0-based half open
 		df$start <- df$start - 1
 		df$thickStart <- df$thickStart - 1
