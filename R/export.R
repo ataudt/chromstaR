@@ -5,11 +5,11 @@
 #'
 #' Export univariate peak-calls and read counts as genome browser viewable file
 #'
-#' Export \code{\link{chromstaR_univariateHMM}} objects as files which can be uploaded into a genome browser. Peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wiggle.gz).
+#' Export \code{\link{chromstaR_univariateHMM}} objects as files which can be uploaded into a genome browser. Peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wig.gz).
 #'
 #' @author Aaron Taudt
 #' @param hmm.list A list of \code{\link{chromstaR_univariateHMM}} objects or files that contain such objects.
-#' @param filename The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for peak-calls or ".wiggle.gz" for read counts. Any existing file will be overwritten.
+#' @param filename The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.
 #' @param what A character vector specifying what will be exported. Supported are \code{c('peaks', 'reads')}.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @seealso \code{\link{exportBinnedData}}, \code{\link{exportMultivariate}}
@@ -31,19 +31,19 @@
 #'## Export the binned read counts and peaks
 #'\donttest{exportUnivariates(uni.HMMs, filename='chromstaR-example_univariate.HMMs', what=c('reads','peaks'))}
 #' @export
-exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'reads'), header=TRUE) {
+exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'reads'), header=TRUE, separate.files=FALSE) {
 	if ('peaks' %in% what) {
-		exportUnivariatePeaks(hmm.list, filename, header=header)
+		exportUnivariatePeaks(hmm.list, filename, header=header, separate.files=separate.files)
 	}
 	if ('reads' %in% what) {
-		exportUnivariateReadCounts(hmm.list, filename, header=header)
+		exportUnivariateReadCounts(hmm.list, filename, header=header, separate.files=separate.files)
 	}
 }
 
 #----------------------------------------------------
 # Export peak-calls from univariate HMMs
 #----------------------------------------------------
-exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCalls", header=TRUE) {
+exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCalls", header=TRUE, separate.files=separate.files) {
 
 	## Function definitions
 	insertchr <- function(hmm.gr) {
@@ -65,7 +65,9 @@ exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCa
 	# Variables
 	nummod <- length(hmm.list)
 	filename <- paste0(filename,".bed.gz")
-	filename.gz <- gzfile(filename, 'w')
+	if (!separate.files) {
+		filename.gz <- gzfile(filename, 'w')
+	}
 
 	# Generate the colors
 	colors <- state.colors[levels(hmm.grl[[1]]$state)]
@@ -73,14 +75,21 @@ exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCa
 	RGBs <- apply(RGBs,1,paste,collapse=",")
 
 	# Write first line to file
-	message('writing to file ',filename)
-# 	cat("browser hide all\n", file=filename.gz)
-	cat("", file=filename.gz)
+	if (!separate.files) {
+		message('writing to file ',filename)
+		cat("", file=filename.gz)
+	}
 	
 	### Write every model to file ###
 	for (imod in 1:nummod) {
 		message('writing hmm ',imod,' / ',nummod,'\r', appendLF=F)
 		hmm <- hmm.list[[imod]]
+		if (separate.files) {
+			filename.sep <- paste0(sub('.bed.gz$', '', filename), '_', hmm$ID, '.bed.gz')
+			filename.gz <- gzfile(filename.sep, 'w')
+			message('writing to file ',filename.sep)
+			cat("", file=filename.gz)
+		}
 		hmm.gr <- hmm.grl[[imod]]
 		priority <- 51 + 4*imod
 		if (header) {
@@ -99,8 +108,13 @@ exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCa
 		} else {
 			write.table(format(df, scientific=FALSE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
 		}
+		if (separate.files) {
+			close(filename.gz)
+		}
 	}
-	close(filename.gz)
+	if (!separate.files) {
+		close(filename.gz)
+	}
 	message('')
 
 }
@@ -109,7 +123,7 @@ exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCa
 #----------------------------------------------------
 # Export read counts from univariate HMMs
 #----------------------------------------------------
-exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateReadCounts", header=TRUE) {
+exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateReadCounts", header=TRUE, separate.files=separate.files) {
 
 	## Function definitions
 	insertchr <- function(hmm.gr) {
@@ -130,18 +144,28 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 
 	# Variables
 	nummod <- length(hmm.list)
-	filename <- paste0(filename,".wiggle.gz")
-	filename.gz <- gzfile(filename, 'w')
+	filename <- paste0(filename,".wig.gz")
+	if (!separate.files) {
+		filename.gz <- gzfile(filename, 'w')
+	}
 	readcol <- paste(col2rgb(state.colors['reads']), collapse=',')
 
 	# Write first line to file
-	message('writing to file ',filename)
-	cat("", file=filename.gz)
+	if (!separate.files) {
+		message('writing to file ',filename)
+		cat("", file=filename.gz)
+	}
 	
 	### Write every model to file ###
 	for (imod in 1:nummod) {
 		message('writing hmm ',imod,' / ',nummod,'\r', appendLF=F)
 		hmm <- hmm.list[[imod]]
+		if (separate.files) {
+			filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', hmm$ID, '.wig.gz')
+			filename.gz <- gzfile(filename.sep, 'w')
+			message('writing to file ',filename.sep)
+			cat("", file=filename.gz)
+		}
 		hmm.gr <- hmm.grl[[imod]]
 		priority <- 50 + 4*imod
 		binsize <- width(hmm.gr[1])
@@ -153,8 +177,13 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 			cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
 			write.table(mcols(hmm.gr[hmm.gr$chromosome==chrom])$reads, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE)
 		}
+		if (separate.files) {
+			close(filename.gz)
+		}
 	}
-	close(filename.gz)
+	if (!separate.files) {
+		close(filename.gz)
+	}
 	message('')
 }
 
@@ -166,11 +195,11 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 #'
 #' Export multivariate calls and read counts as genome browser viewable file
 #'
-#' Export \code{\link{chromstaR_univariateHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states and peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wiggle.gz).
+#' Export \code{\link{chromstaR_univariateHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states and peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wig.gz).
 #'
 #' @author Aaron Taudt
 #' @param multi.hmm A \code{\link{chromstaR_multivariateHMM}} object or file that contains such an object.
-#' @param filename The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for combinatorial states and peak-calls or ".wiggle.gz" for read counts. Any existing file will be overwritten.
+#' @param filename The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for combinatorial states and peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.
 #' @param what A character vector specifying what will be exported. Supported are \code{c('combstates', 'peaks', 'reads')}.
 #' @param exclude.states A vector of combinatorial states that will be excluded from export.
 #' @param include.states A vector of combinatorial states that will be exported. If specified, \code{exclude.states} is ignored.
@@ -187,22 +216,22 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 #'                   what=c('reads','peaks'))
 #'}
 #' @export
-exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks', 'reads'), exclude.states=0, include.states=NULL, header=TRUE) {
+exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks', 'reads'), exclude.states=0, include.states=NULL, header=TRUE, separate.files=separate.files) {
 	if ('combstates' %in% what) {
 		exportMultivariateCalls(multi.hmm, filename, separate.tracks=FALSE, exclude.states, include.states, header=header)
 	}
 	if ('peaks' %in% what) {
-		exportMultivariateCalls(multi.hmm, filename, separate.tracks=TRUE, exclude.states, include.states, header=header)
+		exportMultivariateCalls(multi.hmm, filename, separate.tracks=TRUE, exclude.states, include.states, header=header, separate.files=separate.files)
 	}
 	if ('reads' %in% what) {
-		exportMultivariateReadCounts(multi.hmm, filename, header=header)
+		exportMultivariateReadCounts(multi.hmm, filename, header=header, separate.files=separate.files)
 	}
 }
 
 #----------------------------------------------------
 # Export combinatorial states or peak-calls from multivariate HMMs
 #----------------------------------------------------
-exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateCalls", separate.tracks=TRUE, exclude.states=0, include.states=NULL, header=TRUE) {
+exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateCalls", separate.tracks=TRUE, exclude.states=0, include.states=NULL, header=TRUE, separate.files=separate.files) {
 
 	if (class(multi.hmm)!=class.multivariate.hmm) {
 		multi.hmm <- get(load(multi.hmm))
@@ -223,7 +252,9 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 
 	## Variables
 	filename <- paste0(filename,".bed.gz")
-	filename.gz <- gzfile(filename, 'w')
+	if (!separate.files) {
+		filename.gz <- gzfile(filename, 'w')
+	}
 	combstates <- levels(multi.hmm$bins$state)
 	numstates <- length(combstates)
 	if (is.null(include.states)) {
@@ -249,14 +280,23 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 		stop("No regions to export!")
 	}
 
-	## Write to file
-	message('writing to file ',filename)
-	cat("", file=filename.gz)
+	# Write first line to file
+	if (!separate.files) {
+		message('writing to file ',filename)
+		cat("", file=filename.gz)
+	}
+
 	if (separate.tracks) {
 		## Export peak calls
 		bin <- dec2bin(collapsed.calls$state, ndigits=length(multi.hmm$IDs))
 		colnames(bin) <- multi.hmm$IDs
 		for (icol in 1:ncol(bin)) {
+			if (separate.files) {
+				filename.sep <- paste0(sub('.bed.gz$', '', filename), '_', colnames(bin)[icol], '.bed.gz')
+				filename.gz <- gzfile(filename.sep, 'w')
+				message('writing to file ',filename.sep)
+				cat("", file=filename.gz)
+			}
 			numsegments <- length(which(bin[,icol]))
 			priority <- 52 + 4*icol
 			mask <- bin[,icol]
@@ -276,6 +316,9 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 				cat(paste0("track name=\"multivariate calls for ",colnames(bin)[icol],"\" description=\"multivariate calls for ",colnames(bin)[icol],"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
 			}
 			write.table(format(df, scientific=FALSE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
+			if (separate.files) {
+				close(filename.gz)
+			}
 		}
 	} else {
 		## Export combinatorial states
@@ -300,7 +343,9 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 		}
 		write.table(format(df, scientific=FALSE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
 	}
-	close(filename.gz)
+	if (!separate.files) {
+		close(filename.gz)
+	}
 
 }
 
@@ -328,19 +373,29 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 	}
 
 	## Variables
-	filename <- paste0(filename,".wiggle.gz")
-	filename.gz <- gzfile(filename, 'w')
+	filename <- paste0(filename,".wig.gz")
+	if (!separate.files) {
+		filename.gz <- gzfile(filename, 'w')
+	}
 	nummod <- length(multi.hmm$IDs)
 	readcol <- paste(col2rgb(state.colors['reads']), collapse=',')
 
-	## Write first line to file
-	message('writing to file ',filename)
-	cat("", file=filename.gz)
+	# Write first line to file
+	if (!separate.files) {
+		message('writing to file ',filename)
+		cat("", file=filename.gz)
+	}
 	
 	### Write every model to file ###
 	for (imod in 1:nummod) {
 		message('writing hmm ',imod,' / ',nummod,'\r', appendLF=F)
 		ID <- multi.hmm$IDs[imod]
+		if (separate.files) {
+			filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', ID, '.wig.gz')
+			filename.gz <- gzfile(filename.sep, 'w')
+			message('writing to file ',filename.sep)
+			cat("", file=filename.gz)
+		}
 		priority <- 50 + 4*imod
 		binsize <- width(multi.hmm$bins[1])
 		if (header) {
@@ -356,8 +411,13 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 			cat(paste0("fixedStep chrom=",chromr," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
 			write.table(multi.hmm$bins[seqnames(multi.hmm$bins)==chrom]$reads[,imod], file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE)
 		}
+		if (separate.files) {
+			close(filename.gz)
+		}
 	}
-	close(filename.gz)
+	if (!separate.files) {
+		close(filename.gz)
+	}
 	message('')
 }
 
@@ -369,11 +429,11 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 #'
 #' Export read counts as genome browser viewable file
 #'
-#' Export read counts from \code{\link{binned.data}} as a file which can be uploaded into a genome browser. Read counts are exported in WIGGLE format (.wiggle.gz).
+#' Export read counts from \code{\link{binned.data}} as a file which can be uploaded into a genome browser. Read counts are exported in WIGGLE format (.wig.gz).
 #'
 #' @author Aaron Taudt
 #' @param binned.data.list A list of \code{\link{binned.data}} objects or files that contain such objects.
-#' @param filename The name of the file that will be written. The ending ".wiggle.gz" for read counts will be appended. Any existing file will be overwritten.
+#' @param filename The name of the file that will be written. The ending ".wig.gz" for read counts will be appended. Any existing file will be overwritten.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
 #' @examples
@@ -418,18 +478,28 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", 
 
 	# Variables
 	nummod <- length(binned.data.list)
-	filename <- paste0(filename,".wiggle.gz")
-	filename.gz <- gzfile(filename, 'w')
+	filename <- paste0(filename,".wig.gz")
+	if (!separate.files) {
+		filename.gz <- gzfile(filename, 'w')
+	}
 	readcol <- paste(col2rgb(state.colors['reads']), collapse=',')
 
 	# Write first line to file
-	message('writing to file ',filename)
-	cat("", file=filename.gz)
+	if (!separate.files) {
+		message('writing to file ',filename)
+		cat("", file=filename.gz)
+	}
 	
 	### Write every model to file ###
 	for (imod in 1:nummod) {
 		message('writing binned data ',imod,' / ',nummod,'\r', appendLF=F)
 		b <- binned.data.list[[imod]]
+		if (separate.files) {
+			filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', imod, '.wig.gz')
+			filename.gz <- gzfile(filename.sep, 'w')
+			message('writing to file ',filename.sep)
+			cat("", file=filename.gz)
+		}
 		priority <- 50 + 4*imod
 		binsize <- width(b[1])
 		name <- names(binned.data.list)[imod]
@@ -441,8 +511,13 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", 
 			cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
 			write.table(mcols(b[b$chromosome==chrom])$reads, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE)
 		}
+		if (separate.files) {
+			close(filename.gz)
+		}
 	}
-	close(filename.gz)
+	if (!separate.files) {
+		close(filename.gz)
+	}
 	message('')
 }
 
@@ -480,11 +555,15 @@ exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", h
 
 	# Variables
 	filename <- paste0(filename,".bed.gz")
-	filename.gz <- gzfile(filename, 'w')
+	if (!separate.files) {
+		filename.gz <- gzfile(filename, 'w')
+	}
 
 	# Write first line to file
-	message('writing to file ',filename)
-	cat("", file=filename.gz)
+	if (!separate.files) {
+		message('writing to file ',filename)
+		cat("", file=filename.gz)
+	}
 	
 	### Write every model to file ###
 	if (header) {

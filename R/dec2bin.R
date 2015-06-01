@@ -41,6 +41,7 @@ dec2bin = function(dec, colnames=NULL, ndigits=NULL) {
 	binary_states <- matrix(as.logical(intToBits(dec)), nrow=length(dec), byrow=TRUE)
 	binary_states <- binary_states[ ,ndigits:1]
 	colnames(binary_states) <- colnames
+	rownames(binary_states) <- dec
 	return(binary_states)
 
 }
