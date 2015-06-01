@@ -1,7 +1,7 @@
 #include "utility.h"
 #include "scalehmm.h"
 #include <vector> // storing density functions in multivariate
-// #include <omp.h> // parallelization options
+#include <omp.h> // parallelization options
 #include <string> // strcmp
 
 static ScaleHMM* hmm; // declare as static outside the function because we only need one and this enables memory-cleanup on R_CheckUserInterrupt()
@@ -22,7 +22,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* m
 
 	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	// Parallelization settings
-// 	omp_set_num_threads(*num_threads);
+	omp_set_num_threads(*num_threads);
 
 	// Print some information
 	//FILE_LOG(logINFO) << "number of states = " << *N;
@@ -274,7 +274,7 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 
 	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	// Parallelization settings
-// 	omp_set_num_threads(*num_threads);
+	omp_set_num_threads(*num_threads);
 
 	// Print some information
 	//FILE_LOG(logINFO) << "number of states = " << *N;
