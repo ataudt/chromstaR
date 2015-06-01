@@ -76,7 +76,8 @@ plot(model)
 <<univariate_narrow_export, results='hide', message=FALSE, eval=FALSE>>=
 ## === Step 4: Export to genome browser ===
 # We can export peak calls and binned read counts with
-exportUnivariates(list(model), filename='your-file', what=c('peaks','reads'))
+exportUnivariates(list(model), filename='your-peak-file', what='peaks')
+exportUnivariates(list(model), filename='your-read-file', what='reads')
 @
 \end{scriptsize}
 
@@ -125,7 +126,8 @@ print(plot(model))
 <<univariate_broad_export, results='hide', message=FALSE, eval=FALSE>>=
 ## === Step 4: Export to genome browser ===
 # We can export peak calls and binned read counts with
-exportUnivariates(list(model), filename='your-file', what=c('peaks','reads'))
+exportUnivariates(list(model), filename='your-peak-file', what='peaks')
+exportUnivariates(list(model), filename='your-read-file', what='reads')
 @
 \end{scriptsize}
 
@@ -193,7 +195,8 @@ multi.model <- callPeaksReplicates(models[1:3], force.equal=TRUE, max.time=60)
 <<multivariate_replicate_export, results='hide', message=FALSE, eval=FALSE>>=
 ## === Step 5: Export to genome browser ===
 # Finally, we can export the results as BED file
-exportMultivariate(multi.model, filename='your-file', what=c('peaks','reads'))
+exportMultivariate(multi.model, filename='your-peak-file', what='peaks')
+exportMultivariate(multi.model, filename='your-read-file', what='reads')
 @
 \end{scriptsize}
 
@@ -259,7 +262,11 @@ multi.model <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=
 <<multivariate_differential_export, results='hide', message=FALSE, eval=FALSE>>=
 ## === Step 5: Export to genome browser ===
 # Export only differential peaks by excluding the 'common.states'
-exportMultivariate(multi.model, filename='your-file', what=c('peaks','reads'),
+exportMultivariate(multi.model, filename='your-peak-file', what='peaks',
+                   exclude.states=common.states)
+exportMultivariate(multi.model, filename='your-read-file', what='reads',
+                   exclude.states=common.states)
+exportMultivariate(multi.model, filename='your-combstates-file', what='combstates',
                    exclude.states=common.states)
 @
 \end{scriptsize}
