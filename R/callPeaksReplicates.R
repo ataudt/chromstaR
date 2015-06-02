@@ -38,8 +38,8 @@ callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=
 		## Univariate replicateInfo
 		ids <- unlist(lapply(hmms, '[[', 'ID'))
 		weight.univariate <- unlist(lapply(hmms, function(x) { x$weights['modified'] }))
-		total.reads <- unlist(lapply(hmms, function(x) { sum(x$bins$reads) }))
-		info.df <- data.frame(total.reads=total.reads, weight.univariate=weight.univariate)
+		total.count <- unlist(lapply(hmms, function(x) { sum(x$bins$reads) }))
+		info.df <- data.frame(total.count=total.count, weight.univariate=weight.univariate)
 		rownames(info.df) <- ids
 
 		### Correlation analysis ###
@@ -78,10 +78,10 @@ callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=
 	## Check groups and issue warnings
 	num.groups <- length(unique(info.df$group))
 	if (num.groups > 1) {
-		avg.total.reads <- unlist(lapply(split(info.df, info.df$group), function(x) { mean(x$total.reads) }))
-		IDs.keep <- rownames(info.df)[info.df$group==names(avg.total.reads[which.max(avg.total.reads)])]
+		avg.total.count <- unlist(lapply(split(info.df, info.df$group), function(x) { mean(x$total.count) }))
+		IDs.keep <- rownames(info.df)[info.df$group==names(avg.total.count[which.max(avg.total.count)])]
 		IDs.keep.string <- paste(IDs.keep, collapse='\n')
-		IDs.throw <- rownames(info.df)[info.df$group!=names(avg.total.reads[which.max(avg.total.reads)])]
+		IDs.throw <- rownames(info.df)[info.df$group!=names(avg.total.count[which.max(avg.total.count)])]
 		IDs.throw.string <- paste(IDs.throw, collapse='\n')
 		string <- paste0("Your replicates cluster in ", num.groups, " groups. Consider redoing your analysis with only the group with the highest average coverage:\n", IDs.keep.string, "\nReplicates from groups with lower coverage are:\n", IDs.throw.string)
 		warning(string)

@@ -5,12 +5,13 @@
 \title{Export genome browser viewable files}
 \usage{
 exportMultivariate(multi.hmm, filename, what = c("combstates", "peaks",
-  "reads"), exclude.states = 0, include.states = NULL, header = TRUE)
+  "reads"), exclude.states = 0, include.states = NULL, header = TRUE,
+  separate.files = separate.files)
 }
 \arguments{
 \item{multi.hmm}{A \code{\link{chromstaR_multivariateHMM}} object or file that contains such an object.}
 
-\item{filename}{The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for combinatorial states and peak-calls or ".wiggle.gz" for read counts. Any existing file will be overwritten.}
+\item{filename}{The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for combinatorial states and peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.}
 
 \item{what}{A character vector specifying what will be exported. Supported are \code{c('combstates', 'peaks', 'reads')}.}
 
@@ -24,7 +25,7 @@ exportMultivariate(multi.hmm, filename, what = c("combstates", "peaks",
 Export multivariate calls and read counts as genome browser viewable file
 }
 \details{
-Export \code{\link{chromstaR_univariateHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states and peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wiggle.gz).
+Export \code{\link{chromstaR_univariateHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states and peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wig.gz).
 }
 \examples{
 ### Multivariate peak calling ###

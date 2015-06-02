@@ -5,12 +5,12 @@
 \title{Export genome browser viewable files}
 \usage{
 exportUnivariates(hmm.list, filename, what = c("peaks", "reads"),
-  header = TRUE)
+  header = TRUE, separate.files = FALSE)
 }
 \arguments{
 \item{hmm.list}{A list of \code{\link{chromstaR_univariateHMM}} objects or files that contain such objects.}
 
-\item{filename}{The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for peak-calls or ".wiggle.gz" for read counts. Any existing file will be overwritten.}
+\item{filename}{The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.}
 
 \item{what}{A character vector specifying what will be exported. Supported are \code{c('peaks', 'reads')}.}
 
@@ -20,7 +20,7 @@ exportUnivariates(hmm.list, filename, what = c("peaks", "reads"),
 Export univariate peak-calls and read counts as genome browser viewable file
 }
 \details{
-Export \code{\link{chromstaR_univariateHMM}} objects as files which can be uploaded into a genome browser. Peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wiggle.gz).
+Export \code{\link{chromstaR_univariateHMM}} objects as files which can be uploaded into a genome browser. Peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wig.gz).
 }
 \examples{
 ### Univariate peak calling ###

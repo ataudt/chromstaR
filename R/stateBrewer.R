@@ -75,29 +75,29 @@ stateBrewer <- function(statespec, diffstatespec=NULL, inverse=FALSE, sep='-') {
 	diffgroups <- levels(factor(diffstatespec))
 	tracknames <- sub('^.\\.', '', statespec)
 
-	## Get all possible binary states
-	binstates <- dec2bin(0:(2^numtracks-1), colnames=tracknames)
-
-	## Select specified binary states
+	## Generate specified binary states
+	numstates <- 2^length(which(!grepl('^0\\.|^1\\.', groups)))
+	binstates <- matrix(FALSE, ncol=numtracks, nrow=numstates)
+	i1 <- 1
 	for (group in groups) {
 		track.index <- which(statespec==group)
-		if (grepl('^0\\.', group)) {
-			mask <- !apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('|', x) })
-		} else if (grepl('^1\\.', group)) {
-			mask <- apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('&', x) })
-		} else if (grepl('^x\\.', group)) {
-			mask <- rep(T, nrow(binstates))
-		} else if (grepl('^r\\.', group)) {
-			mask0 <- !apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('|', x) })
-			mask1 <- apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('&', x) })
-			mask <- mask0 | mask1
+		for (itrack in track.index) {
+			if (grepl('^1\\.', group)) {
+				binstates[,itrack] <- TRUE
+			} else if (grepl('^x\\.', group)) {
+				numeach <- numstates/2 / 2^(i1-1)
+				binstates[,itrack] <- rep(c(rep(FALSE, numeach), rep(TRUE, numeach)), 2^(i1-1))
+				i1 <- i1 + 1
+			} else if (grepl('^r\\.', group)) {
+				numeach <- numstates/2 / 2^(i1-1)
+				binstates[,itrack] <- rep(c(rep(FALSE, numeach), rep(TRUE, numeach)), 2^(i1-1))
+			}
 		}
-		binstates <- binstates[mask,]
-		if (class(binstates)!='matrix') {
-			binstates <- matrix(binstates, ncol=length(binstates))
-			colnames(binstates) <- tracknames
+		if (grepl('^r\\.', group)) {
+			i1 <- i1 + 1
 		}
 	}
+	colnames(binstates) <- tracknames
 
 	for (diffgroup in diffgroups) {
 		track.index <- which(diffstatespec==diffgroup)

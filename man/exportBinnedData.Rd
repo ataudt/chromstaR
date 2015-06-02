@@ -10,7 +10,7 @@ exportBinnedData(binned.data.list, filename = "chromstaR_ReadCounts",
 \arguments{
 \item{binned.data.list}{A list of \code{\link{binned.data}} objects or files that contain such objects.}
 
-\item{filename}{The name of the file that will be written. The ending ".wiggle.gz" for read counts will be appended. Any existing file will be overwritten.}
+\item{filename}{The name of the file that will be written. The ending ".wig.gz" for read counts will be appended. Any existing file will be overwritten.}
 
 \item{header}{A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).}
 }
@@ -18,7 +18,7 @@ exportBinnedData(binned.data.list, filename = "chromstaR_ReadCounts",
 Export read counts as genome browser viewable file
 }
 \details{
-Export read counts from \code{\link{binned.data}} as a file which can be uploaded into a genome browser. Read counts are exported in WIGGLE format (.wiggle.gz).
+Export read counts from \code{\link{binned.data}} as a file which can be uploaded into a genome browser. Read counts are exported in WIGGLE format (.wig.gz).
 }
 \examples{
 ## Get example BED-files with ChIP-seq reads for H3K36me3
