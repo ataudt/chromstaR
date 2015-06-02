@@ -5,7 +5,7 @@
 \title{Export genome browser viewable files}
 \usage{
 exportBinnedData(binned.data.list, filename = "chromstaR_ReadCounts",
-  header = TRUE)
+  header = TRUE, separate.files = FALSE)
 }
 \arguments{
 \item{binned.data.list}{A list of \code{\link{binned.data}} objects or files that contain such objects.}

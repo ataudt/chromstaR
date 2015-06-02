@@ -43,7 +43,7 @@ exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'reads'), head
 #----------------------------------------------------
 # Export peak-calls from univariate HMMs
 #----------------------------------------------------
-exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCalls", header=TRUE, separate.files=separate.files) {
+exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCalls", header=TRUE, separate.files=FALSE) {
 
 	## Function definitions
 	insertchr <- function(hmm.gr) {
@@ -123,7 +123,7 @@ exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCa
 #----------------------------------------------------
 # Export read counts from univariate HMMs
 #----------------------------------------------------
-exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateReadCounts", header=TRUE, separate.files=separate.files) {
+exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateReadCounts", header=TRUE, separate.files=FALSE) {
 
 	## Function definitions
 	insertchr <- function(hmm.gr) {
@@ -231,7 +231,7 @@ exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks'
 #----------------------------------------------------
 # Export combinatorial states or peak-calls from multivariate HMMs
 #----------------------------------------------------
-exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateCalls", separate.tracks=TRUE, exclude.states=0, include.states=NULL, header=TRUE, separate.files=separate.files) {
+exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateCalls", separate.tracks=TRUE, exclude.states=0, include.states=NULL, header=TRUE, separate.files=FALSE) {
 
 	if (class(multi.hmm)!=class.multivariate.hmm) {
 		multi.hmm <- get(load(multi.hmm))
@@ -353,7 +353,7 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 #----------------------------------------------------
 # Export read counts from multivariate HMMs
 #----------------------------------------------------
-exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivariateReadCounts", header=TRUE) {
+exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivariateReadCounts", header=TRUE, separate.files=FALSE) {
 
 	if (class(multi.hmm)!=class.multivariate.hmm) {
 		multi.hmm <- get(load(multi.hmm))
@@ -450,7 +450,7 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 #'## Export the binned read counts
 #'\donttest{exportBinnedData(binned.data.list, filename='chromstaR-example_binned.data')}
 #' @export
-exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", header=TRUE) {
+exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", header=TRUE, separate.files=FALSE) {
 
 	## Load data
 	if (is.character(binned.data.list)) {
@@ -555,15 +555,11 @@ exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", h
 
 	# Variables
 	filename <- paste0(filename,".bed.gz")
-	if (!separate.files) {
-		filename.gz <- gzfile(filename, 'w')
-	}
+	filename.gz <- gzfile(filename, 'w')
 
 	# Write first line to file
-	if (!separate.files) {
-		message('writing to file ',filename)
-		cat("", file=filename.gz)
-	}
+	message('writing to file ',filename)
+	cat("", file=filename.gz)
 	
 	### Write every model to file ###
 	if (header) {
