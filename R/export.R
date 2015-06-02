@@ -216,7 +216,7 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 #'                   what=c('reads','peaks'))
 #'}
 #' @export
-exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks', 'reads'), exclude.states=0, include.states=NULL, header=TRUE, separate.files=separate.files) {
+exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks', 'reads'), exclude.states=0, include.states=NULL, header=TRUE, separate.files=FALSE) {
 	if ('combstates' %in% what) {
 		exportMultivariateCalls(multi.hmm, filename, separate.tracks=FALSE, exclude.states, include.states, header=header)
 	}
