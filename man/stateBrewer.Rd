@@ -4,7 +4,8 @@
 \alias{stateBrewer}
 \title{Obtain combinatorial states from specification}
 \usage{
-stateBrewer(statespec, diffstatespec = NULL, inverse = FALSE, sep = "-")
+stateBrewer(statespec, diff.conditions = NULL, tracks2compare = NULL,
+  mindiff = 1, inverse = FALSE, sep = "-")
 }
 \arguments{
 \item{statespec}{A vector composed of any combination of the following entries: \code{'0.[]', '1.[]', 'x.[]', 'r.[]'}, where [] can be any string.
@@ -16,12 +17,9 @@ stateBrewer(statespec, diffstatespec = NULL, inverse = FALSE, sep = "-")
   \item \code{'r.[]'}: all samples in group [] have to be in the same state
 }}
 
-\item{diffstatespec}{A vector composed of any combination of the following entries: \code{'x.[]', 'd.[]'}, where [] can be any string.
-\itemize{
-  \item \code{'x.A'}: sample A can be both 'unmodified' or 'modified'
-  \item \code{'d.B'}: at least one sample in group B has to be different from the other samples in group A
-  \item \code{'d[]'}: at least one sample in group [] has to be different from the other samples in group []
-}}
+\item{diff.conditions}{A vector with the same length as \code{statespec}. Similar entries will be treated as belonging to the same condition. If this parameter is specified, only states that are different between the conditions are returned.}
+
+\item{tracks2compare}{A vector with the same length as \code{statespec}. This vector defines the tracks between which conditions are compared.}
 
 \item{inverse}{If \code{TRUE}, names and entries of the output are swapped.}
 
@@ -55,14 +53,6 @@ stateBrewer(statespec=c('r.A','r.A','r.A','r.B','r.B'))
 # Get all combinatorial states where sample1=sample5, sample2=sample3=1,
 #  sample4=(0 or 1)
 stateBrewer(statespec=c('r.A','1.B','1.C','x.D','r.A'))
-
-# Get all combinatorial states where sample1 != sample2, sample3 != sample4,
-#  sample5=(0 or 1)
-stateBrewer(statespec=c('x.A','x.B','x.C','x.D','x.E'),
-           diffstatespec=c('d.a','d.a','d.b','d.b','x.c'))
-# To check whether you chose the correct specification you can use
-dec2bin(stateBrewer(statespec=c('x.A','x.B','x.C','x.D','x.E'),
-           diffstatespec=c('d.a','d.a','d.b','d.b','x.c')), colnames=c('A','B','C','D','E'))
 }
 \author{
 Aaron Taudt

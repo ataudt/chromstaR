@@ -21,12 +21,8 @@
 #'     \item \code{'r.D'}: all samples in group D have to be in the same state
 #'     \item \code{'r.[]'}: all samples in group [] have to be in the same state
 #'   }
-#' @param diffstatespec A vector composed of any combination of the following entries: \code{'x.[]', 'd.[]'}, where [] can be any string.
-#'   \itemize{
-#'     \item \code{'x.A'}: sample A can be both 'unmodified' or 'modified'
-#'     \item \code{'d.B'}: at least one sample in group B has to be different from the other samples in group A 
-#'     \item \code{'d[]'}: at least one sample in group [] has to be different from the other samples in group [] 
-#'   }
+#' @param diff.conditions A vector with the same length as \code{statespec}. Similar entries will be treated as belonging to the same condition. If this parameter is specified, only states that are different between the conditions are returned.
+#' @param tracks2compare A vector with the same length as \code{statespec}. This vector defines the tracks between which conditions are compared.
 #' @param inverse If \code{TRUE}, names and entries of the output are swapped.
 #' @param sep Separator used to separate the tracknames in the combinations.
 #' @return A named integer vector with (decimal) combinatorial states following the given specification. The names of the vector are the combinatorial states composed of the different groups. If \code{inverse=TRUE}, names and numbers are swapped.
@@ -41,16 +37,8 @@
 #'# Get all combinatorial states where sample1=sample5, sample2=sample3=1,
 #'#  sample4=(0 or 1)
 #'stateBrewer(statespec=c('r.A','1.B','1.C','x.D','r.A'))
-#'
-#'# Get all combinatorial states where sample1 != sample2, sample3 != sample4,
-#'#  sample5=(0 or 1)
-#'stateBrewer(statespec=c('x.A','x.B','x.C','x.D','x.E'),
-#'            diffstatespec=c('d.a','d.a','d.b','d.b','x.c'))
-#'# To check whether you chose the correct specification you can use
-#'dec2bin(stateBrewer(statespec=c('x.A','x.B','x.C','x.D','x.E'),
-#'            diffstatespec=c('d.a','d.a','d.b','d.b','x.c')), colnames=c('A','B','C','D','E'))
 #' @export
-stateBrewer <- function(statespec, diffstatespec=NULL, inverse=FALSE, sep='-') {
+stateBrewer <- function(statespec, diff.conditions=NULL, tracks2compare=NULL, mindiff=1, inverse=FALSE, sep='-') {
 
 	## Check user input
 	for (spec in statespec) {
@@ -71,11 +59,10 @@ stateBrewer <- function(statespec, diffstatespec=NULL, inverse=FALSE, sep='-') {
 
 	## Variables
 	numtracks <- length(statespec)
-	groups <- levels(factor(statespec))
-	diffgroups <- levels(factor(diffstatespec))
 	tracknames <- sub('^.\\.', '', statespec)
 
-	## Generate specified binary states
+	### Generate specified binary states ###
+	groups <- levels(factor(statespec))
 	numstates <- 2^length(which(!grepl('^0\\.|^1\\.', groups)))
 	binstates <- matrix(FALSE, ncol=numtracks, nrow=numstates)
 	i1 <- 1
@@ -99,33 +86,82 @@ stateBrewer <- function(statespec, diffstatespec=NULL, inverse=FALSE, sep='-') {
 	}
 	colnames(binstates) <- tracknames
 
-	for (diffgroup in diffgroups) {
-		track.index <- which(diffstatespec==diffgroup)
-		if (grepl('^d\\.', diffgroup)) {
-			mask0 <- !apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('|', x) })
-			mask1 <- apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('&', x) })
-			mask <- !(mask0 | mask1)
-		} else if (grepl('^x\\.', diffgroup)) {
-			mask <- rep(T, nrow(binstates))
+	### Select differential states ###
+	if (!is.null(diff.conditions)) {
+		if (is.null(tracks2compare)) {
+			stop("argument 'tracks2compare' must be specified if 'diff.conditions' was specified")
 		}
-		binstates <- binstates[mask,]
-		if (class(binstates)!='matrix') {
-			binstates <- matrix(binstates, ncol=length(binstates))
-			colnames(binstates) <- tracknames
+		diffgroups <- unique(diff.conditions)
+		tracks2compare.split <- split(tracks2compare, diff.conditions)
+		intersect.tracks <- Reduce(intersect, lapply(tracks2compare.split, unique))
+		bindiffmatrix <- dec2bin(0:(2^length(intersect.tracks)-1))
+		controlsum <- apply(bindiffmatrix, 1, sum)
+		bindiffmatrix <- bindiffmatrix[controlsum >= mindiff,]
+		if (class(bindiffmatrix)!='matrix') {
+			bindiffmatrix <- matrix(bindiffmatrix, nrow=1)
 		}
+		diffstatespec.list <- list()
+		for (tracks in tracks2compare.split) {
+			#TODO: tracksNOT2use
+			tracks2use <- tracks[tracks %in% intersect.tracks]
+			num.tracks.split <- length(tracks2use)
+			num.reps <- rle(as.integer(factor(tracks, levels=unique(tracks2use))))$lengths
+			cum.num.reps <- cumsum(num.reps)
+			diffstatespec.part <- apply(bindiffmatrix, 1, function(x) { c('x.','d.')[x+1] })
+			diffstatespec.part.reps <- matrix(NA, ncol=sum(num.reps), nrow=nrow(bindiffmatrix))
+			num.rep_prev <- 1
+			for (i1 in 1:length(cum.num.reps)) {
+				diffstatespec.part.reps[,num.rep_prev:cum.num.reps[i1]] <- rep(diffstatespec.part[i1,], num.reps[i1])
+				num.rep_prev <- cum.num.reps[i1]+1
+			}
+			diffstatespec.list[[length(diffstatespec.list)+1]] <- t(apply(diffstatespec.part.reps, 1, function(x) { paste0(x, tracks2use) }))
+		}
+		diffstatespecs <- do.call(cbind, diffstatespec.list)
+
+		## Go through all diffstate specifications
+		binstates.list <- list()
+		for (irow in 1:nrow(diffstatespecs)) {
+			diffstatespec <- diffstatespecs[irow,]
+			diffgroups <- levels(factor(diffstatespec))
+			binstates.irow <- binstates
+			for (diffgroup in diffgroups) {
+				track.index <- which(diffstatespec==diffgroup)
+				if (grepl('^d\\.', diffgroup)) {
+					mask0 <- !apply(as.matrix(binstates.irow[,track.index]), 1, function(x) { Reduce('|', x) })
+					mask1 <- apply(as.matrix(binstates.irow[,track.index]), 1, function(x) { Reduce('&', x) })
+					mask <- !(mask0 | mask1)
+				} else if (grepl('^x\\.', diffgroup)) {
+					mask <- rep(T, nrow(binstates.irow))
+				}
+				binstates.irow <- binstates.irow[mask,]
+				if (class(binstates.irow)!='matrix') {
+					binstates.irow <- matrix(binstates.irow, ncol=length(binstates.irow))
+					colnames(binstates.irow) <- tracknames
+				}
+			}
+			binstates.list[[irow]] <- binstates.irow
+		}
+		binstates <- do.call(rbind, binstates.list)
 	}
 
-	## Construct state names
+	### Construct state names ###
 	mask <- !grepl('^r\\.', statespec) | !duplicated(statespec) # only first replicate
 	tracknames.mask <- tracknames[mask]
 	if (nrow(binstates) > 1) {
-		statenames <- unlist(lapply(apply(as.matrix(binstates[,mask]), 1, function(x) { tracknames.mask[x] }), paste, collapse=sep))
+		statenames.sep <- apply(as.matrix(binstates[,mask]), 1, function(x) { tracknames.mask[x] })
+		if (class(statenames.sep)=='list') {
+			statenames <- unlist(lapply(statenames.sep, paste, collapse=sep))
+		} else if (class(statenames.sep)=='matrix') {
+			statenames <- apply(statenames.sep, 2, paste, collapse=sep)
+		}
 	} else {
 		statenames <- paste(tracknames.mask[binstates[,mask]], collapse=sep)
 	}
 	## Convert to decimal
 	decstates <- bin2dec(binstates)
-	names(decstates) <- statenames
+	duplicate.mask <- !duplicated(decstates)
+	decstates <- decstates[duplicate.mask]
+	names(decstates) <- statenames[duplicate.mask]
 
 	## Change name and entries
 	if (inverse) {
