@@ -46,16 +46,6 @@ stateBrewer <- function(statespec, diff.conditions=NULL, tracks2compare=NULL, mi
 			stop("argument 'statespec' expects a vector composed of any combination of the following entries: '1.[]','0.[]','x.[]','r.[]', where [] can be any string.")
 		}
 	}
-	if (!is.null(diffstatespec)) {
-		for (spec in diffstatespec) {
-			if (!grepl('^1\\.', spec) & !grepl('^0\\.', spec) & !grepl('^x\\.', spec) & !grepl('^d\\.', spec)) {
-				stop("argument 'diffstatespec' expects a vector composed of any combination of the following entries: '1.[]','0.[]','x.[]','r.[]', where [] can be any string.")
-			}
-		}
-		if (length(statespec)!=length(diffstatespec)) {
-			stop("argument 'diffstatespec' must have the same number of elements as 'statespec'")
-		}
-	}
 
 	## Variables
 	numtracks <- length(statespec)
@@ -105,14 +95,12 @@ stateBrewer <- function(statespec, diff.conditions=NULL, tracks2compare=NULL, mi
 			#TODO: tracksNOT2use
 			tracks2use <- tracks[tracks %in% intersect.tracks]
 			num.tracks.split <- length(tracks2use)
-			num.reps <- rle(as.integer(factor(tracks, levels=unique(tracks2use))))$lengths
-			cum.num.reps <- cumsum(num.reps)
-			diffstatespec.part <- apply(bindiffmatrix, 1, function(x) { c('x.','d.')[x+1] })
-			diffstatespec.part.reps <- matrix(NA, ncol=sum(num.reps), nrow=nrow(bindiffmatrix))
-			num.rep_prev <- 1
-			for (i1 in 1:length(cum.num.reps)) {
-				diffstatespec.part.reps[,num.rep_prev:cum.num.reps[i1]] <- rep(diffstatespec.part[i1,], num.reps[i1])
-				num.rep_prev <- cum.num.reps[i1]+1
+			diffstatespec.part <- t(apply(bindiffmatrix, 1, function(x) { c('x.','d.')[x+1] }))
+			colnames(diffstatespec.part) <- intersect.tracks
+			diffstatespec.part.reps <- matrix(NA, ncol=length(tracks2use), nrow=nrow(bindiffmatrix))
+			for (track in intersect.tracks) {
+				index <- which(track==tracks2use)
+				diffstatespec.part.reps[,index] <- rep(diffstatespec.part[,as.character(track)], length(index))
 			}
 			diffstatespec.list[[length(diffstatespec.list)+1]] <- t(apply(diffstatespec.part.reps, 1, function(x) { paste0(x, tracks2use) }))
 		}
