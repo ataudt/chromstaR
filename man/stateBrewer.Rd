@@ -4,11 +4,28 @@
 \alias{stateBrewer}
 \title{Obtain combinatorial states from specification}
 \usage{
-stateBrewer(statespec, diff.conditions = NULL, tracks2compare = NULL,
-  mindiff = 1, inverse = FALSE, sep = "-")
+stateBrewer(replicates = NULL, differential.states = FALSE, min.diff = 1,
+  common.states = FALSE, conditions = NULL, tracks2compare = NULL,
+  inverse = FALSE, sep = "-", statespec = NULL)
 }
 \arguments{
-\item{statespec}{A vector composed of any combination of the following entries: \code{'0.[]', '1.[]', 'x.[]', 'r.[]'}, where [] can be any string.
+\item{replicates}{A vector specifying the replicate structure. Similar entries will be treated as replicates.}
+
+\item{differential.states}{A logical specifying whether differential states shall be returned.}
+
+\item{min.diff}{The minimum number of differences between conditions.}
+
+\item{common.states}{A logical specifying whether common states shall be returned.}
+
+\item{conditions}{A vector with the same length as \code{replicates}. Similar entries will be treated as belonging to the same condition. If this parameter is specified, only states that are different between the conditions are returned.}
+
+\item{tracks2compare}{A vector with the same length as \code{replicates}. This vector defines the tracks between which conditions are compared.}
+
+\item{inverse}{If \code{TRUE}, names and entries of the output are swapped.}
+
+\item{sep}{Separator used to separate the tracknames in the combinations.}
+
+\item{statespec}{If this parameter is specified, \code{replicates} will be ignored. A vector composed of any combination of the following entries: \code{'0.[]', '1.[]', 'x.[]', 'r.[]'}, where [] can be any string.
 \itemize{
   \item \code{'0.A'}: sample A is 'unmodified'
   \item \code{'1.B'}: sample B is 'modified'
@@ -16,14 +33,6 @@ stateBrewer(statespec, diff.conditions = NULL, tracks2compare = NULL,
   \item \code{'r.D'}: all samples in group D have to be in the same state
   \item \code{'r.[]'}: all samples in group [] have to be in the same state
 }}
-
-\item{diff.conditions}{A vector with the same length as \code{statespec}. Similar entries will be treated as belonging to the same condition. If this parameter is specified, only states that are different between the conditions are returned.}
-
-\item{tracks2compare}{A vector with the same length as \code{statespec}. This vector defines the tracks between which conditions are compared.}
-
-\item{inverse}{If \code{TRUE}, names and entries of the output are swapped.}
-
-\item{sep}{Separator used to separate the tracknames in the combinations.}
 }
 \value{
 A named integer vector with (decimal) combinatorial states following the given specification. The names of the vector are the combinatorial states composed of the different groups. If \code{inverse=TRUE}, names and numbers are swapped.

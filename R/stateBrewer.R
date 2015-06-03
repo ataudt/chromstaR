@@ -13,7 +13,15 @@
 #' }
 #'
 #' @author Aaron Taudt
-#' @param statespec A vector composed of any combination of the following entries: \code{'0.[]', '1.[]', 'x.[]', 'r.[]'}, where [] can be any string.
+#' @param replicates A vector specifying the replicate structure. Similar entries will be treated as replicates.
+#' @param differential.states A logical specifying whether differential states shall be returned.
+#' @param min.diff The minimum number of differences between conditions.
+#' @param common.states A logical specifying whether common states shall be returned.
+#' @param conditions A vector with the same length as \code{replicates}. Similar entries will be treated as belonging to the same condition. If this parameter is specified, only states that are different between the conditions are returned.
+#' @param tracks2compare A vector with the same length as \code{replicates}. This vector defines the tracks between which conditions are compared.
+#' @param inverse If \code{TRUE}, names and entries of the output are swapped.
+#' @param sep Separator used to separate the tracknames in the combinations.
+#' @param statespec If this parameter is specified, \code{replicates} will be ignored. A vector composed of any combination of the following entries: \code{'0.[]', '1.[]', 'x.[]', 'r.[]'}, where [] can be any string.
 #'   \itemize{
 #'     \item \code{'0.A'}: sample A is 'unmodified'
 #'     \item \code{'1.B'}: sample B is 'modified'
@@ -21,10 +29,6 @@
 #'     \item \code{'r.D'}: all samples in group D have to be in the same state
 #'     \item \code{'r.[]'}: all samples in group [] have to be in the same state
 #'   }
-#' @param diff.conditions A vector with the same length as \code{statespec}. Similar entries will be treated as belonging to the same condition. If this parameter is specified, only states that are different between the conditions are returned.
-#' @param tracks2compare A vector with the same length as \code{statespec}. This vector defines the tracks between which conditions are compared.
-#' @param inverse If \code{TRUE}, names and entries of the output are swapped.
-#' @param sep Separator used to separate the tracknames in the combinations.
 #' @return A named integer vector with (decimal) combinatorial states following the given specification. The names of the vector are the combinatorial states composed of the different groups. If \code{inverse=TRUE}, names and numbers are swapped.
 #' @examples
 #'# Get all combinatorial states where sample1=0, sample2=1, sample3=(0 or 1),
@@ -38,12 +42,24 @@
 #'#  sample4=(0 or 1)
 #'stateBrewer(statespec=c('r.A','1.B','1.C','x.D','r.A'))
 #' @export
-stateBrewer <- function(statespec, diff.conditions=NULL, tracks2compare=NULL, mindiff=1, inverse=FALSE, sep='-') {
+stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, common.states=FALSE, conditions=NULL, tracks2compare=NULL, inverse=FALSE, sep='-', statespec=NULL) {
 
 	## Check user input
+	if (is.null(statespec)) {
+		if (!is.null(replicates)) {
+			statespec <- paste0('r.', replicates)
+		} else {
+			stop("Please specify either 'replicates' or 'statespec'.")
+		}
+	}
 	for (spec in statespec) {
 		if (!grepl('^1\\.', spec) & !grepl('^0\\.', spec) & !grepl('^x\\.', spec) & !grepl('^r\\.', spec)) {
 			stop("argument 'statespec' expects a vector composed of any combination of the following entries: '1.[]','0.[]','x.[]','r.[]', where [] can be any string.")
+		}
+	}
+	if (differential.states | common.states) {
+		if (is.null(conditions) | is.null(tracks2compare)) {
+			stop("Please specify 'conditions' and 'tracks2compare' if you want to obtain differential or common states.")
 		}
 	}
 
@@ -77,16 +93,16 @@ stateBrewer <- function(statespec, diff.conditions=NULL, tracks2compare=NULL, mi
 	colnames(binstates) <- tracknames
 
 	### Select differential states ###
-	if (!is.null(diff.conditions)) {
+	binstates.diff <- NULL
+	if (differential.states) {
 		if (is.null(tracks2compare)) {
-			stop("argument 'tracks2compare' must be specified if 'diff.conditions' was specified")
+			stop("argument 'tracks2compare' must be specified if 'conditions' was specified")
 		}
-		diffgroups <- unique(diff.conditions)
-		tracks2compare.split <- split(tracks2compare, diff.conditions)
+		tracks2compare.split <- split(tracks2compare, conditions)
 		intersect.tracks <- Reduce(intersect, lapply(tracks2compare.split, unique))
 		bindiffmatrix <- dec2bin(0:(2^length(intersect.tracks)-1))
 		controlsum <- apply(bindiffmatrix, 1, sum)
-		bindiffmatrix <- bindiffmatrix[controlsum >= mindiff,]
+		bindiffmatrix <- bindiffmatrix[controlsum >= min.diff,]
 		if (class(bindiffmatrix)!='matrix') {
 			bindiffmatrix <- matrix(bindiffmatrix, nrow=1)
 		}
@@ -115,9 +131,9 @@ stateBrewer <- function(statespec, diff.conditions=NULL, tracks2compare=NULL, mi
 			for (diffgroup in diffgroups) {
 				track.index <- which(diffstatespec==diffgroup)
 				if (grepl('^d\\.', diffgroup)) {
-					mask0 <- !apply(as.matrix(binstates.irow[,track.index]), 1, function(x) { Reduce('|', x) })
-					mask1 <- apply(as.matrix(binstates.irow[,track.index]), 1, function(x) { Reduce('&', x) })
-					mask <- !(mask0 | mask1)
+					mask0 <- !apply(as.matrix(binstates.irow[,track.index]), 1, function(x) { Reduce('|', x) }) # rows where all group members are 0
+					mask1 <- apply(as.matrix(binstates.irow[,track.index]), 1, function(x) { Reduce('&', x) }) # rows where all group members are 1
+					mask <- !(mask0 | mask1) # rows where not all group members are either 0 or 1
 				} else if (grepl('^x\\.', diffgroup)) {
 					mask <- rep(T, nrow(binstates.irow))
 				}
@@ -129,7 +145,65 @@ stateBrewer <- function(statespec, diff.conditions=NULL, tracks2compare=NULL, mi
 			}
 			binstates.list[[irow]] <- binstates.irow
 		}
-		binstates <- do.call(rbind, binstates.list)
+		binstates.diff <- do.call(rbind, binstates.list)
+	}
+	# There are still duplicate rows at this point, they are removed at the end
+
+	### Select common states ###
+	binstates.common <- NULL
+	if (common.states) {
+		if (is.null(tracks2compare)) {
+			stop("argument 'tracks2compare' must be specified if 'conditions' was specified")
+		}
+		tracks2compare.split <- split(tracks2compare, conditions)
+		intersect.tracks <- Reduce(intersect, lapply(tracks2compare.split, unique))
+		bincommonmatrix <- dec2bin(0:(2^length(intersect.tracks)-1))
+		if (class(bincommonmatrix)!='matrix') {
+			bincommonmatrix <- matrix(bincommonmatrix, nrow=1)
+		}
+		commonstatespec.list <- list()
+		for (tracks in tracks2compare.split) {
+			#TODO: tracksNOT2use
+			tracks2use <- tracks[tracks %in% intersect.tracks]
+			num.tracks.split <- length(tracks2use)
+			commonstatespec.part <- t(apply(bincommonmatrix, 1, function(x) { c('0.','1.')[x+1] }))
+			colnames(commonstatespec.part) <- intersect.tracks
+			commonstatespec.part.reps <- matrix(NA, ncol=length(tracks2use), nrow=nrow(bincommonmatrix))
+			for (track in intersect.tracks) {
+				index <- which(track==tracks2use)
+				commonstatespec.part.reps[,index] <- rep(commonstatespec.part[,as.character(track)], length(index))
+			}
+			commonstatespec.list[[length(commonstatespec.list)+1]] <- t(apply(commonstatespec.part.reps, 1, function(x) { paste0(x, tracks2use) }))
+		}
+		commonstatespecs <- do.call(cbind, commonstatespec.list)
+
+		## Go through all commonstate specifications
+		binstates.list <- list()
+		for (irow in 1:nrow(commonstatespecs)) {
+			commonstatespec <- commonstatespecs[irow,]
+			commongroups <- levels(factor(commonstatespec))
+			binstates.irow <- binstates
+			for (commongroup in commongroups) {
+				track.index <- which(commonstatespec==commongroup)
+				if (grepl('^0\\.', commongroup)) {
+					mask <- !apply(as.matrix(binstates.irow[,track.index]), 1, function(x) { Reduce('|', x) })
+				} else if (grepl('^1\\.', commongroup)) {
+					mask <- apply(as.matrix(binstates.irow[,track.index]), 1, function(x) { Reduce('&', x) })
+				}
+				binstates.irow <- binstates.irow[mask,]
+				if (class(binstates.irow)!='matrix') {
+					binstates.irow <- matrix(binstates.irow, ncol=length(binstates.irow))
+					colnames(binstates.irow) <- tracknames
+				}
+			}
+			binstates.list[[irow]] <- binstates.irow
+		}
+		binstates.common <- do.call(rbind, binstates.list)
+	}
+		
+	## Merge common and differential states
+	if (differential.states | common.states) {
+		binstates <- rbind(binstates.diff, binstates.common)
 	}
 
 	### Construct state names ###
