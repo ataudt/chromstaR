@@ -25,24 +25,24 @@ NULL
 #' @inheritParams align2binned
 #' @param bamindex BAM index file. Can be specified without the .bai ending.
 #' @export
-bam2binned <- function(bamfile, bamindex=bamfile, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE) {
-	return(align2binned(bamfile, format="bam", index=bamindex, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, save.as.RData=save.as.RData))
+bam2binned <- function(bamfile, bamindex=bamfile, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, downsample.to.reads=NULL) {
+	return(align2binned(bamfile, format="bam", index=bamindex, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, save.as.RData=save.as.RData, downsample.to.reads=downsample.to.reads))
 }
 
 #' @describeIn binning Bin reads in BED format.
 #' @param bedfile A file in BED format.
 #' @inheritParams align2binned
 #' @export
-bed2binned <- function(bedfile, assembly, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE) {
-	return(align2binned(bedfile, format="bed", assembly=assembly, chrom.length.file=chrom.length.file, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, save.as.RData=save.as.RData))
+bed2binned <- function(bedfile, assembly, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, downsample.to.reads=NULL) {
+	return(align2binned(bedfile, format="bed", assembly=assembly, chrom.length.file=chrom.length.file, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, save.as.RData=save.as.RData, downsample.to.reads=downsample.to.reads))
 }
 
 #' @describeIn binning Bin reads in bedGraph format.
 #' @param bedGraphfile A file in bedGraph format.
 #' @inheritParams align2binned
 #' @export
-bedGraph2binned <- function(bedGraphfile, assembly, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE) {
-	return(align2binned(bedGraphfile, format="bedGraph", assembly=assembly, chrom.length.file=chrom.length.file, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, save.as.RData=save.as.RData))
+bedGraph2binned <- function(bedGraphfile, assembly, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, downsample.to.reads=NULL) {
+	return(align2binned(bedGraphfile, format="bedGraph", assembly=assembly, chrom.length.file=chrom.length.file, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, save.as.RData=save.as.RData, downsample.to.reads=downsample.to.reads))
 }
 
 #' Convert aligned reads from various file formats into read counts in equidistant bins
@@ -62,7 +62,7 @@ bedGraph2binned <- function(bedGraphfile, assembly, chrom.length.file=NULL, outp
 #' @import Rsamtools
 #' @import GenomicAlignments
 #' @import BSgenome
-align2binned <- function(file, format, assembly, index=file, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE) {
+align2binned <- function(file, format, assembly, index=file, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, downsample.to.reads=NULL) {
 
 	## Create outputfolder if not exists
 	if (!file.exists(outputfolder) & save.as.RData==TRUE) {
@@ -156,6 +156,17 @@ align2binned <- function(file, format, assembly, index=file, chrom.length.file=N
 		stop('The specified chromosomes ', chrstring, ' do not exist in the data.')
 	}
  
+	### Downsampling
+	if (!is.null(downsample.to.reads)) {
+		if (downsample.to.reads <= length(data)) {
+			message("downsampling to ", downsample.to.reads, " reads ...", appendLF=F); ptm <- proc.time()
+			data <- data[sort(sample(1:length(data), size=downsample.to.reads, replace=FALSE))]
+			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		} else {
+			warning("No downsampling done because there are only ", length(data), " reads in the data.")
+		}
+	}
+
 	### Do the loop for all binsizes
 	for (binsize in binsizes) {
 		message("Binning into bin size ",binsize)
