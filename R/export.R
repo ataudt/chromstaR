@@ -335,6 +335,9 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 
 		# Write to file
 		numsegments <- nrow(collapsed.calls)
+		if (is.null(collapsed.calls$score)) {
+			collapsed.calls$score <- 0
+		}
 		if (is.null(collapsed.calls$combination)) {
 			df <- cbind(collapsed.calls[,c('chromosome','start','end','state','score')], strand=rep(".",numsegments), thickStart=collapsed.calls$start, thickEnd=collapsed.calls$end, itemRgb=itemRgb)
 		} else {
