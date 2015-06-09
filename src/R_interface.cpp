@@ -1,8 +1,13 @@
 #include "utility.h"
 #include "scalehmm.h"
 #include <vector> // storing density functions in multivariate
-#include <omp.h> // parallelization options
 #include <string> // strcmp
+
+#if defined TARGET_OS_MAC || defined __APPLE__
+#include <libiomp/omp.h> // parallelization options on mac
+#elif defined __linux__ || defined _WIN32 || defined _WIN64
+#include <omp.h> // parallelization options
+#endif
 
 static ScaleHMM* hmm; // declare as static outside the function because we only need one and this enables memory-cleanup on R_CheckUserInterrupt()
 static int** multiO;
