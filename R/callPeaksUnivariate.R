@@ -383,6 +383,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 														ranges=ranges(binned.data),
 														reads=hmm$reads,
 														state=states) 
+		result$bins$score <- apply(hmm$posteriors, 1, max)
 		result$bins$posteriors <- hmm$posteriors
 		if (keep.densities) {
 			result$bins$densities <- matrix(hmm$densities, ncol=hmm$num.states)
@@ -392,8 +393,8 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 	## Segmentation
 		message("Making segmentation ...", appendLF=F); ptm <- proc.time()
 		gr <- result$bins
-		red.df <- suppressMessages(collapseBins(as.data.frame(gr), column2collapseBy='state', columns2average=c('reads','posteriors.P.modified.'), columns2drop=c('width','posteriors.P.zero.inflation.','posteriors.P.unmodified.')))
-		red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], mean.reads=red.df[,'mean.reads'], mean.posterior.modified=red.df[,'mean.posteriors.P.modified.'])
+		red.df <- suppressMessages(collapseBins(as.data.frame(gr), column2collapseBy='state', columns2average=c('reads','score','posteriors.P.modified.'), columns2drop=c('width','posteriors.P.zero.inflation.','posteriors.P.unmodified.')))
+		red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], mean.reads=red.df[,'mean.reads'], state=red.df[,'state'], score=red.df[,'mean.score'], mean.posterior.modified=red.df[,'mean.posteriors.P.modified.'])
 		result$segments <- red.gr
 		seqlengths(result$segments) <- seqlengths(binned.data)
 		if (!keep.posteriors) {

@@ -54,8 +54,8 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, averages=TRUE
 		gr <- model$bins
 		df <- as.data.frame(gr)
 		if (averages==TRUE) {
-			red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c('reads','posteriors.P.modified.'), columns2drop=c('width','posteriors.P.zero.inflation.','posteriors.P.unmodified.')))
-			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], mean.reads=red.df[,'mean.reads'], mean.posterior.modified=red.df[,'mean.posteriors.P.modified.'])
+			red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c('reads','score','posteriors.P.modified.'), columns2drop=c('width','posteriors.P.zero.inflation.','posteriors.P.unmodified.')))
+			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], mean.reads=red.df[,'mean.reads'], state=red.df[,'state'], mean.score=red.df[,'mean.score'], mean.posterior.modified=red.df[,'mean.posteriors.P.modified.'])
 		} else {
 			red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2drop=c('width','posteriors.P.zero.inflation.','posteriors.P.unmodified.','posteriors.P.modified.','reads')))
 			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'])
@@ -80,11 +80,13 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, averages=TRUE
 		ind.readcols <- grep('^reads', names(df))
 		ind.postcols <- grep('^posteriors', names(df))
 		ind.widthcol <- grep('width', names(df))
+		ind.scorecol <- grep('score', names(df))
 		if (averages==TRUE) {
-			red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=ind.postcols, columns2drop=c(ind.readcols, ind.widthcol)))
+			red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c(ind.postcols,ind.scorecol), columns2drop=c(ind.readcols, ind.widthcol)))
 			mean.posteriors <- matrix(unlist(red.df[,grepl('^mean.posteriors',names(red.df))]), ncol=length(model$IDs))
 			colnames(mean.posteriors) <- model$IDs
-			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'])
+			mean.score <- red.df[,grepl('^mean.score', names(red.df))]
+			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], mean.score=mean.score)
 			red.gr$mean.posteriors <- mean.posteriors
 		} else {
 			red.df <- suppressMessages(collapseBins(df[,-c(4, ind.readcols, ind.postcols)], column2collapseBy='state'))

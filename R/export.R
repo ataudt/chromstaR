@@ -31,9 +31,9 @@
 #'## Export the binned read counts and peaks
 #'\donttest{exportUnivariates(uni.HMMs, filename='chromstaR-example_univariate.HMMs', what=c('reads','peaks'))}
 #' @export
-exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'reads'), header=TRUE, separate.files=FALSE) {
+exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'reads'), header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
 	if ('peaks' %in% what) {
-		exportUnivariatePeaks(hmm.list, filename, header=header, separate.files=separate.files)
+		exportUnivariatePeaks(hmm.list, filename, header=header, separate.files=separate.files, orderByScore=orderByScore)
 	}
 	if ('reads' %in% what) {
 		exportUnivariateReadCounts(hmm.list, filename, header=header, separate.files=separate.files)
@@ -43,7 +43,7 @@ exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'reads'), head
 #----------------------------------------------------
 # Export peak-calls from univariate HMMs
 #----------------------------------------------------
-exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCalls", header=TRUE, separate.files=FALSE) {
+exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCalls", header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
 
 	## Function definitions
 	insertchr <- function(hmm.gr) {
@@ -95,10 +95,14 @@ exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCa
 		if (header) {
 			cat(paste0("track name=\"univariate calls for ",hmm$ID,"\" description=\"univariate calls for ",hmm$ID,"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
 		}
-		collapsed.calls <- as.data.frame(hmm.gr)[c('chromosome','start','end','state','mean.posterior.modified')]
+		collapsed.calls <- as.data.frame(hmm.gr)[c('chromosome','start','end','state','score')]
 		itemRgb <- RGBs[as.character(collapsed.calls$state)]
 		numsegments <- nrow(collapsed.calls)
 		df <- cbind(collapsed.calls, strand=rep(".",numsegments), thickStart=collapsed.calls$start, thickEnd=collapsed.calls$end, itemRgb=itemRgb)
+		# Reorder
+		if (orderByScore) {
+			df <- df[rev(order(df$score)),]
+		}
 		# Convert from 1-based closed to 0-based half open
 		df$start <- df$start - 1
 		df$thickStart <- df$thickStart - 1
@@ -216,12 +220,12 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 #'                   what=c('reads','peaks'))
 #'}
 #' @export
-exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks', 'reads'), exclude.states=0, include.states=NULL, header=TRUE, separate.files=FALSE) {
+exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks', 'reads'), exclude.states=0, include.states=NULL, header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
 	if ('combstates' %in% what) {
-		exportMultivariateCalls(multi.hmm, filename, separate.tracks=FALSE, exclude.states, include.states, header=header)
+		exportMultivariateCalls(multi.hmm, filename, separate.tracks=FALSE, exclude.states, include.states, header=header, orderByScore=orderByScore)
 	}
 	if ('peaks' %in% what) {
-		exportMultivariateCalls(multi.hmm, filename, separate.tracks=TRUE, exclude.states, include.states, header=header, separate.files=separate.files)
+		exportMultivariateCalls(multi.hmm, filename, separate.tracks=TRUE, exclude.states, include.states, header=header, separate.files=separate.files, orderByScore=orderByScore)
 	}
 	if ('reads' %in% what) {
 		exportMultivariateReadCounts(multi.hmm, filename, header=header, separate.files=separate.files)
@@ -231,7 +235,7 @@ exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks'
 #----------------------------------------------------
 # Export combinatorial states or peak-calls from multivariate HMMs
 #----------------------------------------------------
-exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateCalls", separate.tracks=TRUE, exclude.states=0, include.states=NULL, header=TRUE, separate.files=FALSE) {
+exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateCalls", separate.tracks=TRUE, exclude.states=0, include.states=NULL, header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
 
 	if (class(multi.hmm)!=class.multivariate.hmm) {
 		multi.hmm <- get(load(multi.hmm))
@@ -264,12 +268,9 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 	}
 	numstates <- length(combstates2use)
 
-	## Collapse the calls
-	if (is.null(multi.hmm$segments$combination)) {
-		collapsed.calls <- as.data.frame(insertchr(multi.hmm$segments))[,c('chromosome','start','end','state')]
-	} else {
-		collapsed.calls <- as.data.frame(insertchr(multi.hmm$segments))[,c('chromosome','start','end','state','combination')]
-	}
+	## Insert chromosome if missing
+	collapsed.calls <- as.data.frame(insertchr(multi.hmm$segments))
+
 	# Select only desired states
 	mask <- rep(FALSE,nrow(collapsed.calls))
 	for (istate in combstates2use) {
@@ -301,9 +302,13 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 			priority <- 52 + 4*icol
 			mask <- bin[,icol]
 			if (is.null(collapsed.calls$combination)) {
-				df <- cbind(collapsed.calls[mask,c('chromosome','start','end','state')], score=rep(0,numsegments), strand=rep(".",numsegments))
+				df <- cbind(collapsed.calls[mask,c('chromosome','start','end','state')], score=collapsed.calls[mask,grep('^mean.posteriors', names(collapsed.calls))[icol]], strand=rep(".",numsegments))
 			} else {
-				df <- cbind(collapsed.calls[mask,c('chromosome','start','end','combination')], score=rep(0,numsegments), strand=rep(".",numsegments))
+				df <- cbind(collapsed.calls[mask,c('chromosome','start','end','combination')], score=collapsed.calls[mask,grep('^mean.posteriors', names(collapsed.calls))[icol]], strand=rep(".",numsegments))
+			}
+			# Reorder
+			if (orderByScore) {
+				df <- df[rev(order(df$score)),]
 			}
 			# Convert from 1-based closed to 0-based half open
 			df$start <- df$start - 1
@@ -331,9 +336,13 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 		# Write to file
 		numsegments <- nrow(collapsed.calls)
 		if (is.null(collapsed.calls$combination)) {
-			df <- cbind(collapsed.calls[,c('chromosome','start','end','state')], score=rep(0,numsegments), strand=rep(".",numsegments), thickStart=collapsed.calls$start, thickEnd=collapsed.calls$end, itemRgb=itemRgb)
+			df <- cbind(collapsed.calls[,c('chromosome','start','end','state','score')], strand=rep(".",numsegments), thickStart=collapsed.calls$start, thickEnd=collapsed.calls$end, itemRgb=itemRgb)
 		} else {
-			df <- cbind(collapsed.calls[,c('chromosome','start','end','combination')], score=rep(0,numsegments), strand=rep(".",numsegments), thickStart=collapsed.calls$start, thickEnd=collapsed.calls$end, itemRgb=itemRgb)
+			df <- cbind(collapsed.calls[,c('chromosome','start','end','combination','score')], strand=rep(".",numsegments), thickStart=collapsed.calls$start, thickEnd=collapsed.calls$end, itemRgb=itemRgb)
+		}
+		# Reorder
+		if (orderByScore) {
+			df <- df[rev(order(df$score)),]
 		}
 		# Convert from 1-based closed to 0-based half open
 		df$start <- df$start - 1
@@ -538,7 +547,7 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", 
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
 #' @export
-exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", header=TRUE) {
+exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", header=TRUE, orderByScore=TRUE) {
 
 	## Function definitions
 	insertchr <- function(hmm.gr) {
@@ -567,9 +576,12 @@ exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", h
 	}
 	if (is.null(gr$score)) {
 		gr$score <- 0
+	} else {
+		if (orderByScore) {
+			gr <- gr[rev(order(gr$score))]
+		}
 	}
 	regions <- as.data.frame(gr)[c('chromosome','start','end','score')]
-	regions$score <- as.integer(regions$score)
 	regions$name <- paste0('region_', 1:nrow(regions))
 	regions <- regions[c('chromosome','start','end','name','score')]
 	numsegments <- nrow(regions)

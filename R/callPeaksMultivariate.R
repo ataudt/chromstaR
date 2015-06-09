@@ -217,6 +217,7 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 				message("Transforming posteriors to `per sample` representation ...", appendLF=F); ptm <- proc.time()
 				hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
 				colnames(hmm$posteriors) <- paste0("P(",hmm$comb.states,")")
+				result$bins$score <- apply(hmm$posteriors, 1, max)
 				binstates <- dec2bin(hmm$comb.states, ndigits=hmm$num.modifications)
 				post.per.track <- hmm$posteriors %*% binstates
 				colnames(post.per.track) <- result$IDs
@@ -241,10 +242,12 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 			ind.readcols <- grep('^reads', names(df))
 			ind.postcols <- grep('^posteriors', names(df))
 			ind.widthcol <- grep('width', names(df))
-			red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=ind.postcols, columns2drop=c(ind.readcols, ind.widthcol)))
+			ind.scorecol <- grep('score', names(df))
+			red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c(ind.postcols, ind.scorecol), columns2drop=c(ind.readcols, ind.widthcol)))
 			mean.posteriors <- matrix(unlist(red.df[,grepl('^mean.posteriors',names(red.df))]), ncol=length(result$IDs))
 			colnames(mean.posteriors) <- result$IDs
-			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'])
+			mean.score <- red.df[,grepl('^mean.score', names(red.df))]
+			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], score=mean.score)
 			red.gr$mean.posteriors <- mean.posteriors
 			result$segments <- red.gr
 			seqlengths(result$segments) <- seqlengths(result$bins)
@@ -253,10 +256,12 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 			}
 			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 		## Add combinations
-			mapping <- names(use.states)
-			names(mapping) <- use.states
-			result$bins$combination <- factor(mapping[as.character(result$bins$state)])
-			result$segments$combination <- factor(mapping[as.character(result$segments$state)])
+			if (!is.null(names(use.states))) {
+				mapping <- names(use.states)
+				names(mapping) <- use.states
+				result$bins$combination <- factor(mapping[as.character(result$bins$state)])
+				result$segments$combination <- factor(mapping[as.character(result$segments$state)])
+			}
 		## Parameters
 			# Weights
 			tstates <- table(hmm$states)

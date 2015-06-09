@@ -32,7 +32,11 @@ dec2bin = function(dec, colnames=NULL, ndigits=NULL) {
 		ndigits <- length(colnames)
 	} else {
 		if (is.null(ndigits)) {
-			ndigits <- max(which(as.logical(intToBits(maxdec))))
+			if (maxdec > 0) {
+				ndigits <- max(which(as.logical(intToBits(maxdec))))
+			} else {
+				ndigits <- 1
+			}
 		} else {
 			if (check.positive.integer(ndigits)!=0) stop("argument 'ndigits' expects a positive integer")
 		}
@@ -41,7 +45,7 @@ dec2bin = function(dec, colnames=NULL, ndigits=NULL) {
 	binary_states <- matrix(as.logical(intToBits(dec)), nrow=length(dec), byrow=TRUE)
 	binary_states <- binary_states[ ,ndigits:1]
 	if (class(binary_states)!='matrix') {
-		binary_states <- matrix(binary_states, nrow=1)
+		binary_states <- matrix(binary_states, nrow=length(dec))
 	}
 	colnames(binary_states) <- colnames
 	rownames(binary_states) <- dec

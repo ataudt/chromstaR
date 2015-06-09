@@ -29,6 +29,12 @@
 #'     \item \code{'r.D'}: all samples in group D have to be in the same state
 #'     \item \code{'r.[]'}: all samples in group [] have to be in the same state
 #'   }
+#' @param diffstatespec A vector composed of any combination of the following entries: \code{'x.[]', 'd.[]'}, where [] can be any string.
+#'   \itemize{
+#'     \item \code{'x.A'}: sample A can be both 'unmodified' or 'modified'
+#'     \item \code{'d.B'}: at least one sample in group B has to be different from the other samples in group A 
+#'     \item \code{'d[]'}: at least one sample in group [] has to be different from the other samples in group [] 
+#'   }
 #' @return A named integer vector with (decimal) combinatorial states following the given specification. The names of the vector are the combinatorial states composed of the different groups. If \code{inverse=TRUE}, names and numbers are swapped.
 #' @examples
 #'# Get all combinatorial states where sample1=0, sample2=1, sample3=(0 or 1),
@@ -42,7 +48,16 @@
 #'#  sample4=(0 or 1)
 #'stateBrewer(statespec=c('r.A','1.B','1.C','x.D','r.A'))
 #' @export
-stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, common.states=FALSE, conditions=NULL, tracks2compare=NULL, inverse=FALSE, sep='-', statespec=NULL) {
+stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, common.states=FALSE, conditions=NULL, tracks2compare=NULL, inverse=FALSE, sep='-', statespec=NULL, diffstatespec=NULL) {
+
+# 	## Debug
+# 	differential.states <- TRUE
+# 	common.states <- TRUE
+# 	min.diff <- 1
+# 	replicates <- c("Bre.H3K27Ac", "Bre.H3K27me3", "Bre.H3K4me3", "Bre.H4K20me1", "Bre.H3K27Ac", "Bre.H3K27me3", "Bre.H3K4me3", "Bre.H4K20me1", "Bre.H3K27Ac", "Bre.H3K27me3", "Bre.H3K4me3", "Bre.H4K20me1", "Gua.H3K27Ac", "Gua.H3K27me3", "Gua.H3K4me3", "Gua.H4K20me1", "Gua.H3K27Ac", "Gua.H3K27Ac", "Gua.H3K27me3", "Gua.H3K4me3", "Gua.H4K20me1")
+# 	conditions <- c("Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Gua", "Gua", "Gua", "Gua", "Gua", "Gua", "Gua", "Gua", "Gua")
+# 	tracks2compare <- c("H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1", "H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1", "H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1", "H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1", "H3K27Ac", "H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1")
+# 	statespec <- paste0('r.', replicates)
 
 	## Check user input
 	if (is.null(statespec)) {
@@ -57,6 +72,16 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 			stop("argument 'statespec' expects a vector composed of any combination of the following entries: '1.[]','0.[]','x.[]','r.[]', where [] can be any string.")
 		}
 	}
+	if (!is.null(diffstatespec)) {
+		for (spec in diffstatespec) {
+			if (!grepl('^1\\.', spec) & !grepl('^0\\.', spec) & !grepl('^x\\.', spec) & !grepl('^d\\.', spec)) {
+				stop("argument 'diffstatespec' expects a vector composed of any combination of the following entries: '1.[]','0.[]','x.[]','r.[]', where [] can be any string.")
+			}
+		}
+		if (length(statespec)!=length(diffstatespec)) {
+			stop("argument 'diffstatespec' must have the same number of elements as 'statespec'")
+		}
+	}
 	if (differential.states | common.states) {
 		if (is.null(conditions) | is.null(tracks2compare)) {
 			stop("Please specify 'conditions' and 'tracks2compare' if you want to obtain differential or common states.")
@@ -64,10 +89,10 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 	}
 
 	## Variables
-	numtracks <- length(statespec)
 	tracknames <- sub('^.\\.', '', statespec)
 
 	### Generate specified binary states ###
+	numtracks <- length(statespec)
 	groups <- levels(factor(statespec))
 	numstates <- 2^length(which(!grepl('^0\\.|^1\\.', groups)))
 	binstates <- matrix(FALSE, ncol=numtracks, nrow=numstates)
@@ -92,7 +117,27 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 	}
 	colnames(binstates) <- tracknames
 
-	### Select differential states ###
+	### Select specified differential states ###
+	if (!is.null(diffstatespec)) {
+		diffgroups <- levels(factor(diffstatespec))
+		for (diffgroup in diffgroups) {
+			track.index <- which(diffstatespec==diffgroup)
+			if (grepl('^d\\.', diffgroup)) {
+				mask0 <- !apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('|', x) })
+				mask1 <- apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('&', x) })
+				mask <- !(mask0 | mask1)
+			} else if (grepl('^x\\.', diffgroup)) {
+				mask <- rep(T, nrow(binstates))
+			}
+			binstates <- binstates[mask,]
+			if (class(binstates)!='matrix') {
+				binstates <- matrix(binstates, ncol=length(binstates))
+				colnames(binstates) <- tracknames
+			}
+		}
+	}
+
+	### Select differential states by min.diff ###
 	binstates.diff <- NULL
 	if (differential.states) {
 		if (is.null(tracks2compare)) {
@@ -106,19 +151,29 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 		if (class(bindiffmatrix)!='matrix') {
 			bindiffmatrix <- matrix(bindiffmatrix, nrow=1)
 		}
+		## Go through conditions
 		diffstatespec.list <- list()
 		for (tracks in tracks2compare.split) {
 			#TODO: tracksNOT2use
 			tracks2use <- tracks[tracks %in% intersect.tracks]
 			num.tracks.split <- length(tracks2use)
-			diffstatespec.part <- t(apply(bindiffmatrix, 1, function(x) { c('x.','d.')[x+1] }))
+			if (ncol(bindiffmatrix)==1) {
+				diffstatespec.part <- t(t(apply(bindiffmatrix, 1, function(x) { c('x.','d.')[x+1] }))) # R-behaviour differs with only one column
+			} else {
+				diffstatespec.part <- t(apply(bindiffmatrix, 1, function(x) { c('x.','d.')[x+1] }))
+			}
 			colnames(diffstatespec.part) <- intersect.tracks
-			diffstatespec.part.reps <- matrix(NA, ncol=length(tracks2use), nrow=nrow(bindiffmatrix))
+			## Go through replicates
+			diffstatespec.part.reps <- matrix(NA, ncol=length(tracks2use), nrow=nrow(bindiffmatrix)) # replicate-expanded (col) diffstatespec.part
 			for (track in intersect.tracks) {
 				index <- which(track==tracks2use)
 				diffstatespec.part.reps[,index] <- rep(diffstatespec.part[,as.character(track)], length(index))
 			}
-			diffstatespec.list[[length(diffstatespec.list)+1]] <- t(apply(diffstatespec.part.reps, 1, function(x) { paste0(x, tracks2use) }))
+			if (ncol(bindiffmatrix)==1) {
+				diffstatespec.list[[length(diffstatespec.list)+1]] <- t(t(apply(diffstatespec.part.reps, 1, function(x) { paste0(x, tracks2use) })))
+			} else {
+				diffstatespec.list[[length(diffstatespec.list)+1]] <- t(apply(diffstatespec.part.reps, 1, function(x) { paste0(x, tracks2use) }))
+			}
 		}
 		diffstatespecs <- do.call(cbind, diffstatespec.list)
 
@@ -162,18 +217,28 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 			bincommonmatrix <- matrix(bincommonmatrix, nrow=1)
 		}
 		commonstatespec.list <- list()
+		## Go through conditions
 		for (tracks in tracks2compare.split) {
 			#TODO: tracksNOT2use
 			tracks2use <- tracks[tracks %in% intersect.tracks]
 			num.tracks.split <- length(tracks2use)
-			commonstatespec.part <- t(apply(bincommonmatrix, 1, function(x) { c('0.','1.')[x+1] }))
+			if (ncol(bincommonmatrix)==1) {
+				commonstatespec.part <- t(t(apply(bincommonmatrix, 1, function(x) { c('0.','1.')[x+1] }))) # R-behaviour differs with only one column
+			} else {
+				commonstatespec.part <- t(apply(bincommonmatrix, 1, function(x) { c('0.','1.')[x+1] }))
+			}
 			colnames(commonstatespec.part) <- intersect.tracks
-			commonstatespec.part.reps <- matrix(NA, ncol=length(tracks2use), nrow=nrow(bincommonmatrix))
+			## Go through replicates
+			commonstatespec.part.reps <- matrix(NA, ncol=length(tracks2use), nrow=nrow(bincommonmatrix)) # replicate-expanded (col) commonstatespec.part
 			for (track in intersect.tracks) {
 				index <- which(track==tracks2use)
 				commonstatespec.part.reps[,index] <- rep(commonstatespec.part[,as.character(track)], length(index))
 			}
-			commonstatespec.list[[length(commonstatespec.list)+1]] <- t(apply(commonstatespec.part.reps, 1, function(x) { paste0(x, tracks2use) }))
+			if (ncol(bincommonmatrix)==1) {
+				commonstatespec.list[[length(commonstatespec.list)+1]] <- t(t(apply(commonstatespec.part.reps, 1, function(x) { paste0(x, tracks2use) })))
+			} else {
+				commonstatespec.list[[length(commonstatespec.list)+1]] <- t(apply(commonstatespec.part.reps, 1, function(x) { paste0(x, tracks2use) }))
+			}
 		}
 		commonstatespecs <- do.call(cbind, commonstatespec.list)
 
