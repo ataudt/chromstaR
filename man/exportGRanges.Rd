@@ -5,7 +5,7 @@
 \title{Export genome browser viewable files}
 \usage{
 exportGRanges(gr, trackname, filename = "chromstaR_GRanges_regions",
-  header = TRUE)
+  header = TRUE, orderByScore = TRUE)
 }
 \arguments{
 \item{gr}{A \code{\link{GRanges}} object.}

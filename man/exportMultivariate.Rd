@@ -6,7 +6,7 @@
 \usage{
 exportMultivariate(multi.hmm, filename, what = c("combstates", "peaks",
   "reads"), exclude.states = 0, include.states = NULL, header = TRUE,
-  separate.files = FALSE)
+  separate.files = FALSE, orderByScore = TRUE)
 }
 \arguments{
 \item{multi.hmm}{A \code{\link{chromstaR_multivariateHMM}} object or file that contains such an object.}

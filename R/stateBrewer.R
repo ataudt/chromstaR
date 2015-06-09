@@ -138,11 +138,14 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 	}
 
 	### Select differential states by min.diff ###
+	# Idea: Get previously computed binary states and select those that are differential.
+	# Beware: The column order is different from above
 	binstates.diff <- NULL
 	if (differential.states) {
 		if (is.null(tracks2compare)) {
 			stop("argument 'tracks2compare' must be specified if 'conditions' was specified")
 		}
+		tracknames.conditions <- unlist(split(tracknames, conditions))
 		tracks2compare.split <- split(tracks2compare, conditions)
 		intersect.tracks <- Reduce(intersect, lapply(tracks2compare.split, unique))
 		bindiffmatrix <- dec2bin(0:(2^length(intersect.tracks)-1))
@@ -151,9 +154,11 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 		if (class(bindiffmatrix)!='matrix') {
 			bindiffmatrix <- matrix(bindiffmatrix, nrow=1)
 		}
+    colnames(bindiffmatrix) <- intersect.tracks
 		## Go through conditions
 		diffstatespec.list <- list()
-		for (tracks in tracks2compare.split) {
+		for (condition in unique(conditions)) {
+      tracks <- tracks2compare.split[[as.character(condition)]]
 			#TODO: tracksNOT2use
 			tracks2use <- tracks[tracks %in% intersect.tracks]
 			num.tracks.split <- length(tracks2use)
@@ -182,7 +187,7 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 		for (irow in 1:nrow(diffstatespecs)) {
 			diffstatespec <- diffstatespecs[irow,]
 			diffgroups <- levels(factor(diffstatespec))
-			binstates.irow <- binstates
+			binstates.irow <- binstates[,tracknames.conditions] # reorder to match currently used ordering scheme
 			for (diffgroup in diffgroups) {
 				track.index <- which(diffstatespec==diffgroup)
 				if (grepl('^d\\.', diffgroup)) {
@@ -195,30 +200,37 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 				binstates.irow <- binstates.irow[mask,]
 				if (class(binstates.irow)!='matrix') {
 					binstates.irow <- matrix(binstates.irow, ncol=length(binstates.irow))
-					colnames(binstates.irow) <- tracknames
+					colnames(binstates.irow) <- tracknames.conditions
 				}
 			}
 			binstates.list[[irow]] <- binstates.irow
 		}
 		binstates.diff <- do.call(rbind, binstates.list)
+		# Reorder to match initial order
+		binstates.diff <- binstates.diff[,tracknames]
 	}
 	# There are still duplicate rows at this point, they are removed at the end
 
 	### Select common states ###
+	# Idea: Create common states from scratch.
+	# Beware: The column order is different from the binary states in the beginning but the same as in differential state selection by min.diff
 	binstates.common <- NULL
 	if (common.states) {
 		if (is.null(tracks2compare)) {
 			stop("argument 'tracks2compare' must be specified if 'conditions' was specified")
 		}
+		tracknames.conditions <- unlist(split(tracknames, conditions))
 		tracks2compare.split <- split(tracks2compare, conditions)
 		intersect.tracks <- Reduce(intersect, lapply(tracks2compare.split, unique))
 		bincommonmatrix <- dec2bin(0:(2^length(intersect.tracks)-1))
 		if (class(bincommonmatrix)!='matrix') {
 			bincommonmatrix <- matrix(bincommonmatrix, nrow=1)
 		}
+    colnames(bincommonmatrix) <- intersect.tracks
 		commonstatespec.list <- list()
 		## Go through conditions
-		for (tracks in tracks2compare.split) {
+		for (condition in unique(conditions)) {
+      tracks <- tracks2compare.split[[as.character(condition)]]
 			#TODO: tracksNOT2use
 			tracks2use <- tracks[tracks %in% intersect.tracks]
 			num.tracks.split <- length(tracks2use)
@@ -258,12 +270,14 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 				binstates.irow <- binstates.irow[mask,]
 				if (class(binstates.irow)!='matrix') {
 					binstates.irow <- matrix(binstates.irow, ncol=length(binstates.irow))
-					colnames(binstates.irow) <- tracknames
+					colnames(binstates.irow) <- tracknames.conditions
 				}
 			}
 			binstates.list[[irow]] <- binstates.irow
 		}
 		binstates.common <- do.call(rbind, binstates.list)
+		# Reorder to match initial order
+		binstates.common <- binstates.common[,tracknames]
 	}
 		
 	## Merge common and differential states
@@ -273,7 +287,7 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 
 	### Construct state names ###
 	mask <- !grepl('^r\\.', statespec) | !duplicated(statespec) # only first replicate
-	tracknames.mask <- tracknames[mask]
+	tracknames.mask <- colnames(binstates)[mask]
 	if (nrow(binstates) > 1) {
 		statenames.sep <- apply(as.matrix(binstates[,mask]), 1, function(x) { tracknames.mask[x] })
 		if (class(statenames.sep)=='list') {

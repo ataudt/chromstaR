@@ -6,7 +6,7 @@
 \usage{
 stateBrewer(replicates = NULL, differential.states = FALSE, min.diff = 1,
   common.states = FALSE, conditions = NULL, tracks2compare = NULL,
-  inverse = FALSE, sep = "-", statespec = NULL)
+  inverse = FALSE, sep = "-", statespec = NULL, diffstatespec = NULL)
 }
 \arguments{
 \item{replicates}{A vector specifying the replicate structure. Similar entries will be treated as replicates.}
@@ -32,6 +32,13 @@ stateBrewer(replicates = NULL, differential.states = FALSE, min.diff = 1,
   \item \code{'x.C'}: sample C can be both 'unmodified' or 'modified'
   \item \code{'r.D'}: all samples in group D have to be in the same state
   \item \code{'r.[]'}: all samples in group [] have to be in the same state
+}}
+
+\item{diffstatespec}{A vector composed of any combination of the following entries: \code{'x.[]', 'd.[]'}, where [] can be any string.
+\itemize{
+  \item \code{'x.A'}: sample A can be both 'unmodified' or 'modified'
+  \item \code{'d.B'}: at least one sample in group B has to be different from the other samples in group A
+  \item \code{'d[]'}: at least one sample in group [] has to be different from the other samples in group []
 }}
 }
 \value{

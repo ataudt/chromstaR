@@ -5,7 +5,7 @@
 \title{Export genome browser viewable files}
 \usage{
 exportUnivariates(hmm.list, filename, what = c("peaks", "reads"),
-  header = TRUE, separate.files = FALSE)
+  header = TRUE, separate.files = FALSE, orderByScore = TRUE)
 }
 \arguments{
 \item{hmm.list}{A list of \code{\link{chromstaR_univariateHMM}} objects or files that contain such objects.}
