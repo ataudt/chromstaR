@@ -7,7 +7,7 @@
 #' @param annotation A \code{\link{GRanges}} object with the annotation of interest.
 #' @param bp.around.annotation An integer specifying the number of basepairs up- and downstream of the annotation for which the enrichment will be calculated.
 #' @param region A combination of \code{c('start','inside','end')} specifying the region of the annotation for which the enrichment will be calculated.
-#' @return A \code{list()} containing \code{data.frame()}s for enrichment of combinatorial states, binary states and posterior probabilities at the start, end and inside of the annotation.
+#' @return A \code{list()} containing \code{data.frame()}s for enrichment of combinatorial states and binary states at the start, end and inside of the annotation.
 #' @import S4Vectors
 #' @export
 enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=c('start','inside','end')) {
@@ -18,11 +18,10 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 	eCurve <- list()
 	eCurve$combstates <- list()
 	eCurve$binstates <- list()
-	eCurve$posteriors <- list()
 	eCurve$reads <- list()
 
 	## Get combinatorial and binary states
-	combstates <- hmm$bins$state
+	combstates <- hmm$bins$combination
 	binstates <- dec2bin(hmm$bins$state, colnames=hmm$IDs)
 
 	### Calculationg enrichment inside of annotation ###
@@ -37,11 +36,9 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 		strand.per.annotation <- S4Vectors::as.factor(strand(annotation[as.numeric(names(bins.per.annotation))]))
 		names(strand.per.annotation) <- names(bins.per.annotation)
 		
-		# States, posteriors and strands per bin-that-overlaps-an-annotation
+		# States and strands per bin-that-overlaps-an-annotation
 		anno.binstates <- binstates[queryHits(ind),]
 		anno.combstates <- combstates[queryHits(ind)]
-		anno.post <- hmm$bins$posteriors[queryHits(ind),]
-		colnames(anno.post) <- NULL
 		anno.reads <- hmm$bins$reads[queryHits(ind),]
 		colnames(anno.reads) <- NULL
 		anno.strands <- strand(annotation)[subjectHits(ind)]
@@ -58,7 +55,7 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 		relcoord <- unlist(relcoord)
 
 		# Collect in data.frame
-		anno.df <- data.frame(as.data.frame(ind), strand=anno.strands, binstate=anno.binstates, post=anno.post, reads=anno.reads, combstate=anno.combstates)
+		anno.df <- data.frame(as.data.frame(ind), strand=anno.strands, binstate=anno.binstates, reads=anno.reads, combstate=anno.combstates)
 		# Reorder to add stuff that was calculated from sorted table
 		anno.df <- cbind(anno.df[order(anno.df$subjectHits),], relcoord=relcoord)
 		# Annotations that only fall into 1 bin need to get both interval 0 (start) and 1 (end)
@@ -76,25 +73,21 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 
 		# Mean over intervals
 		binstates.inside <- matrix(NA, nrow=length(intervals), ncol=ncol(anno.binstates), dimnames=list(interval=intervals, track=hmm$IDs))
-		combstates.inside <- matrix(NA, nrow=length(intervals), ncol=length(levels(anno.df$combstate)), dimnames=list(interval=intervals, state=levels(anno.df$combstate)))
-		posteriors.inside <- matrix(NA, nrow=length(intervals), ncol=ncol(anno.binstates), dimnames=list(interval=intervals, track=hmm$IDs))
+		combstates.inside <- matrix(NA, nrow=length(intervals), ncol=length(levels(anno.df$combstate)), dimnames=list(interval=intervals, combination=levels(anno.df$combstate)))
 		reads.inside <- matrix(NA, nrow=length(intervals), ncol=ncol(anno.binstates), dimnames=list(interval=intervals, track=hmm$IDs))
 		for (interval in intervals) {
 			i1 <- which(interval==intervals)
 			mask <- anno.df$interval==interval
 			binstates.inside[i1,] <- colMeans(anno.df[,grepl('binstate',names(anno.df))][mask,], na.rm=T)
-			posteriors.inside[i1,] <- colMeans(anno.df[,grepl('post',names(anno.df))][mask,], na.rm=T)
 			reads.inside[i1,] <- colMeans(anno.df[,grepl('reads',names(anno.df))][mask,], na.rm=T)
 			combstates.inside[i1,] <- table(anno.df[grepl('combstate',names(anno.df))][mask,])
 		}
 
 		rownames(combstates.inside) <- as.numeric(rownames(combstates.inside)) * binsize
 		rownames(binstates.inside) <- as.numeric(rownames(binstates.inside)) * binsize
-		rownames(posteriors.inside) <- as.numeric(rownames(posteriors.inside)) * binsize
 		rownames(reads.inside) <- as.numeric(rownames(reads.inside)) * binsize
 		eCurve$combstates$inside <- combstates.inside
 		eCurve$binstates$inside <- binstates.inside
-		eCurve$posteriors$inside <- posteriors.inside
 		eCurve$reads$inside <- reads.inside
 	}
 	
@@ -108,8 +101,7 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 		index.start.minus <- index.start.minus[!is.na(index.start.minus)]
 		# Occurrences at every bin position relative to feature
 		binstates.start <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
-		combstates.start <- array(dim=c(length(-lag:lag), length(levels(hmm$bins$state))), dimnames=list(lag=-lag:lag, state=levels(hmm$bins$state)))
-		posteriors.start <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
+		combstates.start <- array(dim=c(length(-lag:lag), length(levels(hmm$bins$combination))), dimnames=list(lag=-lag:lag, combination=levels(hmm$bins$combination)))
 		reads.start <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
 		for (ilag in -lag:lag) {
 	# 		message("lag = ",ilag)
@@ -117,16 +109,13 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 			index <- index[index>0 & index<=nrow(binstates)]
 			binstates.start[as.character(ilag),] <- colMeans(binstates[index,])
 			combstates.start[as.character(ilag),] <- table(combstates[index])
-			posteriors.start[as.character(ilag),] <- colMeans(hmm$bins$posteriors[index,])
 			reads.start[as.character(ilag),] <- colMeans(hmm$bins$reads[index,])
 		}
 		rownames(combstates.start) <- as.numeric(rownames(combstates.start)) * binsize
 		rownames(binstates.start) <- as.numeric(rownames(binstates.start)) * binsize
-		rownames(posteriors.start) <- as.numeric(rownames(posteriors.start)) * binsize
 		rownames(reads.start) <- as.numeric(rownames(reads.start)) * binsize
 		eCurve$combstates$start <- combstates.start
 		eCurve$binstates$start <- binstates.start
-		eCurve$posteriors$start <- posteriors.start
 		eCurve$reads$start <- reads.start
 	}
 	if ('end' %in% region) {
@@ -138,8 +127,7 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 		index.end.minus <- index.end.minus[!is.na(index.end.minus)]
 		# Occurrences at every bin position relative to feature
 		binstates.end <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
-		combstates.end <- array(dim=c(length(-lag:lag), length(levels(hmm$bins$state))), dimnames=list(lag=-lag:lag, state=levels(hmm$bins$state)))
-		posteriors.end <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
+		combstates.end <- array(dim=c(length(-lag:lag), length(levels(hmm$bins$combination))), dimnames=list(lag=-lag:lag, combination=levels(hmm$bins$combination)))
 		reads.end <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
 		for (ilag in -lag:lag) {
 	# 		message("lag = ",ilag)
@@ -147,16 +135,13 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 			index <- index[index>0 & index<=nrow(binstates)]
 			binstates.end[as.character(ilag),] <- colMeans(binstates[index,])
 			combstates.end[as.character(ilag),] <- table(combstates[index])
-			posteriors.end[as.character(ilag),] <- colMeans(hmm$bins$posteriors[index,])
 			reads.end[as.character(ilag),] <- colMeans(hmm$bins$reads[index,])
 		}
 		rownames(combstates.end) <- as.numeric(rownames(combstates.end)) * binsize
 		rownames(binstates.end) <- as.numeric(rownames(binstates.end)) * binsize
-		rownames(posteriors.end) <- as.numeric(rownames(posteriors.end)) * binsize
 		rownames(reads.end) <- as.numeric(rownames(reads.end)) * binsize
 		eCurve$combstates$end <- combstates.end
 		eCurve$binstates$end <- binstates.end
-		eCurve$posteriors$end <- posteriors.end
 		eCurve$reads$end <- reads.end
 	}
 

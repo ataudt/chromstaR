@@ -94,7 +94,7 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 	### Generate specified binary states ###
 	numtracks <- length(statespec)
 	groups <- levels(factor(statespec))
-	numstates <- 2^length(which(!grepl('^0\\.|^1\\.', groups)))
+	numstates <- 2^(length(which(grepl('^r\\.', groups))) + length(which(grepl('^x\\.', statespec))))
 	binstates <- matrix(FALSE, ncol=numtracks, nrow=numstates)
 	i1 <- 1
 	for (group in groups) {

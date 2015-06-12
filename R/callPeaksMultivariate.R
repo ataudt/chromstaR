@@ -259,8 +259,8 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 			if (!is.null(names(use.states))) {
 				mapping <- names(use.states)
 				names(mapping) <- use.states
-				result$bins$combination <- factor(mapping[as.character(result$bins$state)])
-				result$segments$combination <- factor(mapping[as.character(result$segments$state)])
+				result$bins$combination <- factor(mapping[as.character(result$bins$state)], levels=mapping)
+				result$segments$combination <- factor(mapping[as.character(result$segments$state)], levels=mapping)
 			}
 		## Parameters
 			# Weights
