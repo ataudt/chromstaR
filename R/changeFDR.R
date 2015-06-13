@@ -81,6 +81,13 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, averages=TRUE
 		message("Calculating states from posteriors ...", appendLF=F); ptm <- proc.time()
 		states <- factor(bin2dec(model$bins$posteriors >= threshold), levels=levels(model$bins$state))
 		model$bins$state <- states
+		## Combinations
+		if (!is.null(model$bins$combination)) {
+			mapping <- model$mapping
+# 			mapping <- levels(model$bins$combination)
+# 			names(mapping) <- levels(model$bins$state)
+			model$bins$combination <- factor(mapping[as.character(model$bins$state)], levels=mapping[as.character(levels(model$bins$state))])
+		}
 		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 		## Redo segmentation
 		message("Making segmentation ...", appendLF=F); ptm <- proc.time()
@@ -96,10 +103,15 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, averages=TRUE
 			mean.score <- red.df[,grepl('^mean.score', names(red.df))]
 			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], score=mean.score)
 			red.gr$mean.posteriors <- mean.posteriors
-			red.gr$combination=red.df[,'combination']
+			if (!is.null(model$bins$combination)) {
+				red.gr$combination <- red.df[,'combination']
+			}
 		} else {
 			red.df <- suppressMessages(collapseBins(df[,-c(4, ind.readcols, ind.postcols)], column2collapseBy='state'))
-			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], combination=red.df[,'combination'])
+			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'])
+			if (!is.null(model$bins$combination)) {
+				red.gr$combination <- red.df[,'combination']
+			}
 		}
 		model$segments <- red.gr
 		seqlengths(model$segments) <- seqlengths(model$bins)
