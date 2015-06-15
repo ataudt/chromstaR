@@ -17,7 +17,7 @@ enrichmentCurve(hmm, annotation, bp.around.annotation = 10000,
 \item{region}{A combination of \code{c('start','inside','end')} specifying the region of the annotation for which the enrichment will be calculated.}
 }
 \value{
-A \code{list()} containing \code{data.frame()}s for enrichment of combinatorial states, binary states and posterior probabilities at the start, end and inside of the annotation.
+A \code{list()} containing \code{data.frame()}s for enrichment of combinatorial states and binary states at the start, end and inside of the annotation.
 }
 \description{
 The function calculates the enrichment of a genomic feature with peaks or combinatorial states. Input is a \code{\link{chromstaR_multivariateHMM}} object (containing the peak calls and combinatorial states) and a \code{\link{GRanges}} object containing the annotation of interest (e.g. transcription start sites or genes).
