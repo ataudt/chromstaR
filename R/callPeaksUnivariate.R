@@ -18,7 +18,9 @@
 #' @param num.trials The number of trials to run the HMM. Each time, the HMM is seeded with different random initial values. The HMM with the best likelihood is given as output.
 #' @param eps.try If code num.trials is set to greater than 1, \code{eps.try} is used for the trial runs. If unset, \code{eps} is used.
 #' @param num.threads Number of threads to use. Setting this to >1 may give increased performance.
-#' @param read.cutoff.quantile A quantile between 0 and 1. Should be near 1. Read counts above this quantile will be set to the read count specified by this quantile. Filtering very high read counts increases the performance of the Baum-Welch fitting procedure. However, if your data contains very few peaks they might be filtered out. Set \code{read.cutoff.quantile=1} in this case.
+#' @param read.cutoff The default (\code{TRUE}) enables filtering of high read counts. Set \code{read.cutoff=FALSE} to disable this filtering.
+#' @param read.cutoff.quantile A quantile between 0 and 1. Should be near 1. Read counts above this quantile will be set to the read count specified by this quantile. Filtering very high read counts increases the performance of the Baum-Welch fitting procedure. However, if your data contains very few peaks they might be filtered out. If option \code{read.cutoff.absolute} is also specified, the minimum of the resulting cutoff values will be used. Set \code{read.cutoff=FALSE} to disable this filtering.
+#' @param read.cutoff.absolute Read counts above this value will be set to the read count specified by this value. Filtering very high read counts increases the performance of the Baum-Welch fitting procedure. However, if your data contains very few peaks they might be filtered out. If option \code{read.cutoff.quantile} is also specified, the minimum of the resulting cutoff values will be used. Set \code{read.cutoff=FALSE} to disable this filtering.
 #' @param max.mean If \code{mean(reads)>max.mean}, bins with low read counts will be set to 0. This is a workaround to obtain good fits in the case of large bin sizes.
 #' @param FDR False discovery rate. code{NULL} means that the state with maximum posterior probability will be chosen, irrespective of its absolute probability (default=code{NULL}).
 #' @param keep.posteriors If set to \code{TRUE} (default=\code{FALSE}), posteriors will be available in the output. This is useful to change the FDR later, but increases the necessary disk space to store the result.
@@ -43,7 +45,7 @@
 #'## Check if the fit is ok
 #'plot(hmm, type='histogram')
 #' @export
-callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff.quantile=0.999, max.mean=Inf, FDR=0.5, keep.posteriors=FALSE, control=FALSE, checkpoint.after.iter=NULL, checkpoint.after.time=NULL, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, keep.densities=FALSE, verbosity=1) {
+callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=0.999, read.cutoff.absolute=500, max.mean=Inf, FDR=0.5, keep.posteriors=FALSE, control=FALSE, checkpoint.after.iter=NULL, checkpoint.after.time=NULL, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, keep.densities=FALSE, verbosity=1) {
 
 	### Define cleanup behaviour ###
 	on.exit(.C("R_univariate_cleanup"))
@@ -78,7 +80,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 		hmm <- binned.data
 		binned.data <- hmm$bins
 		binned.data$state <- NULL
-		read.cutoff <- hmm$convergenceInfo$read.cutoff
+		read.cutoff.absolute <- hmm$convergenceInfo$read.cutoff
 		max.mean <- hmm$convergenceInfo$max.mean
 		A.initial <- hmm$transitionProbs
 		proba.initial <- hmm$startProbs
@@ -108,23 +110,23 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 	}
 
 	### Filter high reads out, makes HMM faster ###
+	numfiltered <- 0
 	if (!continue.from.univariate.hmm) {
-		read.cutoff <- quantile(reads, read.cutoff.quantile)
-		names.read.cutoff <- names(read.cutoff)
-		read.cutoff <- as.integer(read.cutoff)
-		mask <- reads > read.cutoff
-		reads[mask] <- read.cutoff
-		numfiltered <- length(which(mask))
-		if (numfiltered > 0) {
-			message("Replaced read counts > ",read.cutoff," (",names.read.cutoff," quantile) by ",read.cutoff," in ",numfiltered," bins. Set option 'read.cutoff.quantile=1' to disable this filtering. This filtering was done to increase the speed of the HMM and should not affect the results.")
+		if (read.cutoff) {
+			read.cutoff.by.quantile <- quantile(reads, read.cutoff.quantile)
+			read.cutoff.by.quantile <- as.integer(read.cutoff.by.quantile)
+			read.cutoff.absolute <- min(read.cutoff.by.quantile, read.cutoff.absolute)
+			mask <- reads > read.cutoff.absolute
+			reads[mask] <- read.cutoff.absolute
+			numfiltered <- length(which(mask))
 		}
 	} else {
-		mask <- reads > read.cutoff
-		reads[mask] <- read.cutoff
+		mask <- reads > read.cutoff.absolute
+		reads[mask] <- read.cutoff.absolute
 		numfiltered <- length(which(mask))
-		if (numfiltered > 0) {
-			message("Replaced read counts > ",read.cutoff," by ",read.cutoff," in ",numfiltered," bins. This filtering was done to increase the speed of the HMM and should not affect the results.")
-		}
+	}
+	if (numfiltered > 0) {
+		message("Replaced read counts > ",read.cutoff.absolute, " by ",read.cutoff.absolute," in ",numfiltered," bins. Set option 'read.cutoff=FALSE' to disable this filtering. This filtering was done to increase the speed of the HMM.")
 	}
 
 	### Filter out low read counts that arise when the bin size is larger than optimal (should correct the result to near optimal again) ###
