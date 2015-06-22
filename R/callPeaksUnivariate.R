@@ -209,7 +209,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 				use.initial.params = as.logical(use.initial), # bool* use_initial_params
 				num.threads = as.integer(num.threads), # int* num_threads
 				error = as.integer(0), # int* error (error handling)
-				read.cutoff = as.integer(read.cutoff), # int* read_cutoff
+				read.cutoff = as.integer(max(reads)), # int* read_cutoff
 				verbosity = as.integer(verbosity) # int* verbosity
 			)
 			## Adjust parameters for the next round
@@ -306,7 +306,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 				use.initial.params = as.logical(0), # bool* use_initial_params
 				num.threads = as.integer(num.threads), # int* num_threads
 				error = as.integer(0), # int* error (error handling)
-				read.cutoff = as.integer(read.cutoff), # int* read_cutoff
+				read.cutoff = as.integer(max(reads)), # int* read_cutoff
 				verbosity = as.integer(verbosity) # int* verbosity
 			)
 
@@ -351,7 +351,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 			use.initial.params = as.logical(1), # bool* use_initial_params
 			num.threads = as.integer(num.threads), # int* num_threads
 			error = as.integer(0), # int* error (error handling)
-			read.cutoff = as.integer(read.cutoff), # int* read_cutoff
+			read.cutoff = as.integer(max(reads)), # int* read_cutoff
 			verbosity = as.integer(verbosity) # int* verbosity
 		)
 	}
