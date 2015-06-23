@@ -258,8 +258,8 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 				if (this->gamma[this->N-1][t]>0.5)
 				{
 					state_last = 1;
-					this->states_prev[t] = state_last;
 				}
+				this->states_prev[t] = state_last;
 				statesum += std::abs(state_last-state_last_old);
 				state_last = 0;
 				state_last_old = 0;
