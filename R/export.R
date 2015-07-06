@@ -225,9 +225,9 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 #'                   what=c('reads','peaks'))
 #'}
 #' @export
-exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks', 'reads'), exclude.states=0, include.states=NULL, header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
+exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks', 'reads'), exclude.states=0, include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
 	if ('combstates' %in% what) {
-		exportMultivariateCalls(multi.hmm, filename, separate.tracks=FALSE, exclude.states, include.states, header=header, orderByScore=orderByScore)
+		exportMultivariateCalls(multi.hmm, filename, separate.tracks=FALSE, exclude.states, include.states, trackname=trackname, header=header, orderByScore=orderByScore)
 	}
 	if ('peaks' %in% what) {
 		exportMultivariateCalls(multi.hmm, filename, separate.tracks=TRUE, exclude.states, include.states, header=header, separate.files=separate.files, orderByScore=orderByScore)
@@ -240,7 +240,7 @@ exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks'
 #----------------------------------------------------
 # Export combinatorial states or peak-calls from multivariate HMMs
 #----------------------------------------------------
-exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateCalls", separate.tracks=TRUE, exclude.states=0, include.states=NULL, header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
+exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateCalls", separate.tracks=TRUE, exclude.states=0, include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
 
 	if (class(multi.hmm)!=class.multivariate.hmm) {
 		multi.hmm <- get(load(multi.hmm))
@@ -364,7 +364,11 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 		df$start <- df$start - 1
 		df$thickStart <- df$thickStart - 1
 		if (header) {
-			cat(paste0("track name=\"combinatorial state\" description=\"multivariate combinatorial states\" visibility=1 itemRgb=On priority=49\n"), file=filename.gz, append=TRUE)
+			if (is.null(trackname)) {
+				cat(paste0('track name="combinatorial state" description="multivariate combinatorial states" visibility=1 itemRgb=On priority=49\n'), file=filename.gz, append=TRUE)
+			} else {
+				cat(paste0('track name="',trackname,'" description="',trackname,'" visibility=1 itemRgb=On priority=49\n'), file=filename.gz, append=TRUE)
+			}
 		}
 		write.table(format(df, scientific=FALSE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
 	}
@@ -517,7 +521,7 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", 
 	
 	### Write every model to file ###
 	for (imod in 1:nummod) {
-		message('writing binned data ',imod,' / ',nummod,'\r', appendLF=F)
+		message('writing binned data ',imod,' / ',nummod,'   \r', appendLF=F)
 		b <- binned.data.list[[imod]]
 		if (separate.files) {
 			filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', imod, '.wig.gz')

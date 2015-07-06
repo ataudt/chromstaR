@@ -4,9 +4,9 @@
 \alias{align2binned}
 \title{Convert aligned reads from various file formats into read counts in equidistant bins}
 \usage{
-align2binned(file, format, assembly, index = file, chrom.length.file = NULL,
-  outputfolder = "binned_data", binsizes = 500, chromosomes = NULL,
-  save.as.RData = FALSE, downsample.to.reads = NULL)
+align2binned(file, format, assembly, bamindex = file,
+  chrom.length.file = NULL, outputfolder = "binned_data", binsizes = 500,
+  chromosomes = NULL, save.as.RData = FALSE, downsample.to.reads = NULL)
 }
 \arguments{
 \item{file}{A file with aligned reads.}
@@ -15,7 +15,7 @@ align2binned(file, format, assembly, index = file, chrom.length.file = NULL,
 
 \item{assembly}{An assembly to specify the chromosome lengths. One of \code{c('hg19','hg18')}.}
 
-\item{index}{Index file if \code{format='bam'} with or without the .bai ending.}
+\item{bamindex}{Index file if \code{format='bam'} with or without the .bai ending. If this file does not exist it will be created and a warning is issued.}
 
 \item{chrom.length.file}{A file which contains the chromosome lengths in basepairs. The first column contains the chromosome name and the second column the length (see also \code{\link{chrom.length.file}}.}
 

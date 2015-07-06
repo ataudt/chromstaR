@@ -22,7 +22,7 @@ bedGraph2binned(bedGraphfile, assembly, chrom.length.file = NULL,
 \arguments{
 \item{bamfile}{A file in BAM format.}
 
-\item{bamindex}{BAM index file. Can be specified without the .bai ending.}
+\item{bamindex}{BAM index file. Can be specified without the .bai ending. If this file does not exist it will be created and a warning is issued.}
 
 \item{outputfolder}{Folder to which the binned data will be saved if \code{save.as.RData=TRUE}. If the specified folder does not exist, it will be created.}
 

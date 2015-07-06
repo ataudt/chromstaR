@@ -23,10 +23,10 @@ NULL
 #' @describeIn binning Bin reads in BAM format.
 #' @param bamfile A file in BAM format.
 #' @inheritParams align2binned
-#' @param bamindex BAM index file. Can be specified without the .bai ending.
+#' @param bamindex BAM index file. Can be specified without the .bai ending. If this file does not exist it will be created and a warning is issued.
 #' @export
 bam2binned <- function(bamfile, bamindex=bamfile, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, downsample.to.reads=NULL) {
-	return(align2binned(bamfile, format="bam", index=bamindex, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, save.as.RData=save.as.RData, downsample.to.reads=downsample.to.reads))
+	return(align2binned(bamfile, format="bam", bamindex=bamindex, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, save.as.RData=save.as.RData, downsample.to.reads=downsample.to.reads))
 }
 
 #' @describeIn binning Bin reads in BED format.
@@ -52,7 +52,7 @@ bedGraph2binned <- function(bedGraphfile, assembly, chrom.length.file=NULL, outp
 #' @param file A file with aligned reads.
 #' @param format One of \code{c('bam', 'bed', 'bedGraph')}.
 #' @param assembly An assembly to specify the chromosome lengths. One of \code{c('hg19','hg18')}.
-#' @param index Index file if \code{format='bam'} with or without the .bai ending.
+#' @param bamindex Index file if \code{format='bam'} with or without the .bai ending. If this file does not exist it will be created and a warning is issued.
 #' @param chrom.length.file A file which contains the chromosome lengths in basepairs. The first column contains the chromosome name and the second column the length (see also \code{\link{chrom.length.file}}.
 #' @param outputfolder Folder to which the binned data will be saved if \code{save.as.RData=TRUE}. If the specified folder does not exist, it will be created.
 #' @param binsizes A vector with integer values which will be used for the binning. If more than one value is given, output files will be produced for each bin size.
@@ -63,7 +63,7 @@ bedGraph2binned <- function(bedGraphfile, assembly, chrom.length.file=NULL, outp
 #' @import Rsamtools
 #' @import GenomicAlignments
 #' @import BSgenome
-align2binned <- function(file, format, assembly, index=file, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, downsample.to.reads=NULL) {
+align2binned <- function(file, format, assembly, bamindex=file, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, downsample.to.reads=NULL) {
 
 	## Create outputfolder if not exists
 	if (!file.exists(outputfolder) & save.as.RData==TRUE) {
@@ -95,10 +95,12 @@ align2binned <- function(file, format, assembly, index=file, chrom.length.file=N
 	## BAM (1-based)
 	} else if (format == "bam") {
 		## Check if bamindex exists
-		index.raw <- sub('\\.bai$', '', index)
-		bamindex <- paste0(index.raw,'.bai')
+		bamindex.raw <- sub('\\.bai$', '', bamindex)
+		bamindex <- paste0(bamindex.raw,'.bai')
 		if (!file.exists(bamindex)) {
-			stop("Cannot find BAM index file ", bamindex)
+			bamindex.own <- Rsamtools::indexBam(file)
+			warning("Couldn't find BAM index-file ",bamindex,". Creating our own file ",bamindex.own," instead.")
+			bamindex <- bamindex.own
 		}
 		file.header <- Rsamtools::scanBamHeader(file)[[1]]
 		chrom.lengths <- file.header$targets
@@ -112,7 +114,7 @@ align2binned <- function(file, format, assembly, index=file, chrom.length.file=N
 			stop('The specified chromosomes ', chrstring, ' do not exist in the data.')
 		}
 		gr <- GenomicRanges::GRanges(seqnames=Rle(chroms2use), ranges=IRanges(start=rep(1, length(chroms2use)), end=chrom.lengths[chroms2use]))
-		data <- GenomicAlignments::readGAlignmentsFromBam(file, index=index, param=ScanBamParam(which=range(gr)))
+		data <- GenomicAlignments::readGAlignmentsFromBam(file, index=bamindex, param=ScanBamParam(which=range(gr)))
 	## BEDGraph (0-based)
 	} else if (format == "bedGraph") {
 		if (!is.null(chrom.length.file)) {
