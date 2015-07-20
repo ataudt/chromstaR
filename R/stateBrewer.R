@@ -51,9 +51,16 @@
 stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, common.states=FALSE, conditions=NULL, tracks2compare=NULL, inverse=FALSE, sep='-', statespec=NULL, diffstatespec=NULL) {
 
 # 	## Debug
+# # 	conditions <- tissues
+# 	conditions <- strains
+# 	tracks2compare <- marks
 # 	differential.states <- TRUE
-# 	common.states <- TRUE
+# 	common.states <- FALSE
 # 	min.diff <- 1
+# 	statespec <- NULL
+# 	diffstatespec <- NULL
+# 	sep='-'
+# 	inverse=FALSE
 # 	replicates <- c("Bre.H3K27Ac", "Bre.H3K27me3", "Bre.H3K4me3", "Bre.H4K20me1", "Bre.H3K27Ac", "Bre.H3K27me3", "Bre.H3K4me3", "Bre.H4K20me1", "Bre.H3K27Ac", "Bre.H3K27me3", "Bre.H3K4me3", "Bre.H4K20me1", "Gua.H3K27Ac", "Gua.H3K27me3", "Gua.H3K4me3", "Gua.H4K20me1", "Gua.H3K27Ac", "Gua.H3K27Ac", "Gua.H3K27me3", "Gua.H3K4me3", "Gua.H4K20me1")
 # 	conditions <- c("Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Gua", "Gua", "Gua", "Gua", "Gua", "Gua", "Gua", "Gua", "Gua")
 # 	tracks2compare <- c("H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1", "H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1", "H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1", "H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1", "H3K27Ac", "H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1")
@@ -148,37 +155,40 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 		tracknames.conditions <- unlist(split(tracknames, conditions))
 		tracks2compare.split <- split(tracks2compare, conditions)
 		intersect.tracks <- Reduce(intersect, lapply(tracks2compare.split, unique))
-		bindiffmatrix <- dec2bin(0:(2^length(intersect.tracks)-1))
+		bindiffmatrix <- dec2bin(0:(2^length(intersect.tracks)-1)) # all possible binary combinations (rows) between tracks (cols)
 		controlsum <- apply(bindiffmatrix, 1, sum)
 		bindiffmatrix <- bindiffmatrix[controlsum >= min.diff,]
-		if (class(bindiffmatrix)!='matrix') {
+		if (class(bindiffmatrix)!='matrix') { # R-behaviour differs with only one column
 			bindiffmatrix <- matrix(bindiffmatrix, nrow=1)
 		}
     colnames(bindiffmatrix) <- intersect.tracks
-		## Go through conditions
 		diffstatespec.list <- list()
+		## Go through conditions
 		for (condition in unique(conditions)) {
       tracks <- tracks2compare.split[[as.character(condition)]]
 			#TODO: tracksNOT2use
 			tracks2use <- tracks[tracks %in% intersect.tracks]
 			num.tracks.split <- length(tracks2use)
-			if (ncol(bindiffmatrix)==1) {
-				diffstatespec.part <- t(t(apply(bindiffmatrix, 1, function(x) { c('x.','d.')[x+1] }))) # R-behaviour differs with only one column
-			} else {
-				diffstatespec.part <- t(apply(bindiffmatrix, 1, function(x) { c('x.','d.')[x+1] }))
-			}
-			colnames(diffstatespec.part) <- intersect.tracks
-			## Go through replicates
-			diffstatespec.part.reps <- matrix(NA, ncol=length(tracks2use), nrow=nrow(bindiffmatrix)) # replicate-expanded (col) diffstatespec.part
-			for (track in intersect.tracks) {
+			## Replicate-expanded (col) bindiffmatrix
+			bindiffmatrix.reps <- matrix(NA, nrow=nrow(bindiffmatrix), ncol=length(tracks2use), dimnames=list(combination=1:nrow(bindiffmatrix), tracks2use=tracks2use))
+			for (track in intersect.tracks) { # go through replicates
 				index <- which(track==tracks2use)
-				diffstatespec.part.reps[,index] <- rep(diffstatespec.part[,as.character(track)], length(index))
+				bindiffmatrix.reps[,index] <- rep(bindiffmatrix[,as.character(track)], length(index))
 			}
-			if (ncol(bindiffmatrix)==1) {
-				diffstatespec.list[[length(diffstatespec.list)+1]] <- t(t(apply(diffstatespec.part.reps, 1, function(x) { paste0(x, tracks2use) })))
+			## Replace FALSE and TRUE by "0." and "1."
+			if (ncol(bindiffmatrix.reps)==1) { # R-behaviour differs with only one column
+				diffstatespec.reps <- t(t(apply(bindiffmatrix.reps, 1, function(x) { c('x.','d.')[x+1] })))
 			} else {
-				diffstatespec.list[[length(diffstatespec.list)+1]] <- t(apply(diffstatespec.part.reps, 1, function(x) { paste0(x, tracks2use) }))
+				diffstatespec.reps <- t(apply(bindiffmatrix.reps, 1, function(x) { c('x.','d.')[x+1] }))
 			}
+			colnames(diffstatespec.reps) <- colnames(bindiffmatrix.reps)
+			## Attach the trackname to "0." or "1." for the next step
+			if (ncol(diffstatespec.reps)==1) { # R-behaviour differs with only one column
+				diffstatespec.list[[as.character(condition)]] <- t(t(apply(diffstatespec.reps, 1, function(x) { paste0(x, tracks2use) })))
+			} else {
+				diffstatespec.list[[as.character(condition)]] <- t(apply(diffstatespec.reps, 1, function(x) { paste0(x, tracks2use) }))
+			}
+			colnames(diffstatespec.list[[as.character(condition)]]) <- tracks2use
 		}
 		diffstatespecs <- do.call(cbind, diffstatespec.list)
 
@@ -222,8 +232,8 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 		tracknames.conditions <- unlist(split(tracknames, conditions))
 		tracks2compare.split <- split(tracks2compare, conditions)
 		intersect.tracks <- Reduce(intersect, lapply(tracks2compare.split, unique))
-		bincommonmatrix <- dec2bin(0:(2^length(intersect.tracks)-1))
-		if (class(bincommonmatrix)!='matrix') {
+		bincommonmatrix <- dec2bin(0:(2^length(intersect.tracks)-1)) # all possible binary combinations (rows) between tracks (cols)
+		if (class(bincommonmatrix)!='matrix') { # R-behaviour differs with only one column
 			bincommonmatrix <- matrix(bincommonmatrix, nrow=1)
 		}
     colnames(bincommonmatrix) <- intersect.tracks
@@ -234,23 +244,26 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 			#TODO: tracksNOT2use
 			tracks2use <- tracks[tracks %in% intersect.tracks]
 			num.tracks.split <- length(tracks2use)
-			if (ncol(bincommonmatrix)==1) {
-				commonstatespec.part <- t(t(apply(bincommonmatrix, 1, function(x) { c('0.','1.')[x+1] }))) # R-behaviour differs with only one column
-			} else {
-				commonstatespec.part <- t(apply(bincommonmatrix, 1, function(x) { c('0.','1.')[x+1] }))
-			}
-			colnames(commonstatespec.part) <- intersect.tracks
-			## Go through replicates
-			commonstatespec.part.reps <- matrix(NA, ncol=length(tracks2use), nrow=nrow(bincommonmatrix)) # replicate-expanded (col) commonstatespec.part
-			for (track in intersect.tracks) {
+			## Replicate-expanded (col) bincommonmatrix
+			bincommonmatrix.reps <- matrix(NA, nrow=nrow(bincommonmatrix), ncol=length(tracks2use), dimnames=list(combination=1:nrow(bincommonmatrix), tracks2use=tracks2use))
+			for (track in intersect.tracks) { # go through replicates
 				index <- which(track==tracks2use)
-				commonstatespec.part.reps[,index] <- rep(commonstatespec.part[,as.character(track)], length(index))
+				bincommonmatrix.reps[,index] <- rep(bincommonmatrix[,as.character(track)], length(index))
 			}
-			if (ncol(bincommonmatrix)==1) {
-				commonstatespec.list[[length(commonstatespec.list)+1]] <- t(t(apply(commonstatespec.part.reps, 1, function(x) { paste0(x, tracks2use) })))
+			## Replace FALSE and TRUE by "0." and "1."
+			if (ncol(bincommonmatrix.reps)==1) { # R-behaviour differs with only one column
+				commonstatespec.reps <- t(t(apply(bincommonmatrix.reps, 1, function(x) { c('0.','1.')[x+1] })))
 			} else {
-				commonstatespec.list[[length(commonstatespec.list)+1]] <- t(apply(commonstatespec.part.reps, 1, function(x) { paste0(x, tracks2use) }))
+				commonstatespec.reps <- t(apply(bincommonmatrix.reps, 1, function(x) { c('0.','1.')[x+1] }))
 			}
+			colnames(commonstatespec.reps) <- colnames(bincommonmatrix.reps)
+			## Attach the trackname to "0." or "1." for the next step
+			if (ncol(commonstatespec.reps)==1) { # R-behaviour differs with only one column
+				commonstatespec.list[[as.character(condition)]] <- t(t(apply(commonstatespec.reps, 1, function(x) { paste0(x, tracks2use) })))
+			} else {
+				commonstatespec.list[[as.character(condition)]] <- t(apply(commonstatespec.reps, 1, function(x) { paste0(x, tracks2use) }))
+			}
+			colnames(commonstatespec.list[[as.character(condition)]]) <- tracks2use
 		}
 		commonstatespecs <- do.call(cbind, commonstatespec.list)
 

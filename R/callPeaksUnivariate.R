@@ -101,7 +101,6 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 	numbins <- length(binned.data)
 	reads <- mcols(binned.data)$reads
 	iniproc <- which(init==c("standard","random","empiric")) # transform to int
-	mean.reads <- mean(reads[reads>0])
 	if (keep.densities) { lenDensities <- numbins * numstates } else { lenDensities <- 1 }
 
 	### Check if there are reads in the data, otherwise HMM will blow up ###
@@ -144,6 +143,38 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 		}
 	}
 	
+# 	### Initialization of emission distributions ###
+# 	reads.greater.0 <- reads[reads>0]
+# 	mean.reads <- mean(reads.greater.0)
+# 	var.reads <- var(reads.greater.0)
+# 	imean <- vector()
+# 	ivar <- vector()
+# 	if (init=="standard") {
+# 		imean['unmodified'] <- mean.reads
+# 		imean['modified'] <- mean.reads + 1
+# 		ivar['unmodified'] <- var.reads
+# 		ivar['modified'] <- var.reads
+# 		# Make sure variance is bigger than mean for negative binomial
+# 		for (i1 in 1:length(imean)) {
+# 			if (imean[i1]>=ivar[i1]) {
+# 				ivar[i1] <- imean[i1] + 1
+# 			}
+# 		}
+# 	} else if (init=="random") {
+# 		for (istate in c('unmodified','modified')) {
+# 			imean[istate] <- runif(1, min=0, max=10*mean.reads)
+# 			ivar[istate] <- runif(1, min=imean[istate], max=20*mean.reads)
+# 		}
+# 	} else if (init=="empiric") {
+# 		imean['unmodified'] <- mean.reads/2
+# 		ivar['unmodified'] <- imean['unmodified']*2
+# 		imean['modified'] <- mean.reads*2
+# 		ivar['modified'] <- imean['modified']*2
+# 	} else if (init %in% seqlevels(binned.data)) {
+# 	} else if {
+# 		stop("Unknown initialization procedure: ",init)
+# 	}
+
 	if (num.trials == 1) {
 		### Load checkpoint file if it exists and if desired ###
 		if (file.exists(checkpoint.file) & checkpoint.use.existing) {

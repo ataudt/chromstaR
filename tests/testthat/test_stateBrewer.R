@@ -1,4 +1,7 @@
-### Test first case ###
+message("===========")
+message("stateBrewer")
+
+### Test first case without replicates ###
 message("First test case")
 strains <- c('BN','SHR','BN','SHR')
 marks <- c('H3K4me3','H3K4me3','H3K27me3','H3K27me3')
@@ -25,7 +28,7 @@ expect_that(names(sort(common.states)),equals(c("", "H3K27me3:BN-H3K27me3:SHR", 
 expect_that(sort(common.states), is_equivalent_to(c(0,3,12,15)))
 
 
-### Test second case ###
+### Test second case without replicates ###
 message("Second test case")
 tissues <- c("Angular_Gyrus", "Anterior_Caudate", "Cingulate_Gyrus", "Hippocampus_Middle", "Inferior_Temporal_Lobe", "Mid_Frontal_Lobe", "Substantia_Nigra")
 marks <- rep("H3K36me3", length(tissues))
@@ -63,3 +66,20 @@ expect_that(sort(states2use),is_equivalent_to(c(0,33,66,99,132,165,198,231,280,3
 common.states <- stateBrewer(replicates=replicates, common.states=TRUE, conditions=countries, tracks2compare=marks)
 expect_that(length(common.states), equals(16))
 expect_that(names(sort(common.states)),equals(c("","H4K20me1:Bre-H4K20me1:Gua","H3K4me3:Bre-H3K4me3:Gua","H3K4me3:Bre-H4K20me1:Bre-H3K4me3:Gua-H4K20me1:Gua","H3K27me3:Bre-H3K27me3:Gua","H3K27me3:Bre-H4K20me1:Bre-H3K27me3:Gua-H4K20me1:Gua","H3K27me3:Bre-H3K4me3:Bre-H3K27me3:Gua-H3K4me3:Gua","H3K27me3:Bre-H3K4me3:Bre-H4K20me1:Bre-H3K27me3:Gua-H3K4me3:Gua-H4K20me1:Gua","H3K27Ac:Bre-H3K27Ac:Gua","H3K27Ac:Bre-H4K20me1:Bre-H3K27Ac:Gua-H4K20me1:Gua","H3K27Ac:Bre-H3K4me3:Bre-H3K27Ac:Gua-H3K4me3:Gua","H3K27Ac:Bre-H3K4me3:Bre-H4K20me1:Bre-H3K27Ac:Gua-H3K4me3:Gua-H4K20me1:Gua","H3K27Ac:Bre-H3K27me3:Bre-H3K27Ac:Gua-H3K27me3:Gua","H3K27Ac:Bre-H3K27me3:Bre-H4K20me1:Bre-H3K27Ac:Gua-H3K27me3:Gua-H4K20me1:Gua","H3K27Ac:Bre-H3K27me3:Bre-H3K4me3:Bre-H3K27Ac:Gua-H3K27me3:Gua-H3K4me3:Gua","H3K27Ac:Bre-H3K27me3:Bre-H3K4me3:Bre-H4K20me1:Bre-H3K27Ac:Gua-H3K27me3:Gua-H3K4me3:Gua-H4K20me1:Gua")))
+
+### Test 4th case ###
+message("4th test case")
+marks <- rep("H3K4me1", 17)
+tissues <- c("Angular_Gyrus","Angular_Gyrus","Anterior_Caudate","Anterior_Caudate","Cingulate_Gyrus","Cingulate_Gyrus","Hippocampus_Middle","Hippocampus_Middle","Hippocampus_Middle","Inferior_Temporal_Lobe","Inferior_Temporal_Lobe","Mid_Frontal_Lobe","Mid_Frontal_Lobe","Substantia_Nigra","Substantia_Nigra","Germinal_Matrix","Germinal_Matrix")
+replicates <- paste0(marks,':',tissues)
+states2use <- stateBrewer(replicates=replicates)
+expect_that(states2use, is_a('numeric'))
+expect_that(length(states2use), equals(256))
+
+common.states <- stateBrewer(replicates=replicates, common.states=TRUE, conditions=tissues, tracks2compare=marks)
+expect_that(length(common.states), equals(2))
+expect_that(names(sort(common.states)),equals(c("","H3K4me1:Angular_Gyrus-H3K4me1:Anterior_Caudate-H3K4me1:Cingulate_Gyrus-H3K4me1:Hippocampus_Middle-H3K4me1:Inferior_Temporal_Lobe-H3K4me1:Mid_Frontal_Lobe-H3K4me1:Substantia_Nigra-H3K4me1:Germinal_Matrix")))
+
+diff.states <- stateBrewer(replicates=replicates, differential.states=TRUE, min.diff=1, conditions=tissues, tracks2compare=marks)
+expect_that(length(diff.states), equals(254))
+
