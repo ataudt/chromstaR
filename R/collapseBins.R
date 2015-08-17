@@ -6,18 +6,18 @@
 #'
 #' Input data:
 #' \tabular{rrrrrr}{
-#' chrom \tab start \tab end \tab column2collapseBy \tab moreColumns \tab columns2sumUp \cr
-#' chr1  \tab     0 \tab 199 \tab                 2 \tab        1 10 \tab           1 3 \cr
-#' chr1  \tab   200 \tab 399 \tab                 2 \tab        2 11 \tab           0 3 \cr
-#' chr1  \tab   400 \tab 599 \tab                 2 \tab        3 12 \tab           1 3 \cr
-#' chr1  \tab   600 \tab 799 \tab                 1 \tab        4 13 \tab           0 3 \cr
-#' chr1  \tab   800 \tab 999 \tab                 1 \tab        5 14 \tab           1 3 \cr
+#' seqnames \tab start \tab end \tab column2collapseBy \tab moreColumns \tab columns2sumUp \cr
+#' chr1     \tab     0 \tab 199 \tab                 2 \tab        1 10 \tab           1 3 \cr
+#' chr1     \tab   200 \tab 399 \tab                 2 \tab        2 11 \tab           0 3 \cr
+#' chr1     \tab   400 \tab 599 \tab                 2 \tab        3 12 \tab           1 3 \cr
+#' chr1     \tab   600 \tab 799 \tab                 1 \tab        4 13 \tab           0 3 \cr
+#' chr1     \tab   800 \tab 999 \tab                 1 \tab        5 14 \tab           1 3 \cr
 #' }
 #' Output data:
 #' \tabular{rrrrrr}{
-#' chrom \tab start \tab end \tab column2collapseBy \tab moreColumns \tab columns2sumUp \cr
-#' chr1  \tab     0 \tab 599 \tab                 2 \tab        1 10 \tab           2 9 \cr
-#' chr1  \tab   600 \tab 999 \tab                 1 \tab        4 13 \tab           1 6 \cr
+#' seqnames \tab start \tab end \tab column2collapseBy \tab moreColumns \tab columns2sumUp \cr
+#' chr1     \tab     0 \tab 599 \tab                 2 \tab        1 10 \tab           2 9 \cr
+#' chr1     \tab   600 \tab 999 \tab                 1 \tab        4 13 \tab           1 6 \cr
 #' }
 #' 
 #' @param data A data.frame containing the genomic coordinates in the first three columns.

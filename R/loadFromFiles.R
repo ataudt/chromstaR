@@ -76,7 +76,7 @@ loadMultiHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 	if (is(hmm.list, class.multivariate.hmm)) {
 		return(list(hmm.list))
 	} else if (is.character(hmm.list)) {
-		message("loading multivariate HMMs from files ...", appendLF=F); ptm <- proc.time()
+		message("Loading multivariate HMMs from files ...", appendLF=F); ptm <- proc.time()
 		mlist <- list()
 		for (modelfile in hmm.list) {
 			mlist[[modelfile]] <- get(load(modelfile))
