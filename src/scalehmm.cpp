@@ -412,6 +412,7 @@ void ScaleHMM::check_for_state_swap()
 		std::vector<double> weights(this->N);
 		std::vector<double> maxdens(this->N);
 		std::vector<double> cutoff_logdens(this->N);
+		std::vector<double> logdens_at_0(this->N);
 
 		// calculate weights, maxdens and logdens at cutoff
 		weights = this->calc_weights();
@@ -421,6 +422,9 @@ void ScaleHMM::check_for_state_swap()
 		cutoff_logdens[0] = log(weights[0]) + this->densityFunctions[0]->getLogDensityAt(this->cutoff);
 		cutoff_logdens[1] = log(weights[1]) + this->densityFunctions[1]->getLogDensityAt(this->cutoff);
 		cutoff_logdens[2] = log(weights[2]) + this->densityFunctions[2]->getLogDensityAt(this->cutoff);
+		logdens_at_0[0] = log(weights[0]) + this->densityFunctions[0]->getLogDensityAt(0);
+		logdens_at_0[1] = log(weights[1]) + this->densityFunctions[1]->getLogDensityAt(0);
+		logdens_at_0[2] = log(weights[2]) + this->densityFunctions[2]->getLogDensityAt(0);
 
 		//FILE_LOG(logINFO) << "mean(0) = "<<this->densityFunctions[0]->get_mean() << ", mean(1) = "<<this->densityFunctions[1]->get_mean() << ", mean(2) = "<<this->densityFunctions[2]->get_mean();
 // 		Rprintf("mean(0) = %g, mean(1) = %g, mean(2) = %g\n", this->densityFunctions[0]->get_mean(), this->densityFunctions[1]->get_mean(), this->densityFunctions[2]->get_mean());
@@ -433,10 +437,12 @@ void ScaleHMM::check_for_state_swap()
 		// Different methods for state swapping detection
 		// 1) Compare means. Does not work for all datasets.
 	// 	if (this->densityFunctions[1]->get_mean() > this->densityFunctions[2]->get_mean()) //states 1 and 2 need to be exchanged
-		// 2) Compare density values at upper cutoff. Does it work for all datasets?
-		if (cutoff_logdens[1] > cutoff_logdens[2]) //states 1 and 2 need to be exchanged
+		// 2) Compare density values at upper cutoff. Works for most datasets.
+// 		if (cutoff_logdens[1] > cutoff_logdens[2]) //states 1 and 2 need to be exchanged
 		// 3) Compare max(density values). Does not work for all datasets.
 	// 	if (maxdens[1] < maxdens[2])
+		// 4) Compare density values at 0.
+		if (logdens_at_0[1] < logdens_at_0[2])
 		{
 			//FILE_LOG(logINFO) << "...swapping states";
 // 			Rprintf("...swapping states\n");
@@ -490,6 +496,9 @@ void ScaleHMM::check_for_state_swap()
 			cutoff_logdens[0] = log(weights[0]) + this->densityFunctions[0]->getLogDensityAt(this->cutoff);
 			cutoff_logdens[1] = log(weights[1]) + this->densityFunctions[1]->getLogDensityAt(this->cutoff);
 			cutoff_logdens[2] = log(weights[2]) + this->densityFunctions[2]->getLogDensityAt(this->cutoff);
+			logdens_at_0[0] = log(weights[0]) + this->densityFunctions[0]->getLogDensityAt(0);
+			logdens_at_0[1] = log(weights[1]) + this->densityFunctions[1]->getLogDensityAt(0);
+			logdens_at_0[2] = log(weights[2]) + this->densityFunctions[2]->getLogDensityAt(0);
 
 			//FILE_LOG(logINFO) << "mean(0) = "<<this->densityFunctions[0]->get_mean() << ", mean(1) = "<<this->densityFunctions[1]->get_mean() << ", mean(2) = "<<this->densityFunctions[2]->get_mean();
 // 			Rprintf("mean(0) = %g, mean(1) = %g, mean(2) = %g\n", this->densityFunctions[0]->get_mean(), this->densityFunctions[1]->get_mean(), this->densityFunctions[2]->get_mean());

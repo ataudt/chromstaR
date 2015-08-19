@@ -212,6 +212,7 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 #' @param what A character vector specifying what will be exported. Supported are \code{c('combstates', 'peaks', 'reads')}.
 #' @param exclude.states A vector of combinatorial states that will be excluded from export.
 #' @param include.states A vector of combinatorial states that will be exported. If specified, \code{exclude.states} is ignored.
+#' @param trackname Name that will be used in the "track name" field of the BED file.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportBinnedData}}
 #' @examples
