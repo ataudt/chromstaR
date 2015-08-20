@@ -17,39 +17,48 @@
 NULL
 #'
 #' @describeIn conversion Decimal to binary conversion.
-#' @param dec An integer vector.
+#' @param dec A vector with whole numbers.
 #' @param colnames The column names for the returned matrix. If specified, \code{ndigits} will be the length of \code{colnames}.
 #' @param ndigits The number of digits that the binary representation should have. If unspecified, the shortest possible representation will be chosen.
 #' @author Aaron Taudt
 #' @export
 dec2bin = function(dec, colnames=NULL, ndigits=NULL) {
 
-	# Convert factor to integer
-	dec <- as.integer(as.character(dec))
-	# Check user input
+  # Check user input
+  dec <- as.numeric(as.character(dec))
 	maxdec = max(dec)
 	if (!is.null(colnames)) {
 		ndigits <- length(colnames)
 	} else {
-		if (is.null(ndigits)) {
-			if (maxdec > 0) {
-				ndigits <- max(which(as.logical(intToBits(maxdec))))
-			} else {
-				ndigits <- 1
-			}
-		} else {
+		if (!is.null(ndigits)) {
 			if (check.positive.integer(ndigits)!=0) stop("argument 'ndigits' expects a positive integer")
 		}
 	}
+  
+  mods <- list()
+  mod <- 1
+  dectemp <- dec
+  while (any(dectemp!=0)) {
+    mod <- dectemp %% 2
+    mods[[length(mods)+1]] <- mod
+    dectemp <- dectemp %/% 2
+  }
+  
+  if (is.null(ndigits)) {
+    ndigits <- max(length(mods),1)
+  }
+  binary.states <- matrix(0, nrow=length(dec), ncol=ndigits)
+  if (length(mods)>0) {
+    binary.states[,1:ndigits] <- as.matrix(as.data.frame(mods))[,1:ndigits]
+  }
+  binary.states <- binary.states[,ncol(binary.states):1]
+  if (class(binary.states)!='matrix') {
+    binary.states <- matrix(binary.states, nrow=length(dec))
+  }
 
-	binary_states <- matrix(as.logical(intToBits(dec)), nrow=length(dec), byrow=TRUE)
-	binary_states <- binary_states[ ,ndigits:1]
-	if (class(binary_states)!='matrix') {
-		binary_states <- matrix(binary_states, nrow=length(dec))
-	}
-	colnames(binary_states) <- colnames
-	rownames(binary_states) <- dec
-	return(binary_states)
+	colnames(binary.states) <- colnames
+	rownames(binary.states) <- dec
+	return(binary.states)
 
 }
 
