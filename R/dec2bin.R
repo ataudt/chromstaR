@@ -58,6 +58,7 @@ dec2bin = function(dec, colnames=NULL, ndigits=NULL) {
 
 	colnames(binary.states) <- colnames
 	rownames(binary.states) <- dec
+  mode(binary.states) <- 'logical'
 	return(binary.states)
 
 }
