@@ -199,6 +199,31 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 	comb.states.table2use = comb.states.table[comb.states2use]
 	determinant2use = determinant[usestateTF][1:numstates2use]
 
+# 	## Calculate emission densities (only debugging, do in C++ otherwise)
+# 	densities <- matrix(1, ncol=numstates2use, nrow=numbins)
+# 	for (comb.state in comb.states2use) {
+# print(comb.state)
+# 		istate <- which(comb.state==comb.states2use)
+# 		z.temp <- matrix(NA, nrow=numbins, ncol=nummod)
+# 		bin.comb.state <- dec2bin(comb.state, colnames=IDs)
+# 		product <- 1
+# 		for (imod in 1:nummod) {
+# 			z.temp[,imod] <- z.per.bin[,imod,bin.comb.state[imod]+1]
+# 			ind.modstate <- bin.comb.state[imod]+2
+# 			if (rownames(distributions[[imod]])[ind.modstate] == 'unmodified') {
+# 				size <- distributions[[imod]][ind.modstate,'size']
+# 				prob <- distributions[[imod]][ind.modstate,'prob']
+# 				product <- product * dzinbinom(reads[,imod], w=weights[[imod]]['zero-inflation'], size, prob)
+# 			} else if (rownames(distributions[[imod]])[ind.modstate] == 'modified') {
+# 				size <- distributions[[imod]][ind.modstate,'size']
+# 				prob <- distributions[[imod]][ind.modstate,'prob']
+# 				product <- product * dnbinom(reads[,imod], size, prob)
+# 			}
+# 		}
+# 		exponent <- -0.5 * apply( ( z.temp %*% (correlationMatrixInverse2use[ , , istate] - diag(nummod)) ) * z.temp, 1, sum)
+# 		densities[,istate] <- product * determinant[istate]^(-0.5) * exp( exponent )
+# 	}
+
 	# Return parameters
 	out = list(IDs = IDs,
 				bins = bins,

@@ -92,13 +92,14 @@ combinatorialEntropy <- function(multi.hmm.list, window.size.bp=NULL, direction.
 	if (!is.null(window.size.bp)) {
 		message("Averaging over window size ",window.size.bp,"bp ...", appendLF=F); ptm <- proc.time()
 		tg <- unlist(tileGenome(seqlengths(gr), tilewidth=window.size.bp))
-		mind <- findOverlaps(gr, tg)
+		tg.cut <- subsetByOverlaps(tg, gr)
+		mind <- findOverlaps(gr, tg.cut)
 		gr.extended <- gr[queryHits(mind)]
 		rlemind <- rle(subjectHits(mind))
 		index.last <- cumsum(rlemind$lengths)
 		index.first <- c(1,index.last[-length(index.last)]+1)
-		start(gr.extended)[index.first] <- start(tg)
-		end(gr.extended)[index.last] <- end(tg)
+		start(gr.extended)[index.first] <- start(tg.cut)
+		end(gr.extended)[index.last] <- end(tg.cut)
 		gr.extended$weighted.entropy <- width(gr.extended)*gr.extended$entropy
 		gr.extended$index <- subjectHits(mind)
 		df <- as.data.frame(gr.extended)[,c('seqnames','start','end','width','index','weighted.entropy')]

@@ -35,21 +35,25 @@ dec2bin = function(dec, colnames=NULL, ndigits=NULL) {
 		}
 	}
   
-  mods <- list()
+  modulos <- list()
   mod <- 1
   dectemp <- dec
   while (any(dectemp!=0)) {
     mod <- dectemp %% 2
-    mods[[length(mods)+1]] <- mod
+    modulos[[length(modulos)+1]] <- mod
     dectemp <- dectemp %/% 2
   }
   
   if (is.null(ndigits)) {
-    ndigits <- max(length(mods),1)
+    ndigits <- max(length(modulos),1)
   }
   binary.states <- matrix(0, nrow=length(dec), ncol=ndigits)
-  if (length(mods)>0) {
-    binary.states[,1:ndigits] <- as.matrix(as.data.frame(mods))[,1:ndigits]
+  if (length(modulos)>0) {
+		if (ndigits>length(modulos)) {
+			binary.states[,1:length(modulos)] <- as.matrix(as.data.frame(modulos))
+		} else {
+			binary.states[,1:ndigits] <- as.matrix(as.data.frame(modulos))[,1:ndigits]
+		}
   }
   binary.states <- binary.states[,ncol(binary.states):1]
   if (class(binary.states)!='matrix') {
