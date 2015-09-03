@@ -340,10 +340,10 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 	} else {
 		## Export combinatorial states
 		# Generate the colors for each combinatorial state
-		colors <- rainbow(numstates)
+		colors <- rainbow(length(levels(collapsed.calls$combination)))
 		RGBs <- t(col2rgb(colors))
 		RGBs <- apply(RGBs,1,paste,collapse=",")
-		itemRgb <- RGBs[as.integer(factor(as.character(collapsed.calls$state)))]
+		itemRgb <- RGBs[as.integer(factor(collapsed.calls$combination, levels=sort(levels(collapsed.calls$combination))))]
 
 		# Write to file
 		numsegments <- nrow(collapsed.calls)
