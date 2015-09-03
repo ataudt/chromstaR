@@ -10,7 +10,14 @@
 #' @return A \code{list()} containing \code{data.frame()}s for enrichment of combinatorial states and binary states at the start, end and inside of the annotation.
 #' @import S4Vectors
 #' @export
-enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=c('start','inside','end')) {
+enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=c('start','inside','end'), what=c('combstates','binstates','reads')) {
+
+	if (class(hmm)!=class.multivariate.hmm) {
+		if (class(hmm)!='character' | length(hmm)>1) {
+			stop("argument 'hmm' expects a multivariate HMM object or a file that contains such an object")
+		}
+	}
+	hmm <- loadMultiHmmsFromFiles(hmm)[[1]]
 
 	## Variables
 	binsize <- width(hmm$bins)[1]
@@ -22,7 +29,9 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 
 	## Get combinatorial and binary states
 	combstates <- hmm$bins$combination
-	binstates <- dec2bin(hmm$bins$state, colnames=hmm$IDs)
+	if ('binstates' %in% what) {
+		binstates <- dec2bin(hmm$bins$state, colnames=hmm$IDs)
+	}
 
 	### Calculationg enrichment inside of annotation ###
 	if ('inside' %in% region) {
@@ -37,10 +46,19 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 		names(strand.per.annotation) <- names(bins.per.annotation)
 		
 		# States and strands per bin-that-overlaps-an-annotation
-		anno.binstates <- binstates[queryHits(ind),]
-		anno.combstates <- combstates[queryHits(ind)]
-		anno.reads <- hmm$bins$reads[queryHits(ind),]
-		colnames(anno.reads) <- NULL
+		anno.binstates <- NULL
+		if ('binstates' %in% what) {
+			anno.binstates <- binstates[queryHits(ind),]
+		}
+		anno.combstates <- NULL
+		if ('combstates' %in% what) {
+			anno.combstates <- combstates[queryHits(ind)]
+		}
+		anno.reads <- NULL
+		if ('reads' %in% what) {
+			anno.reads <- hmm$bins$reads[queryHits(ind),]
+			colnames(anno.reads) <- NULL
+		}
 		anno.strands <- strand(annotation)[subjectHits(ind)]
 
 		# Relative coordinate of every bin (TSS=0, TTS=1)
@@ -55,7 +73,10 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 		relcoord <- unlist(relcoord)
 
 		# Collect in data.frame
-		anno.df <- data.frame(as.data.frame(ind), strand=anno.strands, binstate=anno.binstates, reads=anno.reads, combstate=anno.combstates)
+		anno.df <- data.frame(as.data.frame(ind), strand=as.character(anno.strands))
+		anno.df$binstate <- anno.binstates
+		anno.df$reads <- anno.reads
+		anno.df$combstate <- anno.combstates
 		# Reorder to add stuff that was calculated from sorted table
 		anno.df <- cbind(anno.df[order(anno.df$subjectHits),], relcoord=relcoord)
 		# Annotations that only fall into 1 bin need to get both interval 0 (start) and 1 (end)
@@ -72,25 +93,32 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 		anno.df$interval <- intervals[findInterval(anno.df$relcoord, intervals)]
 
 		# Mean over intervals
-		binstates.inside <- matrix(NA, nrow=length(intervals), ncol=ncol(anno.binstates), dimnames=list(interval=intervals, track=hmm$IDs))
-		combstates.inside <- matrix(NA, nrow=length(intervals), ncol=length(levels(anno.df$combstate)), dimnames=list(interval=intervals, combination=levels(anno.df$combstate)))
-		reads.inside <- matrix(NA, nrow=length(intervals), ncol=ncol(anno.binstates), dimnames=list(interval=intervals, track=hmm$IDs))
-		for (interval in intervals) {
-			i1 <- which(interval==intervals)
-			mask <- anno.df$interval==interval
-			binstates.inside[i1,] <- colMeans(anno.df[,grepl('binstate',names(anno.df))][mask,], na.rm=T)
-			reads.inside[i1,] <- colMeans(anno.df[,grepl('reads',names(anno.df))][mask,], na.rm=T)
-			combstates.inside[i1,] <- table(anno.df[grepl('combstate',names(anno.df))][mask,])
+		if ('binstates' %in% what) {
+			binstates.inside <- matrix(NA, nrow=length(intervals), ncol=ncol(anno.binstates), dimnames=list(interval=intervals, track=hmm$IDs))
+			for (interval in intervals) {
+				mask <- anno.df$interval==interval
+				binstates.inside[as.character(interval),] <- colMeans(anno.df[,grepl('binstate',names(anno.df))][mask,], na.rm=T)
+			}
+			eCurve$binstates$inside <- binstates.inside
 		}
-
-		rownames(combstates.inside) <- as.numeric(rownames(combstates.inside)) * binsize
-		rownames(binstates.inside) <- as.numeric(rownames(binstates.inside)) * binsize
-		rownames(reads.inside) <- as.numeric(rownames(reads.inside)) * binsize
-		eCurve$combstates$inside <- combstates.inside
-		eCurve$binstates$inside <- binstates.inside
-		eCurve$reads$inside <- reads.inside
+		if ('combstates' %in% what) {
+			combstates.inside <- matrix(NA, nrow=length(intervals), ncol=length(levels(anno.df$combstate)), dimnames=list(interval=intervals, combination=levels(anno.df$combstate)))
+			for (interval in intervals) {
+				mask <- anno.df$interval==interval
+				combstates.inside[as.character(interval),] <- table(anno.df[grepl('combstate',names(anno.df))][mask,]) / length(which(mask))
+			}
+			eCurve$combstates$inside <- combstates.inside
+		}
+		if ('reads' %in% what) {
+			reads.inside <- matrix(NA, nrow=length(intervals), ncol=ncol(anno.binstates), dimnames=list(interval=intervals, track=hmm$IDs))
+			for (interval in intervals) {
+				mask <- anno.df$interval==interval
+				reads.inside[as.character(interval),] <- colMeans(anno.df[,grepl('reads',names(anno.df))][mask,], na.rm=T)
+			}
+			eCurve$reads$inside <- reads.inside
+		}
 	}
-	
+
 	### 10000 bp before and after annotation ###
 	if ('start' %in% region) {
 		message("Enrichment ",bp.around.annotation,"bp before annotations")
@@ -100,23 +128,28 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 		index.start.plus <- index.start.plus[!is.na(index.start.plus)]
 		index.start.minus <- index.start.minus[!is.na(index.start.minus)]
 		# Occurrences at every bin position relative to feature
-		binstates.start <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
-		combstates.start <- array(dim=c(length(-lag:lag), length(levels(hmm$bins$combination))), dimnames=list(lag=-lag:lag, combination=levels(hmm$bins$combination)))
-		reads.start <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
+		if ('binstates' %in% what) binstates.start <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
+		if ('combstates' %in% what) combstates.start <- array(dim=c(length(-lag:lag), length(levels(hmm$bins$combination))), dimnames=list(lag=-lag:lag, combination=levels(hmm$bins$combination)))
+		if ('reads' %in% what) reads.start <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
 		for (ilag in -lag:lag) {
-	# 		message("lag = ",ilag)
 			index <- c(index.start.plus+ilag, index.start.minus-ilag)
-			index <- index[index>0 & index<=nrow(binstates)]
-			binstates.start[as.character(ilag),] <- colMeans(binstates[index,])
-			combstates.start[as.character(ilag),] <- table(combstates[index])
-			reads.start[as.character(ilag),] <- colMeans(hmm$bins$reads[index,])
+			index <- index[index>0 & index<=length(hmm$bins)]
+			if ('binstates' %in% what) binstates.start[as.character(ilag),] <- colMeans(binstates[index,])
+			if ('combstates' %in% what) combstates.start[as.character(ilag),] <- table(combstates[index]) / length(index)
+			if ('reads' %in% what) reads.start[as.character(ilag),] <- colMeans(hmm$bins$reads[index,])
 		}
-		rownames(combstates.start) <- as.numeric(rownames(combstates.start)) * binsize
-		rownames(binstates.start) <- as.numeric(rownames(binstates.start)) * binsize
-		rownames(reads.start) <- as.numeric(rownames(reads.start)) * binsize
-		eCurve$combstates$start <- combstates.start
-		eCurve$binstates$start <- binstates.start
-		eCurve$reads$start <- reads.start
+		if ('binstates' %in% what) {
+			rownames(binstates.start) <- as.numeric(rownames(binstates.start)) * binsize
+			eCurve$binstates$start <- binstates.start
+		}
+		if ('combstates' %in% what) {
+			rownames(combstates.start) <- as.numeric(rownames(combstates.start)) * binsize
+			eCurve$combstates$start <- combstates.start
+		}
+		if ('reads' %in% what) {
+			rownames(reads.start) <- as.numeric(rownames(reads.start)) * binsize
+			eCurve$reads$start <- reads.start
+		}
 	}
 	if ('end' %in% region) {
 		message("Enrichment ",bp.around.annotation,"bp after annotations")
@@ -126,23 +159,29 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 		index.end.plus <- index.end.plus[!is.na(index.end.plus)]
 		index.end.minus <- index.end.minus[!is.na(index.end.minus)]
 		# Occurrences at every bin position relative to feature
-		binstates.end <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
-		combstates.end <- array(dim=c(length(-lag:lag), length(levels(hmm$bins$combination))), dimnames=list(lag=-lag:lag, combination=levels(hmm$bins$combination)))
-		reads.end <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
+		if ('binstates' %in% what) binstates.end <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
+		if ('combstates' %in% what) combstates.end <- array(dim=c(length(-lag:lag), length(levels(hmm$bins$combination))), dimnames=list(lag=-lag:lag, combination=levels(hmm$bins$combination)))
+		if ('reads' %in% what) reads.end <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
 		for (ilag in -lag:lag) {
 	# 		message("lag = ",ilag)
 			index <- c(index.end.plus+ilag, index.end.minus-ilag)
-			index <- index[index>0 & index<=nrow(binstates)]
-			binstates.end[as.character(ilag),] <- colMeans(binstates[index,])
-			combstates.end[as.character(ilag),] <- table(combstates[index])
-			reads.end[as.character(ilag),] <- colMeans(hmm$bins$reads[index,])
+			index <- index[index>0 & index<=length(hmm$bins)]
+			if ('binstates' %in% what) binstates.end[as.character(ilag),] <- colMeans(binstates[index,])
+			if ('combstates' %in% what) combstates.end[as.character(ilag),] <- table(combstates[index]) / length(index)
+			if ('reads' %in% what) reads.end[as.character(ilag),] <- colMeans(hmm$bins$reads[index,])
 		}
-		rownames(combstates.end) <- as.numeric(rownames(combstates.end)) * binsize
-		rownames(binstates.end) <- as.numeric(rownames(binstates.end)) * binsize
-		rownames(reads.end) <- as.numeric(rownames(reads.end)) * binsize
-		eCurve$combstates$end <- combstates.end
-		eCurve$binstates$end <- binstates.end
-		eCurve$reads$end <- reads.end
+		if ('binstates' %in% what) {
+			rownames(binstates.end) <- as.numeric(rownames(binstates.end)) * binsize
+			eCurve$binstates$end <- binstates.end
+		}
+		if ('combstates' %in% what) {
+			rownames(combstates.end) <- as.numeric(rownames(combstates.end)) * binsize
+			eCurve$combstates$end <- combstates.end
+		}
+		if ('reads' %in% what) {
+			rownames(reads.end) <- as.numeric(rownames(reads.end)) * binsize
+			eCurve$reads$end <- reads.end
+		}
 	}
 
 	return(eCurve)

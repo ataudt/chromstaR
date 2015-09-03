@@ -403,7 +403,7 @@ plotCombinatorialEntropy <- function(gr, genome) {
 
 	## Make the karyogram
 	ggcytoband <- ggbio::autoplot(cytoband, layout='karyogram', cytoband=TRUE)
-	ggplt <- ggcytoband + ggbio::layout_karyogram(gr, aes_string(x='start', y='entropy'), ylim=c(10,40), geom='line', color='red')
+	ggplt <- ggcytoband + ggbio::layout_karyogram(gr, aes_string(x='start', y='entropy'), ylim=c(10,200), geom='line', color='red')
 	ggplt <- ggplt + theme(axis.text.y=element_blank(), panel.background=element_blank())
 
 	return(ggplt)
