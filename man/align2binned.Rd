@@ -6,7 +6,8 @@
 \usage{
 align2binned(file, format, assembly, bamindex = file,
   chrom.length.file = NULL, outputfolder = "binned_data", binsizes = 500,
-  chromosomes = NULL, save.as.RData = FALSE, downsample.to.reads = NULL)
+  chromosomes = NULL, save.as.RData = FALSE, min.mapq = 10,
+  downsample.to.reads = NULL)
 }
 \arguments{
 \item{file}{A file with aligned reads.}
@@ -26,6 +27,8 @@ align2binned(file, format, assembly, bamindex = file,
 \item{chromosomes}{If only a subset of the chromosomes should be binned, specify them here.}
 
 \item{save.as.RData}{If set to \code{TRUE}, output will be written to file. The filename is generated from the input file and bin sizes. If set to \code{FALSE}, no output file will be written. Instead, a \link{GenomicRanges} object containing the binned data will be returned. Only the first binsize will be processed in this case.}
+
+\item{min.mapq}{Minimum mapping quality when importing from BAM files.}
 
 \item{downsample.to.reads}{Downsample the input data to the specified number of reads.}
 }

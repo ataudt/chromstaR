@@ -11,7 +11,7 @@ dec2bin(dec, colnames = NULL, ndigits = NULL)
 bin2dec(bin)
 }
 \arguments{
-\item{dec}{An integer vector.}
+\item{dec}{A vector with whole numbers.}
 
 \item{colnames}{The column names for the returned matrix. If specified, \code{ndigits} will be the length of \code{colnames}.}
 

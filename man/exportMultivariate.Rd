@@ -19,6 +19,8 @@ exportMultivariate(multi.hmm, filename, what = c("combstates", "peaks",
 
 \item{include.states}{A vector of combinatorial states that will be exported. If specified, \code{exclude.states} is ignored.}
 
+\item{trackname}{Name that will be used in the "track name" field of the BED file.}
+
 \item{header}{A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).}
 }
 \description{

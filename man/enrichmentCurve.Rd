@@ -5,7 +5,8 @@
 \title{Enrichment of (combinatorial) states for genomic annotations}
 \usage{
 enrichmentCurve(hmm, annotation, bp.around.annotation = 10000,
-  region = c("start", "inside", "end"))
+  region = c("start", "inside", "end"), what = c("combstates", "binstates",
+  "reads"))
 }
 \arguments{
 \item{hmm}{A \code{\link{chromstaR_multivariateHMM}} object.}
