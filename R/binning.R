@@ -25,8 +25,8 @@ NULL
 #' @inheritParams align2binned
 #' @param bamindex BAM index file. Can be specified without the .bai ending. If this file does not exist it will be created and a warning is issued.
 #' @export
-bam2binned <- function(bamfile, bamindex=bamfile, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, min.mapq=10, downsample.to.reads=NULL) {
-	return(align2binned(bamfile, format="bam", bamindex=bamindex, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, save.as.RData=save.as.RData, min.mapq=min.mapq, downsample.to.reads=downsample.to.reads))
+bam2binned <- function(bamfile, bamindex=bamfile, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, min.mapq=10, downsample.to.reads=NULL, remove.duplicate.reads=FALSE) {
+	return(align2binned(bamfile, format="bam", bamindex=bamindex, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, save.as.RData=save.as.RData, min.mapq=min.mapq, downsample.to.reads=downsample.to.reads, remove.duplicate.reads=remove.duplicate.reads))
 }
 
 #' @describeIn binning Bin reads in BED format.
@@ -60,11 +60,12 @@ bedGraph2binned <- function(bedGraphfile, assembly, chrom.length.file=NULL, outp
 #' @param save.as.RData If set to \code{TRUE}, output will be written to file. The filename is generated from the input file and bin sizes. If set to \code{FALSE}, no output file will be written. Instead, a \link{GenomicRanges} object containing the binned data will be returned. Only the first binsize will be processed in this case.
 #' @param min.mapq Minimum mapping quality when importing from BAM files.
 #' @param downsample.to.reads Downsample the input data to the specified number of reads.
+#' @param remove.duplicate.reads Logical indicating whether duplicate reads should be removed. NOTE: Duplicate removal only works if your duplicate reads are properly flagged in the BAM file.
 #' @return The function produces a \code{\link{GRanges}} object with one meta data column 'reads' that contains the read count. This binned data will be either written to file (\code{save.as.RData=FALSE}) or given as return value (\code{save.as.RData=FALSE}).
 #' @import Rsamtools
 #' @import GenomicAlignments
 #' @import BSgenome
-align2binned <- function(file, format, assembly, bamindex=file, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, min.mapq=10, downsample.to.reads=NULL) {
+align2binned <- function(file, format, assembly, bamindex=file, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, min.mapq=10, downsample.to.reads=NULL, remove.duplicate.reads=FALSE) {
 
 	## Create outputfolder if not exists
 	if (!file.exists(outputfolder) & save.as.RData==TRUE) {
@@ -115,7 +116,11 @@ align2binned <- function(file, format, assembly, bamindex=file, chrom.length.fil
 			stop('The specified chromosomes ', chrstring, ' do not exist in the data.')
 		}
 		gr <- GenomicRanges::GRanges(seqnames=Rle(chroms2use), ranges=IRanges(start=rep(1, length(chroms2use)), end=chrom.lengths[chroms2use]))
-		data <- GenomicAlignments::readGAlignmentsFromBam(file, index=bamindex, param=ScanBamParam(which=range(gr), what='mapq'))
+		if (remove.duplicate.reads) {
+			data <- GenomicAlignments::readGAlignmentsFromBam(file, index=bamindex, param=ScanBamParam(which=range(gr), what='mapq', flag=scanBamFlag(isDuplicate=FALSE)))
+		} else {
+			data <- GenomicAlignments::readGAlignmentsFromBam(file, index=bamindex, param=ScanBamParam(which=range(gr), what='mapq'))
+		}
 		## Filter by mapping quality
 		if (!is.null(min.mapq)) {
 			data <- data[mcols(data)$mapq >= min.mapq]
