@@ -304,7 +304,7 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 		# Test if terminating condition has been reached
 		if (result$convergenceInfo$loglik.delta <= result$convergenceInfo$eps | (time.total >= max.time & max.time >= 0) | (iteration.total >= max.iter & max.iter >= 0)) break
 		# Reduce the hmm for checkpointing
-		result[c('bins','segments')] <- NULL
+# 		result[c('bins','segments')] <- NULL
 		# Save checkpoint
 		hmm.checkpoint <- result
 		if (checkpoint.overwrite) {
