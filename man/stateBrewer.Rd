@@ -6,7 +6,7 @@
 \usage{
 stateBrewer(replicates = NULL, differential.states = FALSE, min.diff = 1,
   common.states = FALSE, conditions = NULL, tracks2compare = NULL,
-  inverse = FALSE, sep = "-", statespec = NULL, diffstatespec = NULL)
+  sep = "-", statespec = NULL, diffstatespec = NULL)
 }
 \arguments{
 \item{replicates}{A vector specifying the replicate structure. Similar entries will be treated as replicates.}
@@ -20,8 +20,6 @@ stateBrewer(replicates = NULL, differential.states = FALSE, min.diff = 1,
 \item{conditions}{A vector with the same length as \code{replicates}. Similar entries will be treated as belonging to the same condition. If this parameter is specified, only states that are different between the conditions are returned.}
 
 \item{tracks2compare}{A vector with the same length as \code{replicates}. This vector defines the tracks between which conditions are compared.}
-
-\item{inverse}{If \code{TRUE}, names and entries of the output are swapped.}
 
 \item{sep}{Separator used to separate the tracknames in the combinations.}
 
@@ -42,7 +40,7 @@ stateBrewer(replicates = NULL, differential.states = FALSE, min.diff = 1,
 }}
 }
 \value{
-A named integer vector with (decimal) combinatorial states following the given specification. The names of the vector are the combinatorial states composed of the different groups. If \code{inverse=TRUE}, names and numbers are swapped.
+A data.frame with combinations and their corresponding (decimal) combinatorial states.
 }
 \description{
 This function returns all combinatorial (decimal) states that are consistent with a given abstract specification.

@@ -7,7 +7,7 @@
 align2binned(file, format, assembly, bamindex = file,
   chrom.length.file = NULL, outputfolder = "binned_data", binsizes = 500,
   chromosomes = NULL, save.as.RData = FALSE, min.mapq = 10,
-  downsample.to.reads = NULL)
+  downsample.to.reads = NULL, remove.duplicate.reads = FALSE)
 }
 \arguments{
 \item{file}{A file with aligned reads.}
@@ -31,6 +31,8 @@ align2binned(file, format, assembly, bamindex = file,
 \item{min.mapq}{Minimum mapping quality when importing from BAM files.}
 
 \item{downsample.to.reads}{Downsample the input data to the specified number of reads.}
+
+\item{remove.duplicate.reads}{Logical indicating whether duplicate reads should be removed. NOTE: Duplicate removal only works if your duplicate reads are properly flagged in the BAM file.}
 }
 \value{
 The function produces a \code{\link{GRanges}} object with one meta data column 'reads' that contains the read count. This binned data will be either written to file (\code{save.as.RData=FALSE}) or given as return value (\code{save.as.RData=FALSE}).

@@ -9,7 +9,8 @@
 \usage{
 bam2binned(bamfile, bamindex = bamfile, outputfolder = "binned_data",
   binsizes = 500, chromosomes = NULL, save.as.RData = FALSE,
-  min.mapq = 10, downsample.to.reads = NULL)
+  min.mapq = 10, downsample.to.reads = NULL,
+  remove.duplicate.reads = FALSE)
 
 bed2binned(bedfile, assembly, chrom.length.file = NULL,
   outputfolder = "binned_data", binsizes = 500, chromosomes = NULL,
@@ -35,6 +36,8 @@ bedGraph2binned(bedGraphfile, assembly, chrom.length.file = NULL,
 \item{min.mapq}{Minimum mapping quality when importing from BAM files.}
 
 \item{downsample.to.reads}{Downsample the input data to the specified number of reads.}
+
+\item{remove.duplicate.reads}{Logical indicating whether duplicate reads should be removed. NOTE: Duplicate removal only works if your duplicate reads are properly flagged in the BAM file.}
 
 \item{bedfile}{A file in BED format.}
 

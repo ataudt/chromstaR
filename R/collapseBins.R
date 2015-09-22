@@ -86,19 +86,22 @@ collapseBins = function(data, column2collapseBy=NULL, columns2sumUp=NULL, column
 	numcollapsedbins <- length(which(compare==TRUE))
 	numbins <- nrow(data)
 	time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+	if (any(is.na(compare))) {
+		stop("NAs in vector 'compare'")
+	}
 
 	## Select the collapsed rows
 	message('Selecting rows ...', appendLF=F); ptm <- proc.time()
 	collapsed.bins <- list()
-	collapsed.bins[[names(data)[1]]] <- data[compare,1]
-	collapsed.bins[[names(data)[2]]] <- data[compare,2]
+	collapsed.bins[[names(data)[1]]] <- data[which(compare),1] #which to remove NAs which shouldn't be there in the first place
+	collapsed.bins[[names(data)[2]]] <- data[which(compare),2]
 	collapsed.bins[[names(data)[3]]] <- data[c((which(compare==TRUE)-1)[-1],numbins), 3]
 	if (length(ind_morecols)==1) {
-		collapsed.bins[[names(data)[column2collapseBy]]] <- data[compare, ind_morecols]
+		collapsed.bins[[names(data)[column2collapseBy]]] <- data[which(compare), ind_morecols]
 	} else if (length(ind_morecols)>1) {
 		lcb <- length(collapsed.bins)
 		lmc <- length(ind_morecols)
-		collapsed.bins[(lcb+1):(lcb+lmc)] <- data[compare, ind_morecols]
+		collapsed.bins[(lcb+1):(lcb+lmc)] <- data[which(compare), ind_morecols]
 		names(collapsed.bins)[(lcb+1):(lcb+lmc)] <- names(data)[ind_morecols]
 	}
 	time <- proc.time() - ptm; message(" ",round(time[3],2),"s")

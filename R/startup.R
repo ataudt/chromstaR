@@ -1,5 +1,5 @@
 .onLoad <- function(...) {
 
-	packageStartupMessage('Loading chromstaR 0.9.2')
+	packageStartupMessage('Loading chromstaR 0.9.3')
 
 }

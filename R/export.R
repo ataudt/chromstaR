@@ -570,6 +570,11 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", 
 #' @export
 exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", header=TRUE, orderByScore=TRUE) {
 
+	if (length(gr)==0) {
+		warning("Supplied GRanges object contains no ranges.")
+		return()
+	}
+
 	## Function definitions
 	insertchr <- function(hmm.gr) {
 		# Change chromosome names from '1' to 'chr1' if necessary

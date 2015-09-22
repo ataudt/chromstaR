@@ -19,7 +19,6 @@
 #' @param common.states A logical specifying whether common states shall be returned.
 #' @param conditions A vector with the same length as \code{replicates}. Similar entries will be treated as belonging to the same condition. If this parameter is specified, only states that are different between the conditions are returned.
 #' @param tracks2compare A vector with the same length as \code{replicates}. This vector defines the tracks between which conditions are compared.
-#' @param inverse If \code{TRUE}, names and entries of the output are swapped.
 #' @param sep Separator used to separate the tracknames in the combinations.
 #' @param statespec If this parameter is specified, \code{replicates} will be ignored. A vector composed of any combination of the following entries: \code{'0.[]', '1.[]', 'x.[]', 'r.[]'}, where [] can be any string.
 #'   \itemize{
@@ -35,7 +34,7 @@
 #'     \item \code{'d.B'}: at least one sample in group B has to be different from the other samples in group A 
 #'     \item \code{'d[]'}: at least one sample in group [] has to be different from the other samples in group [] 
 #'   }
-#' @return A named integer vector with (decimal) combinatorial states following the given specification. The names of the vector are the combinatorial states composed of the different groups. If \code{inverse=TRUE}, names and numbers are swapped.
+#' @return A data.frame with combinations and their corresponding (decimal) combinatorial states.
 #' @examples
 #'# Get all combinatorial states where sample1=0, sample2=1, sample3=(0 or 1),
 #'#  sample4=sample5
@@ -48,7 +47,7 @@
 #'#  sample4=(0 or 1)
 #'stateBrewer(statespec=c('r.A','1.B','1.C','x.D','r.A'))
 #' @export
-stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, common.states=FALSE, conditions=NULL, tracks2compare=NULL, inverse=FALSE, sep='-', statespec=NULL, diffstatespec=NULL) {
+stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, common.states=FALSE, conditions=NULL, tracks2compare=NULL, sep='-', statespec=NULL, diffstatespec=NULL) {
 
 # 	## Debug
 # # 	conditions <- tissues
@@ -60,7 +59,6 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 # 	statespec <- NULL
 # 	diffstatespec <- NULL
 # 	sep='-'
-# 	inverse=FALSE
 # 	replicates <- c("Bre.H3K27Ac", "Bre.H3K27me3", "Bre.H3K4me3", "Bre.H4K20me1", "Bre.H3K27Ac", "Bre.H3K27me3", "Bre.H3K4me3", "Bre.H4K20me1", "Bre.H3K27Ac", "Bre.H3K27me3", "Bre.H3K4me3", "Bre.H4K20me1", "Gua.H3K27Ac", "Gua.H3K27me3", "Gua.H3K4me3", "Gua.H4K20me1", "Gua.H3K27Ac", "Gua.H3K27Ac", "Gua.H3K27me3", "Gua.H3K4me3", "Gua.H4K20me1")
 # 	conditions <- c("Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Gua", "Gua", "Gua", "Gua", "Gua", "Gua", "Gua", "Gua", "Gua")
 # 	tracks2compare <- c("H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1", "H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1", "H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1", "H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1", "H3K27Ac", "H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1")
@@ -98,7 +96,7 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 	## Variables
 	tracknames <- sub('^.\\.', '', statespec)
 
-	### Generate specified binary states ###
+	### Generate replicate-reduced binary states ###
 	numtracks <- length(statespec)
 	groups <- levels(factor(statespec))
 	numstates <- 2^(length(which(grepl('^r\\.', groups))) + length(which(grepl('^x\\.', statespec))))
@@ -123,6 +121,29 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 		}
 	}
 	colnames(binstates) <- tracknames
+
+	## Construct state names
+	mask <- !grepl('^r\\.', statespec) | !duplicated(statespec) # only first replicate
+	tracknames.mask <- colnames(binstates)[mask]
+	if (nrow(binstates) > 1) {
+		statenames.sep <- apply(as.matrix(binstates[,mask]), 1, function(x) { tracknames.mask[x] })
+		if (length(statenames.sep)==0) {
+			stop("Something went wrong in constructing state names.")
+		} else if (class(statenames.sep)=='list') {
+			statenames <- sapply(statenames.sep, paste, collapse=sep)
+		} else if (class(statenames.sep)=='matrix') {
+			statenames <- apply(statenames.sep, 2, paste, collapse=sep)
+		} else if (class(statenames.sep)=='character') {
+			statenames <- statenames.sep
+		}
+	} else {
+		statenames <- paste(tracknames.mask[binstates[,mask]], collapse=sep)
+	}
+	## Convert to decimal
+	decstates.all <- bin2dec(binstates)
+	duplicate.mask <- !duplicated(decstates.all)
+	decstates.all <- decstates.all[duplicate.mask]
+	names(decstates.all) <- statenames[duplicate.mask]
 
 	### Select specified differential states ###
 	if (!is.null(diffstatespec)) {
@@ -303,10 +324,14 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 	tracknames.mask <- colnames(binstates)[mask]
 	if (nrow(binstates) > 1) {
 		statenames.sep <- apply(as.matrix(binstates[,mask]), 1, function(x) { tracknames.mask[x] })
-		if (class(statenames.sep)=='list') {
-			statenames <- unlist(lapply(statenames.sep, paste, collapse=sep))
+		if (length(statenames.sep)==0) {
+			stop("Something went wrong in constructing state names.")
+		} else if (class(statenames.sep)=='list') {
+			statenames <- sapply(statenames.sep, paste, collapse=sep)
 		} else if (class(statenames.sep)=='matrix') {
 			statenames <- apply(statenames.sep, 2, paste, collapse=sep)
+		} else if (class(statenames.sep)=='character') {
+			statenames <- statenames.sep
 		}
 	} else {
 		statenames <- paste(tracknames.mask[binstates[,mask]], collapse=sep)
@@ -317,13 +342,10 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 	decstates <- decstates[duplicate.mask]
 	names(decstates) <- statenames[duplicate.mask]
 
-	## Change name and entries
-	if (inverse) {
-		decstates.inverse <- names(decstates)
-		names(decstates.inverse) <- decstates
-		decstates <- decstates.inverse
-	}
+	## Put in data.frame and assign levels
+	decdf <- data.frame(combination=factor(names(decstates), levels=names(decstates.all)), state=factor(decstates, levels=decstates.all))
+	rownames(decdf) <- NULL
 
-	return(decstates)
+	return(decdf)
 
 }

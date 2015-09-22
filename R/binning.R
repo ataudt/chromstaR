@@ -123,6 +123,10 @@ align2binned <- function(file, format, assembly, bamindex=file, chrom.length.fil
 		}
 		## Filter by mapping quality
 		if (!is.null(min.mapq)) {
+			if (any(is.na(mcols(data)$mapq))) {
+				warning(paste0(file,": Reads with mapping quality NA (=255 in BAM file) found and removed. Set 'min.mapq=NULL' to keep all reads."))
+				mcols(data)$mapq[is.na(mcols(data)$mapq)] <- -1
+			}
 			data <- data[mcols(data)$mapq >= min.mapq]
 		}
 	## BEDGraph (0-based)

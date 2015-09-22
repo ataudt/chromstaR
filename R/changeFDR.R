@@ -28,7 +28,8 @@
 #' @export
 changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, averages=TRUE) {
 
-	if (!is.numeric(FDR)) {
+	FDR <- suppressWarnings( as.numeric(FDR) )
+	if (!is.numeric(FDR) | is.na(FDR)) {
 		warning("Not changing FDR because given FDR is not numeric.")
 		return(model)
 	} else if (FDR < 0 | FDR > 1) {

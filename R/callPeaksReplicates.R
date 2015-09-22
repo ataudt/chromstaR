@@ -9,12 +9,13 @@
 #' @param eps Convergence threshold for the Baum-Welch algorithm.
 #' @param max.iter The maximum number of iterations for the Baum-Welch algorithm. The default \code{NULL} is no limit.
 #' @param max.time The maximum running time in seconds for the Baum-Welch algorithm. If this time is reached, the Baum-Welch will terminate after the current iteration finishes. The default \code{NULL} is no limit.
+#' @param keep.posteriors If set to \code{TRUE}, posteriors will be available in the output. This is useful to change the FDR later, but increases the necessary disk space to store the result immense.
 #' @param num.threads Number of threads to use. Setting this to >1 may give increased performance.
 #' @param max.distance This number is used as a cutoff to group replicates based on their distance matrix. The lower this number, the more similar replicates have to be to be grouped together.
 #' @return Output is a \code{\link{chromstaR_multivariateHMM}} object with additional entry \code{replicateInfo}. If only one \code{\link{chromstaR_univariateHMM}} was given as input, a simple list() with the \code{replicateInfo} is returned.
 #' @seealso \code{\link{chromstaR_multivariateHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksMultivariate}}
 #' @export
-callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=0.01, max.iter=NULL, max.time=NULL, num.threads=1, max.distance=0.2) {
+callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=0.01, max.iter=NULL, max.time=NULL, keep.posteriors=FALSE, num.threads=1, max.distance=0.2) {
 
 	## Enable reanalysis of multivariate HMM
 	if (class(hmm.list)==class.multivariate.hmm) {
@@ -53,11 +54,11 @@ callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=
 			num.states <- min(max.states, 2^length(hmms))
 			if (force.equal) {
 				states2use <- stateBrewer(rep(paste0('r.',paste(ids, collapse='-')),length(hmms)))
-				multimodel <- callPeaksMultivariate(hmms, use.states=states2use, eps=eps, max.iter=max.iter, max.time=max.time, num.threads=num.threads)
+				multimodel <- callPeaksMultivariate(hmms, use.states=states2use, eps=eps, max.iter=max.iter, max.time=max.time, keep.posteriors=keep.posteriors, num.threads=num.threads)
 				multimodel
 			} else {
 				states2use <- stateBrewer(paste0('x.', ids))
-				multimodel <- callPeaksMultivariate(hmms, use.states=states2use, num.states=num.states, eps=eps, max.iter=max.iter, max.time=max.time, num.threads=num.threads)
+				multimodel <- callPeaksMultivariate(hmms, use.states=states2use, num.states=num.states, eps=eps, max.iter=max.iter, max.time=max.time, keep.posteriors=keep.posteriors, num.threads=num.threads)
 			}
 			binstates <- dec2bin(multimodel$bins$state, colnames=multimodel$IDs)
 			cor.matrix <- cor(binstates)

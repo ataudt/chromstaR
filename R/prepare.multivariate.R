@@ -8,11 +8,8 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 	### Extract the reads ###
 	message("Extracting reads from modellist...", appendLF=F)
 	ptm <- proc.time()
-	reads <- matrix(NA, ncol=nummod, nrow=numbins)
+	reads <- sapply(modellist, function(x) { x$bins$reads })
 	colnames(reads) <- IDs
-	for (imod in 1:nummod) {
-		reads[,imod] <- modellist[[imod]]$bins$reads
-	}
 	maxreads <- max(reads)
 	time <- proc.time() - ptm
 	message(" ",round(time[3], 2),"s")
@@ -41,10 +38,9 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 		comb.states.table <- sort(table(combstates.per.bin), decreasing=TRUE)
 		comb.states <- names(comb.states.table)
 	} else {
-		comb.states.table <- sort(table(combstates.per.bin)[as.character(use.states)], decreasing=TRUE)
+		comb.states.table <- sort(table(combstates.per.bin)[as.character(use.states$state)], decreasing=TRUE)
 		comb.states <- names(comb.states.table)
-		use.states <- c(comb.states, setdiff(use.states, names(comb.states.table)))
-		comb.states <- use.states
+		comb.states <- c(comb.states, setdiff(use.states$state, comb.states))
 	}
 	time <- proc.time() - ptm
 	message(" ",round(time[3], 2),"s")
@@ -167,11 +163,11 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num
 		numstates2use = ok.numstates
 	}
 	if (!is.null(use.states)) {
-		if (ok.numstates < length(use.states)) {
+		if (ok.numstates < length(comb.states)) {
 			warning("Cannot use all of the specified states. The occurrence of the following states is too low: ",paste(comb.states[!usestateTF], collapse=" "),". Continuing without them.")
 			numstates2use <- length(which(usestateTF))
 		} else {
-			numstates2use = length(use.states)
+			numstates2use = length(comb.states)
 		}
 	}
 	if (!is.null(num.states)) {
