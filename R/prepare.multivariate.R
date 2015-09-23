@@ -1,4 +1,4 @@
-prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL, num.threads=1) {
+prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 
 	nummod <- length(modellist)
 	numbins <- length(modellist[[1]]$bins)

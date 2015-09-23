@@ -75,19 +75,17 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 	if (length(modellist)<=1) {
 		stop("argument 'modellist' is of length=1. Cannot call multivariate peaks with only one model.")
 	}
-	# Select only specified chromosomes
+	# Check specified chromosomes
 	if (!is.null(chromosomes)) {
 		for (i1 in 1:length(modellist)) {
 			if (!any(seqlevels(modellist[[i1]]$bins) %in% chromosomes)) {
 				stop("None of the specified chromosomes could be found in model number ",i1,".")
 			}
-			modellist[[i1]]$bins <- modellist[[i1]]$bins[seqnames(modellist[[i1]]$bins) %in% chromosomes]
-			modellist[[i1]]$segments <- modellist[[i1]]$segments[seqnames(modellist[[i1]]$segments) %in% chromosomes]
 		}
 	}
 
 	## Prepare the HMM
-	params <- prepare.multivariate(modellist, use.states=use.states, num.states=num.states, num.threads=num.threads)
+	params <- prepare.multivariate(modellist, use.states=use.states, num.states=num.states)
 	bins <- params$bins
 	reads <- params$reads
 	numbins <- params$numbins
@@ -105,6 +103,14 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 	# Clean up to reduce memory usage
 	remove(modellist)
 	remove(params)
+	# Select only specified chromosomes
+	if (!is.null(chromosomes)) {
+		index <- which(seqnames(bins) %in% chromosomes)
+		reads <- reads[index,]
+		bins <- bins[index]
+		numbins <- length(bins)
+		comb.states.per.bin <- comb.states.per.bin[index]
+	}
 
 	### Define cleanup behaviour ###
 	on.exit(.C("R_multivariate_cleanup", as.integer(nummod)))
@@ -225,10 +231,15 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 				time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 			}
 			message("Calculating states from posteriors ...", appendLF=F); ptm <- proc.time()
-			if (!is.null(FDR)) {
-				result$bins$state <- factor(bin2dec(result$bins$posteriors >= 1-FDR), levels=levels(use.states$state))
+			if (!is.null(use.states$state)) {
+				state.levels <- levels(use.states$state)
 			} else {
-				result$bins$state <- factor(hmm$states, levels=levels(use.states$state))
+				state.levels <- hmm$comb.states
+			}
+			if (!is.null(FDR)) {
+				result$bins$state <- factor(bin2dec(result$bins$posteriors >= 1-FDR), levels=state.levels)
+			} else {
+				result$bins$state <- factor(hmm$states, levels=state.levels)
 			}
 			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 			if (keep.densities) {

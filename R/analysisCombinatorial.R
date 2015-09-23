@@ -5,15 +5,20 @@
 #' @param multi.hmm A \code{\link{chromstaR_multivariateHMM}} or a file that contains such an object.
 #' @param feature A \code{\link{GRanges}} with coordinates of the feature to compute the fold enrichment to.
 #' @param featurelist A list with \code{\link{Granges}} objects containing coordinates of multiple features. The names of the list entries will be used to name the return values.
+#' @param combinations A vector with combinations for which the fold enrichment will be calculated. If \code{NULL} all combinations will be considered.
 #' @return A named array with fold enrichments.
 #' @author Aaron Taudt
 #' @export
-foldEnrichment <- function(multi.hmm, featurelist) {
+foldEnrichment <- function(multi.hmm, featurelist, combinations=NULL) {
 	
 	multi.hmm <- loadMultiHmmsFromFiles(multi.hmm)[[1]]
 	## Variables
 	bins <- multi.hmm$bins
-	comb.levels <- levels(bins$combination)
+	if (is.null(combinations)) {
+		comb.levels <- levels(bins$combination)
+	} else {
+		comb.levels <- combinations
+	}
 	genome <- sum(as.numeric(width(bins)))
 	feature.lengths <- lapply(featurelist, function(x) { sum(as.numeric(width(x))) })
 	
@@ -39,15 +44,20 @@ foldEnrichment <- function(multi.hmm, featurelist) {
 #'
 #' @param multi.hmm A \code{\link{chromstaR_multivariateHMM}} or a file that contains such an object.
 #' @param expression A \code{\link{GRanges}} object with metadata column 'expression', containing the expression value for each range.
+#' @param combinations A vector with combinations for which the expression overlap will be calculated. If \code{NULL} all combinations will be considered.
 #' @return A named list with expression values.
 #' @author Aaron Taudt
 #' @export
-expressionOverlap <- function(multi.hmm, expression) {
+expressionOverlap <- function(multi.hmm, expression, combinations=NULL) {
 	
 	multi.hmm <- loadMultiHmmsFromFiles(multi.hmm)[[1]]
 	## Variables
 	bins <- multi.hmm$bins
-	comb.levels <- levels(bins$combination)
+	if (is.null(combinations)) {
+		comb.levels <- levels(bins$combination)
+	} else {
+		comb.levels <- combinations
+	}
 	
 	exprlist <- list()
 	for (icomb in 1:length(comb.levels)) {
@@ -67,15 +77,20 @@ expressionOverlap <- function(multi.hmm, expression) {
 #'
 #' @param multi.hmm A \code{\link{chromstaR_multivariateHMM}} or a file that contains such an object.
 #' @param expression A \code{\link{GRanges}} object with metadata column 'expression', containing the expression value for each range of the feature.
+#' @param combinations A vector with combinations for which the expression overlap will be calculated. If \code{NULL} all combinations will be considered.
 #' @return A list with vectors of mean expression values per percentile for each combinatorial state. 
 #' @author Aaron Taudt
 #' @export
-expressionAtPercentageOverlap <- function(multi.hmm, expression) {
+expressionAtPercentageOverlap <- function(multi.hmm, expression, combinations=NULL) {
 
 	multi.hmm <- loadMultiHmmsFromFiles(multi.hmm)[[1]]
 	## Variables
 	bins <- multi.hmm$bins
-	comb.levels <- levels(bins$combination)
+	if (is.null(combinations)) {
+		comb.levels <- levels(bins$combination)
+	} else {
+		comb.levels <- combinations
+	}
 	nintervals <- 100
 	
 	expression.means <- array(NA, dim=c(nintervals+1, length(comb.levels), 2), dimnames=list(percentage=0:nintervals, combination=comb.levels, value=c('expression','weight')))
@@ -90,8 +105,8 @@ expressionAtPercentageOverlap <- function(multi.hmm, expression) {
 		expression$percentage[expression$percentage>=nintervals] <- nintervals
 		splt <- split(expression$expression, expression$percentage)
 		tab <- sapply(splt, mean)
-		expression.means[names(tab),as.character(comb.levels[icomb]),'expression'] <- tab
-		expression.means[names(tab),as.character(comb.levels[icomb]),'weight'] <- sapply(splt, length)
+		expression.means[names(tab),icomb,'expression'] <- tab #select by icomb instead of name because of potential '' states
+		expression.means[names(tab),icomb,'weight'] <- sapply(splt, length)
 	}
 	return(expression.means)
 
@@ -103,17 +118,23 @@ expressionAtPercentageOverlap <- function(multi.hmm, expression) {
 #' Get the genomewide frequency of each combinatorial state.
 #'
 #' @param multi.hmm A \code{\link{chromstaR_multivariateHMM}} or a file that contains such an object.
+#' @param combinations A vector with combinations for which the frequency will be calculated. If \code{NULL} all combinations will be considered.
 #' @return A table with frequencies of each combinatorial state.
 #' @author Aaron Taudt
 #' @export
-combinatorialFrequency <- function(multi.hmm) {
+combinatorialFrequency <- function(multi.hmm, combinations=NULL) {
 
 	multi.hmm <- loadMultiHmmsFromFiles(multi.hmm)[[1]]
 	## Variables
 	bins <- multi.hmm$bins
-	comb.levels <- levels(bins$combination)
+	if (is.null(combinations)) {
+		comb.levels <- levels(bins$combination)
+	} else {
+		comb.levels <- combinations
+	}
 
 	t <- table(bins$combination) / length(bins)
+	t <- t[names(t) %in% comb.levels]
 
 	return(t)
 }
