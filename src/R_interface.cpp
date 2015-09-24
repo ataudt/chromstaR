@@ -304,8 +304,8 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 	}
 	//FILE_LOG(logINFO) << "epsilon = " << *eps;
 	if (*verbosity>=1) Rprintf("HMM: epsilon = %g\n", *eps);
-	//FILE_LOG(logINFO) << "number of modifications = " << *Nmod;
-	if (*verbosity>=1) Rprintf("HMM: number of modifications = %d\n", *Nmod);
+	//FILE_LOG(logINFO) << "number of experiments = " << *Nmod;
+	if (*verbosity>=1) Rprintf("HMM: number of experiments = %d\n", *Nmod);
 
 	// Flush Rprintf statements to console
 	R_FlushConsole();
