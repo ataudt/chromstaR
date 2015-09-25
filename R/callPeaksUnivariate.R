@@ -45,7 +45,7 @@
 #'## Check if the fit is ok
 #'plot(hmm, type='histogram')
 #' @export
-callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=0.999, read.cutoff.absolute=500, max.mean=Inf, FDR=0.5, keep.posteriors=FALSE, control=FALSE, checkpoint.after.iter=NULL, checkpoint.after.time=NULL, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, keep.densities=FALSE, verbosity=1) {
+callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, FDR=0.5, keep.posteriors=FALSE, control=FALSE, checkpoint.after.iter=NULL, checkpoint.after.time=NULL, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, keep.densities=FALSE, verbosity=1) {
 
 	### Define cleanup behaviour ###
 	on.exit(.C("R_univariate_cleanup"))

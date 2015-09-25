@@ -104,7 +104,7 @@ expressionAtPercentageOverlap <- function(multi.hmm, expression, combinations=NU
 		expression$percentage <- round(expression$num.bins*1000 / expression$genewidth * nintervals) # Normalize to genewidth
 		expression$percentage[expression$percentage>=nintervals] <- nintervals
 		splt <- split(expression$expression, expression$percentage)
-		tab <- sapply(splt, mean)
+		tab <- sapply(splt, mean, na.rm=TRUE)
 		expression.means[names(tab),icomb,'expression'] <- tab #select by icomb instead of name because of potential '' states
 		expression.means[names(tab),icomb,'weight'] <- sapply(splt, length)
 	}

@@ -426,6 +426,26 @@ void ScaleHMM::check_for_state_swap()
 		logdens_at_0[1] = log(weights[1]) + this->densityFunctions[1]->getLogDensityAt(0);
 		logdens_at_0[2] = log(weights[2]) + this->densityFunctions[2]->getLogDensityAt(0);
 
+		// get highest value where both distributions are non-zero
+		double logdens_1, logdens_2;
+		bool doswap = false;
+		for (int i1=this->cutoff; i1>=0; i1--)
+		{
+			logdens_1 = log(weights[1]) + this->densityFunctions[1]->getLogDensityAt(i1);
+			logdens_2 = log(weights[2]) + this->densityFunctions[2]->getLogDensityAt(i1);
+// 			Rprintf("i1 = %d\n",i1);
+// 			Rprintf("logdens_1 = %g\n",logdens_1);
+// 			Rprintf("logdens_2 = %g\n",logdens_2);
+			if (logdens_1 != logdens_2)
+			{
+				if (logdens_1 > logdens_2)
+				{
+					doswap = true;
+				}
+				break;
+			}
+		}
+
 		//FILE_LOG(logINFO) << "mean(0) = "<<this->densityFunctions[0]->get_mean() << ", mean(1) = "<<this->densityFunctions[1]->get_mean() << ", mean(2) = "<<this->densityFunctions[2]->get_mean();
 // 		Rprintf("mean(0) = %g, mean(1) = %g, mean(2) = %g\n", this->densityFunctions[0]->get_mean(), this->densityFunctions[1]->get_mean(), this->densityFunctions[2]->get_mean());
 		//FILE_LOG(logINFO) << "weight(0) = "<<weights[0] << ", weight(1) = "<<weights[1] << ", weight(2) = "<<weights[2];
@@ -441,8 +461,10 @@ void ScaleHMM::check_for_state_swap()
 // 		if (cutoff_logdens[1] > cutoff_logdens[2]) //states 1 and 2 need to be exchanged
 		// 3) Compare max(density values). Does not work for all datasets.
 	// 	if (maxdens[1] < maxdens[2])
-		// 4) Compare density values at 0.
-		if (logdens_at_0[1] < logdens_at_0[2])
+		// 4) Compare density values at 0. Does not work for all datasets.
+// 		if (logdens_at_0[1] < logdens_at_0[2])
+		// 5) Compare logdens at highest value where both distributions are non-zero.
+		if (doswap)
 		{
 			//FILE_LOG(logINFO) << "...swapping states";
 // 			Rprintf("...swapping states\n");
