@@ -20,10 +20,10 @@ void R_univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* m
 {
 
 	// Define logging level
-// 	//FILE* pFile = fopen("chromStar.log", "w");
-// 	Output2//FILE::Stream() = pFile;
- 	//FILELog::ReportingLevel() = //FILELog::FromString("ERROR");
-//  	//FILELog::ReportingLevel() = //FILELog::FromString("DEBUG2");
+	//FILE* pFile = fopen("chromStar.log", "w");
+ 	//Output2FILE::Stream() = pFile;
+ 	//FILELog::ReportingLevel() = FILELog::FromString("ERROR");
+ 	//FILELog::ReportingLevel() = FILELog::FromString("DEBUG2");
 
 	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	// Parallelization settings
@@ -272,10 +272,10 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 {
 
 	// Define logging level {"ERROR", "WARNING", "INFO", "ITERATION", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4"}
-// 	//FILE* pFile = fopen("chromStar.log", "w");
-// 	Output2//FILE::Stream() = pFile;
- 	//FILELog::ReportingLevel() = //FILELog::FromString("ERROR");
-//  	//FILELog::ReportingLevel() = //FILELog::FromString("DEBUG3");
+ 	//FILE* pFile = fopen("chromStar.log", "w");
+	//Output2FILE::Stream() = pFile;
+ 	//FILELog::ReportingLevel() = FILELog::FromString("ERROR");
+ 	FILELog::ReportingLevel() = FILELog::FromString("DEBUG3");
 
 	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	// Parallelization settings

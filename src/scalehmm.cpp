@@ -983,18 +983,19 @@ void ScaleHMM::calc_densities()
 		}
 	}
 
-	// Check if the density for all states is numerically zero and correct to prevent NaNs
+	// Check if the density for all states is close to zero and correct to prevent NaNs
+	double zero_cutoff = 1e-100;
 	std::vector<double> temp(this->N);
 	// t=0
 	for (int iN=0; iN<this->N; iN++)
 	{
 		temp[iN] = this->densities[iN][0];
 	}
-	if (*std::max_element(temp.begin(), temp.end()) == 0.0)
+	if (*std::max_element(temp.begin(), temp.end()) < zero_cutoff)
 	{
 		for (int iN=0; iN<this->N; iN++)
 		{
-			this->densities[iN][0] = 0.00000000001;
+			this->densities[iN][0] = zero_cutoff;
 		}
 	}
 	// t>0
@@ -1004,7 +1005,7 @@ void ScaleHMM::calc_densities()
 		{
 			temp[iN] = this->densities[iN][t];
 		}
-		if (*std::max_element(temp.begin(), temp.end()) == 0.0)
+		if (*std::max_element(temp.begin(), temp.end()) < zero_cutoff)
 		{
 			for (int iN=0; iN<this->N; iN++)
 			{
