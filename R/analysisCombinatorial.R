@@ -6,10 +6,11 @@
 #' @param feature A \code{\link{GRanges}} with coordinates of the feature to compute the fold enrichment to.
 #' @param featurelist A list with \code{\link{Granges}} objects containing coordinates of multiple features. The names of the list entries will be used to name the return values.
 #' @param combinations A vector with combinations for which the fold enrichment will be calculated. If \code{NULL} all combinations will be considered.
-#' @return A named array with fold enrichments.
+#' @param percentages Set to \code{TRUE} if you want to have percentages (0 to 1) instead of fold enrichments returned. Note that in this case different features are not directly comparable.
+#' @return A named array with fold enrichments. If \code{percentages=TRUE} a list with arrays of percentage (0 to 1) enrichments.
 #' @author Aaron Taudt
 #' @export
-foldEnrichment <- function(multi.hmm, featurelist, combinations=NULL) {
+foldEnrichment <- function(multi.hmm, featurelist, combinations=NULL, percentages=FALSE) {
 	
 	multi.hmm <- loadMultiHmmsFromFiles(multi.hmm)[[1]]
 	## Variables
@@ -22,18 +23,33 @@ foldEnrichment <- function(multi.hmm, featurelist, combinations=NULL) {
 	genome <- sum(as.numeric(width(bins)))
 	feature.lengths <- lapply(featurelist, function(x) { sum(as.numeric(width(x))) })
 	
+	## Fold enrichment
 	fold <- array(NA, dim=c(length(featurelist), length(comb.levels)), dimnames=list(feature=names(featurelist), combination=comb.levels))
+	perc.combstate.in.feature <- fold
+	perc.feature.in.combstate <- fold
 	for (icomb in 1:length(comb.levels)) {
 		mask <- bins$combination == comb.levels[icomb]
 		bins.mask <- bins[mask]
 		combstate.length <- sum(as.numeric(width(bins.mask)))
 		for (ifeat in 1:length(featurelist)) {
 			feature <- featurelist[[ifeat]]
-			binsinfeature <- subsetByOverlaps(bins.mask, feature)
-			fold[ifeat,icomb] <- sum(as.numeric(width(binsinfeature))) / combstate.length / feature.lengths[[ifeat]] * genome
+			ind <- findOverlaps(bins.mask, feature)
+
+			binsinfeature <- bins.mask[unique(queryHits(ind))]
+			sum.binsinfeature <- sum(as.numeric(width(binsinfeature)))
+			perc.combstate.in.feature[ifeat,icomb] <- sum.binsinfeature / combstate.length
+
+			featuresinbins <- feature[unique(subjectHits(ind))]
+			sum.featuresinbins <- sum(as.numeric(width(featuresinbins)))
+			perc.feature.in.combstate[ifeat,icomb] <- sum.featuresinbins / feature.lengths[[ifeat]]
+
+			fold[ifeat,icomb] <- sum.binsinfeature / combstate.length / feature.lengths[[ifeat]] * genome
 		}
 	}
 	
+	if (percentages) {
+		return(list(combstate.in.feature=perc.combstate.in.feature, feature.in.combstate=perc.feature.in.combstate))
+	}
 	return(fold)
 }
 
@@ -45,10 +61,11 @@ foldEnrichment <- function(multi.hmm, featurelist, combinations=NULL) {
 #' @param multi.hmm A \code{\link{chromstaR_multivariateHMM}} or a file that contains such an object.
 #' @param expression A \code{\link{GRanges}} object with metadata column 'expression', containing the expression value for each range.
 #' @param combinations A vector with combinations for which the expression overlap will be calculated. If \code{NULL} all combinations will be considered.
+#' @param return.marks Set to \code{TRUE} if expression values for marks instead of combinations should be returned.
 #' @return A named list with expression values.
 #' @author Aaron Taudt
 #' @export
-expressionOverlap <- function(multi.hmm, expression, combinations=NULL) {
+expressionOverlap <- function(multi.hmm, expression, combinations=NULL, return.marks=FALSE) {
 	
 	multi.hmm <- loadMultiHmmsFromFiles(multi.hmm)[[1]]
 	## Variables
@@ -58,14 +75,22 @@ expressionOverlap <- function(multi.hmm, expression, combinations=NULL) {
 	} else {
 		comb.levels <- combinations
 	}
+	marks <- mixedsort(unique(unlist(strsplit(comb.levels,'-'))))
 	
 	exprlist <- list()
-	for (icomb in 1:length(comb.levels)) {
-		mask <- bins$combination == comb.levels[icomb]
-		expr.combstate <- subsetByOverlaps(expression, bins[mask])
-		exprlist[[icomb]] <- expr.combstate$expression
+	if (return.marks) {
+		for (mark in marks) {
+			mask <- grepl(paste0('\\<',mark,'\\>'),bins$combination)
+			expr.mark <- subsetByOverlaps(expression, bins[mask])
+			exprlist[[mark]] <- expr.mark$expression
+		}
+	} else {
+		for (comb.level in comb.levels) {
+			mask <- bins$combination == comb.level
+			expr.combstate <- subsetByOverlaps(expression, bins[mask])
+			exprlist[[comb.level]] <- expr.combstate$expression
+		}
 	}
-	names(exprlist) <- comb.levels
 	return(exprlist)
 
 }
@@ -173,22 +198,22 @@ transitionFrequencies <- function(multi.hmms=NULL, zero.states="", combstates=NU
 	freqtrans$cumulative.frequency <- cumsum(freqtrans$frequency)
 
 	### Assigning groups for frequency table ###
-	freqtrans.split <- strsplit(as.character(freqtrans$transition),'>')
-	freqtrans.split <- do.call(rbind, freqtrans.split)
 	freqtrans$group <- 'other'
 	freqtrans$transition <- gsub('-','_',freqtrans$transition) # words separated with underscore will be treated as one when searching with \\<XXX\\>
-	# Stage-specific and common states
+	# Stage-specific and constant states
 	combstates$sep <- NULL
 	levels.combstates <- unique(unlist(lapply(combstates, levels)))
 	levels.combstates <- setdiff(levels.combstates, zero.states)
 	levels.combstates <- gsub('-','_',levels.combstates)
 	for (combination in levels.combstates) {
 		mask <- intersect(grep(paste0('\\<',combination,'\\>'), freqtrans$transition), grep(paste(paste0('\\<',setdiff(levels.combstates,combination),'\\>'), collapse='|'), freqtrans$transition, invert=T))
-		freqtrans$group[mask] <- paste0('stage-specific ',gsub('_','-',combination))
+		freqtrans$group[mask] <- paste0('stage-specific ',combination)
 		mask <- sapply(gregexpr(paste0('\\<',combination,'\\>'),freqtrans$transition), length) == num.models
-		freqtrans$group[mask] <- paste0('common ', gsub('_','-',combination))
+		freqtrans$group[mask] <- paste0('constant ', combination)
 	}
 	# Zero transitions
+	freqtrans.split <- strsplit(sub('>$','>>',as.character(freqtrans$transition)),'>')
+	freqtrans.split <- do.call(rbind, freqtrans.split)
 	df <- as.data.frame(apply(freqtrans.split, 2, function(x) { x %in% zero.states } ))
 	if (ncol(df)==1) {
 		iszero <- Reduce('&', df[,1])

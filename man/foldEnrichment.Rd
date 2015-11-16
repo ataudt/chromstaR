@@ -4,17 +4,22 @@
 \alias{foldEnrichment}
 \title{Fold enrichment of combinatorial states}
 \usage{
-foldEnrichment(multi.hmm, featurelist)
+foldEnrichment(multi.hmm, featurelist, combinations = NULL,
+  percentages = FALSE)
 }
 \arguments{
 \item{multi.hmm}{A \code{\link{chromstaR_multivariateHMM}} or a file that contains such an object.}
 
 \item{featurelist}{A list with \code{\link{Granges}} objects containing coordinates of multiple features. The names of the list entries will be used to name the return values.}
 
+\item{combinations}{A vector with combinations for which the fold enrichment will be calculated. If \code{NULL} all combinations will be considered.}
+
+\item{percentages}{Set to \code{TRUE} if you want to have percentages (0 to 1) instead of fold enrichments returned. Note that in this case different features are not directly comparable.}
+
 \item{feature}{A \code{\link{GRanges}} with coordinates of the feature to compute the fold enrichment to.}
 }
 \value{
-A named array with fold enrichments.
+A named array with fold enrichments. If \code{percentages=TRUE} a list with arrays of percentage (0 to 1) enrichments.
 }
 \description{
 Compute the fold enrichment of combinatorial states in a given feature (e.g. TSS, exons, ...)

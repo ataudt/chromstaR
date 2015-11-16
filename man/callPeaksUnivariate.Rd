@@ -6,7 +6,7 @@
 \usage{
 callPeaksUnivariate(binned.data, ID, eps = 0.01, init = "standard",
   max.time = NULL, max.iter = NULL, num.trials = 1, eps.try = NULL,
-  num.threads = 1, read.cutoff = TRUE, read.cutoff.quantile = 0.999,
+  num.threads = 1, read.cutoff = TRUE, read.cutoff.quantile = 1,
   read.cutoff.absolute = 500, max.mean = Inf, FDR = 0.5,
   keep.posteriors = FALSE, control = FALSE, checkpoint.after.iter = NULL,
   checkpoint.after.time = NULL,

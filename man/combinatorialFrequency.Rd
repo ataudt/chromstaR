@@ -4,10 +4,12 @@
 \alias{combinatorialFrequency}
 \title{Frequency of combinatorial states}
 \usage{
-combinatorialFrequency(multi.hmm)
+combinatorialFrequency(multi.hmm, combinations = NULL)
 }
 \arguments{
 \item{multi.hmm}{A \code{\link{chromstaR_multivariateHMM}} or a file that contains such an object.}
+
+\item{combinations}{A vector with combinations for which the frequency will be calculated. If \code{NULL} all combinations will be considered.}
 }
 \value{
 A table with frequencies of each combinatorial state.

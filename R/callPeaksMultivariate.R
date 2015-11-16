@@ -223,7 +223,7 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 				message("Transforming posteriors to `per sample` representation ...", appendLF=F); ptm <- proc.time()
 				hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
 				colnames(hmm$posteriors) <- paste0("P(",hmm$comb.states,")")
-				result$bins$score <- apply(hmm$posteriors, 1, max)
+				result$bins$score <- do.call(pmax,as.list(as.data.frame(hmm$posteriors)))
 				binstates <- dec2bin(hmm$comb.states, ndigits=hmm$num.modifications)
 				post.per.track <- hmm$posteriors %*% binstates
 				colnames(post.per.track) <- result$IDs

@@ -4,12 +4,14 @@
 \alias{expressionAtPercentageOverlap}
 \title{Mean expression at percentage overlap}
 \usage{
-expressionAtPercentageOverlap(multi.hmm, expression)
+expressionAtPercentageOverlap(multi.hmm, expression, combinations = NULL)
 }
 \arguments{
 \item{multi.hmm}{A \code{\link{chromstaR_multivariateHMM}} or a file that contains such an object.}
 
 \item{expression}{A \code{\link{GRanges}} object with metadata column 'expression', containing the expression value for each range of the feature.}
+
+\item{combinations}{A vector with combinations for which the expression overlap will be calculated. If \code{NULL} all combinations will be considered.}
 }
 \value{
 A list with vectors of mean expression values per percentile for each combinatorial state.

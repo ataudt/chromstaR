@@ -4,12 +4,17 @@
 \alias{expressionOverlap}
 \title{Overlap with expression data}
 \usage{
-expressionOverlap(multi.hmm, expression)
+expressionOverlap(multi.hmm, expression, combinations = NULL,
+  return.marks = FALSE)
 }
 \arguments{
 \item{multi.hmm}{A \code{\link{chromstaR_multivariateHMM}} or a file that contains such an object.}
 
 \item{expression}{A \code{\link{GRanges}} object with metadata column 'expression', containing the expression value for each range.}
+
+\item{combinations}{A vector with combinations for which the expression overlap will be calculated. If \code{NULL} all combinations will be considered.}
+
+\item{return.marks}{Set to \code{TRUE} if expression values for marks instead of combinations should be returned.}
 }
 \value{
 A named list with expression values.

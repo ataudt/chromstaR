@@ -28,7 +28,7 @@ align2binned(file, format, assembly, bamindex = file,
 
 \item{save.as.RData}{If set to \code{TRUE}, output will be written to file. The filename is generated from the input file and bin sizes. If set to \code{FALSE}, no output file will be written. Instead, a \link{GenomicRanges} object containing the binned data will be returned. Only the first binsize will be processed in this case.}
 
-\item{min.mapq}{Minimum mapping quality when importing from BAM files.}
+\item{min.mapq}{Minimum mapping quality when importing from BAM files. Set \code{min.mapq=NULL} to keep all reads.}
 
 \item{downsample.to.reads}{Downsample the input data to the specified number of reads.}
 
