@@ -4,7 +4,7 @@
 #'
 #' @param multi.hmm A \code{\link{chromstaR_multivariateHMM}} or a file that contains such an object.
 #' @param feature A \code{\link{GRanges}} with coordinates of the feature to compute the fold enrichment to.
-#' @param featurelist A list with \code{\link{Granges}} objects containing coordinates of multiple features. The names of the list entries will be used to name the return values.
+#' @param featurelist A list with \code{\link{GRanges}} objects containing coordinates of multiple features. The names of the list entries will be used to name the return values.
 #' @param combinations A vector with combinations for which the fold enrichment will be calculated. If \code{NULL} all combinations will be considered.
 #' @param percentages Set to \code{TRUE} if you want to have percentages (0 to 1) instead of fold enrichments returned. Note that in this case different features are not directly comparable.
 #' @return A named array with fold enrichments. If \code{percentages=TRUE} a list with arrays of percentage (0 to 1) enrichments.

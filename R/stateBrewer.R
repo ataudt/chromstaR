@@ -19,7 +19,7 @@
 #' @param common.states A logical specifying whether common states shall be returned.
 #' @param conditions A vector with the same length as \code{replicates}. Similar entries will be treated as belonging to the same condition. If this parameter is specified, only states that are different between the conditions are returned.
 #' @param tracks2compare A vector with the same length as \code{replicates}. This vector defines the tracks between which conditions are compared.
-#' @param sep Separator used to separate the tracknames in the combinations.
+#' @param sep Separator used to separate the tracknames in the combinations. The default '+' should not be changed because it is assumed in follow-up functions.
 #' @param statespec If this parameter is specified, \code{replicates} will be ignored. A vector composed of any combination of the following entries: \code{'0.[]', '1.[]', 'x.[]', 'r.[]'}, where [] can be any string.
 #'   \itemize{
 #'     \item \code{'0.A'}: sample A is 'unmodified'
@@ -47,7 +47,7 @@
 #'#  sample4=(0 or 1)
 #'stateBrewer(statespec=c('r.A','1.B','1.C','x.D','r.A'))
 #' @export
-stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, common.states=FALSE, conditions=NULL, tracks2compare=NULL, sep='-', statespec=NULL, diffstatespec=NULL) {
+stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, common.states=FALSE, conditions=NULL, tracks2compare=NULL, sep='+', statespec=NULL, diffstatespec=NULL) {
 
 # 	## Debug
 # # 	conditions <- tissues
@@ -58,7 +58,7 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 # 	min.diff <- 1
 # 	statespec <- NULL
 # 	diffstatespec <- NULL
-# 	sep='-'
+# 	sep='+'
 # 	replicates <- c("Bre.H3K27Ac", "Bre.H3K27me3", "Bre.H3K4me3", "Bre.H4K20me1", "Bre.H3K27Ac", "Bre.H3K27me3", "Bre.H3K4me3", "Bre.H4K20me1", "Bre.H3K27Ac", "Bre.H3K27me3", "Bre.H3K4me3", "Bre.H4K20me1", "Gua.H3K27Ac", "Gua.H3K27me3", "Gua.H3K4me3", "Gua.H4K20me1", "Gua.H3K27Ac", "Gua.H3K27Ac", "Gua.H3K27me3", "Gua.H3K4me3", "Gua.H4K20me1")
 # 	conditions <- c("Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Bre", "Gua", "Gua", "Gua", "Gua", "Gua", "Gua", "Gua", "Gua", "Gua")
 # 	tracks2compare <- c("H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1", "H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1", "H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1", "H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1", "H3K27Ac", "H3K27Ac", "H3K27me3", "H3K4me3", "H4K20me1")

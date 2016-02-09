@@ -12,7 +12,7 @@ loadMultiHmmsFromFiles(hmm.list, strict = FALSE)
 \item{strict}{If any of the loaded objects is not a \code{\link{chromstaR_multivariateHMM}} object, an error (\code{strict=TRUE}) or a warning (\code{strict=FALSE}) will be generated.}
 }
 \value{
-A list() containing all loaded \code{\link{chromstaR_multivariateHMM}} objects.
+A \code{list()} containing all loaded \code{\link{chromstaR_multivariateHMM}} objects.
 }
 \description{
 Load \code{\link{chromstaR_multivariateHMM}} objects from file into a list.

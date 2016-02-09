@@ -10,7 +10,7 @@ foldEnrichment(multi.hmm, featurelist, combinations = NULL,
 \arguments{
 \item{multi.hmm}{A \code{\link{chromstaR_multivariateHMM}} or a file that contains such an object.}
 
-\item{featurelist}{A list with \code{\link{Granges}} objects containing coordinates of multiple features. The names of the list entries will be used to name the return values.}
+\item{featurelist}{A list with \code{\link{GRanges}} objects containing coordinates of multiple features. The names of the list entries will be used to name the return values.}
 
 \item{combinations}{A vector with combinations for which the fold enrichment will be calculated. If \code{NULL} all combinations will be considered.}
 

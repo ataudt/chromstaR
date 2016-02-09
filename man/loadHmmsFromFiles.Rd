@@ -12,7 +12,7 @@ loadHmmsFromFiles(hmm.list, strict = FALSE)
 \item{strict}{If any of the loaded objects is not a \code{\link{chromstaR_univariateHMM}} object, an error (\code{strict=TRUE}) or a warning (\code{strict=FALSE}) will be generated.}
 }
 \value{
-A list() containing all loaded \code{\link{chromstaR_univariateHMM}} objects.
+A \code{list()} containing all loaded \code{\link{chromstaR_univariateHMM}} objects.
 }
 \description{
 Load \code{\link{chromstaR_univariateHMM}} objects from file into a list.

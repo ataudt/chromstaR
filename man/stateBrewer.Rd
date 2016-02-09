@@ -6,7 +6,7 @@
 \usage{
 stateBrewer(replicates = NULL, differential.states = FALSE, min.diff = 1,
   common.states = FALSE, conditions = NULL, tracks2compare = NULL,
-  sep = "-", statespec = NULL, diffstatespec = NULL)
+  sep = "+", statespec = NULL, diffstatespec = NULL)
 }
 \arguments{
 \item{replicates}{A vector specifying the replicate structure. Similar entries will be treated as replicates.}
@@ -21,7 +21,7 @@ stateBrewer(replicates = NULL, differential.states = FALSE, min.diff = 1,
 
 \item{tracks2compare}{A vector with the same length as \code{replicates}. This vector defines the tracks between which conditions are compared.}
 
-\item{sep}{Separator used to separate the tracknames in the combinations.}
+\item{sep}{Separator used to separate the tracknames in the combinations. The default '+' should not be changed because it is assumed in follow-up functions.}
 
 \item{statespec}{If this parameter is specified, \code{replicates} will be ignored. A vector composed of any combination of the following entries: \code{'0.[]', '1.[]', 'x.[]', 'r.[]'}, where [] can be any string.
 \itemize{

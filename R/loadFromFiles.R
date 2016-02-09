@@ -4,7 +4,7 @@
 #'
 #' @param hmm.list A list of files that contain \code{\link{chromstaR_univariateHMM}} objects.
 #' @param strict If any of the loaded objects is not a \code{\link{chromstaR_univariateHMM}} object, an error (\code{strict=TRUE}) or a warning (\code{strict=FALSE}) will be generated.
-#' @return A list() containing all loaded \code{\link{chromstaR_univariateHMM}} objects.
+#' @return A \code{list()} containing all loaded \code{\link{chromstaR_univariateHMM}} objects.
 #' @author Aaron Taudt
 #' @examples
 #'\donttest{
@@ -37,7 +37,7 @@ loadHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 		}
 		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 		return(mlist)
-	} else if (is.list(hmm.list)) {
+	} else if (check.univariate.modellist(hmm.list)==0) {
 		index <- which(unlist(lapply(hmm.list, function(hmm) { !is(hmm, class.univariate.hmm) })))
 		if (length(index)>0) {
 			if (strict) {
@@ -50,6 +50,9 @@ loadHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 			}
 		}
 		return(hmm.list)
+	} else {
+		warning("Returned empty list because 'hmm.list' is neither a character vector of filenames, nor a univariate HMM object, nor a list of univariate HMM objects.")
+		return(list())
 	}
 }
 
@@ -59,7 +62,7 @@ loadHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 #'
 #' @param hmm.list A list of files that contain \code{\link{chromstaR_multivariateHMM}} objects.
 #' @param strict If any of the loaded objects is not a \code{\link{chromstaR_multivariateHMM}} object, an error (\code{strict=TRUE}) or a warning (\code{strict=FALSE}) will be generated.
-#' @return A list() containing all loaded \code{\link{chromstaR_multivariateHMM}} objects.
+#' @return A \code{list()} containing all loaded \code{\link{chromstaR_multivariateHMM}} objects.
 #' @author Aaron Taudt
 #' @examples
 #'\donttest{
@@ -92,7 +95,7 @@ loadMultiHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 		}
 		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 		return(mlist)
-	} else if (is.list(hmm.list)) {
+	} else if (check.multivariate.modellist(hmm.list)) {
 		index <- which(unlist(lapply(hmm.list, function(hmm) { !is(hmm, class.multivariate.hmm) })))
 		if (length(index)>0) {
 			if (strict) {
@@ -105,6 +108,9 @@ loadMultiHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 			}
 		}
 		return(hmm.list)
+	} else {
+		warning("Returned empty list because 'hmm.list' is neither a character vector of filenames, nor a multivariate HMM object, nor a list of multivariate HMM objects.")
+		return(list())
 	}
 }
 
