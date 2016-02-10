@@ -25,8 +25,8 @@ NULL
 #' @inheritParams align2binned
 #' @param bamindex BAM index file. Can be specified without the .bai ending. If this file does not exist it will be created and a warning is issued.
 #' @export
-bam2binned <- function(bamfile, bamindex=bamfile, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, min.mapq=10, downsample.to.reads=NULL, remove.duplicate.reads=FALSE) {
-	return(align2binned(bamfile, format="bam", bamindex=bamindex, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, save.as.RData=save.as.RData, min.mapq=min.mapq, downsample.to.reads=downsample.to.reads, remove.duplicate.reads=remove.duplicate.reads))
+bam2binned <- function(bamfile, bamindex=bamfile, pairedEndReads=FALSE, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, min.mapq=10, downsample.to.reads=NULL, remove.duplicate.reads=FALSE) {
+	return(align2binned(bamfile, format="bam", bamindex=bamindex, pairedEndReads=pairedEndReads, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, save.as.RData=save.as.RData, min.mapq=min.mapq, downsample.to.reads=downsample.to.reads, remove.duplicate.reads=remove.duplicate.reads))
 }
 
 #' @describeIn binning Bin reads in BED format.
@@ -53,6 +53,7 @@ bedGraph2binned <- function(bedGraphfile, assembly, chrom.length.file=NULL, outp
 #' @param format One of \code{c('bam', 'bed', 'bedGraph')}.
 #' @param assembly An assembly to specify the chromosome lengths. One of \code{c('hg19','hg18')}.
 #' @param bamindex Index file if \code{format='bam'} with or without the .bai ending. If this file does not exist it will be created and a warning is issued.
+#' @param pairedEndReads Set to \code{TRUE} if you have paired-end reads in your file.
 #' @param chrom.length.file A file which contains the chromosome lengths in basepairs. The first column contains the chromosome name and the second column the length (see also \code{\link{chrom.length.file}}.
 #' @param outputfolder Folder to which the binned data will be saved if \code{save.as.RData=TRUE}. If the specified folder does not exist, it will be created.
 #' @param binsizes A vector with integer values which will be used for the binning. If more than one value is given, output files will be produced for each bin size.
@@ -62,10 +63,7 @@ bedGraph2binned <- function(bedGraphfile, assembly, chrom.length.file=NULL, outp
 #' @param downsample.to.reads Downsample the input data to the specified number of reads.
 #' @param remove.duplicate.reads Logical indicating whether duplicate reads should be removed. NOTE: Duplicate removal only works if your duplicate reads are properly flagged in the BAM file.
 #' @return The function produces a \code{\link{GRanges}} object with one meta data column 'reads' that contains the read count. This binned data will be either written to file (\code{save.as.RData=FALSE}) or given as return value (\code{save.as.RData=FALSE}).
-#' @import Rsamtools
-#' @import GenomicAlignments
-#' @import BSgenome
-align2binned <- function(file, format, assembly, bamindex=file, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, min.mapq=10, downsample.to.reads=NULL, remove.duplicate.reads=FALSE) {
+align2binned <- function(file, format, assembly, bamindex=file, pairedEndReads=FALSE, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, min.mapq=10, downsample.to.reads=NULL, remove.duplicate.reads=FALSE) {
 
 	## Create outputfolder if not exists
 	if (!file.exists(outputfolder) & save.as.RData==TRUE) {
@@ -93,34 +91,9 @@ align2binned <- function(file, format, assembly, bamindex=file, chrom.length.fil
 		# Convert to GRanges object
 		data <- GenomicRanges::GRanges(seqnames=Rle(data[,1]), ranges=IRanges(start=data[,2]+1, end=data[,3]), strand=Rle(strand("*"), nrow(data)))	# start+1 to go from [0,x) -> [1,x]
 		seqlengths(data) <- as.integer(chrom.lengths[names(seqlengths(data))])
-		chroms.in.data <- seqlevels(data)
 	## BAM (1-based)
 	} else if (format == "bam") {
-		## Check if bamindex exists
-		bamindex.raw <- sub('\\.bai$', '', bamindex)
-		bamindex <- paste0(bamindex.raw,'.bai')
-		if (!file.exists(bamindex)) {
-			bamindex.own <- Rsamtools::indexBam(file)
-			warning("Couldn't find BAM index-file ",bamindex,". Creating our own file ",bamindex.own," instead.")
-			bamindex <- bamindex.own
-		}
-		file.header <- Rsamtools::scanBamHeader(file)[[1]]
-		chrom.lengths <- file.header$targets
-		chroms.in.data <- names(chrom.lengths)
-		if (is.null(chromosomes)) {
-			chromosomes <- chroms.in.data
-		}
-		chroms2use <- intersect(chromosomes, chroms.in.data)
-		if (length(chroms2use)==0) {
-			chrstring <- paste0(chromosomes, collapse=', ')
-			stop('The specified chromosomes ', chrstring, ' do not exist in the data.')
-		}
-		gr <- GenomicRanges::GRanges(seqnames=Rle(chroms2use), ranges=IRanges(start=rep(1, length(chroms2use)), end=chrom.lengths[chroms2use]))
-		if (remove.duplicate.reads) {
-			data <- GenomicAlignments::readGAlignmentsFromBam(file, index=bamindex, param=ScanBamParam(which=range(gr), what='mapq', flag=scanBamFlag(isDuplicate=FALSE)))
-		} else {
-			data <- GenomicAlignments::readGAlignmentsFromBam(file, index=bamindex, param=ScanBamParam(which=range(gr), what='mapq'))
-		}
+		data <- bam2GRanges(file, bamindex, chromosomes=chromosomes, pairedEndReads=pairedEndReads, keep.duplicate.reads=!remove.duplicate.reads)
 		## Filter by mapping quality
 		if (!is.null(min.mapq)) {
 			if (any(is.na(mcols(data)$mapq))) {
@@ -148,30 +121,14 @@ align2binned <- function(file, format, assembly, bamindex=file, chrom.length.fil
 		# Convert to GRanges object
 		data <- GenomicRanges::GRanges(seqnames=Rle(data[,1]), ranges=IRanges(start=data[,2]+1, end=data[,3]), strand=Rle(strand("*"), nrow(data)), signal=data[,4])	# start+1 to go from [0,x) -> [1,x]
 		seqlengths(data) <- as.integer(chrom.lengths[names(seqlengths(data))])
-		chroms.in.data <- seqlevels(data)
 	}
 	time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 
 	## Select chromosomes to bin
 	if (is.null(chromosomes)) {
-		chromosomes <- chroms.in.data
+		chromosomes <- seqlevels(data)
 	}
-	diff <- setdiff(chromosomes, chroms.in.data)
-	if (length(diff)>0) {
-		diffs <- paste0(diff, collapse=', ')
-		warning(paste0('Not using chromosomes ', diffs, ' because they are not in the data.'))
-	}
-	diff <- setdiff(chromosomes, names(chrom.lengths))
-	if (length(diff)>0) {
-		diffs <- paste0(diff, collapse=', ')
-		warning(paste0('Not using chromosomes ', diffs, ' because no lengths could be found.'))
-	}
-	chroms2use <- intersect(chromosomes, chroms.in.data)
-	chroms2use <- intersect(chroms2use, names(chrom.lengths))
-	if (length(chroms2use)==0) {
-		chrstring <- paste0(chromosomes, collapse=', ')
-		stop('The specified chromosomes ', chrstring, ' do not exist in the data.')
-	}
+	chroms2use <- intersect(chromosomes, seqlevels(data))
  
 	### Downsampling
 	if (!is.null(downsample.to.reads)) {
@@ -193,11 +150,11 @@ align2binned <- function(file, format, assembly, bamindex=file, chrom.length.fil
 		binned.data <- GenomicRanges::GRangesList()
 		for (chromosome in chroms2use) {
 			## Check last incomplete bin
-			incomplete.bin <- chrom.lengths[chromosome] %% binsize > 0
+			incomplete.bin <- seqlengths(data)[chromosome] %% binsize > 0
 			if (incomplete.bin) {
-				numbins <- floor(chrom.lengths[chromosome]/binsize)	# floor: we don't want incomplete bins, ceiling: we want incomplete bins at the end
+				numbins <- floor(seqlengths(data)[chromosome]/binsize)	# floor: we don't want incomplete bins, ceiling: we want incomplete bins at the end
 			} else {
-				numbins <- chrom.lengths[chromosome]/binsize
+				numbins <- seqlengths(data)[chromosome]/binsize
 			}
 			if (numbins == 0) {
 				warning("chromosome ",chromosome," is smaller than binsize. Skipped.")
@@ -208,14 +165,14 @@ align2binned <- function(file, format, assembly, bamindex=file, chrom.length.fil
 			reads <- rep(0,numbins)
 			start <- seq(from=1, by=binsize, length.out=numbins)
 			end <- seq(from=binsize, by=binsize, length.out=numbins)
-# 			end[length(end)] <- chrom.lengths[chromosome] # last ending coordinate is size of chromosome, only if incomplete bins are desired
+# 			end[length(end)] <- seqlengths(data)[chromosome] # last ending coordinate is size of chromosome, only if incomplete bins are desired
 
 			## Create binned chromosome as GRanges object
 			i.binned.data <- GenomicRanges::GRanges(seqnames = Rle(chromosome, numbins),
 							ranges = IRanges(start=start, end=end),
 							strand = Rle(strand("*"), numbins)
 							)
-			seqlengths(i.binned.data) <- chrom.lengths[chromosome]
+			seqlengths(i.binned.data) <- seqlengths(data)[chromosome]
 
 			suppressWarnings(
 				binned.data[[chromosome]] <- i.binned.data
@@ -265,3 +222,71 @@ align2binned <- function(file, format, assembly, bamindex=file, chrom.length.fil
 	}
 
 }
+
+
+#' Import BAM file into GRanges
+#'
+#' Import aligned reads from a BAM file into a \code{\link{GRanges}} object.
+#'
+#' @param file A file in BAM format.
+#' @param bamindex BAM index file. Can be specified without the .bai ending. If the index file does not exist it will be created and a warning is issued.
+#' @param chromosomes If only a subset of the chromosomes should be imported, specify them here.
+#' @param pairedEndReads Set to \code{TRUE} if you have paired-end reads in your file.
+#' @param keep.duplicate.reads A logical indicating whether or not duplicate reads should be kept.
+#' @importFrom Rsamtools indexBam scanBamHeader ScanBamParam scanBamFlag
+#' @importFrom GenomicAlignments readGAlignmentPairsFromBam readGAlignmentsFromBam first
+bam2GRanges <- function(file, bamindex=file, chromosomes=NULL, pairedEndReads=FALSE, keep.duplicate.reads=TRUE) {
+
+	## Check if bamindex exists
+	bamindex.raw <- sub('\\.bai$', '', bamindex)
+	bamindex <- paste0(bamindex.raw,'.bai')
+	if (!file.exists(bamindex)) {
+		bamindex.own <- Rsamtools::indexBam(file)
+		warning("Couldn't find BAM index-file ",bamindex,". Creating our own file ",bamindex.own," instead.")
+		bamindex <- bamindex.own
+	}
+	file.header <- Rsamtools::scanBamHeader(file)[[1]]
+	chrom.lengths <- file.header$targets
+	chroms.in.data <- names(chrom.lengths)
+	if (is.null(chromosomes)) {
+		chromosomes <- chroms.in.data
+	}
+	chroms2use <- intersect(chromosomes, chroms.in.data)
+	if (length(chroms2use)==0) {
+		chrstring <- paste0(chromosomes, collapse=', ')
+		stop('The specified chromosomes ', chrstring, ' do not exist in the data.')
+	}
+	## Issue warning for non-existent chromosomes
+	diff <- setdiff(chromosomes, chroms.in.data)
+	if (length(diff)>0) {
+		diffs <- paste0(diff, collapse=', ')
+		warning(paste0('Not using chromosomes ', diffs, ' because they are not in the data.'))
+	}
+	## Import the file into GRanges
+	gr <- GenomicRanges::GRanges(seqnames=Rle(chroms2use), ranges=IRanges(start=rep(1, length(chroms2use)), end=chrom.lengths[chroms2use]))
+	if (keep.duplicate.reads) {
+		if (pairedEndReads) {
+			data.raw <- GenomicAlignments::readGAlignmentPairsFromBam(file, index=bamindex, param=Rsamtools::ScanBamParam(which=range(gr), what='mapq'))
+		} else {
+			data.raw <- GenomicAlignments::readGAlignmentsFromBam(file, index=bamindex, param=Rsamtools::ScanBamParam(which=range(gr), what='mapq'))
+		}
+	} else {
+		if (pairedEndReads) {
+			data.raw <- GenomicAlignments::readGAlignmentPairsFromBam(file, index=bamindex, param=Rsamtools::ScanBamParam(which=range(gr), what='mapq', flag=scanBamFlag(isDuplicate=F)))
+		} else {
+			data.raw <- GenomicAlignments::readGAlignmentsFromBam(file, index=bamindex, param=Rsamtools::ScanBamParam(which=range(gr), what='mapq', flag=scanBamFlag(isDuplicate=F)))
+		}
+	}
+	if (pairedEndReads) {
+		data.first <- as(GenomicAlignments::first(data.raw), 'GRanges')
+		data.last <- as(GenomicAlignments::last(data.raw), 'GRanges')
+		strand(data.last) <- strand(data.first)
+# 		data <- sort(c(data.first, data.last))
+		data <- data.first # TODO: only use first mate for now
+	} else {
+		data <- as(data.raw, 'GRanges')
+	}
+	return(data)
+
+}
+
