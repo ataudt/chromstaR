@@ -110,7 +110,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* m
 				{
 					//FILE_LOG(logDEBUG) << "Initializing size and prob for state 2";
 					imean = mean+1;
-					ivariance = variance;
+					ivariance = variance*2;
 				} 
 				// Make sure variance is greater than mean
 				if (imean >= ivariance)
