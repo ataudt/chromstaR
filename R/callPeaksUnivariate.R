@@ -42,7 +42,7 @@
 #'## Check if the fit is ok
 #'plot(hmm, type='histogram')
 #' @export
-callPeaksUnivariate2 <- function(binned.data, ID, prefit.on.chr=NULL, short=TRUE, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, FDR=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
+callPeaksUnivariate2 <- function(binned.data, ID, prefit.on.chr, short=TRUE, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, FDR=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
 
 	pre.binned.data <- binned.data[seqnames(binned.data)==prefit.on.chr]
 	pre.model <- callPeaksUnivariate(pre.binned.data, ID=ID, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, FDR=FDR, control=control, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=verbosity)
