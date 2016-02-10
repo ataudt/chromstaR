@@ -13,6 +13,8 @@ exportBinnedData(binned.data.list, filename = "chromstaR_ReadCounts",
 \item{filename}{The name of the file that will be written. The ending ".wig.gz" for read counts will be appended. Any existing file will be overwritten.}
 
 \item{header}{A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).}
+
+\item{separate.files}{A logical indicating whether or not to produce separate files for each object in \code{binned.data.list}.}
 }
 \description{
 Export read counts as genome browser viewable file

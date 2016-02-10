@@ -12,7 +12,7 @@ combineMultivariates(conditions = NULL, marks = NULL)
 \item{marks}{A named \code{list()} with \code{\link{chromstaR_multivariateHMM}} objects. The names of the list are used to name the marks. Alternatively a named character vector with filenames that contain \code{\link{chromstaR_multivariateHMM}} objects.}
 }
 \value{
-A data.frame with combinatorial states for each condition.
+A DataFrame with combinatorial states for each condition.
 }
 \description{
 Combine combinatorial states from several \code{\link{chromstaR_multivariateHMM}} objects. Combinatorial states can be combined across \code{conditions} (from a combinatorial analysis) or across \code{marks} (from a differential analysis).

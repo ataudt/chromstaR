@@ -116,6 +116,7 @@ combineMultivariates <- function(conditions=NULL, marks=NULL) {
 		df <- as.data.frame(bins.cond)
 		segments.cond <- suppressMessages( collapseBins(df, column2collapseBy=cond, columns2drop=c('width')) )
 		segments.cond <- as(segments.cond, 'GRanges')
+		names(mcols(segments.cond)) <- 'combination'
 		seqlengths(segments.cond) <- seqlengths(bins)
 		segments[[cond]] <- segments.cond
 	}
@@ -127,5 +128,6 @@ combineMultivariates <- function(conditions=NULL, marks=NULL) {
 	hmm$bins <- bins
 	hmm$combined.segments <- combined.segments
 	hmm$segments <- segments
+	return(hmm)
 	
 }

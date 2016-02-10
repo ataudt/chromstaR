@@ -12,6 +12,8 @@
 #' @param filename The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.
 #' @param what A character vector specifying what will be exported. Supported are \code{c('peaks', 'reads')}.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
+#' @param separate.files A logical indicating whether or not to produce separate files for each hmm in \code{hmm.list}.
+#' @param orderByScore Logical indicating whether or not to sort entries in BED file by score.
 #' @seealso \code{\link{exportBinnedData}}, \code{\link{exportMultivariate}}
 #' @examples
 #'### Univariate peak calling ###
@@ -214,6 +216,8 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 #' @param include.states A vector of combinatorial states that will be exported. If specified, \code{exclude.states} is ignored.
 #' @param trackname Name that will be used in the "track name" field of the BED file.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
+#' @param separate.files A logical indicating whether or not to produce separate files for peaks if \code{what} contains 'peaks' or 'reads'.
+#' @param orderByScore Logical indicating whether or not to sort entries in BED file by score.
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportBinnedData}}
 #' @examples
 #'### Multivariate peak calling ###
@@ -271,15 +275,11 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 	numstates <- length(combstates2use)
 
 	## Insert chromosome if missing
-	collapsed.calls <- as.data.frame(insertchr(multi.hmm$segments))
+	segments.df <- as.data.frame(insertchr(multi.hmm$segments))
 
 	# Select only desired states
-	mask <- rep(FALSE,nrow(collapsed.calls))
-	for (istate in combstates2use) {
-		mask <- mask | istate==collapsed.calls$state
-	}
-	collapsed.calls <- collapsed.calls[mask,]
-	if (nrow(collapsed.calls) == 0) {
+	segments.df <- segments.df[segments.df$state %in% combstates2use,]
+	if (nrow(segments.df) == 0) {
 		warning("No regions to export!")
 		return()
 	}
@@ -294,7 +294,7 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 
 	if (separate.tracks) {
 		## Export peak calls
-		bin <- dec2bin(collapsed.calls$state, ndigits=length(multi.hmm$IDs))
+		bin <- dec2bin(segments.df$state, ndigits=length(multi.hmm$IDs))
 		colnames(bin) <- multi.hmm$IDs
 		for (icol in 1:ncol(bin)) {
 			if (separate.files) {
@@ -306,15 +306,15 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 			numsegments <- length(which(bin[,icol]))
 			priority <- 52 + 4*icol
 			mask <- bin[,icol]
-			if (length(grep('^mean.posteriors', names(collapsed.calls)))==ncol(bin)) {
-				collapsed.calls$score <- collapsed.calls[,grep('^mean.posteriors', names(collapsed.calls))[icol]]
+			if (length(grep('^mean.posteriors', names(segments.df)))==ncol(bin)) {
+				segments.df$score <- segments.df[,grep('^mean.posteriors', names(segments.df))[icol]]
 			} else {
-				collapsed.calls$score <- 0
+				segments.df$score <- 0
 			}
-			if (is.null(collapsed.calls$combination)) {
-				df <- cbind(collapsed.calls[mask,c('chromosome','start','end','state','score')], strand=rep(".",numsegments))
+			if (is.null(segments.df$combination)) {
+				df <- cbind(segments.df[mask,c('chromosome','start','end','state','score')], strand=rep(".",numsegments))
 			} else {
-				df <- cbind(collapsed.calls[mask,c('chromosome','start','end','combination','score')], strand=rep(".",numsegments))
+				df <- cbind(segments.df[mask,c('chromosome','start','end','combination','score')], strand=rep(".",numsegments))
 			}
 			# Make score integer
 			df$score <- round(df$score*1000)
@@ -340,20 +340,20 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 	} else {
 		## Export combinatorial states
 		# Generate the colors for each combinatorial state
-		colors <- rainbow(length(levels(collapsed.calls$combination)))
+		colors <- rainbow(length(levels(segments.df$combination)))
 		RGBs <- t(col2rgb(colors))
 		RGBs <- apply(RGBs,1,paste,collapse=",")
-		itemRgb <- RGBs[as.integer(factor(collapsed.calls$combination, levels=sort(levels(collapsed.calls$combination))))]
+		itemRgb <- RGBs[as.integer(factor(segments.df$combination, levels=sort(levels(segments.df$combination))))]
 
 		# Write to file
-		numsegments <- nrow(collapsed.calls)
-		if (is.null(collapsed.calls$score)) {
-			collapsed.calls$score <- 0
+		numsegments <- nrow(segments.df)
+		if (is.null(segments.df$score)) {
+			segments.df$score <- 0
 		}
-		if (is.null(collapsed.calls$combination)) {
-			df <- cbind(collapsed.calls[,c('chromosome','start','end','state','score')], strand=rep(".",numsegments), thickStart=collapsed.calls$start, thickEnd=collapsed.calls$end, itemRgb=itemRgb)
+		if (is.null(segments.df$combination)) {
+			df <- cbind(segments.df[,c('chromosome','start','end','state','score')], strand=rep(".",numsegments), thickStart=segments.df$start, thickEnd=segments.df$end, itemRgb=itemRgb)
 		} else {
-			df <- cbind(collapsed.calls[,c('chromosome','start','end','combination','score')], strand=rep(".",numsegments), thickStart=collapsed.calls$start, thickEnd=collapsed.calls$end, itemRgb=itemRgb)
+			df <- cbind(segments.df[,c('chromosome','start','end','combination','score')], strand=rep(".",numsegments), thickStart=segments.df$start, thickEnd=segments.df$end, itemRgb=itemRgb)
 		}
 		# Make score integer
 		df$score <- round(df$score*1000)
@@ -465,6 +465,7 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 #' @param binned.data.list A list of \code{\link{binned.data}} objects or files that contain such objects.
 #' @param filename The name of the file that will be written. The ending ".wig.gz" for read counts will be appended. Any existing file will be overwritten.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
+#' @param separate.files A logical indicating whether or not to produce separate files for each object in \code{binned.data.list}.
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
 #' @examples
 #'## Get example BED-files with ChIP-seq reads for H3K36me3
@@ -566,9 +567,10 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", 
 #' @param trackname The name that will be used as track name and description in the header.
 #' @param filename The name of the file that will be written. The ending ".bed.gz". Any existing file will be overwritten.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
+#' @param append Whether or not to append to an existing file.
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
 #' @export
-exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", header=TRUE, orderByScore=TRUE) {
+exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", header=TRUE, orderByScore=TRUE, append=FALSE) {
 
 	if (length(gr)==0) {
 		warning("Supplied GRanges object contains no ranges.")
@@ -590,11 +592,19 @@ exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", h
 
 	# Variables
 	filename <- paste0(filename,".bed.gz")
-	filename.gz <- gzfile(filename, 'w')
+	if (append) {
+		filename.gz <- gzfile(filename, 'a')
+	} else {
+		filename.gz <- gzfile(filename, 'w')
+	}
 
 	# Write first line to file
-	message('writing to file ',filename)
-	cat("", file=filename.gz)
+	if (append) {
+		message('appending to file ',filename)
+	} else {
+		message('writing to file ',filename)
+		cat("", file=filename.gz)
+	}
 	
 	### Write every model to file ###
 	if (header) {
@@ -624,8 +634,138 @@ exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", h
 	}
 
 	close(filename.gz)
-	message('')
 
 }
 
 
+#=====================================================
+# Export combined multivariate HMMs
+#=====================================================
+#' Export genome browser viewable files
+#'
+#' Export multivariate calls as genome browser viewable file
+#'
+#' Export \code{\link{chromstaR_combinedMultiHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states are exported in BED format (.bed.gz).
+#'
+#' @author Aaron Taudt
+#' @param hmm A \code{\link{chromstaR_combinedMultiHMM}} object or file that contains such an object.
+#' @param filename The name of the file that will be written. The ending ".bed.gz" for combinatorial states will be appended. Any existing file will be overwritten.
+#' @param what A character vector specifying what will be exported. Supported are \code{c('combstates')}.
+#' @param exclude.states A vector of combinatorial states that will be excluded from export.
+#' @param include.states A vector of combinatorial states that will be exported. If specified, \code{exclude.states} is ignored.
+#' @param trackname Name that will be used in the "track name" field of the BED file.
+#' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
+#' @param separate.files A logical indicating whether or not to produce separate files for each condition.
+#' @examples
+#'### Multivariate peak calling ###
+#'## Load example multivariate Hidden Markov Model
+#'data(example.multi.HMM)
+#'## Export the binned read counts and peaks for each track
+#'\donttest{
+#'exportMultivariate(example.multi.HMM, exclude.states=c(0),
+#'                   filename='chromstaR_example.multi.HMM',
+#'                   what=c('reads','peaks'))
+#'}
+#' @export
+exportCombinedMultivariate <- function(hmm, filename, what=c('combstates'), exclude.states='', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE) {
+	if ('combstates' %in% what) {
+		exportCombinedMultivariateCalls(hmm, filename=filename, exclude.states=exclude.states, include.states=include.states, trackname=trackname, header=header, separate.files=separate.files)
+	}
+}
+
+#----------------------------------------------------
+# Export combinatorial states or peak-calls from multivariate HMMs
+#----------------------------------------------------
+exportCombinedMultivariateCalls <- function(hmm, filename="chromstaR_combinedMultivariateCalls", exclude.states='', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE) {
+
+	if (class(hmm)!=class.combined.multivariate.hmm) {
+		hmm <- get(load(hmm))
+		if (class(hmm)!=class.combined.multivariate.hmm) {
+			stop("argument 'hmm' expects a combined multivariate hmm or a file which contains an object")
+		}
+	}
+
+	## Function definitions
+	insertchr <- function(hmm.gr) {
+		# Change chromosome names from '1' to 'chr1' if necessary
+		mask <- which(!grepl('chr', seqnames(hmm.gr)))
+		mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
+		mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
+		mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
+		return(hmm.gr)
+	}
+
+	## Write first line to file
+	if (!separate.files) {
+		filename <- paste0(filename,".bed.gz")
+		filename.gz <- gzfile(filename, 'w')
+		message('writing to file ',filename)
+		cat("", file=filename.gz)
+	}
+
+	## Export the combinatorial states from individual segments
+	conditions <- names(hmm$segments)
+	for (cond in conditions) {
+		segments <- hmm$segments[[cond]]
+
+		# Exclude and include states
+		combstates <- levels(segments$combination)
+		if (is.null(include.states)) {
+			combstates2use <- setdiff(combstates, exclude.states)
+		} else {
+			combstates2use <- intersect(combstates, include.states)
+		}
+		segments <- segments[mcols(segments)$combination %in% combstates2use]
+		segments <- insertchr(segments)
+		segments.df <- as.data.frame(segments)
+
+		# Make header
+		if (is.null(trackname)) {
+			trackname.cond <- paste0('combinatorial states, condition ', cond)
+		} else {
+			trackname.cond <- paste0(trackname, ', condition ', cond)
+		}
+		# Make filenames
+		if (separate.files) {
+			filename.cond <- paste0(filename, '_', cond, '.bed.gz')
+			filename.gz <- gzfile(filename.cond, 'w')
+			message('writing to file ',filename.cond)
+			cat("", file=filename.gz)
+		}
+
+		## Export combinatorial states
+		# Generate the colors for each combinatorial state
+		colors <- rainbow(length(levels(segments.df$combination)))
+		RGBs <- t(col2rgb(colors))
+		RGBs <- apply(RGBs,1,paste,collapse=",")
+		itemRgb <- RGBs[as.integer(factor(segments.df$combination, levels=sort(levels(segments.df$combination))))]
+
+		# Write to file
+		numsegments <- nrow(segments.df)
+		if (is.null(segments.df$score)) {
+			segments.df$score <- 0
+		}
+		df <- cbind(segments.df[,c('chromosome','start','end','combination','score')], strand=rep(".",numsegments), thickStart=segments.df$start, thickEnd=segments.df$end, itemRgb=itemRgb)
+		# Make score integer
+		df$score <- round(df$score*1000)
+		# Reorder
+# 		if (orderByScore) {
+# 			df <- df[rev(order(df$score)),]
+# 		}
+		# Convert from 1-based closed to 0-based half open
+		df$start <- df$start - 1
+		df$thickStart <- df$thickStart - 1
+		if (header) {
+			cat(paste0('track name="',trackname.cond, '" description="', trackname.cond, '" visibility=1 itemRgb=On priority=49\n'), file=filename.gz, append=TRUE)
+		}
+		write.table(format(df, scientific=FALSE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
+
+		if (separate.files) {
+			close(filename.gz)
+		}
+	}
+	if (!separate.files) {
+		close(filename.gz)
+	}
+
+}

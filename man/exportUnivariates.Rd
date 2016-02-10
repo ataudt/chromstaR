@@ -15,6 +15,10 @@ exportUnivariates(hmm.list, filename, what = c("peaks", "reads"),
 \item{what}{A character vector specifying what will be exported. Supported are \code{c('peaks', 'reads')}.}
 
 \item{header}{A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).}
+
+\item{separate.files}{A logical indicating whether or not to produce separate files for each hmm in \code{hmm.list}.}
+
+\item{orderByScore}{Logical indicating whether or not to sort entries in BED file by score.}
 }
 \description{
 Export univariate peak-calls and read counts as genome browser viewable file

@@ -22,6 +22,10 @@ exportMultivariate(multi.hmm, filename, what = c("combstates", "peaks",
 \item{trackname}{Name that will be used in the "track name" field of the BED file.}
 
 \item{header}{A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).}
+
+\item{separate.files}{A logical indicating whether or not to produce separate files for peaks if \code{what} contains 'peaks' or 'reads'.}
+
+\item{orderByScore}{Logical indicating whether or not to sort entries in BED file by score.}
 }
 \description{
 Export multivariate calls and read counts as genome browser viewable file
