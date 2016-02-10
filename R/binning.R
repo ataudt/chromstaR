@@ -25,8 +25,8 @@ NULL
 #' @inheritParams align2binned
 #' @param bamindex BAM index file. Can be specified without the .bai ending. If this file does not exist it will be created and a warning is issued.
 #' @export
-bam2binned <- function(bamfile, bamindex=bamfile, pairedEndReads=FALSE, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, min.mapq=10, downsample.to.reads=NULL, remove.duplicate.reads=FALSE) {
-	return(align2binned(bamfile, format="bam", bamindex=bamindex, pairedEndReads=pairedEndReads, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, save.as.RData=save.as.RData, min.mapq=min.mapq, downsample.to.reads=downsample.to.reads, remove.duplicate.reads=remove.duplicate.reads))
+bam2binned <- function(bamfile, bamindex=bamfile, pairedEndReads=FALSE, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, min.mapq=10, downsample.to.reads=NULL, remove.duplicate.reads=FALSE, max.fragment.width=1000) {
+	return(align2binned(bamfile, format="bam", bamindex=bamindex, pairedEndReads=pairedEndReads, outputfolder=outputfolder, binsizes=binsizes, chromosomes=chromosomes, save.as.RData=save.as.RData, min.mapq=min.mapq, downsample.to.reads=downsample.to.reads, remove.duplicate.reads=remove.duplicate.reads, max.fragment.width=max.fragment.width))
 }
 
 #' @describeIn binning Bin reads in BED format.
@@ -62,8 +62,9 @@ bedGraph2binned <- function(bedGraphfile, assembly, chrom.length.file=NULL, outp
 #' @param min.mapq Minimum mapping quality when importing from BAM files. Set \code{min.mapq=NULL} to keep all reads.
 #' @param downsample.to.reads Downsample the input data to the specified number of reads.
 #' @param remove.duplicate.reads Logical indicating whether duplicate reads should be removed. NOTE: Duplicate removal only works if your duplicate reads are properly flagged in the BAM file.
+#' @param max.fragment.width Maximum allowed fragment length. This is to filter out erroneously wrong fragments due to mapping errors of paired end reads.
 #' @return The function produces a \code{\link{GRanges}} object with one meta data column 'reads' that contains the read count. This binned data will be either written to file (\code{save.as.RData=FALSE}) or given as return value (\code{save.as.RData=FALSE}).
-align2binned <- function(file, format, assembly, bamindex=file, pairedEndReads=FALSE, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, min.mapq=10, downsample.to.reads=NULL, remove.duplicate.reads=FALSE) {
+align2binned <- function(file, format, assembly, bamindex=file, pairedEndReads=FALSE, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, min.mapq=10, downsample.to.reads=NULL, remove.duplicate.reads=FALSE, max.fragment.width=1000) {
 
 	## Create outputfolder if not exists
 	if (!file.exists(outputfolder) & save.as.RData==TRUE) {
@@ -93,15 +94,7 @@ align2binned <- function(file, format, assembly, bamindex=file, pairedEndReads=F
 		seqlengths(data) <- as.integer(chrom.lengths[names(seqlengths(data))])
 	## BAM (1-based)
 	} else if (format == "bam") {
-		data <- bam2GRanges(file, bamindex, chromosomes=chromosomes, pairedEndReads=pairedEndReads, keep.duplicate.reads=!remove.duplicate.reads)
-		## Filter by mapping quality
-		if (!is.null(min.mapq)) {
-			if (any(is.na(mcols(data)$mapq))) {
-				warning(paste0(file,": Reads with mapping quality NA (=255 in BAM file) found and removed. Set 'min.mapq=NULL' to keep all reads."))
-				mcols(data)$mapq[is.na(mcols(data)$mapq)] <- -1
-			}
-			data <- data[mcols(data)$mapq >= min.mapq]
-		}
+		data <- suppressMessages( bam2GRanges(file, bamindex, chromosomes=chromosomes, pairedEndReads=pairedEndReads, keep.duplicate.reads=!remove.duplicate.reads, min.mapq=min.mapq, max.fragment.width=max.fragment.width) )
 	## BEDGraph (0-based)
 	} else if (format == "bedGraph") {
 		if (!is.null(chrom.length.file)) {
@@ -233,9 +226,11 @@ align2binned <- function(file, format, assembly, bamindex=file, pairedEndReads=F
 #' @param chromosomes If only a subset of the chromosomes should be imported, specify them here.
 #' @param pairedEndReads Set to \code{TRUE} if you have paired-end reads in your file.
 #' @param keep.duplicate.reads A logical indicating whether or not duplicate reads should be kept.
+#' @param min.mapq Minimum mapping quality when importing from BAM files. Set \code{min.mapq=NULL} to keep all reads.
+#' @param max.fragment.width Maximum allowed fragment length. This is to filter out erroneously wrong fragments due to mapping errors of paired end reads.
 #' @importFrom Rsamtools indexBam scanBamHeader ScanBamParam scanBamFlag
 #' @importFrom GenomicAlignments readGAlignmentPairsFromBam readGAlignmentsFromBam first
-bam2GRanges <- function(file, bamindex=file, chromosomes=NULL, pairedEndReads=FALSE, keep.duplicate.reads=TRUE) {
+bam2GRanges <- function(file, bamindex=file, chromosomes=NULL, pairedEndReads=FALSE, keep.duplicate.reads=TRUE, min.mapq=10, max.fragment.width=1000) {
 
 	## Check if bamindex exists
 	bamindex.raw <- sub('\\.bai$', '', bamindex)
@@ -277,14 +272,39 @@ bam2GRanges <- function(file, bamindex=file, chromosomes=NULL, pairedEndReads=FA
 			data.raw <- GenomicAlignments::readGAlignmentsFromBam(file, index=bamindex, param=Rsamtools::ScanBamParam(which=range(gr), what='mapq', flag=scanBamFlag(isDuplicate=F)))
 		}
 	}
+	## Filter by mapping quality
 	if (pairedEndReads) {
-		data.first <- as(GenomicAlignments::first(data.raw), 'GRanges')
-		data.last <- as(GenomicAlignments::last(data.raw), 'GRanges')
-		strand(data.last) <- strand(data.first)
-# 		data <- sort(c(data.first, data.last))
-		data <- data.first # TODO: only use first mate for now
+		message("Converting to GRanges ...", appendLF=FALSE); ptm <- proc.time()
+		data <- as(data.raw, 'GRanges') # treat as one fragment
+		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+
+		message("Filtering reads ...", appendLF=FALSE); ptm <- proc.time()
+		if (!is.null(min.mapq)) {
+			mapq.first <- mcols(GenomicAlignments::first(data.raw))$mapq
+			mapq.last <- mcols(GenomicAlignments::last(data.raw))$mapq
+			mapq.mask <- mapq.first >= min.mapq & mapq.last >= min.mapq
+			if (any(is.na(mapq.mask))) {
+				warning(paste0(file,": Reads with mapping quality NA (=255 in BAM file) found and removed. Set 'min.mapq=NULL' to keep all reads."))
+			}
+			data <- data[which(mapq.mask)]
+			# Filter out too long fragments
+			data <- data[width(data)<=max.fragment.width]
+		}
+		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 	} else {
+		message("Converting to GRanges ...", appendLF=FALSE); ptm <- proc.time()
 		data <- as(data.raw, 'GRanges')
+		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+
+		message("Filtering reads ...", appendLF=FALSE); ptm <- proc.time()
+		if (!is.null(min.mapq)) {
+			if (any(is.na(mcols(data)$mapq))) {
+				warning(paste0(file,": Reads with mapping quality NA (=255 in BAM file) found and removed. Set 'min.mapq=NULL' to keep all reads."))
+				mcols(data)$mapq[is.na(mcols(data)$mapq)] <- -1
+			}
+			data <- data[mcols(data)$mapq >= min.mapq]
+		}
+		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
 	}
 	return(data)
 

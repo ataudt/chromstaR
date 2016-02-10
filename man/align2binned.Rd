@@ -5,9 +5,10 @@
 \title{Convert aligned reads from various file formats into read counts in equidistant bins}
 \usage{
 align2binned(file, format, assembly, bamindex = file,
-  chrom.length.file = NULL, outputfolder = "binned_data", binsizes = 500,
-  chromosomes = NULL, save.as.RData = FALSE, min.mapq = 10,
-  downsample.to.reads = NULL, remove.duplicate.reads = FALSE)
+  pairedEndReads = FALSE, chrom.length.file = NULL,
+  outputfolder = "binned_data", binsizes = 500, chromosomes = NULL,
+  save.as.RData = FALSE, min.mapq = 10, downsample.to.reads = NULL,
+  remove.duplicate.reads = FALSE, max.fragment.width = 1000)
 }
 \arguments{
 \item{file}{A file with aligned reads.}
@@ -17,6 +18,8 @@ align2binned(file, format, assembly, bamindex = file,
 \item{assembly}{An assembly to specify the chromosome lengths. One of \code{c('hg19','hg18')}.}
 
 \item{bamindex}{Index file if \code{format='bam'} with or without the .bai ending. If this file does not exist it will be created and a warning is issued.}
+
+\item{pairedEndReads}{Set to \code{TRUE} if you have paired-end reads in your file.}
 
 \item{chrom.length.file}{A file which contains the chromosome lengths in basepairs. The first column contains the chromosome name and the second column the length (see also \code{\link{chrom.length.file}}.}
 
@@ -33,6 +36,8 @@ align2binned(file, format, assembly, bamindex = file,
 \item{downsample.to.reads}{Downsample the input data to the specified number of reads.}
 
 \item{remove.duplicate.reads}{Logical indicating whether duplicate reads should be removed. NOTE: Duplicate removal only works if your duplicate reads are properly flagged in the BAM file.}
+
+\item{max.fragment.width}{Maximum allowed fragment length. This is to filter out erroneously wrong fragments due to mapping errors of paired end reads.}
 }
 \value{
 The function produces a \code{\link{GRanges}} object with one meta data column 'reads' that contains the read count. This binned data will be either written to file (\code{save.as.RData=FALSE}) or given as return value (\code{save.as.RData=FALSE}).

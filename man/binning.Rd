@@ -7,10 +7,10 @@
 \alias{binning}
 \title{Convert aligned reads from various file formats into read counts in equidistant bins}
 \usage{
-bam2binned(bamfile, bamindex = bamfile, outputfolder = "binned_data",
-  binsizes = 500, chromosomes = NULL, save.as.RData = FALSE,
-  min.mapq = 10, downsample.to.reads = NULL,
-  remove.duplicate.reads = FALSE)
+bam2binned(bamfile, bamindex = bamfile, pairedEndReads = FALSE,
+  outputfolder = "binned_data", binsizes = 500, chromosomes = NULL,
+  save.as.RData = FALSE, min.mapq = 10, downsample.to.reads = NULL,
+  remove.duplicate.reads = FALSE, max.fragment.width = 1000)
 
 bed2binned(bedfile, assembly, chrom.length.file = NULL,
   outputfolder = "binned_data", binsizes = 500, chromosomes = NULL,
@@ -25,6 +25,8 @@ bedGraph2binned(bedGraphfile, assembly, chrom.length.file = NULL,
 
 \item{bamindex}{BAM index file. Can be specified without the .bai ending. If this file does not exist it will be created and a warning is issued.}
 
+\item{pairedEndReads}{Set to \code{TRUE} if you have paired-end reads in your file.}
+
 \item{outputfolder}{Folder to which the binned data will be saved if \code{save.as.RData=TRUE}. If the specified folder does not exist, it will be created.}
 
 \item{binsizes}{A vector with integer values which will be used for the binning. If more than one value is given, output files will be produced for each bin size.}
@@ -38,6 +40,8 @@ bedGraph2binned(bedGraphfile, assembly, chrom.length.file = NULL,
 \item{downsample.to.reads}{Downsample the input data to the specified number of reads.}
 
 \item{remove.duplicate.reads}{Logical indicating whether duplicate reads should be removed. NOTE: Duplicate removal only works if your duplicate reads are properly flagged in the BAM file.}
+
+\item{max.fragment.width}{Maximum allowed fragment length. This is to filter out erroneously wrong fragments due to mapping errors of paired end reads.}
 
 \item{bedfile}{A file in BED format.}
 
