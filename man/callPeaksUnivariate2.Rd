@@ -4,7 +4,7 @@
 \alias{callPeaksUnivariate2}
 \title{Fit a Hidden Markov Model to a ChIP-seq sample.}
 \usage{
-callPeaksUnivariate2(binned.data, ID, prefit.on.chr = NULL, short = TRUE,
+callPeaksUnivariate2(binned.data, ID, prefit.on.chr, short = TRUE,
   eps = 0.01, init = "standard", max.time = NULL, max.iter = NULL,
   num.trials = 1, eps.try = NULL, num.threads = 1, read.cutoff = TRUE,
   read.cutoff.quantile = 1, read.cutoff.absolute = 500, max.mean = Inf,
