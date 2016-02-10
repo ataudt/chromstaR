@@ -70,17 +70,24 @@ void R_univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* m
 	hmm->initialize_proba(initial_proba, *use_initial_params);
     
 	// Calculate mean and variance of data
-	double mean = 0, variance = 0;
+	double Tadjust = 0, mean = 0, variance = 0;
 	for(int t=0; t<*T; t++)
 	{
-		mean+= O[t];
+		if (O[t]>0)
+		{
+			mean += O[t];
+			Tadjust += 1;
+		}
 	}
-	mean = mean / *T;
+	mean = mean / Tadjust;
 	for(int t=0; t<*T; t++)
 	{
-		variance+= pow(O[t] - mean, 2);
+		if (O[t]>0)
+		{
+			variance += pow(O[t] - mean, 2);
+		}
 	}
-	variance = variance / *T;
+	variance = variance / Tadjust;
 	//FILE_LOG(logINFO) << "data mean = " << mean << ", data variance = " << variance;		
 	if (*verbosity>=1) Rprintf("HMM: data mean = %g, data variance = %g\n", mean, variance);		
 	
