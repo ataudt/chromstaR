@@ -116,7 +116,7 @@ void R_univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* m
 				else if (i_state == 2)
 				{
 					//FILE_LOG(logDEBUG) << "Initializing size and prob for state 2";
-					imean = mean*2;
+					imean = mean*1.5;
 					ivariance = variance*2;
 				} 
 				// Make sure variance is greater than mean
