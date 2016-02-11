@@ -8,7 +8,7 @@
 #' Export \code{\link{chromstaR_univariateHMM}} objects as files which can be uploaded into a genome browser. Peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wig.gz).
 #'
 #' @author Aaron Taudt
-#' @param hmm.list A list of \code{\link{chromstaR_univariateHMM}} objects or files that contain such objects.
+#' @param hmm.list A \code{list()} of \code{\link{chromstaR_univariateHMM}} objects or vector of files that contain such objects.
 #' @param filename The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.
 #' @param what A character vector specifying what will be exported. Supported are \code{c('peaks', 'reads')}.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
@@ -117,7 +117,7 @@ exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCa
 		if (nrow(df) == 0) {
 			warning('hmm ',imod,' does not contain any \'modified\' calls')
 		} else {
-			write.table(format(df, scientific=FALSE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
+			write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
 		}
 		if (separate.files) {
 			close(filename.gz)
@@ -186,7 +186,7 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 		# Write read data
 		for (chrom in unique(hmm.gr$chromosome)) {
 			cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-			write.table(mcols(hmm.gr[hmm.gr$chromosome==chrom])$reads, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE)
+			write.table(mcols(hmm.gr[hmm.gr$chromosome==chrom])$reads, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
 		}
 		if (separate.files) {
 			close(filename.gz)
@@ -332,7 +332,7 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 			if (header) {
 				cat(paste0("track name=\"multivariate calls for ",colnames(bin)[icol],"\" description=\"multivariate calls for ",colnames(bin)[icol],"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
 			}
-			write.table(format(df, scientific=FALSE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
+			write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
 			if (separate.files) {
 				close(filename.gz)
 			}
@@ -371,7 +371,7 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 				cat(paste0('track name="',trackname,'" description="',trackname,'" visibility=1 itemRgb=On priority=49\n'), file=filename.gz, append=TRUE)
 			}
 		}
-		write.table(format(df, scientific=FALSE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
+		write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
 	}
 	if (!separate.files) {
 		close(filename.gz)
@@ -439,7 +439,7 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 				chromr <- chrom
 			}
 			cat(paste0("fixedStep chrom=",chromr," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-			write.table(multi.hmm$bins[seqnames(multi.hmm$bins)==chrom]$reads[,imod], file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE)
+			write.table(multi.hmm$bins[seqnames(multi.hmm$bins)==chrom]$reads[,imod], file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
 		}
 		if (separate.files) {
 			close(filename.gz)
@@ -462,7 +462,7 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 #' Export read counts from \code{\link{binned.data}} as a file which can be uploaded into a genome browser. Read counts are exported in WIGGLE format (.wig.gz).
 #'
 #' @author Aaron Taudt
-#' @param binned.data.list A list of \code{\link{binned.data}} objects or files that contain such objects.
+#' @param binned.data.list A \code{list()} of \code{\link{binned.data}} objects or vector of files that contain such objects.
 #' @param filename The name of the file that will be written. The ending ".wig.gz" for read counts will be appended. Any existing file will be overwritten.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @param separate.files A logical indicating whether or not to produce separate files for each object in \code{binned.data.list}.
@@ -540,7 +540,7 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", 
 		# Write read data
 		for (chrom in unique(b$chromosome)) {
 			cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-			write.table(mcols(b[b$chromosome==chrom])$reads, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE)
+			write.table(mcols(b[b$chromosome==chrom])$reads, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
 		}
 		if (separate.files) {
 			close(filename.gz)
@@ -630,7 +630,7 @@ exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", h
 	if (nrow(df) == 0) {
 		warning('No regions in input')
 	} else {
-		write.table(format(df, scientific=FALSE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
+		write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
 	}
 
 	close(filename.gz)
@@ -758,7 +758,7 @@ exportCombinedMultivariateCalls <- function(hmm, filename="chromstaR_combinedMul
 		if (header) {
 			cat(paste0('track name="',trackname.cond, '" description="', trackname.cond, '" visibility=1 itemRgb=On priority=49\n'), file=filename.gz, append=TRUE)
 		}
-		write.table(format(df, scientific=FALSE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE)
+		write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
 
 		if (separate.files) {
 			close(filename.gz)
