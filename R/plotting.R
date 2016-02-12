@@ -72,7 +72,7 @@ plot.chromstaR_univariateHMM <- function(x, type='histogram', ...) {
 #' Make different types of plots for \code{\link{chromstaR_multivariateHMM}} objects.
 #'
 #' @param x A \code{\link{chromstaR_multivariateHMM}} object.
-#' @param type Type of the plot, one of \code{c('transitionMatrix','histograms')}. You can also specify the type with an integer number.
+#' @param type Type of the plot, one of \code{c('transitionMatrix','histograms','correlation')}. You can also specify the type with an integer number.
 #' \describe{
 #'   \item{\code{transitionMatrix}}{A heatmap with entries of the transition matrix.}
 #'   \item{\code{histograms}}{Fitted histograms of all underlying univariate distributions.}
@@ -87,6 +87,8 @@ plot.chromstaR_multivariateHMM <- function(x, type='transitionMatrix', ...) {
 		plotMultivariateTransition(x, ...)
 	} else if (type == 'histograms' | type==2) {
 		plotMultivariateHistograms(x, ...)
+	} else if (type == 'correlation' | type==3) {
+		plotMultivariateCorrelation(x, ...)
 	}
 
 }
@@ -176,6 +178,21 @@ plotMultivariateHistograms <- function(multi.hmm) {
 	}
 	
 	return(ggplts)
+
+}
+
+# =================================================================
+# Plot count correlation heatmap for a multivariate HMM
+# =================================================================
+plotMultivariateCorrelation <- function(multi.hmm) {
+
+	cr <- cor(multi.hmm$bins$reads)
+	hc <- hclust(dist(cr))
+	df <- melt(cr, value.name='correlation')
+	df$Var1 <- factor(df$Var1, levels=levels(df$Var1)[hc$order])
+	df$Var2 <- factor(df$Var2, levels=levels(df$Var2)[hc$order])
+	ggplt <- ggplot(df) + geom_tile(aes(x=Var1, y=Var2, fill=correlation)) + xlab('') + ylab('') + theme(axis.text.x = element_text(angle=45, hjust=1))
+	return(ggplt)
 
 }
 

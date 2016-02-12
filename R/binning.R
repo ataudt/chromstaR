@@ -204,7 +204,7 @@ align2binned <- function(file, format, assembly, bamindex=file, pairedEndReads=F
 
 		if (save.as.RData==TRUE) {
 			# Print to file
-			filename <- paste0(basename(file),"_binsize_",format(binsize, scientific=F, trim=T),".RData")
+			filename <- paste0(basename(file),"_binsize",format(binsize, scientific=F, trim=T),".RData")
 			message("Saving to file ...", appendLF=F); ptm <- proc.time()
 			save(binned.data, file=file.path(outputfolder,filename) )
 			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
