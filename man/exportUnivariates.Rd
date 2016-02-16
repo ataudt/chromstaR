@@ -8,7 +8,7 @@ exportUnivariates(hmm.list, filename, what = c("peaks", "reads"),
   header = TRUE, separate.files = FALSE, orderByScore = TRUE)
 }
 \arguments{
-\item{hmm.list}{A list of \code{\link{chromstaR_univariateHMM}} objects or files that contain such objects.}
+\item{hmm.list}{A \code{list()} of \code{\link{chromstaR_univariateHMM}} objects or vector of files that contain such objects.}
 
 \item{filename}{The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.}
 

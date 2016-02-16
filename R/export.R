@@ -340,7 +340,7 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 	} else {
 		## Export combinatorial states
 		# Generate the colors for each combinatorial state
-		colors <- rainbow(length(levels(segments.df$combination)))
+		colors <- getDistinctColors(length(levels(segments.df$combination)))
 		RGBs <- t(col2rgb(colors))
 		RGBs <- apply(RGBs,1,paste,collapse=",")
 		itemRgb <- RGBs[as.integer(factor(segments.df$combination, levels=sort(levels(segments.df$combination))))]
@@ -735,7 +735,7 @@ exportCombinedMultivariateCalls <- function(hmm, filename="chromstaR_combinedMul
 
 		## Export combinatorial states
 		# Generate the colors for each combinatorial state
-		colors <- rainbow(length(levels(segments.df$combination)))
+		colors <- getDistinctColors(length(levels(segments.df$combination)))
 		RGBs <- t(col2rgb(colors))
 		RGBs <- apply(RGBs,1,paste,collapse=",")
 		itemRgb <- RGBs[as.integer(factor(segments.df$combination, levels=sort(levels(segments.df$combination))))]

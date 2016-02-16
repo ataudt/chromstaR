@@ -8,7 +8,7 @@ exportBinnedData(binned.data.list, filename = "chromstaR_ReadCounts",
   header = TRUE, separate.files = FALSE)
 }
 \arguments{
-\item{binned.data.list}{A list of \code{\link{binned.data}} objects or files that contain such objects.}
+\item{binned.data.list}{A \code{list()} of \code{\link{binned.data}} objects or vector of files that contain such objects.}
 
 \item{filename}{The name of the file that will be written. The ending ".wig.gz" for read counts will be appended. Any existing file will be overwritten.}
 

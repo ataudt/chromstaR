@@ -9,7 +9,7 @@
 \arguments{
 \item{x}{A \code{\link{chromstaR_multivariateHMM}} object.}
 
-\item{type}{Type of the plot, one of \code{c('transitionMatrix','histograms')}. You can also specify the type with an integer number.
+\item{type}{Type of the plot, one of \code{c('transitionMatrix','histograms','correlation')}. You can also specify the type with an integer number.
 \describe{
   \item{\code{transitionMatrix}}{A heatmap with entries of the transition matrix.}
   \item{\code{histograms}}{Fitted histograms of all underlying univariate distributions.}
