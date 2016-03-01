@@ -555,106 +555,238 @@ void NegativeBinomial::calc_logCDFs(double* logCDF)
 	}
 }
 
-void NegativeBinomial::update(double* weight)
+void NegativeBinomial::update(double* weights)
 {
 	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
-	double eps = 1e-4, kmax;
-	double numerator, denominator, rhere, dr, Fr, dFrdr, DigammaR, DigammaRplusDR;
-	// Update p
+	//FILE_LOG(logDEBUG1) << "size = "<<this->size << ", prob = "<<this->prob;
+	double eps = 1e-4;
+	double kmax = 20;
+	double numerator, denominator, size0, DigammaSize, TrigammaSize;
+	double F, dFdSize, FdivM;
+	double logp = log(this->prob);
+	// Update prob (p)
 	numerator=denominator=0.0;
 // 	clock_t time, dtime;
 // 	time = clock();
 	for (int t=0; t<this->T; t++)
 	{
-		numerator+=weight[t]*this->size;
-		denominator+=weight[t]*(this->size+this->obs[t]);
+		numerator += weights[t] * this->size;
+		denominator += weights[t] * (this->size + this->obs[t]);
 	}
-	this->prob = numerator/denominator; // Update of r is now done with updated p
-	double logp = log(this->prob);
+	this->prob = numerator/denominator; // Update this->prob
+// 	logp = log(this->prob); // Update of size is done with new prob
+	
 // 	dtime = clock() - time;
 // 	//FILE_LOG(logDEBUG1) << "updateP(): "<<dtime<< " clicks";
-	// Update of r with Newton Method
-	rhere = this->size;
-	dr = 0.00001;
-	kmax = 20;
+
+	// Update of size with Newton Method
+	size0 = this->size;
 // 	time = clock();
 	// Select strategy for computing digammas
 	if (this->max_obs <= this->T)
 	{
-		//FILE_LOG(logDEBUG3) << "Precomputing digammas in " << __func__ << " for every obs[t], because max(O)<=T";
-		std::vector<double> DigammaRplusX(this->max_obs+1);
-		std::vector<double> DigammaRplusDRplusX(this->max_obs+1);
-		for (int k=1; k<kmax; k++)
+		//FILE_LOG(logDEBUG2) << "Precomputing digammas in " << __func__ << " for every obs[t], because max(O)<=T";
+		std::vector<double> DigammaSizePlusX(this->max_obs+1);
+		std::vector<double> TrigammaSizePlusX(this->max_obs+1);
+		for (int k=0; k<kmax; k++)
 		{
-			Fr=dFrdr=0.0;
-			DigammaR = digamma(rhere); // boost::math::digamma<>(rhere);
-			DigammaRplusDR = digamma(rhere + dr); // boost::math::digamma<>(rhere+dr);
+			F=dFdSize=0.0;
+			DigammaSize = digamma(size0); // boost::math::digamma<>(size0);
+			TrigammaSize = trigamma(size0); // boost::math::digamma<>(size0);
 			// Precompute the digammas by iterating over all possible values of the observation vector
 			for (int j=0; j<=this->max_obs; j++)
 			{
-				DigammaRplusX[j] = digamma(rhere+j);
-				DigammaRplusDRplusX[j] = digamma(rhere+dr+j);
+				DigammaSizePlusX[j] = digamma(size0+j);
+				TrigammaSizePlusX[j] = trigamma(size0+j);
 			}
 			for(int t=0; t<this->T; t++)
 			{
 				if(this->obs[t]==0)
 				{
-					Fr+=weight[t]*logp;
-					//dFrdr+=0;
+					F += weights[t] * logp;
+					//dFdSize+=0;
 				}
 				if(this->obs[t]!=0)
 				{
-					Fr+=weight[t]*(logp-DigammaR+DigammaRplusX[(int)obs[t]]);
-					dFrdr+=weight[t]/dr*(DigammaR-DigammaRplusDR+DigammaRplusDRplusX[(int)obs[t]]-DigammaRplusX[(int)obs[t]]);
+					F += weights[t] * (logp - DigammaSize + DigammaSizePlusX[(int)obs[t]]);
+					dFdSize += weights[t] * (-TrigammaSize + TrigammaSizePlusX[(int)obs[t]]);
 				}
 			}
-			if(fabs(Fr)<eps)
-{
+			FdivM = F/dFdSize;
+// Rprintf("k = %d, F = %g, dFdSize = %g, FdivM = %g, size0 = %g\n", k, F, dFdSize, FdivM, size0);
+			if (FdivM < size0)
+			{
+				size0 = size0-FdivM;
+			}
+			else if (FdivM >= size0)
+			{
+				size0 = size0/2.0;
+			}
+			if(fabs(F)<eps)
+			{
 				break;
 			}
-			if(Fr/dFrdr<rhere) rhere=rhere-Fr/dFrdr;
-			if(Fr/dFrdr>rhere) rhere=rhere/2.0;
 		}
 	}
 	else
 	{
 		//FILE_LOG(logDEBUG2) << "Computing digammas in " << __func__ << " for every t, because max(O)>T";
-		double DigammaRplusX, DigammaRplusDRplusX;
-		for (int k=1; k<kmax; k++)
+		double DigammaSizePlusX, TrigammaSizePlusX;
+		for (int k=0; k<kmax; k++)
 		{
-			Fr = dFrdr = 0.0;
-			DigammaR = digamma(rhere); // boost::math::digamma<>(rhere);
-			DigammaRplusDR = digamma(rhere + dr); // boost::math::digamma<>(rhere+dr);
+			F = dFdSize = 0.0;
+			DigammaSize = digamma(size0); // boost::math::digamma<>(size0);
+			TrigammaSize = trigamma(size0); // boost::math::digamma<>(size0);
 			for(int t=0; t<this->T; t++)
 			{
-				DigammaRplusX = digamma(rhere+this->obs[t]); //boost::math::digamma<>(rhere+this->obs[ti]);
-				DigammaRplusDRplusX = digamma(rhere+dr+this->obs[t]); // boost::math::digamma<>(rhere+dr+this->obs[ti]);
+				DigammaSizePlusX = digamma(size0+this->obs[t]); //boost::math::digamma<>(size0+this->obs[ti]);
+				TrigammaSizePlusX = trigamma(size0+this->obs[t]);
 				if(this->obs[t]==0)
 				{
-					Fr+=weight[t]*logp;
-					//dFrdr+=0;
+					F += weights[t] * logp;
+					//dFdSize+=0;
 				}
 				if(this->obs[t]!=0)
 				{
-					Fr+=weight[t]*(logp-DigammaR+DigammaRplusX);
-					dFrdr+=weight[t]/dr*(DigammaR-DigammaRplusDR+DigammaRplusDRplusX-DigammaRplusX);
+					F += weights[t] * (logp - DigammaSize + DigammaSizePlusX);
+					dFdSize += weights[t] * (-TrigammaSize + TrigammaSizePlusX);
 				}
 			}
-			if(fabs(Fr)<eps)
+			FdivM = F/dFdSize;
+			if (FdivM < size0)
+			{
+				size0 = size0-FdivM;
+			}
+			else if (FdivM >= size0)
+			{
+				size0 = size0/2.0;
+			}
+			if(fabs(F)<eps)
 			{
 				break;
 			}
-			if(Fr/dFrdr<rhere) rhere=rhere-Fr/dFrdr;
-			if(Fr/dFrdr>rhere) rhere=rhere/2.0;
 		}
 	}
-	this->size = rhere;
-	//FILE_LOG(logDEBUG1) << "r = "<<this->size << ", p = "<<this->prob;
+	this->size = size0;
+	//FILE_LOG(logDEBUG1) << "size = "<<this->size << ", prob = "<<this->prob;
 
 // 	dtime = clock() - time;
 // 	//FILE_LOG(logDEBUG1) << "updateR(): "<<dtime<< " clicks";
 
 }
+
+// void NegativeBinomial::update(double* weight)
+// {
+// 	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+// 	double eps = 1e-4, kmax;
+// 	double numerator, denominator, rhere, dr, Fr, dFrdr, DigammaR, DigammaRplusDR;
+// 	// Update p
+// 	numerator=denominator=0.0;
+// // 	clock_t time, dtime;
+// // 	time = clock();
+// 	for (int t=0; t<this->T; t++)
+// 	{
+// 		numerator+=weight[t]*this->size;
+// 		denominator+=weight[t]*(this->size+this->obs[t]);
+// 	}
+// 	this->prob = numerator/denominator; // Update of r is now done with updated p
+// 	double logp = log(this->prob);
+// // 	dtime = clock() - time;
+// // 	//FILE_LOG(logDEBUG1) << "updateP(): "<<dtime<< " clicks";
+// 	// Update of r with Newton Method
+// 	rhere = this->size;
+// 	dr = 0.00001;
+// 	kmax = 20;
+// // 	time = clock();
+// 	// Select strategy for computing digammas
+// 	if (this->max_obs <= this->T)
+// 	{
+// 		//FILE_LOG(logDEBUG3) << "Precomputing digammas in " << __func__ << " for every obs[t], because max(O)<=T";
+// 		std::vector<double> DigammaRplusX(this->max_obs+1);
+// 		std::vector<double> DigammaRplusDRplusX(this->max_obs+1);
+// 		for (int k=1; k<kmax; k++)
+// 		{
+// 			Fr=dFrdr=0.0;
+// 			DigammaR = digamma(rhere); // boost::math::digamma<>(rhere);
+// 			DigammaRplusDR = digamma(rhere + dr); // boost::math::digamma<>(rhere+dr);
+// 			// Precompute the digammas by iterating over all possible values of the observation vector
+// 			for (int j=0; j<=this->max_obs; j++)
+// 			{
+// 				DigammaRplusX[j] = digamma(rhere+j);
+// 				DigammaRplusDRplusX[j] = digamma(rhere+dr+j);
+// 			}
+// 			for(int t=0; t<this->T; t++)
+// 			{
+// 				if(this->obs[t]==0)
+// 				{
+// 					Fr+=weight[t]*logp;
+// 					//dFrdr+=0;
+// 				}
+// 				if(this->obs[t]!=0)
+// 				{
+// 					Fr+=weight[t]*(logp-DigammaR+DigammaRplusX[(int)obs[t]]);
+// 					dFrdr+=weight[t]/dr*(DigammaR-DigammaRplusDR+DigammaRplusDRplusX[(int)obs[t]]-DigammaRplusX[(int)obs[t]]);
+// 				}
+// 			}
+// 			if(fabs(Fr)<eps)
+// 			{
+// 				break;
+// 			}
+// 			if(Fr/dFrdr<rhere)
+// 			{
+// 				rhere=rhere-Fr/dFrdr;
+// 			}
+// 			else if (Fr/dFrdr>=rhere)
+// 			{
+// 				rhere=rhere/2.0;
+// 			}
+// 		}
+// 	}
+// 	else
+// 	{
+// 		//FILE_LOG(logDEBUG2) << "Computing digammas in " << __func__ << " for every t, because max(O)>T";
+// 		double DigammaRplusX, DigammaRplusDRplusX;
+// 		for (int k=1; k<kmax; k++)
+// 		{
+// 			Fr = dFrdr = 0.0;
+// 			DigammaR = digamma(rhere); // boost::math::digamma<>(rhere);
+// 			DigammaRplusDR = digamma(rhere + dr); // boost::math::digamma<>(rhere+dr);
+// 			for(int t=0; t<this->T; t++)
+// 			{
+// 				DigammaRplusX = digamma(rhere+this->obs[t]); //boost::math::digamma<>(rhere+this->obs[ti]);
+// 				DigammaRplusDRplusX = digamma(rhere+dr+this->obs[t]); // boost::math::digamma<>(rhere+dr+this->obs[ti]);
+// 				if(this->obs[t]==0)
+// 				{
+// 					Fr+=weight[t]*logp;
+// 					//dFrdr+=0;
+// 				}
+// 				if(this->obs[t]!=0)
+// 				{
+// 					Fr+=weight[t]*(logp-DigammaR+DigammaRplusX);
+// 					dFrdr+=weight[t]/dr*(DigammaR-DigammaRplusDR+DigammaRplusDRplusX-DigammaRplusX);
+// 				}
+// 			}
+// 			if(fabs(Fr)<eps)
+// 			{
+// 				break;
+// 			}
+// 			if(Fr/dFrdr<rhere)
+// 			{
+// 				rhere=rhere-Fr/dFrdr;
+// 			}
+// 			else if (Fr/dFrdr>=rhere)
+// 			{
+// 				rhere=rhere/2.0;
+// 			}
+// 		}
+// 	}
+// 	this->size = rhere;
+// 	//FILE_LOG(logDEBUG1) << "r = "<<this->size << ", p = "<<this->prob;
+// 
+// // 	dtime = clock() - time;
+// // 	//FILE_LOG(logDEBUG1) << "updateR(): "<<dtime<< " clicks";
+// 
+// }
 
 void NegativeBinomial::copy(Density* other)
 {

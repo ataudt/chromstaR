@@ -232,13 +232,13 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 #' @export
 exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks', 'reads'), exclude.states=0, include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
 	if ('combstates' %in% what) {
-		exportMultivariateCalls(multi.hmm, filename, separate.tracks=FALSE, exclude.states, include.states, trackname=trackname, header=header, orderByScore=orderByScore)
+		exportMultivariateCalls(multi.hmm, filename=paste0(filename, '_combstates'), separate.tracks=FALSE, exclude.states, include.states, trackname=trackname, header=header, orderByScore=orderByScore)
 	}
 	if ('peaks' %in% what) {
-		exportMultivariateCalls(multi.hmm, filename, separate.tracks=TRUE, exclude.states, include.states, header=header, separate.files=separate.files, orderByScore=orderByScore)
+		exportMultivariateCalls(multi.hmm, filename=paste0(filename, '_peaks'), separate.tracks=TRUE, exclude.states, include.states, header=header, separate.files=separate.files, orderByScore=orderByScore)
 	}
 	if ('reads' %in% what) {
-		exportMultivariateReadCounts(multi.hmm, filename, header=header, separate.files=separate.files)
+		exportMultivariateReadCounts(multi.hmm, filename=paste0(filename, '_reads'), header=header, separate.files=separate.files)
 	}
 }
 

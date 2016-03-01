@@ -95,9 +95,9 @@ collapseBins = function(data, column2collapseBy=NULL, columns2sumUp=NULL, column
 	collapsed.bins <- list()
 	collapsed.bins[[names(data)[1]]] <- data[which(compare),1] #which to remove NAs which shouldn't be there in the first place
 	collapsed.bins[[names(data)[2]]] <- data[which(compare),2]
-	collapsed.bins[[names(data)[3]]] <- data[c((which(compare==TRUE)-1)[-1],numbins), 3]
+	collapsed.bins[[names(data)[3]]] <- data[c((which(compare)-1)[-1],numbins), 3]
 	if (length(ind_morecols)==1) {
-		collapsed.bins[[names(data)[column2collapseBy]]] <- data[which(compare), ind_morecols]
+		collapsed.bins[[names(data)[ind_morecols]]] <- data[which(compare), ind_morecols]
 	} else if (length(ind_morecols)>1) {
 		lcb <- length(collapsed.bins)
 		lmc <- length(ind_morecols)
