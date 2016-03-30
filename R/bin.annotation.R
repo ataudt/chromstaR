@@ -21,13 +21,13 @@ bin.annotation = function(annotation.file, reference.genome.file, outputfolder="
 
 	# Read in the data
 	cat("Reading file",basename(annotation.file),"...")
-	annotation = read.table(annotation.file, sep="\t", header=TRUE)
+	annotation = utils::read.table(annotation.file, sep="\t", header=TRUE)
 	annotation$txDiff = annotation$txEnd - annotation$txStart
 	annotation$cdsDiff = annotation$cdsEnd - annotation$cdsStart
 	cat(" done\n")
 
 	# Reference genome
-	reference.genome = read.table(reference.genome.file, row.names=1)
+	reference.genome = utils::read.table(reference.genome.file, row.names=1)
 
 	# Do the loop for all binsizes
 	for (binsize in binsizes) {

@@ -87,7 +87,7 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 	## Prepare the HMM
 	params <- prepare.multivariate(modellist, use.states=use.states, num.states=num.states)
 	bins <- params$bins
-	reads <- params$reads
+	reads <- params$counts
 	numbins <- params$numbins
 	nummod <- params$nummod
 	comb.states2use <- params$comb.states
@@ -113,11 +113,11 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 	}
 
 	### Define cleanup behaviour ###
-	on.exit(.C("R_multivariate_cleanup", as.integer(nummod)))
+	on.exit(.C("C_multivariate_cleanup", as.integer(nummod)))
 
 	## Starting multivariate HMM
 	message("\nStarting multivariate HMM")
-	message("Using the following combinatorial states, covering ", mean(comb.states.per.bin %in% comb.states2use)*100, "% of the bins:\n", paste(comb.states2use, collapse=" "),"\n", appendLF=F)
+	message("Using the following combinatorial states, covering ", mean(comb.states.per.bin %in% comb.states2use)*100, "% of the bins:\n", paste(comb.states2use, collapse=" "),"\n", appendLF=FALSE)
 
 	# Prepare input for C function
 	rs <- unlist(lapply(distributions,"[",2:3,'size'))
@@ -176,7 +176,7 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 			max.time.temp <- checkpoint.after.time
 		}
 		# Call the C function
-		hmm <- .C("R_multivariate_hmm",
+		hmm <- .C("C_multivariate_hmm",
 			reads = as.integer(as.vector(reads)), # int* multiO
 			num.bins = as.integer(numbins), # int* T
 			num.states = as.integer(numstates2use), # int* N
@@ -218,9 +218,9 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 			result$IDs <- IDs
 		## Bin coordinates, posteriors and states
 			result$bins <- bins
-			result$bins$reads <- reads
+			result$bins$counts <- reads
 			if (get.posteriors) {
-				message("Transforming posteriors to `per sample` representation ...", appendLF=F); ptm <- proc.time()
+				ptm <- startTimedMessage("Transforming posteriors to `per sample` representation ...")
 				hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
 				colnames(hmm$posteriors) <- paste0("P(",hmm$comb.states,")")
 				result$bins$score <- do.call(pmax,as.list(as.data.frame(hmm$posteriors)))
@@ -228,9 +228,9 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 				post.per.track <- hmm$posteriors %*% binstates
 				colnames(post.per.track) <- result$IDs
 				result$bins$posteriors <- post.per.track
-				time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+				stopTimedMessage(ptm)
 			}
-			message("Calculating states from posteriors ...", appendLF=F); ptm <- proc.time()
+			ptm <- startTimedMessage("Calculating states from posteriors ...")
 			if (!is.null(use.states$state)) {
 				state.levels <- levels(use.states$state)
 			} else {
@@ -241,14 +241,14 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 			} else {
 				result$bins$state <- factor(hmm$states, levels=state.levels)
 			}
-			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+			stopTimedMessage(ptm)
 			if (keep.densities) {
 				result$bins$densities <- matrix(hmm$densities, ncol=hmm$num.states)
 				colnames(result$bins$densities) <- hmm$comb.states
 			}
 			
 		## Segmentation
-			message("Making segmentation ...", appendLF=F); ptm <- proc.time()
+			ptm <- startTimedMessage("Making segmentation ...")
 			df <- as.data.frame(result$bins)
 			ind.readcols <- grep('^reads', names(df))
 			ind.postcols <- grep('^posteriors', names(df))
@@ -265,7 +265,7 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 			if (!keep.posteriors) {
 				result$bins$posteriors <- NULL
 			}
-			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+			stopTimedMessage(ptm)
 		## Add combinations
 			if (!is.null(use.states)) {
 				mapping <- use.states$combination
@@ -277,7 +277,7 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 		## Parameters
 			# Weights
 			tstates <- table(hmm$states)
-			result$weights <- sort(tstates/sum(tstates), decreasing=T)
+			result$weights <- sort(tstates/sum(tstates), decreasing=TRUE)
 			result$weights.univariate <- weights
 			# Transition matrices
 			result$transitionProbs <- matrix(hmm$A, ncol=numstates2use, byrow=TRUE)

@@ -8,22 +8,23 @@
 #' @param binsize Force the resulting \link{GRanges} to have this bin size.
 #' @return A \link{GRanges} object.
 #' @author Aaron Taudt
+#' @importFrom utils read.table
 bed2GRanges <- function(bedfile, chrom.length.file, skip=1, binsize=NULL) {
 
 	# File with chromosome lengths (1-based)
-	chrom.lengths.df <- read.table(chrom.length.file)
+	chrom.lengths.df <- utils::read.table(chrom.length.file)
 	chrom.lengths <- chrom.lengths.df[,2]
 	names(chrom.lengths) <- chrom.lengths.df[,1]
 	# File with reads, determine classes first for faster import (0-based)
-	tab5rows <- read.table(bedfile, nrows=5, skip=skip)
+	tab5rows <- utils::read.table(bedfile, nrows=5, skip=skip)
 	classes.in.bed <- sapply(tab5rows, class)
 	classes <- rep("NULL",length(classes.in.bed))
 	classes[1:4] <- classes.in.bed[1:4]
-	data <- read.table(bedfile, colClasses=classes, skip=skip)
+	data <- utils::read.table(bedfile, colClasses=classes, skip=skip)
 	# Convert to GRanges object
-	data <- GenomicRanges::GRanges(seqnames=Rle(data[,1]),
+	data <- GenomicRanges::GRanges(seqnames=data[,1],
 																	ranges=IRanges(start=data[,2]+1, end=data[,3]+1),	# +1 to match coordinate systems
-																	strand=Rle(strand("*"), nrow(data)),
+																	strand="*",
 																	state=data[,4])
 	seqlengths(data) <- as.integer(chrom.lengths[names(seqlengths(data))])
 	chroms.in.data <- seqlevels(data)
@@ -39,7 +40,7 @@ bed2GRanges <- function(bedfile, chrom.length.file, skip=1, binsize=NULL) {
 # 		} else {
 # 			numbins <- chrom.lengths[chrom]/binsize
 # 		}
-# 		ibinned <- GenomicRanges::GRanges(seqnames=Rle(rep(chrom, numbins)),
+# 		ibinned <- GenomicRanges::GRanges(seqnames=rep(chrom, numbins),
 # 																				ranges=IRanges(start=seq(from=1, by=binsize, length=numbins), end=seq(from=binsize, by=binsize, length=numbins)))
 # 		seqlengths(ibinned) <- chrom.lengths[chrom]
 # 		suppressWarnings( binned <- c(binned, ibinned) )
@@ -77,9 +78,9 @@ bed2GRanges <- function(bedfile, chrom.length.file, skip=1, binsize=NULL) {
 			infstarts <- seq(starts[1], ends[length(ends)]-1, by=binsize)
 			infends <- seq(starts[1]-1+binsize, ends[length(ends)]-2+binsize, by=binsize)
 
-			inflated.chrom <- GenomicRanges::GRanges(seqnames=Rle(infchroms),
+			inflated.chrom <- GenomicRanges::GRanges(seqnames=infchroms,
 																								ranges=IRanges(start=infstarts, end=infends),
-																								strand=Rle(strand('*'), sum(numbins)),
+																								strand="*",
 																								state=infstates)
 			suppressWarnings( inflated.data[[i1]] <- inflated.chrom )
 		}

@@ -9,6 +9,7 @@
 #' @param percentages Set to \code{TRUE} if you want to have percentages (0 to 1) instead of fold enrichments returned. Note that in this case different features are not directly comparable.
 #' @return A named array with fold enrichments. If \code{percentages=TRUE} a list with arrays of percentage (0 to 1) enrichments.
 #' @author Aaron Taudt
+#' @importFrom S4Vectors subjectHits queryHits
 #' @export
 foldEnrichment <- function(multi.hmm, featurelist, combinations=NULL, percentages=FALSE) {
 	
@@ -35,11 +36,11 @@ foldEnrichment <- function(multi.hmm, featurelist, combinations=NULL, percentage
 			feature <- featurelist[[ifeat]]
 			ind <- findOverlaps(bins.mask, feature)
 
-			binsinfeature <- bins.mask[unique(queryHits(ind))]
+			binsinfeature <- bins.mask[unique(S4Vectors::queryHits(ind))]
 			sum.binsinfeature <- sum(as.numeric(width(binsinfeature)))
 			perc.combstate.in.feature[ifeat,icomb] <- sum.binsinfeature / combstate.length
 
-			featuresinbins <- feature[unique(subjectHits(ind))]
+			featuresinbins <- feature[unique(S4Vectors::subjectHits(ind))]
 			sum.featuresinbins <- sum(as.numeric(width(featuresinbins)))
 			perc.feature.in.combstate[ifeat,icomb] <- sum.featuresinbins / feature.lengths[[ifeat]]
 
@@ -105,6 +106,7 @@ expressionOverlap <- function(multi.hmm, expression, combinations=NULL, return.m
 #' @param combinations A vector with combinations for which the expression overlap will be calculated. If \code{NULL} all combinations will be considered.
 #' @return A list with vectors of mean expression values per percentile for each combinatorial state. 
 #' @author Aaron Taudt
+#' @importFrom S4Vectors queryHits
 #' @export
 expressionAtPercentageOverlap <- function(multi.hmm, expression, combinations=NULL) {
 
@@ -122,7 +124,7 @@ expressionAtPercentageOverlap <- function(multi.hmm, expression, combinations=NU
 	for (icomb in 1:length(comb.levels)) {
 		mask <- bins$combination == comb.levels[icomb]
 		ind <- findOverlaps(expression, bins[mask])
-		rle <- rle(queryHits(ind))
+		rle <- rle(S4Vectors::queryHits(ind))
 		expression$num.bins <- 0
 		expression$num.bins[rle$values] <- rle$lengths
 		expression$genewidth <- width(expression)
@@ -206,7 +208,7 @@ transitionFrequencies <- function(multi.hmms=NULL, zero.states="", combstates=NU
 	levels.combstates <- setdiff(levels.combstates, zero.states)
 	levels.combstates <- gsub('-','_',levels.combstates)
 	for (combination in levels.combstates) {
-		mask <- intersect(grep(paste0('\\<',combination,'\\>'), freqtrans$transition), grep(paste(paste0('\\<',setdiff(levels.combstates,combination),'\\>'), collapse='|'), freqtrans$transition, invert=T))
+		mask <- intersect(grep(paste0('\\<',combination,'\\>'), freqtrans$transition), grep(paste(paste0('\\<',setdiff(levels.combstates,combination),'\\>'), collapse='|'), freqtrans$transition, invert=TRUE))
 		freqtrans$group[mask] <- paste0('stage-specific ',combination)
 		mask <- sapply(gregexpr(paste0('\\<',combination,'\\>'),freqtrans$transition), length) == num.models
 		freqtrans$group[mask] <- paste0('constant ', combination)

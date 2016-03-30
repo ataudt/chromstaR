@@ -48,7 +48,7 @@ scanBinsizes = function(files.binned, outputfolder, chromosomes="chr10", eps=0.0
 		if (!file.exists(path.sim.bin)) dir.create(path.sim.bin)
 		simfile = file.path(path.sim.bin, paste0("simulated.RData"))
 		if (!file.exists(simfile)) {
-			message('  simulating data ...', appendLF=F); ptm <- proc.time()
+			ptm <- startTimedMessage('  simulating data ...')
 			files2sim = list.files(path.uni, full.names=TRUE)
 			sim.data.list = list()
 			for (binfile in files.binned) {
@@ -62,23 +62,23 @@ scanBinsizes = function(files.binned, outputfolder, chromosomes="chr10", eps=0.0
 				sim.binfile <- file.path(path.sim.bin, paste0("simulated_",basename(binfile)))
 				save(simulated.binned.data, file=sim.binfile)
 			}
-			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+			stopTimedMessage(ptm)
 			# Save with states
-			message('  saving to file ...', appendLF=F); ptm <- proc.time()
+			ptm <- startTimedMessage('  saving to file ...')
 			save(sim.data.list, file=simfile)
-			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+			stopTimedMessage(ptm)
 		} else {
-			message('  loading simulated data ...', appendLF=F); ptm <- proc.time()
+			ptm <- startTimedMessage('  loading simulated data ...')
 			sim.data.list = get(load(simfile))
-			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+			stopTimedMessage(ptm)
 		}
 		# Get simulated original states
-		message("  getting simulated original states ...", appendLF=F); ptm <- proc.time()
+		ptm <- startTimedMessage("  getting simulated original states ...")
 		sim.states.list = lapply(lapply(sim.data.list, "[[", 'bins'), function(gr) { return(gr$state) } )
 		for (binfile in files.binned) {
 			sim.states.list[[basename(binfile)]] = state.labels[sim.states.list[[basename(binfile)]]]
 		}
-		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		stopTimedMessage(ptm)
 
 		## Univariate (simulated)
 		path.sim.uni = file.path(outputfolder, paste0("simulated_rep_",irep,"_results_univariate"))
@@ -103,17 +103,17 @@ scanBinsizes = function(files.binned, outputfolder, chromosomes="chr10", eps=0.0
 				unimodel <- get(load(sim.unifile))
 			}
 			# Get univariate predicted states
-			message("  getting predicted univariate states...", appendLF=F); ptm <- proc.time()
+			ptm <- startTimedMessage("  getting predicted univariate states...")
 			uni.states.list[[basename(binfile)]] = unimodel$bins$state
 			binsizes[basename(binfile)] <- width(unimodel$bins)[1]
-			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+			stopTimedMessage(ptm)
 
 			# Performance
-			message("  calculating performance...", appendLF=F); ptm <- proc.time()
+			ptm <- startTimedMessage("  calculating performance...")
 			mask = sim.states.list[[basename(binfile)]] != uni.states.list[[basename(binfile)]]
 			miscalls = length(which(mask)) / length(sim.states.list[[basename(binfile)]])
 			performance = rbind(performance, data.frame(simulation=irep, binsize=binsizes[basename(binfile)], miscalls))
-			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+			stopTimedMessage(ptm)
 
 			## Plot miscalls
 			if (plot.progress) {

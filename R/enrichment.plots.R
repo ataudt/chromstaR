@@ -33,16 +33,16 @@ plotHeatmapFoldEnrichment <- function(enrichment.table) {
 	et <- enrichment.table
 
 	## Get columns with fold enrichment values
-	fe.names <- unlist(lapply(as.list(names(et)), function(x) { grep(x=x, pattern='fold_enrich', value=T) } ))
+	fe.names <- unlist(lapply(as.list(names(et)), function(x) { grep(x=x, pattern='fold_enrich', value=TRUE) } ))
 	fe <- et[,c('state',fe.names)]
 	names(fe) <- gsub(pattern='\\.fold_enrich', replacement='', x=names(fe))
 	df.feat <- melt(fe, id.vars='state', variable.name='feature', value.name='fold.enrichment')
 
 	## Get columns with p-values
-	p.dep.names <- unlist(lapply(as.list(names(et)), function(x) { grep(x=x, pattern='p_dep', value=T) } ))
+	p.dep.names <- unlist(lapply(as.list(names(et)), function(x) { grep(x=x, pattern='p_dep', value=TRUE) } ))
 	pv <- et[,c('state',p.dep.names)]
 	df.p.dep <- melt(pv, id.vars='state', variable.name='feature', value.name='p.value')
-	p.enr.names <- unlist(lapply(as.list(names(et)), function(x) { grep(x=x, pattern='p_enr', value=T) } ))
+	p.enr.names <- unlist(lapply(as.list(names(et)), function(x) { grep(x=x, pattern='p_enr', value=TRUE) } ))
 	pv <- et[,c('state',p.enr.names)]
 	df.p.enr <- melt(pv, id.vars='state', variable.name='feature', value.name='p.value')
 	# Combine

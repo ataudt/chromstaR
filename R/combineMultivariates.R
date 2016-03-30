@@ -31,13 +31,13 @@ combineMultivariates <- function(conditions=NULL, marks=NULL) {
 		## Add combinatorial states
 		combs <- list()
 		combs[[names(conditions)[1]]] <- hmm$bins$combination
-		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		stopTimedMessage(ptm)
 		
 		for (i1 in 2:length(conditions)) {
 			message("Processing condition ",names(conditions)[i1]," ...", appendLF=FALSE); ptm <- proc.time()
 			hmm <- suppressMessages( loadMultiHmmsFromFiles(conditions[[i1]])[[1]] )
 			combs[[names(conditions)[i1]]] <- hmm$bins$combination
-			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+			stopTimedMessage(ptm)
 		}
 		combs.df <- as(combs,'DataFrame')
 		
@@ -72,7 +72,7 @@ combineMultivariates <- function(conditions=NULL, marks=NULL) {
 				names(mapping) <- comblevels
 				states[[mark]][[cond]] <- c('',mark)[mapping[hmm$bins$combination]+1] # no need to coerce to character here because the order is the same
 			}
-			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+			stopTimedMessage(ptm)
 		}
 		### Paste the marks over each condition
 		message("Pasting into combinatorial states")
@@ -86,7 +86,7 @@ combineMultivariates <- function(conditions=NULL, marks=NULL) {
 			comb <- sub('^\\+','', comb)
 			comb <- sub('\\+$','', comb)
 			combs[[cond]] <- comb
-			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+			stopTimedMessage(ptm)
 		}
 		combs.df <- as.data.frame(combs)
 		combs.df <- as(combs.df, 'DataFrame')
@@ -105,7 +105,7 @@ combineMultivariates <- function(conditions=NULL, marks=NULL) {
 	combined.segments <- as(segments.df, 'GRanges')
 	seqlengths(combined.segments) <- seqlengths(bins)
 	mcols(bins)$state <- NULL
-	time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+	stopTimedMessage(ptm)
 	
 	### Redo the segmentation for each condition separately
 	message("Redoing segmentation for each condition separately ...", appendLF=FALSE); ptm <- proc.time()
@@ -120,7 +120,7 @@ combineMultivariates <- function(conditions=NULL, marks=NULL) {
 		seqlengths(segments.cond) <- seqlengths(bins)
 		segments[[cond]] <- segments.cond
 	}
-	time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+	stopTimedMessage(ptm)
 	
 	### Make return object
 	hmm <- list()

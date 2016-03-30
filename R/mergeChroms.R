@@ -39,13 +39,13 @@ mergeChroms <- function(multi.hmm.list, filename=NULL) {
 		if (i1 < num.models) remove(hmm)	# remove it because otherwise R will make a copy when we NULL the underlying reference (multi.hmm.list[[1]])
 		multi.hmm.list[[1]] <- NULL
 	}
-	time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+	stopTimedMessage(ptm)
 
 	## Merge the list
-	message("Merging ...", appendLF=F); ptm <- proc.time()
+	ptm <- startTimedMessage("Merging ...")
 	bins <- do.call('c', bins)	# this can be too memory intensive if posteriors are present
 	segments <- do.call('c', segments)
-	time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+	stopTimedMessage(ptm)
 
 	## Reassign
 	multi.hmm <- hmm
@@ -53,16 +53,16 @@ mergeChroms <- function(multi.hmm.list, filename=NULL) {
 	multi.hmm$segments <- segments
 
 	## Weights
-	message("Calculating weights ...", appendLF=F); ptm <- proc.time()
+	ptm <- startTimedMessage("Calculating weights ...")
 	multi.hmm$weights <- table(multi.hmm$bins$state) / length(multi.hmm$bins)
-	time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+	stopTimedMessage(ptm)
 
 	if (is.null(filename)) {
 		return(multi.hmm)
 	} else {
-		message("Writing to file ",filename," ...", appendLF=F); ptm <- proc.time()
+		ptm <- startTimedMessage("Writing to file ",filename," ...")
 		save(multi.hmm, file=filename)
-		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		stopTimedMessage(ptm)
 	}
 
 	return(NULL)

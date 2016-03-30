@@ -13,10 +13,11 @@ NULL
 #' @param ... Additional arguments.
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
 #' @method plot character
+#' @importFrom graphics plot
 #' @export
 plot.character <- function(x, ...) {
 	x <- get(load(x))
-	plot(x, ...)
+	graphics::plot(x, ...)
 }
 
 #' Plotting function for binned read counts
@@ -94,30 +95,36 @@ plot.chromstaR_multivariateHMM <- function(x, type='transitionMatrix', ...) {
 }
 
 # ============================================================
+# Helper functions
+# ============================================================
+get_rightxlim <- function(counts) {
+	if (!any(!counts==0)) {
+		return(rightxlim=10)
+	}
+	rightxlim1 <- median(counts[counts>0])*7
+	tab <- table(counts)
+	tab <- tab[names(tab)!='0']
+	breaks <- as.numeric(names(tab))
+	rightxlim2 <- breaks[tab<=5 & breaks>median(counts)*2][1]
+	rightxlim <- min(rightxlim1,rightxlim2, na.rm=TRUE)
+	if (length(rightxlim)==0 | is.na(rightxlim) | is.infinite(rightxlim)) {
+		rightxlim <- 1
+	}
+	return(rightxlim)
+}
+
+# ============================================================
 # Plot a read histogram
 # ============================================================
 #' Plot a histogram of binned read counts
 #'
 #' Plot a histogram of binned read counts from \code{\link{binned.data}}
 #'
-#' @param binned.data A \code{\link{binned.data}} object containing binned read counts in meta-column 'reads'.
+#' @param binned.data A \code{\link{binned.data}} object containing binned read counts in meta-column 'counts'.
 #' @param chromosomes,start,end Plot the histogram only for the specified chromosomes, start and end position.
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
+#' @importFrom graphics hist
 plotBinnedDataHistogram <- function(binned.data, chromosomes=NULL, start=NULL, end=NULL) {
-
-	# -----------------------------------------
-	# Get right x limit
-	get_rightxlim <- function(histdata, reads) {
-		if (!any(!reads==0)) {
-			return(rightxlim=10)
-		}
-		rightxlim1 <- median(reads[reads>0])*7
-		breaks <- histdata$breaks[1:length(histdata$counts)]
-		counts <- histdata$counts
-		rightxlim2 <- breaks[counts<=5 & breaks>median(reads)*2][1]
-		rightxlim <- min(c(rightxlim1,rightxlim2), na.rm=TRUE)
-		return(rightxlim)
-	}
 
 	# Select the rows to plot
 	selectmask <- rep(TRUE,length(binned.data))
@@ -140,20 +147,16 @@ plotBinnedDataHistogram <- function(binned.data, chromosomes=NULL, start=NULL, e
 			selectmask <- selectmask & selectend
 		}
 	}
-	if (length(which(selectmask)) != length(binned.data$reads)) {
-		reads <- binned.data$reads[selectmask]
+	if (length(which(selectmask)) != length(binned.data$counts)) {
+		counts <- binned.data$counts[selectmask]
 	} else {
-		reads <- binned.data$reads
+		counts <- binned.data$counts
 	}
 
-	# Find the x limits
-	breaks <- max(reads)
-	if (max(reads)==0) { breaks <- 1 }
-	histdata <- hist(reads, right=FALSE, breaks=breaks, plot=FALSE)
-	rightxlim <- get_rightxlim(histdata, reads)
 
 	# Plot the histogram
-	ggplt <- ggplot(data.frame(reads)) + geom_histogram(aes_string(x='reads', y='..density..'), binwidth=1, color='black', fill='white') + coord_cartesian(xlim=c(0,rightxlim)) + theme_bw() + xlab("read count")
+	rightxlim <- get_rightxlim(counts)
+	ggplt <- ggplot(data.frame(counts)) + geom_histogram(aes_string(x='counts', y='..density..'), binwidth=1, color='black', fill='white') + coord_cartesian(xlim=c(0,rightxlim)) + theme_bw() + xlab("read count")
 	return(ggplt)
 
 }
@@ -170,7 +173,7 @@ plotMultivariateHistograms <- function(multi.hmm) {
 		uni.hmm$ID <- multi.hmm$IDs[i1]
 		uni.hmm$bins <- multi.hmm$bins
 		uni.hmm$bins$state <- NULL
-		uni.hmm$bins$reads <- multi.hmm$bins$reads[,i1]
+		uni.hmm$bins$counts <- multi.hmm$bins$counts[,i1]
 		uni.hmm$weights <- multi.hmm$weights.univariate[[i1]]
 		uni.hmm$distributions <- multi.hmm$distributions[[i1]]
 		class(uni.hmm) <- class.univariate.hmm
@@ -184,14 +187,15 @@ plotMultivariateHistograms <- function(multi.hmm) {
 # =================================================================
 # Plot count correlation heatmap for a multivariate HMM
 # =================================================================
+#' @importFrom stats dist hclust
 plotMultivariateCorrelation <- function(multi.hmm) {
 
-	cr <- cor(multi.hmm$bins$reads)
-	hc <- hclust(dist(cr))
+	cr <- cor(multi.hmm$bins$counts)
+	hc <- stats::hclust(stats::dist(cr))
 	df <- melt(cr, value.name='correlation')
 	df$Var1 <- factor(df$Var1, levels=levels(df$Var1)[hc$order])
 	df$Var2 <- factor(df$Var2, levels=levels(df$Var2)[hc$order])
-	ggplt <- ggplot(df) + geom_tile(aes(x=Var1, y=Var2, fill=correlation)) + xlab('') + ylab('') + theme(axis.text.x = element_text(angle=45, hjust=1))
+	ggplt <- ggplot(df) + geom_tile(aes_string(x='Var1', y='Var2', fill='correlation')) + xlab('') + ylab('') + theme(axis.text.x = element_text(angle=45, hjust=1))
 	return(ggplt)
 
 }
@@ -207,26 +211,14 @@ plotMultivariateCorrelation <- function(multi.hmm) {
 #' @param state Plot the histogram only for the specified state. One of \code{c('unmodified','modified')}.
 #' @param chromosomes,start,end Plot the histogram only for the specified chromosomes, start and end position.
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
+#' @importFrom graphics hist
+#' @importFrom stats dnbinom
 plotUnivariateHistogram <- function(model, state=NULL, chromosomes=NULL, start=NULL, end=NULL, linewidth=1) {
 
 	## Check user input
 	if (check.univariate.model(model)!=0) {
 		model <- get(load(model))
 		if (check.univariate.model(model)!=0) stop("argument 'model' expects a univariate HMM or a file that contains a univariate HMM")
-	}
-
-	# -----------------------------------------
-	# Get right x limit
-	get_rightxlim <- function(histdata, reads) {
-		if (!any(!reads==0)) {
-			return(rightxlim=10)
-		}
-		rightxlim1 <- median(reads[reads>0])*7
-		breaks <- histdata$breaks[1:length(histdata$counts)]
-		counts <- histdata$counts
-		rightxlim2 <- breaks[counts<=5 & breaks>median(reads)][1]
-		rightxlim <- min(c(rightxlim1,rightxlim2), na.rm=TRUE)
-		return(rightxlim)
 	}
 
 	# Select the rows to plot
@@ -249,8 +241,8 @@ plotUnivariateHistogram <- function(model, state=NULL, chromosomes=NULL, start=N
 	if (!is.null(state)) {
 		selectmask <- selectmask & model$bins$state==state
 	}
-	if (length(which(selectmask)) != length(model$bins$reads)) {
-		reads <- model$bins$reads[selectmask]
+	if (length(which(selectmask)) != length(model$bins$counts)) {
+		counts <- model$bins$counts[selectmask]
 		states <- model$bins$state[selectmask]
 		weights <- rep(NA, 3)
 		weights[1] <- length(which(states=="zero-inflation"))
@@ -258,21 +250,17 @@ plotUnivariateHistogram <- function(model, state=NULL, chromosomes=NULL, start=N
 		weights[3] <- length(which(states=="modified"))
 		weights <- weights / length(states)
 	} else {
-		reads <- model$bins$reads
+		counts <- model$bins$counts
 		weights <- model$weights
 	}
 
-	# Find the x limits
-	breaks <- max(reads)
-	if (max(reads)==0) { breaks <- 1 }
-	histdata <- hist(reads, right=FALSE, breaks=breaks, plot=FALSE)
-	rightxlim <- get_rightxlim(histdata, reads)
 
 	# Plot the histogram
-	ggplt <- ggplot(data.frame(reads)) + geom_histogram(aes_string(x='reads', y='..density..'), binwidth=1, color='black', fill='white') + coord_cartesian(xlim=c(0,rightxlim)) + theme_bw() + xlab("read count")
+	rightxlim <- get_rightxlim(counts)
+	ggplt <- ggplot(data.frame(counts)) + geom_histogram(aes_string(x='counts', y='..density..'), binwidth=1, color='black', fill='white') + coord_cartesian(xlim=c(0,rightxlim)) + theme_bw() + xlab("read count")
 
 	### Add fits to the histogram
-	x <- 0:max(reads)
+	x <- 0:max(counts)
 	distributions <- data.frame(x)
 
 	# Unmodified
@@ -280,7 +268,7 @@ plotUnivariateHistogram <- function(model, state=NULL, chromosomes=NULL, start=N
 	if (is.nan(w)) { w <- 0 }
 	distributions$unmodified <- (1-weights[3]) * dzinbinom(x, w, model$distributions[2,'size'], model$distributions[2,'prob'])
 	# Modified
-	distributions$modified <- weights[3] * dnbinom(x, model$distributions[3,'size'], model$distributions[3,'prob'])
+	distributions$modified <- weights[3] * stats::dnbinom(x, model$distributions[3,'size'], model$distributions[3,'prob'])
 	# Total
 	distributions$total <- distributions$unmodified + distributions$modified
 	# Convert to long format
@@ -291,7 +279,7 @@ plotUnivariateHistogram <- function(model, state=NULL, chromosomes=NULL, start=N
 	lvars <- round(model$distributions[,'variance'], 2)[-1]
 	lweights <- round(c(1-weights[3], weights[3]), 2)
 	legend <- paste0(c('unmodified','modified'), ", mean=", lmeans, ", var=", lvars, ", weight=", lweights)
-	legend <- c(legend, paste0('total, mean(data)=', round(mean(reads),2), ', var(data)=', round(var(reads),2)))
+	legend <- c(legend, paste0('total, mean(data)=', round(mean(counts),2), ', var(data)=', round(var(counts),2)))
 	ggplt <- ggplt + ggtitle(model$ID)
 
 	### Plot the distributions
@@ -314,7 +302,7 @@ plotUnivariateHistogram <- function(model, state=NULL, chromosomes=NULL, start=N
 }
 
 # ============================================================
-# Plot a karyogram with reads and univariate calls
+# Plot a karyogram with read counts and univariate calls
 # ============================================================
 #' Plot a karyogram with read counts and univariate peak calls
 #'
@@ -336,7 +324,7 @@ plotUnivariateKaryogram <- function(model) {
 	ggplt <- ggbio::autoplot(model$segments[model$segments$state=='modified'], layout='karyogram', color=state.colors['modified'])
 
 	# Plot the read counts
-	ggplt <- ggplt + ggbio::layout_karyogram(model$bins, aes_string(x='start', y='reads'), ylim=c(10,40), geom='line', color=state.colors['reads'])
+	ggplt <- ggplt + ggbio::layout_karyogram(model$bins, aes_string(x='start', y='counts'), ylim=c(10,40), geom='line', color=state.colors['counts'])
 	ggplt <- ggplt + theme(axis.text.y=element_blank(), panel.background=element_blank())
 
 	return(ggplt)
@@ -345,26 +333,27 @@ plotUnivariateKaryogram <- function(model) {
 # ============================================================
 # Plot a read histogram in normal space of the given state
 # ============================================================
+#' @importFrom stats pnbinom qnorm dnorm
 plotUnivariateNormalTransformation <- function(model, state='unmodified') {
 
 	## Plot settings
 	cols <- state.colors[c("unmodified","modified")]
 
-	## Transform the reads
-	df <- as.data.frame(model$bins)[,c('reads','state')]
+	## Transform the counts
+	df <- as.data.frame(model$bins)[,c('counts','state')]
 	# Transform to uniform space
 	mask <- df$state=='modified'
-	df$ureads[!mask] <- pzinbinom(df$reads[!mask], model$weights[1], model$distributions[2,'size'], model$distributions[2,'prob'])
-	df$ureads[mask] <- pnbinom(df$reads[mask], model$distributions[3,'size'], model$distributions[3,'prob'])
+	df$ucounts[!mask] <- pzinbinom(df$counts[!mask], model$weights[1], model$distributions[2,'size'], model$distributions[2,'prob'])
+	df$ucounts[mask] <- stats::pnbinom(df$counts[mask], model$distributions[3,'size'], model$distributions[3,'prob'])
 	# Transform to normal space
-	df$nreads <- qnorm(df$ureads)
+	df$ncounts <- stats::qnorm(df$ucounts)
 
 	## Make the plots
-	subset <- df$nreads[df$state==state]
+	subset <- df$ncounts[df$state==state]
 	breaks <- c(-Inf,sort(as.numeric(names(table(subset)))))
 	x <- seq(-4,4,0.1)
 	title <- paste0("Transformed emission density for state ",state)
-	ggplt <- ggplot() + geom_histogram(data=data.frame(ureads=subset), aes_string(x='ureads', y='..density..'), breaks=breaks, right=TRUE, col='black', fill=cols[state]) + theme_bw() + geom_line(data=data.frame(x=x, y=dnorm(x, mean=0, sd=1)), aes_string(x='x', y='y')) + xlab("transformed reads") + labs(title=title)
+	ggplt <- ggplot() + geom_histogram(data=data.frame(ucounts=subset), aes_string(x='ucounts', y='..density..'), breaks=breaks, right=TRUE, col='black', fill=cols[state]) + theme_bw() + geom_line(data=data.frame(x=x, y=stats::dnorm(x, mean=0, sd=1)), aes_string(x='x', y='y')) + xlab("transformed counts") + labs(title=title)
 	return(ggplt)
 
 }
@@ -375,8 +364,8 @@ plotUnivariateNormalTransformation <- function(model, state='unmodified') {
 plotUnivariateBoxplot <- function(model) {
 
 	## Boxplot
-	df <- as.data.frame(model$bins)[,c('state','reads')]
-	ggplt <- ggplot() + theme_bw() + geom_boxplot(data=df, aes_string(x='state', y='reads', fill='state')) + scale_fill_manual(values=state.colors)
+	df <- as.data.frame(model$bins)[,c('state','counts')]
+	ggplt <- ggplot() + theme_bw() + geom_boxplot(data=df, aes_string(x='state', y='counts', fill='state')) + scale_fill_manual(values=state.colors)
 	return(ggplt)
 
 }
@@ -411,7 +400,7 @@ plotCombinatorialEntropy <- function(gr, genome) {
 
 	## Get cytoband info
 	ideogram <- biovizBase::getIdeogram(genome=genome, cytoband=TRUE)
-	cytoband <- keepSeqlevels(ideogram, mixedsort(seqlevels(ideogram)))
+	cytoband <- GenomeInfoDb::keepSeqlevels(ideogram, mixedsort(seqlevels(ideogram)))
 	
 	# Reshape GRanges to get nice plotting
 	gr.low <- resize(gr, width=1, fix='start')

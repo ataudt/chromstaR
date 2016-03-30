@@ -21,13 +21,13 @@ loadHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 	if (is(hmm.list, class.univariate.hmm)) {
 		return(list(hmm.list))
 	} else if (is.character(hmm.list)) {
-		message("Loading univariate HMMs from files ...", appendLF=F); ptm <- proc.time()
+		ptm <- startTimedMessage("Loading univariate HMMs from files ...")
 		mlist <- list()
 		for (modelfile in hmm.list) {
 			mlist[[modelfile]] <- get(load(modelfile))
 			if (!is(mlist[[modelfile]], class.univariate.hmm)) {
 				if (strict) {
-					time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+					stopTimedMessage(ptm)
 					stop("File ",modelfile," does not contain an ",class.univariate.hmm," object.")
 				} else {
 					class(mlist[[modelfile]]) <- class.univariate.hmm
@@ -35,7 +35,7 @@ loadHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 				}
 			}
 		}
-		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		stopTimedMessage(ptm)
 		return(mlist)
 	} else if (check.univariate.modellist(hmm.list)==0) {
 		index <- which(unlist(lapply(hmm.list, function(hmm) { !is(hmm, class.univariate.hmm) })))
@@ -79,13 +79,13 @@ loadMultiHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 	if (is(hmm.list, class.multivariate.hmm)) {
 		return(list(hmm.list))
 	} else if (is.character(hmm.list)) {
-		message("Loading multivariate HMMs from files ...", appendLF=F); ptm <- proc.time()
+		ptm <- startTimedMessage("Loading multivariate HMMs from files ...")
 		mlist <- list()
 		for (modelfile in hmm.list) {
 			mlist[[modelfile]] <- get(load(modelfile))
 			if (!is(mlist[[modelfile]], class.multivariate.hmm)) {
 				if (strict) {
-					time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+					stopTimedMessage(ptm)
 					stop("File ",modelfile," does not contain a ",class.multivariate.hmm," object.")
 				} else {
 					class(modelfile) <- class.multivariate.hmm
@@ -93,7 +93,7 @@ loadMultiHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 				}
 			}
 		}
-		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		stopTimedMessage(ptm)
 		return(mlist)
 	} else if (check.multivariate.modellist(hmm.list)) {
 		index <- which(unlist(lapply(hmm.list, function(hmm) { !is(hmm, class.multivariate.hmm) })))

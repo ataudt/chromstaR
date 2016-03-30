@@ -1,3 +1,4 @@
+#' @importFrom stats pnbinom qnorm dnbinom
 prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 
 	nummod <- length(modellist)
@@ -6,9 +7,9 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 	names(IDs) <- NULL
 
 	### Extract the reads ###
-	message("Extracting reads from modellist...", appendLF=F)
+	message("Extracting reads from modellist...", appendLF=FALSE)
 	ptm <- proc.time()
-	reads <- sapply(modellist, function(x) { x$bins$reads })
+	reads <- sapply(modellist, function(x) { x$bins$counts })
 	colnames(reads) <- IDs
 	maxreads <- max(reads)
 	time <- proc.time() - ptm
@@ -21,7 +22,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 	weights <- lapply(modellist,"[[","weights")
 
 	### Get the combinatorial states ###
-	message("Getting combinatorial states...", appendLF=F)
+	message("Getting combinatorial states...", appendLF=FALSE)
 	ptm <- proc.time()
 	## Get the univariate states (zero inflation = 0, unmodified = 0, modified = 1) from the modellist
 	binary_statesmatrix <- matrix(rep(NA,numbins*nummod), ncol=nummod)
@@ -49,7 +50,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 	remove(modellist)
 
 	## We pre-compute the z-values for each number of reads
-	message("Computing pre z-matrix...", appendLF=F)
+	message("Computing pre z-matrix...", appendLF=FALSE)
 	ptm <- proc.time()
 	z.per.read <- array(NA, dim=c(maxreads+1, nummod, 2))
 # 	z_per_read = matrix(rep(NA,(maxreads+1)*nummod*2), ncol=nummod*2)
@@ -67,13 +68,13 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 				u = pzinbinom(xreads, w, size, prob)
 			} else if (i1 == 3) {
 				# Modified
-				u = pnbinom(xreads, size, prob)
+				u = stats::pnbinom(xreads, size, prob)
 			}
 
 			# Check for infinities in u and set them to max value which is not infinity
-			qnorm_u = qnorm(u)
+			qnorm_u = stats::qnorm(u)
 			mask <- qnorm_u==Inf
-			qnorm_u[mask] <- qnorm(1-1e-16)
+			qnorm_u[mask] <- stats::qnorm(1-1e-16)
 # 			testvec = qnorm_u!=Inf
 # 			qnorm_u = ifelse(testvec, qnorm_u, max(qnorm_u[testvec]))
 			z.per.read[ , imod, i1-1] <- qnorm_u
@@ -84,7 +85,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 	message(" ",round(time[3], 2),"s")
 
 	## Compute the z matrix
-	message("Transfering values into z-matrix...", appendLF=F)
+	message("Transfering values into z-matrix...", appendLF=FALSE)
 	ptm <- proc.time()
 	z.per.bin = array(NA, dim=c(numbins, nummod, 2), dimnames=list(bin=1:numbins, track=IDs, state.labels[2:3]))
 	for (imod in 1:nummod) {
@@ -99,7 +100,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 	message(" ",round(time[3], 2),"s")
 
 	### Calculate correlation matrix
-	message("Computing inverse of correlation matrix...", appendLF=F)
+	message("Computing inverse of correlation matrix...", appendLF=FALSE)
 	ptm <- proc.time()
 # 	covarianceMatrix = array(NA, dim=c(nummod,nummod,length(comb.states)))
 	correlationMatrix = array(NA, dim=c(nummod,nummod,length(comb.states)), dimnames=list(track=IDs, track=IDs, comb.state=comb.states))
@@ -213,7 +214,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 # 			} else if (rownames(distributions[[imod]])[ind.modstate] == 'modified') {
 # 				size <- distributions[[imod]][ind.modstate,'size']
 # 				prob <- distributions[[imod]][ind.modstate,'prob']
-# 				product <- product * dnbinom(reads[,imod], size, prob)
+# 				product <- product * stats::dnbinom(reads[,imod], size, prob)
 # 			}
 # 		}
 # 		exponent <- -0.5 * apply( ( z.temp %*% (correlationMatrixInverse2use[ , , istate] - diag(nummod)) ) * z.temp, 1, sum)

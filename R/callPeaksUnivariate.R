@@ -11,7 +11,7 @@
 #' @param eps Convergence threshold for the Baum-Welch algorithm.
 #' @param init One of the following initialization procedures:
 #' \describe{
-#' \item{\code{standard}}{The negative binomial of state 'unmodified' will be initialized with \code{mean=mean(reads)}, \code{var=var(reads)} and the negative binomial of state 'modified' with \code{mean=mean(reads)+1}, \code{var=var(reads)}. This procedure usually gives the fastest convergence.}
+#' \item{\code{standard}}{The negative binomial of state 'unmodified' will be initialized with \code{mean=mean(counts)}, \code{var=var(counts)} and the negative binomial of state 'modified' with \code{mean=mean(counts)+1}, \code{var=var(counts)}. This procedure usually gives the fastest convergence.}
 #' \item{\code{random}}{Mean and variance of the negative binomials will be initialized with random values (in certain boundaries, see source code). Try this if the \code{'standard'} procedure fails to produce a good fit.}
 #' \item{\code{empiric}}{Yet another way to initialize the Baum-Welch. Try this if the other two methods fail to produce a good fit.}
 #' }
@@ -23,7 +23,7 @@
 #' @param read.cutoff The default (\code{TRUE}) enables filtering of high read counts. Set \code{read.cutoff=FALSE} to disable this filtering.
 #' @param read.cutoff.quantile A quantile between 0 and 1. Should be near 1. Read counts above this quantile will be set to the read count specified by this quantile. Filtering very high read counts increases the performance of the Baum-Welch fitting procedure. However, if your data contains very few peaks they might be filtered out. If option \code{read.cutoff.absolute} is also specified, the minimum of the resulting cutoff values will be used. Set \code{read.cutoff=FALSE} to disable this filtering.
 #' @param read.cutoff.absolute Read counts above this value will be set to the read count specified by this value. Filtering very high read counts increases the performance of the Baum-Welch fitting procedure. However, if your data contains very few peaks they might be filtered out. If option \code{read.cutoff.quantile} is also specified, the minimum of the resulting cutoff values will be used. Set \code{read.cutoff=FALSE} to disable this filtering.
-#' @param max.mean If \code{mean(reads)>max.mean}, bins with low read counts will be set to 0. This is a workaround to obtain good fits in the case of large bin sizes.
+#' @param max.mean If \code{mean(counts)>max.mean}, bins with low read counts will be set to 0. This is a workaround to obtain good fits in the case of large bin sizes.
 #' @param FDR False discovery rate. code{NULL} means that the state with maximum posterior probability will be chosen, irrespective of its absolute probability (default=code{NULL}).
 #' @param control If set to \code{TRUE}, the binned data will be treated as control experiment. That means only state 'zero-inflation' and 'unmodified' will be used in the HMM.
 #' @param keep.posteriors If set to \code{TRUE} (default=\code{FALSE}), posteriors will be available in the output. This is useful to change the FDR later, but increases the necessary disk space to store the result.
@@ -75,7 +75,7 @@ callPeaksUnivariate2 <- function(binned.data, ID, prefit.on.chr, short=TRUE, eps
 #' @param eps Convergence threshold for the Baum-Welch algorithm.
 #' @param init One of the following initialization procedures:
 #' \describe{
-#' \item{\code{standard}}{The negative binomial of state 'unmodified' will be initialized with \code{mean=mean(reads)}, \code{var=var(reads)} and the negative binomial of state 'modified' with \code{mean=mean(reads)+1}, \code{var=var(reads)}. This procedure usually gives the fastest convergence.}
+#' \item{\code{standard}}{The negative binomial of state 'unmodified' will be initialized with \code{mean=mean(counts)}, \code{var=var(counts)} and the negative binomial of state 'modified' with \code{mean=mean(counts)+1}, \code{var=var(counts)}. This procedure usually gives the fastest convergence.}
 #' \item{\code{random}}{Mean and variance of the negative binomials will be initialized with random values (in certain boundaries, see source code). Try this if the \code{'standard'} procedure fails to produce a good fit.}
 #' \item{\code{empiric}}{Yet another way to initialize the Baum-Welch. Try this if the other two methods fail to produce a good fit.}
 #' }
@@ -87,7 +87,7 @@ callPeaksUnivariate2 <- function(binned.data, ID, prefit.on.chr, short=TRUE, eps
 #' @param read.cutoff The default (\code{TRUE}) enables filtering of high read counts. Set \code{read.cutoff=FALSE} to disable this filtering.
 #' @param read.cutoff.quantile A quantile between 0 and 1. Should be near 1. Read counts above this quantile will be set to the read count specified by this quantile. Filtering very high read counts increases the performance of the Baum-Welch fitting procedure. However, if your data contains very few peaks they might be filtered out. If option \code{read.cutoff.absolute} is also specified, the minimum of the resulting cutoff values will be used. Set \code{read.cutoff=FALSE} to disable this filtering.
 #' @param read.cutoff.absolute Read counts above this value will be set to the read count specified by this value. Filtering very high read counts increases the performance of the Baum-Welch fitting procedure. However, if your data contains very few peaks they might be filtered out. If option \code{read.cutoff.quantile} is also specified, the minimum of the resulting cutoff values will be used. Set \code{read.cutoff=FALSE} to disable this filtering.
-#' @param max.mean If \code{mean(reads)>max.mean}, bins with low read counts will be set to 0. This is a workaround to obtain good fits in the case of large bin sizes.
+#' @param max.mean If \code{mean(counts)>max.mean}, bins with low read counts will be set to 0. This is a workaround to obtain good fits in the case of large bin sizes.
 #' @param FDR False discovery rate. code{NULL} means that the state with maximum posterior probability will be chosen, irrespective of its absolute probability (default=code{NULL}).
 #' @param control If set to \code{TRUE}, the binned data will be treated as control experiment. That means only state 'zero-inflation' and 'unmodified' will be used in the HMM.
 #' @param keep.posteriors If set to \code{TRUE} (default=\code{FALSE}), posteriors will be available in the output. This is useful to change the FDR later, but increases the necessary disk space to store the result.
@@ -100,6 +100,7 @@ callPeaksUnivariate2 <- function(binned.data, ID, prefit.on.chr, short=TRUE, eps
 #' @param verbosity Verbosity level for the fitting procedure. 0 - No output, 1 - Iterations are printed.
 #' @author Aaron Taudt, Maria Coome Tatche
 #' @seealso \code{\link{chromstaR_univariateHMM}}, \code{\link{callPeaksMultivariate}}
+#' @importFrom stats runif
 #' @examples
 #'## Get an example BED-file with ChIP-seq reads for H3K36me3 in brain tissue
 #'bedfile <- system.file("extdata/brain/BI.Brain_Angular_Gyrus.H3K36me3.112.chr22.bed.gz",
@@ -114,7 +115,7 @@ callPeaksUnivariate2 <- function(binned.data, ID, prefit.on.chr, short=TRUE, eps
 callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, FDR=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, checkpoint.after.iter=NULL, checkpoint.after.time=NULL, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, verbosity=1) {
 
 	### Define cleanup behaviour ###
-	on.exit(.C("R_univariate_cleanup"))
+	on.exit(.C("C_univariate_cleanup"))
 
 	### Intercept user input ###
 	IDcheck <- ID  #trigger error if not defined
@@ -156,7 +157,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 		continue.from.univariate.hmm <- TRUE
 	} else if (class(binned.data) == 'GRanges') {
 	} else {
-		stop("argument 'binned.data' expects a GRanges with meta-column 'reads' or a file that contains such an object")
+		stop("argument 'binned.data' expects a GRanges with meta-column 'counts' or a file that contains such an object")
 	}
 
 	### Assign variables ###
@@ -165,29 +166,29 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 	}
 	numstates <- length(state.labels)
 	numbins <- length(binned.data)
-	reads <- mcols(binned.data)$reads
+	counts <- mcols(binned.data)$counts
 	iniproc <- which(init==c("standard","random","empiric")) # transform to int
 	if (keep.densities) { lenDensities <- numbins * numstates } else { lenDensities <- 1 }
 
-	### Check if there are reads in the data, otherwise HMM will blow up ###
-	if (!any(reads!=0)) {
-		stop("All reads in data are zero. No univariate HMM done.")
+	### Check if there are counts in the data, otherwise HMM will blow up ###
+	if (!any(counts!=0)) {
+		stop("All counts in data are zero. No univariate HMM done.")
 	}
 
-	### Filter high reads out, makes HMM faster ###
+	### Filter high counts out, makes HMM faster ###
 	numfiltered <- 0
 	if (!continue.from.univariate.hmm) {
 		if (read.cutoff) {
-			read.cutoff.by.quantile <- quantile(reads, read.cutoff.quantile)
+			read.cutoff.by.quantile <- quantile(counts, read.cutoff.quantile)
 			read.cutoff.by.quantile <- as.integer(read.cutoff.by.quantile)
 			read.cutoff.absolute <- min(read.cutoff.by.quantile, read.cutoff.absolute)
-			mask <- reads > read.cutoff.absolute
-			reads[mask] <- read.cutoff.absolute
+			mask <- counts > read.cutoff.absolute
+			counts[mask] <- read.cutoff.absolute
 			numfiltered <- length(which(mask))
 		}
 	} else {
-		mask <- reads > read.cutoff.absolute
-		reads[mask] <- read.cutoff.absolute
+		mask <- counts > read.cutoff.absolute
+		counts[mask] <- read.cutoff.absolute
 		numfiltered <- length(which(mask))
 	}
 	if (numfiltered > 0) {
@@ -195,29 +196,29 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 	}
 
 	### Filter out low read counts that arise when the bin size is larger than optimal (should correct the result to near optimal again) ###
-	hist <- hist(reads[reads>0], breaks=0:max(reads), right=FALSE, plot=FALSE)
+	hist <- graphics::hist(counts[counts>0], breaks=0:max(counts), right=FALSE, plot=FALSE)
 	maxhist <- which.max(hist$counts)
 	if (maxhist-1 > max.mean) {	# -1 to get from 1-based histogram indices to (0-based) read counts
-		# Two empirical rules to remove low reads
+		# Two empirical rules to remove low counts
 		read.counts.to.remove.1 <- which(hist$counts[1:maxhist]<=hist$counts[2]) -1
 		minlow <- which.min(hist$counts[2:maxhist])
 		read.counts.to.remove <- max(c(read.counts.to.remove.1, 2*minlow))
-		index.filtered <- which(reads>0 & reads<=read.counts.to.remove)
-		reads[index.filtered] <- 0
+		index.filtered <- which(counts>0 & counts<=read.counts.to.remove)
+		counts[index.filtered] <- 0
 		if (length(index.filtered)>0) {
 			message(paste0("Replaced read counts <= ",read.counts.to.remove," by 0. This was done because the selected bin size is considered too big for this dataset: The mean of the read counts (zeros removed) is bigger than the specified max.mean = ",max.mean,". Check the fits!"))
 		}
 	}
 	
 # 	### Initialization of emission distributions ###
-# 	reads.greater.0 <- reads[reads>0]
-# 	mean.reads <- mean(reads.greater.0)
+# 	reads.greater.0 <- counts[counts>0]
+# 	mean.counts <- mean(reads.greater.0)
 # 	var.reads <- var(reads.greater.0)
 # 	imean <- vector()
 # 	ivar <- vector()
 # 	if (init=="standard") {
-# 		imean['unmodified'] <- mean.reads
-# 		imean['modified'] <- mean.reads + 1
+# 		imean['unmodified'] <- mean.counts
+# 		imean['modified'] <- mean.counts + 1
 # 		ivar['unmodified'] <- var.reads
 # 		ivar['modified'] <- var.reads
 # 		# Make sure variance is bigger than mean for negative binomial
@@ -228,13 +229,13 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 # 		}
 # 	} else if (init=="random") {
 # 		for (istate in c('unmodified','modified')) {
-# 			imean[istate] <- runif(1, min=0, max=10*mean.reads)
-# 			ivar[istate] <- runif(1, min=imean[istate], max=20*mean.reads)
+# 			imean[istate] <- stats::runif(1, min=0, max=10*mean.counts)
+# 			ivar[istate] <- stats::runif(1, min=imean[istate], max=20*mean.counts)
 # 		}
 # 	} else if (init=="empiric") {
-# 		imean['unmodified'] <- mean.reads/2
+# 		imean['unmodified'] <- mean.counts/2
 # 		ivar['unmodified'] <- imean['unmodified']*2
-# 		imean['modified'] <- mean.reads*2
+# 		imean['modified'] <- mean.counts*2
 # 		ivar['modified'] <- imean['modified']*2
 # 	} else if (init %in% seqlevels(binned.data)) {
 # 	} else if {
@@ -282,8 +283,8 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 				max.time.temp <- checkpoint.after.time
 			}
 			## Call the Baum-Welch
-			hmm <- .C("R_univariate_hmm",
-				reads = as.integer(reads), # double* O
+			hmm <- .C("C_univariate_hmm",
+				counts = as.integer(counts), # double* O
 				num.bins = as.integer(numbins), # int* T
 				num.states = as.integer(numstates), # int* N
 				size = double(length=numstates), # double* size
@@ -306,7 +307,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 				use.initial.params = as.logical(use.initial), # bool* use_initial_params
 				num.threads = as.integer(num.threads), # int* num_threads
 				error = as.integer(0), # int* error (error handling)
-				read.cutoff = as.integer(max(reads)), # int* read_cutoff
+				read.cutoff = as.integer(max(counts)), # int* read_cutoff
 				verbosity = as.integer(verbosity) # int* verbosity
 			)
 			## Adjust parameters for the next round
@@ -353,7 +354,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 				# FDR
 				result$FDR <- FDR
 			## Convergence info
-				convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec, read.cutoff=max(hmm$reads))
+				convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec, read.cutoff=max(hmm$counts))
 				result$convergenceInfo <- convergenceInfo
 			## Add class
 				class(result) <- class.univariate.hmm
@@ -379,8 +380,8 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 		modellist <- list()
 		for (i_try in 1:num.trials) {
 			if (verbosity>=1) message("------------------------------------ Try ",i_try," of ",num.trials," -------------------------------------")
-			hmm <- .C("R_univariate_hmm",
-				reads = as.integer(reads), # double* O
+			hmm <- .C("C_univariate_hmm",
+				counts = as.integer(counts), # double* O
 				num.bins = as.integer(numbins), # int* T
 				num.states = as.integer(numstates), # int* N
 				size = double(length=numstates), # double* size
@@ -403,7 +404,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 				use.initial.params = as.logical(0), # bool* use_initial_params
 				num.threads = as.integer(num.threads), # int* num_threads
 				error = as.integer(0), # int* error (error handling)
-				read.cutoff = as.integer(max(reads)), # int* read_cutoff
+				read.cutoff = as.integer(max(counts)), # int* read_cutoff
 				verbosity = as.integer(verbosity) # int* verbosity
 			)
 
@@ -424,8 +425,8 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 
 		# Rerun the HMM with different epsilon and initial parameters from trial run
 		if (verbosity>=1) message("------------------------- Rerunning try ",indexmax," with eps = ",eps," -------------------------")
-		hmm <- .C("R_univariate_hmm",
-			reads = as.integer(reads), # double* O
+		hmm <- .C("C_univariate_hmm",
+			counts = as.integer(counts), # double* O
 			num.bins = as.integer(numbins), # int* T
 			num.states = as.integer(numstates), # int* N
 			size = double(length=numstates), # double* size
@@ -448,7 +449,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 			use.initial.params = as.logical(1), # bool* use_initial_params
 			num.threads = as.integer(num.threads), # int* num_threads
 			error = as.integer(0), # int* error (error handling)
-			read.cutoff = as.integer(max(reads)), # int* read_cutoff
+			read.cutoff = as.integer(max(counts)), # int* read_cutoff
 			verbosity = as.integer(verbosity) # int* verbosity
 		)
 	}
@@ -468,7 +469,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 		result <- list()
 		result$ID <- ID
 	## Get states
-		message("Calculating states from posteriors ...", appendLF=F); ptm <- proc.time()
+		ptm <- startTimedMessage("Calculating states from posteriors ...")
 		hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
 		colnames(hmm$posteriors) <- paste0("P(",state.labels,")")
 		threshold <- 1-FDR
@@ -480,7 +481,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 	## Bin coordinates, posteriors and states
 		result$bins <- GRanges(seqnames=seqnames(binned.data),
 														ranges=ranges(binned.data),
-														reads=hmm$reads,
+														counts=hmm$counts,
 														state=states) 
 		result$bins$score <- apply(hmm$posteriors, 1, max)
 		result$bins$posteriors <- hmm$posteriors
@@ -488,18 +489,18 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 			result$bins$densities <- matrix(hmm$densities, ncol=hmm$num.states)
 		}
 		seqlengths(result$bins) <- seqlengths(binned.data)
-		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		stopTimedMessage(ptm)
 	## Segmentation
-		message("Making segmentation ...", appendLF=F); ptm <- proc.time()
+		ptm <- startTimedMessage("Making segmentation ...")
 		gr <- result$bins
-		red.df <- suppressMessages(collapseBins(as.data.frame(gr), column2collapseBy='state', columns2average=c('reads','score','posteriors.P.modified.'), columns2drop=c('width','posteriors.P.zero.inflation.','posteriors.P.unmodified.')))
-		red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], mean.reads=red.df[,'mean.reads'], state=red.df[,'state'], score=red.df[,'mean.score'], mean.posterior.modified=red.df[,'mean.posteriors.P.modified.'])
+		red.df <- suppressMessages(collapseBins(as.data.frame(gr), column2collapseBy='state', columns2average=c('counts','score','posteriors.P.modified.'), columns2drop=c('width','posteriors.P.zero.inflation.','posteriors.P.unmodified.')))
+		red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], mean.counts=red.df[,'mean.counts'], state=red.df[,'state'], score=red.df[,'mean.score'], mean.posterior.modified=red.df[,'mean.posteriors.P.modified.'])
 		result$segments <- red.gr
 		seqlengths(result$segments) <- seqlengths(binned.data)
 		if (!keep.posteriors) {
 			result$bins$posteriors <- NULL
 		}
-		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		stopTimedMessage(ptm)
 	## Parameters
 		# Weights
 		result$weights <- hmm$weights
@@ -529,7 +530,7 @@ callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.
 		# FDR
 		result$FDR <- FDR
 	## Convergence info
-		convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec, max.mean=max.mean, read.cutoff=max(hmm$reads))
+		convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec, max.mean=max.mean, read.cutoff=max(hmm$counts))
 		result$convergenceInfo <- convergenceInfo
 	## Add class
 		class(result) <- class.univariate.hmm

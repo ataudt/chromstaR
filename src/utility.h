@@ -2,13 +2,13 @@
 #define UTILITY_H
 
 #include <exception> // error handling
-#include "logging.h" // FILE_LOG() capability
+// #include "logging.h" // FILE_LOG() capability
 #include <R.h> // Calloc() etc.
 #include <algorithm> // max_element
 
 /* custom error handling class */
 // extern statement to avoid 'multiple definition' errors
-extern class exception_nan: public std::exception
+static class exception_nan: public std::exception
 {
   virtual const char* what() const throw()
   {

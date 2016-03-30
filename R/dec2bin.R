@@ -15,7 +15,7 @@
 #'new.states.decimal <- bin2dec(states.binary)
 #' @name conversion
 NULL
-#'
+
 #' @describeIn conversion Decimal to binary conversion.
 #' @param dec A vector with whole numbers.
 #' @param colnames The column names for the returned matrix. If specified, \code{ndigits} will be the length of \code{colnames}.

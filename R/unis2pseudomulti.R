@@ -31,7 +31,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
 	# Extract coordinates and other stuff
 	nummod = length(uni.hmm.list)
 	bins <- uni.hmm.list[[1]]$bins
-	bins$reads <- NULL
+	bins$counts <- NULL
 	bins$state <- NULL
 	numbins = length(uni.hmm.list[[1]]$bins)
 	IDs <- unlist(lapply(uni.hmm.list, "[[", "ID"))
@@ -40,18 +40,18 @@ unis2pseudomulti <- function(uni.hmm.list) {
 	weights = lapply(uni.hmm.list,"[[","weights")
 
 	# Extract the reads
-	message("Extracting reads from uni.hmm.list...", appendLF=F)
+	message("Extracting reads from uni.hmm.list...", appendLF=FALSE)
 	reads = matrix(NA, ncol=nummod, nrow=numbins)
 	colnames(reads) <- IDs
 	for (imod in 1:nummod) {
-		reads[,imod] = uni.hmm.list[[imod]]$bins$reads
+		reads[,imod] = uni.hmm.list[[imod]]$bins$counts
 	}
 	maxreads = max(reads)
-	bins$reads <- reads
+	bins$counts <- reads
 	message(" done")
 
 	## Get combinatorial states
-	message("Getting combinatorial states...", appendLF=F)
+	message("Getting combinatorial states...", appendLF=FALSE)
 	combstates.per.bin = combinatorialStates(uni.hmm.list)
 	comb.states.table = table(combstates.per.bin)
 	comb.states = as.numeric(names(sort(comb.states.table, decreasing=TRUE)))
@@ -60,7 +60,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
 	message(" done")
 	
 	## Calculate transition matrix
-	message("Estimating transition matrix...", appendLF=F)
+	message("Estimating transition matrix...", appendLF=FALSE)
 	A.estimated = matrix(0, ncol=2^nummod, nrow=2^nummod)
 	colnames(A.estimated) = 1:2^nummod-1
 	rownames(A.estimated) = 1:2^nummod-1
@@ -79,7 +79,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
 	multi.hmm$IDs <- IDs
 	multi.hmm$bins <- bins
 	## Segmentation
-		message("Making segmentation ...", appendLF=F)
+		message("Making segmentation ...", appendLF=FALSE)
 		ptm <- proc.time()
 		gr <- multi.hmm$bins
 		red.gr.list <- GRangesList()
@@ -90,7 +90,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
 				red.gr.list[[length(red.gr.list)+1]] <- red.gr
 			}
 		}
-		red.gr <- GenomicRanges::sort(GenomicRanges::unlist(red.gr.list))
+		red.gr <- GenomicRanges::sort(unlist(red.gr.list))
 		multi.hmm$segments <- red.gr
 		seqlengths(multi.hmm$segments) <- seqlengths(multi.hmm$bins)
 		time <- proc.time() - ptm
@@ -98,7 +98,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
 	## Parameters
 		# Weights
 		tstates <- table(combstates.per.bin)
-		multi.hmm$weights <- sort(tstates/sum(tstates), decreasing=T)
+		multi.hmm$weights <- sort(tstates/sum(tstates), decreasing=TRUE)
 		# Transition matrices
 		multi.hmm$transitionProbs <- A.estimated
 		# Distributions

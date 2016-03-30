@@ -12,19 +12,21 @@
 #' @param exclude.rgb.above Exclude colors where all RGB values are above. This is useful to exclude whitish colors.
 #' @return A character vector with colors.
 #' @author Aaron Taudt
+#' @importFrom grDevices col2rgb
+#' @importFrom stats dist
 #' @export
 getDistinctColors <- function(n, start.color='blue4', exclude.colors=c('white','black','gray','grey'), exclude.rgb.above=210) {
 	
-	cols <- colors()
+	cols <- grDevices::colors()
 	# Exclude unwanted colors
 	cols <- grep(paste(exclude.colors, collapse='|'), cols, invert=TRUE, value=TRUE)
 	# Get RGB values
-	rgbs <- t(col2rgb(cols))
+	rgbs <- t(grDevices::col2rgb(cols))
 	rownames(rgbs) <- cols
 	# Exclude whitish colors
 	rgbs <- rgbs[apply(rgbs, 1, function(x) { !all(x>exclude.rgb.above) }), ]
 	# Calculate distance
-	coldist <- as.matrix(dist(rgbs, method='euclidean'))
+	coldist <- as.matrix(stats::dist(rgbs, method='euclidean'))
 	
 	# Iteratively select colors
 	selected.cols <- character()

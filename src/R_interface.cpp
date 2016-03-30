@@ -1,13 +1,4 @@
-#include "utility.h"
-#include "scalehmm.h"
-#include <vector> // storing density functions in multivariate
-#include <string> // strcmp
-
-#if defined TARGET_OS_MAC || defined __APPLE__
-#include <libiomp/omp.h> // parallelization options on mac
-#elif defined __linux__ || defined _WIN32 || defined _WIN64
-#include <omp.h> // parallelization options
-#endif
+#include "R_interface.h"
 
 static ScaleHMM* hmm; // declare as static outside the function because we only need one and this enables memory-cleanup on R_CheckUserInterrupt()
 static int** multiO;
@@ -15,8 +6,7 @@ static int** multiO;
 // ===================================================================================================================================================
 // This function takes parameters from R, creates a univariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // ===================================================================================================================================================
-extern "C" {
-void R_univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* maxiter, int* maxtime, double* eps, double* posteriors, double* densities, bool* keep_densities, double* A, double* proba, double* loglik, double* weights, int* iniproc, double* initial_size, double* initial_prob, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* read_cutoff, int* verbosity)
+void univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* maxiter, int* maxtime, double* eps, double* posteriors, double* densities, bool* keep_densities, double* A, double* proba, double* loglik, double* weights, int* iniproc, double* initial_size, double* initial_prob, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* read_cutoff, int* verbosity)
 {
 
 	// Define logging level
@@ -130,15 +120,8 @@ void R_univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* m
 				// Disturb mean and variance for use as randomized initial parameters
 				//FILE_LOG(logINFO) << "Using random initialization for size and prob";
 				if (*verbosity>=1) Rprintf("HMM: Using random initialization for size and prob\n");
-				srand (clock());
-				int rand1, rand2;
-				rand1 = rand();
-				rand2 = rand();
-				imean = (double)rand1/(double)RAND_MAX * 10*mean;
-				ivariance = imean + (double)rand2/(double)RAND_MAX * 20*imean; // variance has to be greater than mean, otherwise r will be negative
-				//FILE_LOG(logDEBUG2) << "RAND_MAX = " << RAND_MAX;
-				//FILE_LOG(logDEBUG2) << "rand1 = " << rand1;
-				//FILE_LOG(logDEBUG2) << "rand2 = " << rand2;
+					imean = runif(0, 10*mean);
+					ivariance = imean + runif(0, 20*imean); // variance has to be greater than mean, otherwise r will be negative
 				//FILE_LOG(logDEBUG2) << "imean = " << imean;
 				//FILE_LOG(logDEBUG2) << "ivariance = " << ivariance;
 			}
@@ -269,20 +252,18 @@ void R_univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* m
 	delete hmm;
 	hmm = NULL; // assign NULL to defuse the additional delete in on.exit() call
 }
-} // extern C
 
 // =====================================================================================================================================================
 // This function takes parameters from R, creates a multivariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // =====================================================================================================================================================
-extern "C" {
-void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, double* size, double* prob, double* w, double* cor_matrix_inv, double* det, int* maxiter, int* maxtime, double* eps, double* posteriors, bool* keep_posteriors, double* densities, bool* keep_densities, int* states, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* verbosity)
+void multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, double* size, double* prob, double* w, double* cor_matrix_inv, double* det, int* maxiter, int* maxtime, double* eps, double* posteriors, bool* keep_posteriors, double* densities, bool* keep_densities, int* states, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* verbosity)
 {
 
 	// Define logging level {"ERROR", "WARNING", "INFO", "ITERATION", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4"}
  	//FILE* pFile = fopen("chromStar.log", "w");
 	//Output2FILE::Stream() = pFile;
  	//FILELog::ReportingLevel() = FILELog::FromString("ERROR");
- 	FILELog::ReportingLevel() = FILELog::FromString("DEBUG3");
+ 	//FILELog::ReportingLevel() = FILELog::FromString("DEBUG3");
 
 	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	// Parallelization settings
@@ -480,25 +461,20 @@ void R_multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, dou
 	hmm = NULL; // assign NULL to defuse the additional delete in on.exit() call
 // 	FreeIntMatrix(multiO, *Nmod); // free on.exit() in R code
 }
-} // extern C
 
 
 // =======================================================
 // This function make a cleanup if anything was left over
 // =======================================================
-extern "C" {
-void R_univariate_cleanup()
+void univariate_cleanup()
 {
 // 	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__; // This message will be shown if interrupt happens before start of C-code
 	delete hmm;
 }
-}
 
-extern "C" {
-void R_multivariate_cleanup(int* Nmod)
+void multivariate_cleanup(int* Nmod)
 {
 	delete hmm;
 	FreeIntMatrix(multiO, *Nmod);
-}
 }
 

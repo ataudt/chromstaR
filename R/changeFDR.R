@@ -45,7 +45,7 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, averages=TRUE
 	if (is(model,class.univariate.hmm)) {
 		if (is.null(model$bins$posteriors)) stop("Cannot recalculate states because posteriors are missing. Run 'callPeaksUnivariate' again with option 'keep.posteriors' set to TRUE.")
 		## Calculate states
-		message("Calculating states from posteriors ...", appendLF=F); ptm <- proc.time()
+		ptm <- startTimedMessage("Calculating states from posteriors ...")
 		states <- rep(NA,length(model$bins))
 		if (separate.zeroinflation) {
 			states[ model$bins$posteriors[,3]<threshold & model$bins$posteriors[,2]<=model$bins$posteriors[,1] ] <- 1
@@ -57,9 +57,9 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, averages=TRUE
 			states <- state.labels[2:3][states]
 		}
 		model$bins$state <- states
-		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		stopTimedMessage(ptm)
 		## Redo segmentation
-		message("Making segmentation ...", appendLF=F); ptm <- proc.time()
+		ptm <- startTimedMessage("Making segmentation ...")
 		gr <- model$bins
 		df <- as.data.frame(gr)
 		if (averages==TRUE) {
@@ -71,7 +71,7 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, averages=TRUE
 		}	
 		model$segments <- red.gr
 		seqlengths(model$segments) <- seqlengths(model$bins)
-		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		stopTimedMessage(ptm)
 # 		## Redo weights
 # 		model$weights <- table(model$bins$state) / length(model$bins)
 
@@ -79,7 +79,7 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, averages=TRUE
 	} else if (is(model,class.multivariate.hmm)) {
 		if (is.null(model$bins$posteriors)) stop("Cannot recalculate states because posteriors are missing. Run 'callPeaksMultivariate' again with option 'keep.posteriors' set to TRUE.")
 		## Calculate states
-		message("Calculating states from posteriors ...", appendLF=F); ptm <- proc.time()
+		ptm <- startTimedMessage("Calculating states from posteriors ...")
 		states <- factor(bin2dec(model$bins$posteriors >= threshold), levels=levels(model$bins$state))
 		model$bins$state <- states
 		## Combinations
@@ -89,9 +89,9 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, averages=TRUE
 # 			names(mapping) <- levels(model$bins$state)
 			model$bins$combination <- factor(mapping[as.character(model$bins$state)], levels=mapping[as.character(levels(model$bins$state))])
 		}
-		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		stopTimedMessage(ptm)
 		## Redo segmentation
-		message("Making segmentation ...", appendLF=F); ptm <- proc.time()
+		ptm <- startTimedMessage("Making segmentation ...")
 		df <- as.data.frame(model$bins)
 		ind.readcols <- grep('^reads', names(df))
 		ind.postcols <- grep('^posteriors', names(df))
@@ -116,7 +116,7 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, averages=TRUE
 		}
 		model$segments <- red.gr
 		seqlengths(model$segments) <- seqlengths(model$bins)
-		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		stopTimedMessage(ptm)
 # 		## Redo weights
 # 		model$weights <- table(model$bins$state) / length(model$bins)
 	} else {

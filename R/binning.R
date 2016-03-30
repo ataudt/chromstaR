@@ -64,6 +64,7 @@ bedGraph2binned <- function(bedGraphfile, assembly, chrom.length.file=NULL, outp
 #' @param remove.duplicate.reads Logical indicating whether duplicate reads should be removed. NOTE: Duplicate removal only works if your duplicate reads are properly flagged in the BAM file.
 #' @param max.fragment.width Maximum allowed fragment length. This is to filter out erroneously wrong fragments due to mapping errors of paired end reads.
 #' @return The function produces a \code{\link{GRanges}} object with one meta data column 'reads' that contains the read count. This binned data will be either written to file (\code{save.as.RData=FALSE}) or given as return value (\code{save.as.RData=FALSE}).
+#' @importFrom utils read.table
 align2binned <- function(file, format, assembly, bamindex=file, pairedEndReads=FALSE, chrom.length.file=NULL, outputfolder="binned_data", binsizes=500, chromosomes=NULL, save.as.RData=FALSE, min.mapq=10, downsample.to.reads=NULL, remove.duplicate.reads=FALSE, max.fragment.width=1000) {
 
 	## Create outputfolder if not exists
@@ -72,25 +73,25 @@ align2binned <- function(file, format, assembly, bamindex=file, pairedEndReads=F
 	}
 
 	### Read in the data
-	message("Reading file ",basename(file)," ...", appendLF=F); ptm <- proc.time()
+	ptm <- startTimedMessage("Reading file ",basename(file)," ...")
 	## BED (0-based)
 	if (format == "bed") {
 		if (!is.null(chrom.length.file)) {
 			# File with chromosome lengths (1-based)
-			chrom.lengths.df <- read.table(chrom.length.file)
+			chrom.lengths.df <- utils::read.table(chrom.length.file)
 			chrom.lengths <- chrom.lengths.df[,2]
 			names(chrom.lengths) <- chrom.lengths.df[,1]
 		} else {
 			chrom.lengths <- getChromLengths(assembly=assembly)
 		}
 		# File with reads, determine classes first for faster import (0-based)
-		tab5rows <- read.table(file, nrows=5)
+		tab5rows <- utils::read.table(file, nrows=5)
 		classes.in.bed <- sapply(tab5rows, class)
 		classes <- rep("NULL",length(classes.in.bed))
 		classes[1:3] <- classes.in.bed[1:3]
-		data <- read.table(file, colClasses=classes)
+		data <- utils::read.table(file, colClasses=classes)
 		# Convert to GRanges object
-		data <- GenomicRanges::GRanges(seqnames=Rle(data[,1]), ranges=IRanges(start=data[,2]+1, end=data[,3]), strand=Rle(strand("*"), nrow(data)))	# start+1 to go from [0,x) -> [1,x]
+		data <- GenomicRanges::GRanges(seqnames=data[,1], ranges=IRanges(start=data[,2]+1, end=data[,3]), strand="*")	# start+1 to go from [0,x) -> [1,x]
 		seqlengths(data) <- as.integer(chrom.lengths[names(seqlengths(data))])
 	## BAM (1-based)
 	} else if (format == "bam") {
@@ -99,23 +100,23 @@ align2binned <- function(file, format, assembly, bamindex=file, pairedEndReads=F
 	} else if (format == "bedGraph") {
 		if (!is.null(chrom.length.file)) {
 			# File with chromosome lengths (1-based)
-			chrom.lengths.df <- read.table(chrom.length.file)
+			chrom.lengths.df <- utils::read.table(chrom.length.file)
 			chrom.lengths <- chrom.lengths.df[,2]
 			names(chrom.lengths) <- chrom.lengths.df[,1]
 		} else {
 			chrom.lengths <- getChromLengths(assembly=assembly)
 		}
 		# File with reads, determine classes first for faster import
-		tab5rows <- read.table(file, nrows=5)
+		tab5rows <- utils::read.table(file, nrows=5)
 		classes.in.bed <- sapply(tab5rows, class)
 		classes <- rep("NULL",length(classes.in.bed))
 		classes[1:4] <- classes.in.bed[1:4]
-		data <- read.table(file, colClasses=classes)
+		data <- utils::read.table(file, colClasses=classes)
 		# Convert to GRanges object
-		data <- GenomicRanges::GRanges(seqnames=Rle(data[,1]), ranges=IRanges(start=data[,2]+1, end=data[,3]), strand=Rle(strand("*"), nrow(data)), signal=data[,4])	# start+1 to go from [0,x) -> [1,x]
+		data <- GenomicRanges::GRanges(seqnames=data[,1], ranges=IRanges(start=data[,2]+1, end=data[,3]), strand="*", signal=data[,4])	# start+1 to go from [0,x) -> [1,x]
 		seqlengths(data) <- as.integer(chrom.lengths[names(seqlengths(data))])
 	}
-	time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+	stopTimedMessage(ptm)
 
 	## Select chromosomes to bin
 	if (is.null(chromosomes)) {
@@ -126,9 +127,9 @@ align2binned <- function(file, format, assembly, bamindex=file, pairedEndReads=F
 	### Downsampling
 	if (!is.null(downsample.to.reads)) {
 		if (downsample.to.reads <= length(data)) {
-			message("downsampling to ", downsample.to.reads, " reads ...", appendLF=F); ptm <- proc.time()
+			ptm <- startTimedMessage("downsampling to ", downsample.to.reads, " reads ...")
 			data <- data[sort(sample(1:length(data), size=downsample.to.reads, replace=FALSE))]
-			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+			stopTimedMessage(ptm)
 		} else {
 			warning("No downsampling done because there are only ", length(data), " reads in the data.")
 		}
@@ -139,7 +140,7 @@ align2binned <- function(file, format, assembly, bamindex=file, pairedEndReads=F
 		message("Binning into bin size ",binsize)
 
 		### Iterate over all chromosomes
-		message("  binning genome ...", appendLF=F); ptm <- proc.time()
+		ptm <- startTimedMessage("  binning genome ...")
 		binned.data <- GenomicRanges::GRangesList()
 		for (chromosome in chroms2use) {
 			## Check last incomplete bin
@@ -161,9 +162,9 @@ align2binned <- function(file, format, assembly, bamindex=file, pairedEndReads=F
 # 			end[length(end)] <- seqlengths(data)[chromosome] # last ending coordinate is size of chromosome, only if incomplete bins are desired
 
 			## Create binned chromosome as GRanges object
-			i.binned.data <- GenomicRanges::GRanges(seqnames = Rle(chromosome, numbins),
+			i.binned.data <- GenomicRanges::GRanges(seqnames = rep(chromosome, numbins),
 							ranges = IRanges(start=start, end=end),
-							strand = Rle(strand("*"), numbins)
+							strand = "*"
 							)
 			seqlengths(i.binned.data) <- seqlengths(data)[chromosome]
 
@@ -171,12 +172,12 @@ align2binned <- function(file, format, assembly, bamindex=file, pairedEndReads=F
 				binned.data[[chromosome]] <- i.binned.data
 			)
 		}
-		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		stopTimedMessage(ptm)
 		binned.data <- unlist(binned.data)
 		names(binned.data) <- NULL
 
 		## Count overlaps
-		message("  counting overlaps ...", appendLF=F); ptm <- proc.time()
+		ptm <- startTimedMessage("  counting overlaps ...")
 		if (format=="bam" | format=="bed") {
 			reads <- GenomicRanges::countOverlaps(binned.data, data)
 		} else if (format=="bedGraph") {
@@ -194,8 +195,8 @@ align2binned <- function(file, format, assembly, bamindex=file, pairedEndReads=F
 			}
 			reads[read.idx] <- maxvalues
 		}
-		mcols(binned.data)$reads <- reads
-		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		mcols(binned.data)$counts <- reads
+		stopTimedMessage(ptm)
 
 		if (length(binned.data) == 0) {
 			warning(paste0("The bin size of ",binsize," is larger than any of the chromosomes."))
@@ -204,10 +205,10 @@ align2binned <- function(file, format, assembly, bamindex=file, pairedEndReads=F
 
 		if (save.as.RData==TRUE) {
 			# Print to file
-			filename <- paste0(basename(file),"_binsize",format(binsize, scientific=F, trim=T),".RData")
-			message("Saving to file ...", appendLF=F); ptm <- proc.time()
+			filename <- paste0(basename(file),"_binsize",format(binsize, scientific=F, trim=TRUE),".RData")
+			ptm <- startTimedMessage("Saving to file ...")
 			save(binned.data, file=file.path(outputfolder,filename) )
-			time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+			stopTimedMessage(ptm)
 		} else {
 			return(binned.data)
 		}
@@ -229,7 +230,7 @@ align2binned <- function(file, format, assembly, bamindex=file, pairedEndReads=F
 #' @param min.mapq Minimum mapping quality when importing from BAM files. Set \code{min.mapq=NULL} to keep all reads.
 #' @param max.fragment.width Maximum allowed fragment length. This is to filter out erroneously wrong fragments due to mapping errors of paired end reads.
 #' @importFrom Rsamtools indexBam scanBamHeader ScanBamParam scanBamFlag
-#' @importFrom GenomicAlignments readGAlignmentPairsFromBam readGAlignmentsFromBam first
+#' @importFrom GenomicAlignments readGAlignmentPairs readGAlignments first
 bam2GRanges <- function(file, bamindex=file, chromosomes=NULL, pairedEndReads=FALSE, keep.duplicate.reads=TRUE, min.mapq=10, max.fragment.width=1000) {
 
 	## Check if bamindex exists
@@ -258,25 +259,25 @@ bam2GRanges <- function(file, bamindex=file, chromosomes=NULL, pairedEndReads=FA
 		warning(paste0('Not using chromosomes ', diffs, ' because they are not in the data.'))
 	}
 	## Import the file into GRanges
-	gr <- GenomicRanges::GRanges(seqnames=Rle(chroms2use), ranges=IRanges(start=rep(1, length(chroms2use)), end=chrom.lengths[chroms2use]))
+	gr <- GenomicRanges::GRanges(seqnames=chroms2use, ranges=IRanges(start=rep(1, length(chroms2use)), end=chrom.lengths[chroms2use]))
 	if (keep.duplicate.reads) {
 		if (pairedEndReads) {
-			data.raw <- GenomicAlignments::readGAlignmentPairsFromBam(file, index=bamindex, param=Rsamtools::ScanBamParam(which=range(gr), what='mapq'))
+			data.raw <- GenomicAlignments::readGAlignmentPairs(file, index=bamindex, param=Rsamtools::ScanBamParam(which=range(gr), what='mapq'))
 		} else {
-			data.raw <- GenomicAlignments::readGAlignmentsFromBam(file, index=bamindex, param=Rsamtools::ScanBamParam(which=range(gr), what='mapq'))
+			data.raw <- GenomicAlignments::readGAlignments(file, index=bamindex, param=Rsamtools::ScanBamParam(which=range(gr), what='mapq'))
 		}
 	} else {
 		if (pairedEndReads) {
-			data.raw <- GenomicAlignments::readGAlignmentPairsFromBam(file, index=bamindex, param=Rsamtools::ScanBamParam(which=range(gr), what='mapq', flag=scanBamFlag(isDuplicate=F)))
+			data.raw <- GenomicAlignments::readGAlignmentPairs(file, index=bamindex, param=Rsamtools::ScanBamParam(which=range(gr), what='mapq', flag=scanBamFlag(isDuplicate=FALSE)))
 		} else {
-			data.raw <- GenomicAlignments::readGAlignmentsFromBam(file, index=bamindex, param=Rsamtools::ScanBamParam(which=range(gr), what='mapq', flag=scanBamFlag(isDuplicate=F)))
+			data.raw <- GenomicAlignments::readGAlignments(file, index=bamindex, param=Rsamtools::ScanBamParam(which=range(gr), what='mapq', flag=scanBamFlag(isDuplicate=FALSE)))
 		}
 	}
 	## Filter by mapping quality
 	if (pairedEndReads) {
 		message("Converting to GRanges ...", appendLF=FALSE); ptm <- proc.time()
 		data <- as(data.raw, 'GRanges') # treat as one fragment
-		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		stopTimedMessage(ptm)
 
 		message("Filtering reads ...", appendLF=FALSE); ptm <- proc.time()
 		if (!is.null(min.mapq)) {
@@ -290,11 +291,11 @@ bam2GRanges <- function(file, bamindex=file, chromosomes=NULL, pairedEndReads=FA
 			# Filter out too long fragments
 			data <- data[width(data)<=max.fragment.width]
 		}
-		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		stopTimedMessage(ptm)
 	} else {
 		message("Converting to GRanges ...", appendLF=FALSE); ptm <- proc.time()
 		data <- as(data.raw, 'GRanges')
-		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		stopTimedMessage(ptm)
 
 		message("Filtering reads ...", appendLF=FALSE); ptm <- proc.time()
 		if (!is.null(min.mapq)) {
@@ -304,7 +305,7 @@ bam2GRanges <- function(file, bamindex=file, chromosomes=NULL, pairedEndReads=FA
 			}
 			data <- data[mcols(data)$mapq >= min.mapq]
 		}
-		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		stopTimedMessage(ptm)
 	}
 	return(data)
 

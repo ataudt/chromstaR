@@ -1,7 +1,4 @@
 %\VignetteIndexEntry{The chromstaR users guide}
-%\VignetteDepends{chromstaR}
-%\VignetteKeywords{ChIP-seq}
-%\VignettePackage{chromstaR}
 %\VignetteEngine{knitr::knitr}
 \documentclass[11pt]{article}
 \usepackage{hyperref}

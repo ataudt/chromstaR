@@ -6,17 +6,18 @@
 #' @param binned.data A \code{\link{GRanges}} object with meta data column 'reads' that contains the read count.
 #' @param sample.reads The number of reads that will be retained.
 #' @return A \code{\link{GRanges}} object with downsampled read counts.
+#' @importFrom stats rbinom
 #' @export
 subsample <- function(binned.data, sample.reads) {
 
-	total.reads <- sum(binned.data$reads)
+	total.reads <- sum(binned.data$counts)
 	if (sample.reads >= total.reads) {
 		warning("Not resampling reads because sample.reads is bigger than the actual number of reads in the sample.")
 		return(binned.data)
 	}
 
 	p <- sample.reads / total.reads
-	binned.data$reads <- rbinom(binned.data$reads, binned.data$reads, p)
+	binned.data$counts <- stats::rbinom(binned.data$counts, binned.data$counts, p)
 
 	return(binned.data)
 }

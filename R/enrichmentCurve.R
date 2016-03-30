@@ -9,7 +9,7 @@
 #' @param region A combination of \code{c('start','inside','end')} specifying the region of the annotation for which the enrichment will be calculated.
 #' @param what A combination of \code{c('combstates','binstates','reads')} specifying which statistic to calculate.
 #' @return A \code{list()} containing \code{data.frame()}s for enrichment of combinatorial states and binary states at the start, end and inside of the annotation.
-#' @import S4Vectors
+#' @importFrom S4Vectors as.factor subjectHits queryHits
 #' @export
 enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=c('start','inside','end'), what=c('combstates','binstates','reads'), intervals=21) {
 
@@ -26,7 +26,7 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 	eCurve <- list()
 	eCurve$combstates <- list()
 	eCurve$binstates <- list()
-	eCurve$reads <- list()
+	eCurve$counts <- list()
 
 	## Get combinatorial and binary states
 	combstates <- hmm$bins$combination
@@ -41,7 +41,7 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 
 		# Get bins that overlap annotation
 		ind <- findOverlaps(hmm$bins, annotation)
-		bins.per.annotation <- table(subjectHits(ind))	# Table is sorted!
+		bins.per.annotation <- table(S4Vectors::subjectHits(ind))	# Table is sorted!
 		annotation$num.bins.spanning <- rep(0, length(annotation))
 		annotation$num.bins.spanning[as.numeric(names(bins.per.annotation))] <- bins.per.annotation
 		strand.per.annotation <- S4Vectors::as.factor(strand(annotation[as.numeric(names(bins.per.annotation))]))
@@ -50,18 +50,18 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 		# States and strands per bin-that-overlaps-an-annotation
 		anno.binstates <- NULL
 		if ('binstates' %in% what) {
-			anno.binstates <- binstates[queryHits(ind),]
+			anno.binstates <- binstates[S4Vectors::queryHits(ind),]
 		}
 		anno.combstates <- NULL
 		if ('combstates' %in% what) {
-			anno.combstates <- combstates[queryHits(ind)]
+			anno.combstates <- combstates[S4Vectors::queryHits(ind)]
 		}
 		anno.reads <- NULL
 		if ('reads' %in% what) {
-			anno.reads <- hmm$bins$reads[queryHits(ind),]
+			anno.reads <- hmm$bins$counts[S4Vectors::queryHits(ind),]
 			colnames(anno.reads) <- NULL
 		}
-		anno.strands <- strand(annotation)[subjectHits(ind)]
+		anno.strands <- strand(annotation)[S4Vectors::subjectHits(ind)]
 
 		# Relative coordinate of every bin (TSS=0, TES=1)
 		relcoord <- list()
@@ -77,7 +77,7 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 		# Collect in data.frame
 		anno.df <- data.frame(as.data.frame(ind), strand=as.character(anno.strands))
 		anno.df$binstate <- anno.binstates
-		anno.df$reads <- anno.reads
+		anno.df$counts <- anno.reads
 		anno.df$combstate <- anno.combstates
 		# Reorder to add stuff that was calculated from sorted table
 		anno.df <- cbind(anno.df[order(anno.df$subjectHits),], relcoord=relcoord)
@@ -98,7 +98,7 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 			binstates.inside <- matrix(NA, nrow=length(intervals), ncol=ncol(anno.binstates), dimnames=list(interval=intervals, track=hmm$IDs))
 			for (interval in intervals) {
 				mask <- anno.df$interval==interval
-				binstates.inside[as.character(interval),] <- colMeans(anno.df[,grepl('binstate',names(anno.df))][mask,], na.rm=T)
+				binstates.inside[as.character(interval),] <- colMeans(anno.df[,grepl('binstate',names(anno.df))][mask,], na.rm=TRUE)
 			}
 			eCurve$binstates$inside <- binstates.inside
 		}
@@ -115,9 +115,9 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 			reads.inside <- matrix(NA, nrow=length(intervals), ncol=ncol(anno.binstates), dimnames=list(interval=intervals, track=hmm$IDs))
 			for (interval in intervals) {
 				mask <- anno.df$interval==interval
-				reads.inside[as.character(interval),] <- colMeans(anno.df[,grepl('reads',names(anno.df))][mask,], na.rm=T)
+				reads.inside[as.character(interval),] <- colMeans(anno.df[,grepl('reads',names(anno.df))][mask,], na.rm=TRUE)
 			}
-			eCurve$reads$inside <- reads.inside
+			eCurve$counts$inside <- reads.inside
 		}
 	}
 
@@ -143,7 +143,7 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 				fold[is.na(fold)] <- 0
 				combstates.start[as.character(ilag),] <- fold
 			}
-			if ('reads' %in% what) reads.start[as.character(ilag),] <- colMeans(hmm$bins$reads[index,])
+			if ('reads' %in% what) reads.start[as.character(ilag),] <- colMeans(hmm$bins$counts[index,])
 		}
 		if ('binstates' %in% what) {
 			rownames(binstates.start) <- as.numeric(rownames(binstates.start)) * binsize
@@ -155,7 +155,7 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 		}
 		if ('reads' %in% what) {
 			rownames(reads.start) <- as.numeric(rownames(reads.start)) * binsize
-			eCurve$reads$start <- reads.start
+			eCurve$counts$start <- reads.start
 		}
 	}
 	if ('end' %in% region) {
@@ -180,7 +180,7 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 				fold[is.na(fold)] <- 0
 				combstates.start[as.character(ilag),] <- fold
 			}
-			if ('reads' %in% what) reads.end[as.character(ilag),] <- colMeans(hmm$bins$reads[index,])
+			if ('reads' %in% what) reads.end[as.character(ilag),] <- colMeans(hmm$bins$counts[index,])
 		}
 		if ('binstates' %in% what) {
 			rownames(binstates.end) <- as.numeric(rownames(binstates.end)) * binsize
@@ -192,7 +192,7 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 		}
 		if ('reads' %in% what) {
 			rownames(reads.end) <- as.numeric(rownames(reads.end)) * binsize
-			eCurve$reads$end <- reads.end
+			eCurve$counts$end <- reads.end
 		}
 	}
 
@@ -200,30 +200,31 @@ enrichmentCurve <- function(hmm, annotation, bp.around.annotation=10000, region=
 
 }
 
+#' @importFrom S4Vectors subjectHits queryHits
 plot.cross.correlation <- function(hmm, annotation, bp.around.annotation=10000) {
 
-	## Debugging
-	library(biomaRt)
-	bp.around.annotation=10000
-# 	hg19 <- useMart('ENSEMBL_MART_ENSEMBL', host='grch37.ensembl.org', dataset='hsapiens_gene_ensembl')
-# 	filters <- listFilters(hg19)
-# 	attributes <- listAttributes(hg19)
-# 	hg19.genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position', 'end_position', 'strand'), mart=hg19)
-# 	names(hg19.genes)[1:5] <- c('ID','chrom','start','end','strand')
-# 	genes <- GRanges(seqnames=paste0('chr',hg19.genes$chrom), ranges=IRanges(start=hg19.genes$start, end=hg19.genes$end), strand=hg19.genes$strand, gene_id=hg19.genes$ID)
-# 	file <- "multiresults_all_chrom/multivariate_mark_H3K27ac_patient_149_binsize_1000.RData"
+# 	## Debugging
+# 	library(biomaRt)
+# 	bp.around.annotation=10000
+# # 	hg19 <- biomaRt::useMart('ENSEMBL_MART_ENSEMBL', host='grch37.ensembl.org', dataset='hsapiens_gene_ensembl')
+# # 	filters <- biomaRt::listFilters(hg19)
+# # 	attributes <- biomaRt::listAttributes(hg19)
+# # 	hg19.genes <- biomaRt::getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position', 'end_position', 'strand'), mart=hg19)
+# # 	names(hg19.genes)[1:5] <- c('ID','chrom','start','end','strand')
+# # 	genes <- GRanges(seqnames=paste0('chr',hg19.genes$chrom), ranges=IRanges(start=hg19.genes$start, end=hg19.genes$end), strand=hg19.genes$strand, gene_id=hg19.genes$ID)
+# # 	file <- "multiresults_all_chrom/multivariate_mark_H3K27ac_patient_149_binsize_1000.RData"
+# # 	hmm <- get(load(file))
+# # 	annotation <- genes
+# 
+# 	rat.ensembl59 <- biomaRt::useMart('ENSEMBL_MART_ENSEMBL', host='aug2010.archive.ensembl.org', dataset='rnorvegicus_gene_ensembl')
+# 	filters <- biomaRt::listFilters(rat.ensembl59)
+# 	attributes <- biomaRt::listAttributes(rat.ensembl59)
+# 	rat.genes <- biomaRt::getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position', 'end_position', 'strand'), mart=rat.ensembl59)
+# 	names(rat.genes)[1:5] <- c('ID','chrom','start','end','strand')
+# 	genes <- GRanges(seqnames=paste0('chr',rat.genes$chrom), ranges=IRanges(start=rat.genes$start, end=rat.genes$end), strand=rat.genes$strand, gene_id=rat.genes$ID)
+# 	file <- 'multiresults/euratrans_lv_binsize_1000.RData'
 # 	hmm <- get(load(file))
 # 	annotation <- genes
-
-	rat.ensembl59 <- useMart('ENSEMBL_MART_ENSEMBL', host='aug2010.archive.ensembl.org', dataset='rnorvegicus_gene_ensembl')
-	filters <- listFilters(rat.ensembl59)
-	attributes <- listAttributes(rat.ensembl59)
-	rat.genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position', 'end_position', 'strand'), mart=rat.ensembl59)
-	names(rat.genes)[1:5] <- c('ID','chrom','start','end','strand')
-	genes <- GRanges(seqnames=paste0('chr',rat.genes$chrom), ranges=IRanges(start=rat.genes$start, end=rat.genes$end), strand=rat.genes$strand, gene_id=rat.genes$ID)
-	file <- 'multiresults/euratrans_lv_binsize_1000.RData'
-	hmm <- get(load(file))
-	annotation <- genes
 
 	## Variables
 	binsize <- width(hmm$bins)[1]
@@ -234,26 +235,26 @@ plot.cross.correlation <- function(hmm, annotation, bp.around.annotation=10000) 
 	# Select only annotations that span more than 10 bins
 	annotation.sub <- annotation
 	# Not necessary but makes it easier to debug
-	annotation.sub <- keepSeqlevels(annotation.sub, seqlevels(hmm$bins))
+	annotation.sub <- GenomeInfoDb::keepSeqlevels(annotation.sub, seqlevels(hmm$bins))
 	seqlengths(annotation.sub) <- seqlengths(hmm$bins)
 	annotation.sub <- sort(annotation.sub)
 
 	# Get bins that overlap annotation
 	ind <- findOverlaps(hmm$bins, annotation.sub)
-	bins.per.annotation <- table(subjectHits(ind))	# Table is sorted!
+	bins.per.annotation <- table(S4Vectors::subjectHits(ind))	# Table is sorted!
 	annotation.sub$num.bins.spanning <- rep(0, length(annotation.sub))
 	annotation.sub$num.bins.spanning[as.numeric(names(bins.per.annotation))] <- bins.per.annotation
 	strand.per.annotation <- as.factor(strand(annotation.sub[as.numeric(names(bins.per.annotation))]))
 	names(strand.per.annotation) <- names(bins.per.annotation)
 	
 	# Get binary states
-	binstates <- dec2bin(hmm$bins$state, ndigits=ncol(hmm$bins$reads))
+	binstates <- dec2bin(hmm$bins$state, ndigits=ncol(hmm$bins$counts))
 
 	# States, reads and strands per bin-that-overlaps-an-annotation
-	ind.binstates <- binstates[queryHits(ind),]
-	ind.reads <- hmm$bins$reads[queryHits(ind),]
+	ind.binstates <- binstates[S4Vectors::queryHits(ind),]
+	ind.reads <- hmm$bins$counts[S4Vectors::queryHits(ind),]
 	colnames(ind.reads) <- NULL
-	ind.strands <- strand(annotation.sub)[subjectHits(ind)]
+	ind.strands <- strand(annotation.sub)[S4Vectors::subjectHits(ind)]
 
 	# Relative coordinate of every bin (TSS=0, TTS=1)
 	relcoord <- list()
@@ -284,13 +285,13 @@ plot.cross.correlation <- function(hmm, annotation, bp.around.annotation=10000) 
 	ind.df$interval <- intervals[findInterval(ind.df$relcoord, intervals)]
 
 	# Mean over intervals
-	binstates.inside <- matrix(NA, nrow=length(intervals), ncol=ncol(ind.binstates), dimnames=list(interval=intervals, track=colnames(hmm$bins$reads)))
-	reads.inside <- matrix(NA, nrow=length(intervals), ncol=ncol(ind.binstates), dimnames=list(interval=intervals, track=colnames(hmm$bins$reads)))
+	binstates.inside <- matrix(NA, nrow=length(intervals), ncol=ncol(ind.binstates), dimnames=list(interval=intervals, track=colnames(hmm$bins$counts)))
+	reads.inside <- matrix(NA, nrow=length(intervals), ncol=ncol(ind.binstates), dimnames=list(interval=intervals, track=colnames(hmm$bins$counts)))
 	for (interval in intervals) {
 		i1 <- which(interval==intervals)
 		mask <- ind.df$interval==interval
-		binstates.inside[i1,] <- colMeans(ind.df[,grepl('binstate',names(ind.df))][mask,], na.rm=T)
-		reads.inside[i1,] <- colMeans(ind.df[,grepl('read',names(ind.df))][mask,], na.rm=T)
+		binstates.inside[i1,] <- colMeans(ind.df[,grepl('binstate',names(ind.df))][mask,], na.rm=TRUE)
+		reads.inside[i1,] <- colMeans(ind.df[,grepl('read',names(ind.df))][mask,], na.rm=TRUE)
 	}
 	
 	### 10000 bp before and after annotation ###
@@ -301,14 +302,14 @@ plot.cross.correlation <- function(hmm, annotation, bp.around.annotation=10000) 
 	index.start.plus <- index.start.plus[!is.na(index.start.plus)]
 	index.start.minus <- index.start.minus[!is.na(index.start.minus)]
 	# Occurrences at every bin position relative to feature
-	binstates.before <- array(dim=c(length(-lag:0), ncol(hmm$bins$reads)), dimnames=list(lag=-lag:0, track=colnames(hmm$bins$reads)))
-	reads.before <- array(dim=c(length(-lag:0), ncol(hmm$bins$reads)), dimnames=list(lag=-lag:0, track=colnames(hmm$bins$reads)))
+	binstates.before <- array(dim=c(length(-lag:0), ncol(hmm$bins$counts)), dimnames=list(lag=-lag:0, track=colnames(hmm$bins$counts)))
+	reads.before <- array(dim=c(length(-lag:0), ncol(hmm$bins$counts)), dimnames=list(lag=-lag:0, track=colnames(hmm$bins$counts)))
 	for (ilag in -lag:0) {
-		message("lag = ",ilag,"\r", appendLF=F)
+		message("lag = ",ilag,"\r", appendLF=FALSE)
 		index <- c(index.start.plus+ilag, index.start.minus-ilag)
 		index <- index[index>0]
 		binstates.before[as.character(ilag),] <- colMeans(binstates[index,])
-		reads.before[as.character(ilag),] <- colMeans(hmm$bins$reads[index,])
+		reads.before[as.character(ilag),] <- colMeans(hmm$bins$counts[index,])
 		message("             \r")
 	}
 	message("calculating cross-correlation after annotation")
@@ -318,15 +319,15 @@ plot.cross.correlation <- function(hmm, annotation, bp.around.annotation=10000) 
 	index.end.plus <- index.end.plus[!is.na(index.end.plus)]
 	index.end.minus <- index.end.minus[!is.na(index.end.minus)]
 	# Occurrences at every bin position relative to feature
-	binstates.after <- array(dim=c(length(0:lag), ncol(hmm$bins$reads)), dimnames=list(lag=0:lag, track=colnames(hmm$bins$reads)))
-	reads.after <- array(dim=c(length(0:lag), ncol(hmm$bins$reads)), dimnames=list(lag=0:lag, track=colnames(hmm$bins$reads)))
+	binstates.after <- array(dim=c(length(0:lag), ncol(hmm$bins$counts)), dimnames=list(lag=0:lag, track=colnames(hmm$bins$counts)))
+	reads.after <- array(dim=c(length(0:lag), ncol(hmm$bins$counts)), dimnames=list(lag=0:lag, track=colnames(hmm$bins$counts)))
 	for (ilag in 0:lag) {
-		message("lag = ",ilag,"\r", appendLF=F)
+		message("lag = ",ilag,"\r", appendLF=FALSE)
 		index <- c(index.end.plus+ilag, index.end.minus-ilag)
 		index <- index[index>0]
 		binstates.after[as.character(ilag),] <- colMeans(binstates[index,])
-		reads.after[as.character(ilag),] <- colMeans(hmm$bins$reads[index,])
-		message("             \r", appendLF=F)
+		reads.after[as.character(ilag),] <- colMeans(hmm$bins$counts[index,])
+		message("             \r", appendLF=FALSE)
 	}
 
 	### Combine results ###
@@ -353,13 +354,13 @@ plot.cross.correlation <- function(hmm, annotation, bp.around.annotation=10000) 
 cross.correlation <- function(multi.hmm, annotation.file, grouping=NULL, lag.in.bp=10000) {
 
 	## Import annotation file
-	message("importing ",annotation.file," ...", appendLF=F)
+	message("importing ",annotation.file," ...", appendLF=FALSE)
 	anno.data <- rtracklayer::import(annotation.file)
 	message(" done")
 
 	## Convert multi.hmm to GRanges
 	if (class(multi.hmm) == class.multivariate.hmm) {
-		message("converting multi.hmm to GRanges...", appendLF=F)
+		message("converting multi.hmm to GRanges...", appendLF=FALSE)
 		multi.gr <- multi.hmm$bins
 		message(" done")
 	} else if (class(multi.hmm) == 'GRanges') {
@@ -373,12 +374,12 @@ cross.correlation <- function(multi.hmm, annotation.file, grouping=NULL, lag.in.
 	binsize <- width(multi.gr)[1]
 	lag <- round(lag.in.bp/binsize)
 	if (is.null(grouping)) {
-		grouping <- rep(0,ncol(multi.gr$reads))
+		grouping <- rep(0,ncol(multi.gr$counts))
 	}
 
 	## Split the combinatorial states per group
 	states.per.group <- list()
-	binstates <- dec2bin(multi.gr$state, ndigits=ncol(multi.gr$reads))
+	binstates <- dec2bin(multi.gr$state, ndigits=ncol(multi.gr$counts))
 	for (group in grouping) {
 		num.group.members <- length(which(group==grouping))
 		states.per.group[[as.character(group)]] <- factor(bin2dec(binstates[,group==grouping]), levels=0:(2^num.group.members-1))
@@ -405,19 +406,19 @@ cross.correlation <- function(multi.hmm, annotation.file, grouping=NULL, lag.in.
 		# Occurrences at every bin position relative to feature
 		tables.start <- array(dim=c(length(-lag:lag), length(levels.group), length(groups)), dimnames=list(lag=-lag:lag, comb.state=levels.group, group=groups))
 		tables.end <- tables.start
-		tracks.start <- array(dim=c(length(-lag:lag), ncol(multi.gr$reads)), dimnames=list(lag=-lag:lag, track=colnames(multi.gr$reads)))
+		tracks.start <- array(dim=c(length(-lag:lag), ncol(multi.gr$counts)), dimnames=list(lag=-lag:lag, track=colnames(multi.gr$counts)))
 		tracks.end <- tracks.start
 		for (ilag in -lag:lag) {
-			message("lag = ",ilag,"\r", appendLF=F)
+			message("lag = ",ilag,"\r", appendLF=FALSE)
 			# Combinatorial states
 			for (group in groups) {
 				tables.start[as.character(ilag), ,as.character(group)] <- table(states.per.group[[as.character(group)]][index.start.plus+ilag]) + table(states.per.group[[as.character(group)]][index.start.minus-ilag])
 				tables.end[as.character(ilag), ,as.character(group)] <- table(states.per.group[[as.character(group)]][index.end.plus+ilag]) + table(states.per.group[[as.character(group)]][index.end.minus-ilag])
 			}
 			# Tracks
-			tracks.start[as.character(ilag),] <- colSums(dec2bin(multi.gr[index.start.plus+ilag]$state, ndigits=ncol(multi.gr$reads))) + colSums(dec2bin(multi.gr[index.start.minus-ilag]$state, ndigits=ncol(multi.gr$reads)))
-			tracks.end[as.character(ilag),] <- colSums(dec2bin(multi.gr[index.end.plus+ilag]$state, ndigits=ncol(multi.gr$reads))) + colSums(dec2bin(multi.gr[index.end.minus-ilag]$state, ndigits=ncol(multi.gr$reads)))
-			message("             \r", appendLF=F)
+			tracks.start[as.character(ilag),] <- colSums(dec2bin(multi.gr[index.start.plus+ilag]$state, ndigits=ncol(multi.gr$counts))) + colSums(dec2bin(multi.gr[index.start.minus-ilag]$state, ndigits=ncol(multi.gr$counts)))
+			tracks.end[as.character(ilag),] <- colSums(dec2bin(multi.gr[index.end.plus+ilag]$state, ndigits=ncol(multi.gr$counts))) + colSums(dec2bin(multi.gr[index.end.minus-ilag]$state, ndigits=ncol(multi.gr$counts)))
+			message("             \r", appendLF=FALSE)
 		}
 
 		## Plot cross-correlations

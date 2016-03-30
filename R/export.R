@@ -45,6 +45,8 @@ exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'reads'), head
 #----------------------------------------------------
 # Export peak-calls from univariate HMMs
 #----------------------------------------------------
+#' @importFrom utils write.table
+#' @importFrom grDevices col2rgb
 exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCalls", header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
 
 	## Function definitions
@@ -73,7 +75,7 @@ exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCa
 
 	# Generate the colors
 	colors <- state.colors[levels(hmm.grl[[1]]$state)]
-	RGBs <- t(col2rgb(colors))
+	RGBs <- t(grDevices::col2rgb(colors))
 	RGBs <- apply(RGBs,1,paste,collapse=",")
 
 	# Write first line to file
@@ -84,7 +86,7 @@ exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCa
 	
 	### Write every model to file ###
 	for (imod in 1:nummod) {
-		message('writing hmm ',imod,' / ',nummod,'\r', appendLF=F)
+		message('writing hmm ',imod,' / ',nummod,'\r', appendLF=FALSE)
 		hmm <- hmm.list[[imod]]
 		if (separate.files) {
 			filename.sep <- paste0(sub('.bed.gz$', '', filename), '_', hmm$ID, '.bed.gz')
@@ -117,7 +119,7 @@ exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCa
 		if (nrow(df) == 0) {
 			warning('hmm ',imod,' does not contain any \'modified\' calls')
 		} else {
-			write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
+			utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
 		}
 		if (separate.files) {
 			close(filename.gz)
@@ -134,6 +136,8 @@ exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCa
 #----------------------------------------------------
 # Export read counts from univariate HMMs
 #----------------------------------------------------
+#' @importFrom utils write.table
+#' @importFrom grDevices col2rgb
 exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateReadCounts", header=TRUE, separate.files=FALSE) {
 
 	## Function definitions
@@ -159,7 +163,7 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 	if (!separate.files) {
 		filename.gz <- gzfile(filename, 'w')
 	}
-	readcol <- paste(col2rgb(state.colors['reads']), collapse=',')
+	readcol <- paste(grDevices::col2rgb(state.colors['reads']), collapse=',')
 
 	# Write first line to file
 	if (!separate.files) {
@@ -169,7 +173,7 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 	
 	### Write every model to file ###
 	for (imod in 1:nummod) {
-		message('writing hmm ',imod,' / ',nummod,'\r', appendLF=F)
+		message('writing hmm ',imod,' / ',nummod,'\r', appendLF=FALSE)
 		hmm <- hmm.list[[imod]]
 		if (separate.files) {
 			filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', hmm$ID, '.wig.gz')
@@ -186,7 +190,7 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 		# Write read data
 		for (chrom in unique(hmm.gr$chromosome)) {
 			cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-			write.table(mcols(hmm.gr[hmm.gr$chromosome==chrom])$reads, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
+			utils::write.table(mcols(hmm.gr[hmm.gr$chromosome==chrom])$counts, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
 		}
 		if (separate.files) {
 			close(filename.gz)
@@ -245,6 +249,8 @@ exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks'
 #----------------------------------------------------
 # Export combinatorial states or peak-calls from multivariate HMMs
 #----------------------------------------------------
+#' @importFrom utils write.table
+#' @importFrom grDevices col2rgb
 exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateCalls", separate.tracks=TRUE, exclude.states=0, include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
 
 	if (class(multi.hmm)!=class.multivariate.hmm) {
@@ -326,13 +332,13 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 			df$start <- df$start - 1
 			df$thickStart <- df$start
 			df$thickEnd <- df$end
-			RGB <- t(col2rgb(state.colors['modified']))
+			RGB <- t(grDevices::col2rgb(state.colors['modified']))
 			RGB <- apply(RGB,1,paste,collapse=",")
 			df$itemRgb <- rep(RGB, numsegments)
 			if (header) {
 				cat(paste0("track name=\"multivariate calls for ",colnames(bin)[icol],"\" description=\"multivariate calls for ",colnames(bin)[icol],"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
 			}
-			write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
+			utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
 			if (separate.files) {
 				close(filename.gz)
 			}
@@ -341,7 +347,7 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 		## Export combinatorial states
 		# Generate the colors for each combinatorial state
 		colors <- getDistinctColors(length(levels(segments.df$combination)))
-		RGBs <- t(col2rgb(colors))
+		RGBs <- t(grDevices::col2rgb(colors))
 		RGBs <- apply(RGBs,1,paste,collapse=",")
 		itemRgb <- RGBs[as.integer(factor(segments.df$combination, levels=sort(levels(segments.df$combination))))]
 
@@ -371,7 +377,7 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 				cat(paste0('track name="',trackname,'" description="',trackname,'" visibility=1 itemRgb=On priority=49\n'), file=filename.gz, append=TRUE)
 			}
 		}
-		write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
+		utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
 	}
 	if (!separate.files) {
 		close(filename.gz)
@@ -383,6 +389,8 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 #----------------------------------------------------
 # Export read counts from multivariate HMMs
 #----------------------------------------------------
+#' @importFrom utils write.table
+#' @importFrom grDevices col2rgb
 exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivariateReadCounts", header=TRUE, separate.files=FALSE) {
 
 	if (class(multi.hmm)!=class.multivariate.hmm) {
@@ -408,7 +416,7 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 		filename.gz <- gzfile(filename, 'w')
 	}
 	nummod <- length(multi.hmm$IDs)
-	readcol <- paste(col2rgb(state.colors['reads']), collapse=',')
+	readcol <- paste(grDevices::col2rgb(state.colors['reads']), collapse=',')
 
 	# Write first line to file
 	if (!separate.files) {
@@ -418,7 +426,7 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 	
 	### Write every model to file ###
 	for (imod in 1:nummod) {
-		message('writing hmm ',imod,' / ',nummod,'\r', appendLF=F)
+		message('writing hmm ',imod,' / ',nummod,'\r', appendLF=FALSE)
 		ID <- multi.hmm$IDs[imod]
 		if (separate.files) {
 			filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', ID, '.wig.gz')
@@ -439,7 +447,7 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 				chromr <- chrom
 			}
 			cat(paste0("fixedStep chrom=",chromr," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-			write.table(multi.hmm$bins[seqnames(multi.hmm$bins)==chrom]$reads[,imod], file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
+			utils::write.table(multi.hmm$bins[seqnames(multi.hmm$bins)==chrom]$counts[,imod], file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
 		}
 		if (separate.files) {
 			close(filename.gz)
@@ -467,6 +475,8 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @param separate.files A logical indicating whether or not to produce separate files for each object in \code{binned.data.list}.
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
+#' @importFrom utils write.table
+#' @importFrom grDevices col2rgb
 #' @examples
 #'## Get example BED-files with ChIP-seq reads for H3K36me3
 #' # in 7 different brain tissues (chr22)
@@ -485,13 +495,13 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", 
 
 	## Load data
 	if (is.character(binned.data.list)) {
-		message('Loading binned.data from files ...', appendLF=F); ptm <- proc.time()
+		ptm <- startTimedMessage('Loading binned.data from files ...')
 		binfiles <- binned.data.list
 		binned.data.list <- list()
 		for (binfile in binfiles) {
 			binned.data.list[[binfile]] <- get(load(binfile))
 		}
-		time <- proc.time() - ptm; message(" ",round(time[3],2),"s")
+		stopTimedMessage(ptm)
 	}
 
 	## Function definitions
@@ -513,7 +523,7 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", 
 	if (!separate.files) {
 		filename.gz <- gzfile(filename, 'w')
 	}
-	readcol <- paste(col2rgb(state.colors['reads']), collapse=',')
+	readcol <- paste(grDevices::col2rgb(state.colors['reads']), collapse=',')
 
 	# Write first line to file
 	if (!separate.files) {
@@ -523,7 +533,7 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", 
 	
 	### Write every model to file ###
 	for (imod in 1:nummod) {
-		message('writing binned data ',imod,' / ',nummod,'   \r', appendLF=F)
+		message('writing binned data ',imod,' / ',nummod,'   \r', appendLF=FALSE)
 		b <- binned.data.list[[imod]]
 		if (separate.files) {
 			filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', imod, '.wig.gz')
@@ -540,7 +550,7 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", 
 		# Write read data
 		for (chrom in unique(b$chromosome)) {
 			cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-			write.table(mcols(b[b$chromosome==chrom])$reads, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
+			utils::write.table(mcols(b[b$chromosome==chrom])$counts, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
 		}
 		if (separate.files) {
 			close(filename.gz)
@@ -569,6 +579,7 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", 
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @param append Whether or not to append to an existing file.
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
+#' @importFrom utils write.table
 #' @export
 exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", header=TRUE, orderByScore=TRUE, append=FALSE) {
 
@@ -630,7 +641,7 @@ exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", h
 	if (nrow(df) == 0) {
 		warning('No regions in input')
 	} else {
-		write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
+		utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
 	}
 
 	close(filename.gz)
@@ -676,6 +687,8 @@ exportCombinedMultivariate <- function(hmm, filename, what=c('combstates'), excl
 #----------------------------------------------------
 # Export combinatorial states or peak-calls from multivariate HMMs
 #----------------------------------------------------
+#' @importFrom utils write.table
+#' @importFrom grDevices col2rgb
 exportCombinedMultivariateCalls <- function(hmm, filename="chromstaR_combinedMultivariateCalls", exclude.states='', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE) {
 
 	if (class(hmm)!=class.combined.multivariate.hmm) {
@@ -736,7 +749,7 @@ exportCombinedMultivariateCalls <- function(hmm, filename="chromstaR_combinedMul
 		## Export combinatorial states
 		# Generate the colors for each combinatorial state
 		colors <- getDistinctColors(length(levels(segments.df$combination)))
-		RGBs <- t(col2rgb(colors))
+		RGBs <- t(grDevices::col2rgb(colors))
 		RGBs <- apply(RGBs,1,paste,collapse=",")
 		itemRgb <- RGBs[as.integer(factor(segments.df$combination, levels=sort(levels(segments.df$combination))))]
 
@@ -758,7 +771,7 @@ exportCombinedMultivariateCalls <- function(hmm, filename="chromstaR_combinedMul
 		if (header) {
 			cat(paste0('track name="',trackname.cond, '" description="', trackname.cond, '" visibility=1 itemRgb=On priority=49\n'), file=filename.gz, append=TRUE)
 		}
-		write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
+		utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
 
 		if (separate.files) {
 			close(filename.gz)

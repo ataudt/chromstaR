@@ -14,6 +14,7 @@
 #' @param max.distance This number is used as a cutoff to group replicates based on their distance matrix. The lower this number, the more similar replicates have to be to be grouped together.
 #' @return Output is a \code{\link{chromstaR_multivariateHMM}} object with additional entry \code{replicateInfo}. If only one \code{\link{chromstaR_univariateHMM}} was given as input, a simple list() with the \code{replicateInfo} is returned.
 #' @seealso \code{\link{chromstaR_multivariateHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksMultivariate}}
+#' @importFrom stats hclust cutree dist
 #' @export
 callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=0.01, max.iter=NULL, max.time=NULL, keep.posteriors=FALSE, num.threads=1, max.distance=0.2) {
 
@@ -28,8 +29,8 @@ callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=
 		info.df <- multimodel$replicateInfo$info
 		cor.matrix <- multimodel$replicateInfo$correlation
 		dist.matrix <- multimodel$replicateInfo$distance
-		hc <- hclust(dist.matrix)
-		info.df$group <- cutree(hc, h=max.distance)
+		hc <- stats::hclust(dist.matrix)
+		info.df$group <- stats::cutree(hc, h=max.distance)
 
 	### Call peaks for several replicates ###
 	} else {
@@ -39,7 +40,7 @@ callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=
 		## Univariate replicateInfo
 		ids <- unlist(lapply(hmms, '[[', 'ID'))
 		weight.univariate <- unlist(lapply(hmms, function(x) { x$weights['modified'] }))
-		total.count <- unlist(lapply(hmms, function(x) { sum(x$bins$reads) }))
+		total.count <- unlist(lapply(hmms, function(x) { sum(x$bins$counts) }))
 		info.df <- data.frame(total.count=total.count, weight.univariate=weight.univariate)
 		rownames(info.df) <- ids
 
@@ -64,9 +65,9 @@ callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=
 			cor.matrix <- cor(binstates)
 			weight.multivariate <- apply(binstates, 2, sum) / nrow(binstates)
 			info.df$weight.multivariate <- weight.multivariate
-			dist.matrix <- dist(cor.matrix)
-			hc <- hclust(dist.matrix)
-			info.df$group <- cutree(hc, h=max.distance)
+			dist.matrix <- stats::dist(cor.matrix)
+			hc <- stats::hclust(dist.matrix)
+			info.df$group <- stats::cutree(hc, h=max.distance)
 		}
 
 		## Make return object

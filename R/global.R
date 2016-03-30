@@ -1,6 +1,7 @@
-#' @useDynLib chromstaR
-#' @import GenomicRanges
+#' @useDynLib chromstaR, .registration = TRUE, .fixes = ""
+#' @import GenomeInfoDb
 #' @import IRanges
+#' @import GenomicRanges
 NULL
 
 # =======================================================
