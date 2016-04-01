@@ -87,7 +87,7 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 	## Prepare the HMM
 	params <- prepare.multivariate(modellist, use.states=use.states, num.states=num.states)
 	bins <- params$bins
-	reads <- params$counts
+	counts <- params$counts
 	numbins <- params$numbins
 	nummod <- params$nummod
 	comb.states2use <- params$comb.states
@@ -106,7 +106,7 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 	# Select only specified chromosomes
 	if (!is.null(chromosomes)) {
 		index <- which(seqnames(bins) %in% chromosomes)
-		reads <- reads[index,]
+		counts <- counts[index,]
 		bins <- bins[index]
 		numbins <- length(bins)
 		comb.states.per.bin <- comb.states.per.bin[index]
@@ -177,7 +177,7 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 		}
 		# Call the C function
 		hmm <- .C("C_multivariate_hmm",
-			reads = as.integer(as.vector(reads)), # int* multiO
+			counts = as.integer(as.vector(counts)), # int* multiO
 			num.bins = as.integer(numbins), # int* T
 			num.states = as.integer(numstates2use), # int* N
 			num.modifications = as.integer(nummod), # int* Nmod
@@ -218,7 +218,7 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 			result$IDs <- IDs
 		## Bin coordinates, posteriors and states
 			result$bins <- bins
-			result$bins$counts <- reads
+			result$bins$counts <- counts
 			if (get.posteriors) {
 				ptm <- startTimedMessage("Transforming posteriors to `per sample` representation ...")
 				hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
@@ -250,7 +250,7 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 		## Segmentation
 			ptm <- startTimedMessage("Making segmentation ...")
 			df <- as.data.frame(result$bins)
-			ind.readcols <- grep('^reads', names(df))
+			ind.readcols <- grep('^counts', names(df))
 			ind.postcols <- grep('^posteriors', names(df))
 			ind.widthcol <- grep('width', names(df))
 			ind.scorecol <- grep('score', names(df))

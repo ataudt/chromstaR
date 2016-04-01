@@ -39,7 +39,7 @@ data(example.multi.HMM)
 \donttest{
 exportMultivariate(example.multi.HMM, exclude.states=c(0),
                   filename='chromstaR_example.multi.HMM',
-                  what=c('reads','peaks'))
+                  what=c('counts','peaks'))
 }
 }
 \author{

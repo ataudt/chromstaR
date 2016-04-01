@@ -4,26 +4,25 @@
 \alias{callPeaksUnivariate}
 \title{Fit a Hidden Markov Model to a ChIP-seq sample.}
 \usage{
-callPeaksUnivariate(binned.data, ID, eps = 0.01, init = "standard",
-  max.time = NULL, max.iter = NULL, num.trials = 1, eps.try = NULL,
-  num.threads = 1, read.cutoff = TRUE, read.cutoff.quantile = 1,
-  read.cutoff.absolute = 500, max.mean = Inf, FDR = 0.5,
-  control = FALSE, keep.posteriors = FALSE, keep.densities = FALSE,
-  checkpoint.after.iter = NULL, checkpoint.after.time = NULL,
-  checkpoint.file = paste0("chromstaR_checkpoint_", ID, ".cpt"),
-  checkpoint.overwrite = TRUE, checkpoint.use.existing = FALSE,
-  verbosity = 1)
+callPeaksUnivariate(binned.data, ID, prefit.on.chr = NULL, short = TRUE,
+  eps = 0.01, init = "standard", max.time = NULL, max.iter = NULL,
+  num.trials = 1, eps.try = NULL, num.threads = 1, read.cutoff = TRUE,
+  read.cutoff.quantile = 1, read.cutoff.absolute = 500, max.mean = Inf,
+  FDR = 0.5, control = FALSE, keep.posteriors = FALSE,
+  keep.densities = FALSE, verbosity = 1)
 }
 \arguments{
 \item{binned.data}{A \link{GRanges} object with binned read counts.}
 
 \item{ID}{An identifier that will be used to identify this sample in various downstream functions. Could be the file name of the \code{binned.data} for example.}
 
+\item{prefit.on.chr}{A chromosome that is used to pre-fit the Hidden Markov Model. Set to \code{NULL} if you don't want to prefit but use the whole genome instead.}
+
 \item{eps}{Convergence threshold for the Baum-Welch algorithm.}
 
 \item{init}{One of the following initialization procedures:
 \describe{
-\item{\code{standard}}{The negative binomial of state 'unmodified' will be initialized with \code{mean=mean(reads)}, \code{var=var(reads)} and the negative binomial of state 'modified' with \code{mean=mean(reads)+1}, \code{var=var(reads)}. This procedure usually gives the fastest convergence.}
+\item{\code{standard}}{The negative binomial of state 'unmodified' will be initialized with \code{mean=mean(counts)}, \code{var=var(counts)} and the negative binomial of state 'modified' with \code{mean=mean(counts)+1}, \code{var=var(counts)}. This procedure usually gives the fastest convergence.}
 \item{\code{random}}{Mean and variance of the negative binomials will be initialized with random values (in certain boundaries, see source code). Try this if the \code{'standard'} procedure fails to produce a good fit.}
 \item{\code{empiric}}{Yet another way to initialize the Baum-Welch. Try this if the other two methods fail to produce a good fit.}
 }}
@@ -44,7 +43,7 @@ callPeaksUnivariate(binned.data, ID, eps = 0.01, init = "standard",
 
 \item{read.cutoff.absolute}{Read counts above this value will be set to the read count specified by this value. Filtering very high read counts increases the performance of the Baum-Welch fitting procedure. However, if your data contains very few peaks they might be filtered out. If option \code{read.cutoff.quantile} is also specified, the minimum of the resulting cutoff values will be used. Set \code{read.cutoff=FALSE} to disable this filtering.}
 
-\item{max.mean}{If \code{mean(reads)>max.mean}, bins with low read counts will be set to 0. This is a workaround to obtain good fits in the case of large bin sizes.}
+\item{max.mean}{If \code{mean(counts)>max.mean}, bins with low read counts will be set to 0. This is a workaround to obtain good fits in the case of large bin sizes.}
 
 \item{FDR}{False discovery rate. code{NULL} means that the state with maximum posterior probability will be chosen, irrespective of its absolute probability (default=code{NULL}).}
 
@@ -54,23 +53,15 @@ callPeaksUnivariate(binned.data, ID, eps = 0.01, init = "standard",
 
 \item{keep.densities}{If set to \code{TRUE} (default=\code{FALSE}), densities will be available in the output. This should only be needed debugging.}
 
-\item{checkpoint.after.iter}{Write a checkpoint file every n iterations. The default \code{NULL} means no checkpointing for iterations.}
-
-\item{checkpoint.after.time}{Write a checkpoint file every t seconds. The default \code{NULL} means no checkpointing for time.}
-
-\item{checkpoint.file}{The name of the checkpoint file that will be written.}
-
-\item{checkpoint.overwrite}{If set to \code{TRUE}, only one checkpoint file will be written. If set to \code{FALSE}, a new checkpoint file will be written at each checkpoint with the total number of iterations appended.}
-
-\item{checkpoint.use.existing}{If set to \code{TRUE}, the Baum-Welch fitting procedure will be continued from the HMM in the \code{checkpoint.file}.}
-
 \item{verbosity}{Verbosity level for the fitting procedure. 0 - No output, 1 - Iterations are printed.}
+
+\item{If}{\code{TRUE}, the second fitting step is only done with one iteration.}
 }
 \description{
 Fit a HMM to a ChIP-seq sample to determine the modification state of genomic regions, e.g. call peaks in the sample.
 }
 \details{
-The Hidden Markov Model which is used to classify the bins uses 3 states: state 'zero-inflation' with a delta function as emission densitiy (only zero read counts), 'unmodified' and 'modified' with Negative Binomials as emission densities. A Baum-Welch algorithm is employed to estimate the parameters of the distributions. See our paper TODO:insert paper for a detailed description of the method.
+This function is similar to \code{\link{callPeaksUnivariateAllChr}} but allows to pre-fit on a single chromosome instead of the whole genome. This gives a significant performance increase and can help to converge into a better fit in case of unsteady quality for some chromosomes.
 }
 \examples{
 ## Get an example BED-file with ChIP-seq reads for H3K36me3 in brain tissue

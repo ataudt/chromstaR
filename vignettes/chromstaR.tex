@@ -1,7 +1,5 @@
 %\VignetteIndexEntry{The chromstaR users guide}
-%\VignetteDepends{chromstaR}
-%\VignetteKeywords{ChIP-seq}
-%\VignettePackage{chromstaR}
+%\VignetteEngine{knitr::knitr}
 \documentclass[11pt]{article}\usepackage[]{graphicx}\usepackage[]{color}
 %% maxwidth is the original width if it is less than linewidth
 %% otherwise use linewidth (to make sure the graphics do not exceed the margin)
@@ -64,7 +62,7 @@
 \newcommand{\Robject}[1]{{\texttt{#1}}}
 \newcommand{\Rpackage}[1]{{\textit{#1}}}
 
-\author{Aaron Taudt\footnote{a.s.taudt@umcg.nl}}
+\author{Aaron Taudt\footnote{aaron.taudt@gmail.com}}
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
 \begin{document}
 \title{The chromstaR user's guide}
@@ -83,13 +81,249 @@ ChIP-seq has become the standard technique for assessing the genome-wide chromat
 
 Every analysis with the \Rpackage{chromstaR} package starts from aligned reads in either BAM or BED format. In the first step, the genome is partitioned into non-overlapping, equally sized bins and the reads that fall into each bin are counted. These read counts serve as the basis for both the univariate and the multivariate peak- and broad-region calling. Univariate peak calling is done by fitting a three-state Hidden Markov Model to the binned read counts. Multivariate peak calling for $\mathcal{S}$ samples is done by fitting a $2^\mathcal{S}$-state Hidden Markov Model to all binned read counts.
 
-\section{Univariate analysis}
+%' \section{Univariate analysis}
+%' 
+%' \subsection{\label{sec:narrow}Task 1: Peak calling for a narrow histone modification}
+%' 
+%' Examples of histone modifications with a narrow profile are H3K4me3, H3K9ac and H3K27ac in most human tissues. For such peak-like modifications, the bin size should be set to a value between 200bp and 1000bp.
+%' 
+%' \begin{scriptsize}
+%' <<univariate_narrow_library, results='hide', message=FALSE, eval=TRUE>>=
+%' library(chromstaR)
+%' @
+%' 
+%' <<univariate_narrow_binning, results='show', message=FALSE, eval=TRUE>>=
+%' ## === Step 1: Binning ===
+%' # Get an example BED file
+%' bedfile <- system.file("extdata","euratrans","liver-H3K4me3-BN-male-bio2-tech1.bed.gz",
+%'                         package="chromstaRData")
+%' # Get the chromosome lengths (see ?GenomeInfoDb::fetchExtendedChromInfoFromUCSC)
+%' # This is only necessary for BED files. BAM files are handled automatically.
+%' chrom.lengths <- data(rn4_chrominfo)
+%' # We use bin size 1000bp and chromosome 12 to keep the example quick
+%' binned.data <- binReads(bedfile, format='bed',assembly=rn4_chrominfo, binsizes=1000,
+%'                         chromosomes='chr12')
+%' print(binned.data)
+%' @
+%' 
+%' <<univariate_narrow_peak_calling, results='markup', eval=TRUE>>=
+%' ## === Step 2: Peak calling ===
+%' # We restrict the peak calling to 60 seconds to keep this example quick.
+%' model <- callPeaksUnivariate(binned.data, ID='H3K4me3', max.time=60, verbosity=0)
+%' @
+%' 
+%' <<univariate_narrow_plotting, fig.width=6, fig.height=4>>=
+%' ## === Step 3: Checking the fit ===
+%' # For a narrow modification, the fit should look something like this,
+%' # with the 'modified'-component near the bottom of the figure
+%' plot(model)
+%' @
+%' 
+%' <<univariate_narrow_export, results='hide', message=FALSE, eval=FALSE>>=
+%' ## === Step 4: Export to genome browser ===
+%' # We can export peak calls and binned read counts with
+%' exportUnivariates(list(model), filename='your-peak-file', what='peaks')
+%' exportUnivariates(list(model), filename='your-read-file', what='counts')
+%' @
+%' \end{scriptsize}
+%' 
+%' \subsection{\label{sec:broad}Task 2: Peak calling for a broad histone modification}
+%' 
+%' Examples of histone modifications with a broad profile are H3K9me3, H3K27me3, H3K36me3, H4K20me1 in most human tissues. These modifications usually cover broad domains of the genome, and the enrichment is best captured with a bin size between 500bp and 2000bp.
+%' 
+%' \begin{scriptsize}
+%' <<univariate_broad_library, results='hide', message=FALSE, eval=TRUE>>=
+%' library(chromstaR)
+%' @
+%' 
+%' <<univariate_broad_binning, results='hide', message=FALSE, eval=TRUE>>=
+%' ## === Step 1: Binning ===
+%' # Get an example BED file
+%' bedfile <- system.file("extdata","euratrans","liver-H3K27me3-BN-male-bio1-tech1.bed.gz",
+%'                         package="chromstaRData")
+%' # Get the chromosome lengths (see ?GenomeInfoDb::fetchExtendedChromInfoFromUCSC)
+%' # This is only necessary for BED files. BAM files are handled automatically.
+%' chrom.lengths <- data(rn4_chrominfo)
+%' # We use bin size 1000bp and chromosome 12 to keep the example quick
+%' binned.data <- binReads(bedfile, format='bed',assembly=rn4_chrominfo, binsizes=1000,
+%'                         chromosomes='chr12')
+%' print(binned.data)
+%' @
+%' 
+%' <<univariate_broad_peak_calling, results='markup', eval=TRUE>>=
+%' ## === Step 2: Peak calling ===
+%' # We restrict the peak calling to 60 seconds to keep this example quick.
+%' model <- callPeaksUnivariate(binned.data, ID='H3K27me3', max.time=60, verbosity=0)
+%' @
+%' 
+%' <<univariate_broad_plotting, fig.width=6, fig.height=4>>=
+%' ## === Step 3: Checking the fit ===
+%' # For a broad modification, the fit should look something like this,
+%' # with a 'modified'-component that fits the thick tail of the distribution.
+%' plot(model)
+%' @
+%' 
+%' <<univariate_broad_export, results='hide', message=FALSE, eval=FALSE>>=
+%' ## === Step 4: Export to genome browser ===
+%' # We can export peak calls and binned read counts with
+%' exportUnivariates(list(model), filename='your-peak-file', what='peaks')
+%' exportUnivariates(list(model), filename='your-read-file', what='counts')
+%' @
+%' 
+%' <<univariate_broad_H4K20me1, echo=TRUE, results='hide', message=FALSE, fig.width=6, fig.height=4>>=
+%' ## === Step 1-3: Another example for mark H4K20me1 ===
+%' bedfile <- system.file("extdata","euratrans","liver-H4K20me1-BN-male-bio1-tech1.bed.gz",
+%'                        package="chromstaRData")
+%' data(rn4_chrominfo)
+%' binned.data <- binReads(bedfile, format='bed',assembly=rn4_chrominfo, binsizes=1000,
+%'                         chromosomes='chr12')
+%' model <- callPeaksUnivariate(binned.data, ID='H4K20me1', max.time=60, verbosity=0)
+%' plot(model)
+%' @
+%' 
+%' \end{scriptsize}
+%' 
+%' \subsection{Task 3: Peak calling for ATAC-seq, DNase-seq, FAIRE-seq, ...}
+%' 
+%' Peak calling for ATAC-seq and DNase-seq is similar to the peak calling of a narrow histone modification (see section~\ref{sec:narrow}). FAIRE-seq experiments seem to exhibit a broad profile with our model, so the procedure is similar to the domain calling of a broad histone modification (see section~\ref{sec:broad}).
+%' 
+%' \section{Multivariate analysis}
+%' \subsection{Task 1: Integrating multiple replicates}
+%' 
+%' \Rpackage{chromstaR} can be used to call peaks with multiple replicates, without the need of prior merging. The underlying statistical model integrates information from all replicates to identify common peaks. It is, however, important to note that replicates with poor quality can affect the joint peak calling negatively. It is therefore recommended to first check the replicate quality and discard poor-quality replicates. The necessary steps for peak calling for an example ChIP-seq experiment with 4 replicates are detailed below.
+%' 
+%' \begin{scriptsize}
+%' <<univariate_replicate_library, results='hide', message=FALSE, eval=TRUE>>=
+%' library(chromstaR)
+%' @
+%' 
+%' <<multivariate_replicate_binning, results='show', message=FALSE, eval=TRUE>>=
+%' ## === Step 1: Binning ===
+%' # Let's get some example data with 3 replicates
+%' file.path <- system.file("extdata","euratrans", package='chromstaRData')
+%' bedfiles.good <- list.files(file.path, pattern="liver.*H3K27me3", full.names=TRUE)[1:3]
+%' # We fake a replicate with poor quality by taking a different mark entirely
+%' bedfiles.poor <- list.files(file.path, pattern="liver.*H4K20me1", full.names=TRUE)[1]
+%' bedfiles <- c(bedfiles.good, bedfiles.poor)
+%' # This is only necessary for BED files. BAM files are handled automatically.
+%' data(rn4_chrominfo)
+%' # We use bin size 1000bp and chromosome 12 to keep the example quick
+%' binned.data <- list()
+%' for (bedfile in bedfiles) {
+%'   binned.data[[basename(bedfile)]] <- binReads(bedfile, format='bed', binsize=1000,
+%'                                          assembly=rn4_chrominfo, chromosomes='chr12')
+%' }
+%' @
+%' 
+%' <<multivariate_replicate_univariate, results='hide', message=FALSE, eval=TRUE>>=
+%' ## === Step 2: Univariate peak calling ===
+%' # The univariate fit is obtained for each replicate
+%' models <- list()
+%' for (i1 in 1:length(binned.data)) {
+%'   models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], ID=paste0('Rep',i1),
+%'                                       max.time=60)
+%' }
+%' @
+%' 
+%' <<multivariate_replicate_peak_calling, results='show', message=FALSE, eval=TRUE>>=
+%' ## === Step 3: Check replicate correlation ===
+%' # We run a multivariate peak calling on all 4 replicates
+%' # A warning is issued because replicate 4 is very different from the others
+%' multi.model <- callPeaksReplicates(models, max.time=60, eps=1)
+%' # Checking the correlation confirms that Rep4 is very different from the others
+%' print(multi.model$replicateInfo$correlation)
+%' @
+%' 
+%' <<multivariate_replicate_peak_calling2, results='hide', message=FALSE, eval=TRUE>>=
+%' ## === Step 4: Peak calling with replicates ===
+%' # We redo the previous step without the "bad" replicate
+%' # Also, we force all replicates to agree in their peak calls
+%' multi.model <- callPeaksReplicates(models[1:3], force.equal=TRUE, max.time=60)
+%' @
+%' 
+%' <<multivariate_replicate_export, results='hide', message=FALSE, eval=FALSE>>=
+%' ## === Step 5: Export to genome browser ===
+%' # Finally, we can export the results as BED file
+%' exportMultivariate(multi.model, filename='your-peak-file', what='peaks')
+%' exportMultivariate(multi.model, filename='your-read-file', what='counts')
+%' @
+%' \end{scriptsize}
+%' 
+%' \subsection{Task 2: Detecting differentially modified regions}
+%' 
+%' \Rpackage{chromstaR} is extremely powerful in detecting differentially modified regions in two or more samples. The following example illustrates this on ChIP-seq data for H4K20me1 in liver and heart (left-ventricle) tissues from rat. With 2 samples we can have $2^2 = 4$ combinatorial states, which can be readily interpreted as '0: all samples unmodified', '1-2: DMR' and '3: all samples modified'. Having several replicates for each sample makes it more complicated, but you get the idea ...
+%' 
+%' \begin{scriptsize}
+%' <<univariate_differential_library, results='hide', message=FALSE, eval=TRUE>>=
+%' library(chromstaR)
+%' @
+%' 
+%' <<multivariate_differential_binning, results='hide', message=FALSE, eval=TRUE>>=
+%' ## === Step 1: Binning ===
+%' # Let's get some example data for heart (lv) and liver with 3 replicates each
+%' file.path <- system.file("extdata","euratrans", package='chromstaRData')
+%' bedfiles <- list.files(file.path, pattern="H4K20me1", full.names=TRUE)
+%' # This is only necessary for BED files. BAM files are handled automatically.
+%' data(rn4_chrominfo)
+%' # We use bin size 1000bp and chromosome 12 to keep the example quick
+%' binned.data <- list()
+%' for (bedfile in bedfiles) {
+%'   binned.data[[basename(bedfile)]] <- binReads(bedfile, format='bed', binsize=1000,
+%'                                          assembly=rn4_chrominfo, chromosomes='chr12')
+%' }
+%' @
+%' 
+%' <<multivariate_differential_univariate, results='hide', message=FALSE, eval=TRUE>>=
+%' ## === Step 2: Univariate peak calling ===
+%' # The univariate fit is obtained for each replicate
+%' models <- list()
+%' for (i1 in 1:length(binned.data)) {
+%'   models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], ID=names(binned.data)[i1],
+%'                                       max.time=60)
+%' }
+%' @
+%' 
+%' <<multivariate_differential_stateBrewer, results='markup', message=TRUE, eval=TRUE>>=
+%' ## === Step 3: Constructing the combinatorial states ===
+%' # This step is only necessary if you have replicates for each sample.
+%' # To ensure that replicates are treated as such, and not as independent
+%' # samples, we have to construct the proper combinatorial states:
+%' 
+%' # First, we get all the tissues (we could specify them by hand, but we are lazy)
+%' IDs <- names(binned.data)
+%' tissues <- sapply(strsplit(IDs,'-'),'[[',1)
+%' marks <- sapply(strsplit(IDs,'-'),'[[',2)
+%' print(tissues)
+%' # Second, we obtain the combinatorial states
+%' # Look up ?stateBrewer on how to use this function
+%' states <- stateBrewer(tissues)
+%' print(states)
+%' # Third, we construct differential states
+%' diff.states <- stateBrewer(tissues, differential.states=TRUE, conditions=tissues,
+%'                            tracks2compare=marks)
+%' print(diff.states)
+%' @
+%' 
+%' <<multivariate_differential_multivariate, results='hide', message=FALSE, eval=TRUE>>=
+%' ## === Step 4: Multivariate peak calling ===
+%' multi.model <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
+%' @
+%' 
+%' <<multivariate_differential_export, results='hide', message=FALSE, eval=FALSE>>=
+%' ## === Step 5: Export to genome browser ===
+%' # Export only differential peaks by excluding the 'common.states'
+%' exportMultivariate(multi.model, filename='your-peak-file', what='peaks',
+%'                    include.states=diff.states)
+%' exportMultivariate(multi.model, filename='your-read-file', what='counts',
+%'                    include.states=diff.states)
+%' exportMultivariate(multi.model, filename='your-combstates-file', what='combstates',
+%'                    include.states=diff.states)
+%' @
+%' \end{scriptsize}
 
-\subsection{\label{sec:narrow}Task 1: Peak calling for a narrow histone modification}
+\subsection{Task 3: Finding combinatorial chromatin states}
 
-Examples of histone modifications with a narrow profile are H3K4me3, H3K9ac and H3K27ac. For such peak-like modifications, the bin size should be set to a value between 200bp and 1000bp.
-
-If you want to do this example starting from a BAM file, you should have the \Rpackage{chromstaRExampleData} package installed. Otherwise you can skip the first step (Binning) and start from already binned data. If your input is in BED format, use function \Rfunction{bed2binned} instead. Please refer to the FAQ section \ref{sec:faq} for more details and troubleshooting on the binning step.
+Most experimental studies that probe several histone modifications are interested in combinatorial chromatin states. An example of a simple combinatorial state would be [H3K4me3+H3K27me3], which is also frequently called ``bivalent promoter'', due to the simultaneous occurrence of the promoter marking H3K4me3 and the repressive H3K27me3. Finding combinatorial states with \Rpackage{chromstaR} is equivalent to a multivariate peak calling. The following code chunks demonstrate how to find bivalent promoters and do some simple analysis:
 
 \begin{scriptsize}
 \begin{knitrout}
@@ -104,201 +338,17 @@ If you want to do this example starting from a BAM file, you should have the \Rp
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
 \hlcom{## === Step 1: Binning ===}
-\hlcom{# We use bin size 1000bp and chromosome 12 to keep the example quick}
-\hlkwd{library}\hlstd{(chromstaRExampleData)}
-\hlstd{bamfile} \hlkwb{<-} \hlkwd{getExampleFilesBAM}\hlstd{(}\hlstr{'H3K4me3'}\hlstd{)[}\hlnum{1}\hlstd{]}
-\hlstd{binned.data} \hlkwb{<-} \hlkwd{bam2binned}\hlstd{(bamfile,} \hlkwc{bamindex}\hlstd{=bamfile,} \hlkwc{binsize}\hlstd{=}\hlnum{1000}\hlstd{,}
-                          \hlkwc{chromosomes}\hlstd{=}\hlstr{'chr12'}\hlstd{)}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlcom{## === Step 2: Peak calling ===}
-\hlcom{# We load the binned.data from step 1 (this is only necessary if step 1 was skipped)}
-\hlkwd{data}\hlstd{(}\hlstr{"liver-H3K4me3-BN-male-bio2-tech1_chr12.bam_binsize_1000"}\hlstd{)}
-\hlcom{# We restrict the peak calling to 60 seconds to keep this example quick.}
-\hlstd{model} \hlkwb{<-} \hlkwd{callPeaksUnivariate}\hlstd{(binned.data,} \hlkwc{ID}\hlstd{=}\hlstr{'H3K4me3'}\hlstd{,} \hlkwc{max.time}\hlstd{=}\hlnum{60}\hlstd{)}
-\end{alltt}
-
-
-{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Replaced read counts > 163 (99.9\% quantile) by 163 in 46 bins. Set option 'read.cutoff.quantile=1' to disable this filtering. This filtering was done to increase the speed of the HMM and should not affect the results.\\\#\# ------------------------------------ Try 1 of 1 -------------------------------------}}\begin{verbatim}
-## HMM: number of states = 3
-## HMM: number of bins = 46782
-## HMM: maximum number of iterations = none
-## HMM: maximum running time = 60 sec
-## HMM: epsilon = 0.01
-## HMM: data mean = 2.47595, data variance = 180.327
-##  Iteration              log(P)             dlog(P)     Diff in state 2    Time in sec
-##          0                -inf                   -                   -              0
-##          1       -60305.655970                 inf               27150              0
-##          2       -57564.343441         2741.312529                7264              0
-##          3       -55096.051255         2468.292186               16265              1
-##        ...                 ...                 ...                 ...            ...
-##        124       -50021.551800            0.010576               23718              2
-##        125       -50021.541731            0.010068               23717              2
-##        126       -50021.532143            0.009588               23715              2
-## HMM: Convergence reached!
-## HMM: Recoding posteriors ...
-\end{verbatim}
-
-
-{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Calculating states from posteriors ... 0.24s\\\#\# Making segmentation ... 0.44s}}\end{kframe}
-\end{knitrout}
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlcom{## === Step 3: Checking the fit ===}
-\hlcom{# For a narrow modification, the fit should look something like this,}
-\hlcom{# with the 'modified'-component near the bottom of the figure}
-\hlkwd{plot}\hlstd{(model)}
-\end{alltt}
-\end{kframe}
-\includegraphics[width=\maxwidth]{figure/univariate_narrow_plotting-1} 
-
-\end{knitrout}
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlcom{## === Step 4: Export to genome browser ===}
-\hlcom{# We can export peak calls and binned read counts with}
-\hlkwd{exportUnivariates}\hlstd{(}\hlkwd{list}\hlstd{(model),} \hlkwc{filename}\hlstd{=}\hlstr{'your-file'}\hlstd{,} \hlkwc{what}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{'peaks'}\hlstd{,}\hlstr{'reads'}\hlstd{))}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
-\end{scriptsize}
-
-\subsection{\label{sec:broad}Task 2: Peak calling for a broad histone modification}
-
-Examples of histone modifications with a broad profile are H3K9me3, H3K27me3, H3K36me3, H4K20me1. These modifications usually cover broad domains of the genome, and the enrichment is best captured with a bin size between 500bp and 2000bp.
-
-If you want to do this example starting from a BAM file, you should have the \Rpackage{chromstaRExampleData} package installed. Otherwise you can skip the first step (Binning) and start from already binned data. If your input is in BED format, use function \Rfunction{bed2binned} instead. Please refer to the FAQ section \ref{sec:faq} for more details and troubleshooting on the binning step.
-
-\begin{scriptsize}
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{library}\hlstd{(chromstaR)}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlcom{## === Step 1: Binning ===}
-\hlcom{# We use bin size 1000bp and chromosome 12 to keep the example quick}
-\hlkwd{library}\hlstd{(chromstaRExampleData)}
-\hlstd{bamfile} \hlkwb{<-} \hlkwd{getExampleFilesBAM}\hlstd{(}\hlstr{'H3K27me3'}\hlstd{)[}\hlnum{4}\hlstd{]}
-\hlstd{binned.data} \hlkwb{<-} \hlkwd{bam2binned}\hlstd{(bamfile,} \hlkwc{bamindex}\hlstd{=bamfile,} \hlkwc{binsize}\hlstd{=}\hlnum{1000}\hlstd{,}
-                          \hlkwc{chromosomes}\hlstd{=}\hlstr{'chr12'}\hlstd{)}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlcom{## === Step 2: Peak calling ===}
-\hlcom{# We load the binned.data from step 1 (this is only necessary if step 1 was skipped)}
-\hlkwd{data}\hlstd{(}\hlstr{"liver-H3K27me3-BN-male-bio3-tech1_chr12.bam_binsize_1000"}\hlstd{)}
-\hlcom{# We restrict the peak calling to 60 seconds to keep this example quick.}
-\hlstd{model} \hlkwb{<-} \hlkwd{callPeaksUnivariate}\hlstd{(binned.data,} \hlkwc{ID}\hlstd{=}\hlstr{'H3K27me3'}\hlstd{,} \hlkwc{max.time}\hlstd{=}\hlnum{60}\hlstd{)}
-\end{alltt}
-
-
-{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Replaced read counts > 70 (99.9\% quantile) by 70 in 44 bins. Set option 'read.cutoff.quantile=1' to disable this filtering. This filtering was done to increase the speed of the HMM and should not affect the results.\\\#\# ------------------------------------ Try 1 of 1 -------------------------------------}}\begin{verbatim}
-## HMM: number of states = 3
-## HMM: number of bins = 46782
-## HMM: maximum number of iterations = none
-## HMM: maximum running time = 60 sec
-## HMM: epsilon = 0.01
-## HMM: data mean = 9.9711, data variance = 115.938
-##  Iteration              log(P)             dlog(P)     Diff in state 2    Time in sec
-##          0                -inf                   -                   -              0
-##          1      -145371.198541                 inf               26373              0
-##          2      -138286.718658         7084.479883                4015              0
-##          3      -135011.421891         3275.296767                3861              0
-##        ...                 ...                 ...                 ...            ...
-##         70      -130368.590285            0.011413                1908              1
-##         71      -130368.580012            0.010274                1909              1
-##         72      -130368.570759            0.009252                1907              1
-## HMM: Convergence reached!
-## HMM: Recoding posteriors ...
-\end{verbatim}
-
-
-{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Calculating states from posteriors ... 0.03s\\\#\# Making segmentation ... 0.41s}}\end{kframe}
-\end{knitrout}
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlcom{## === Step 3: Checking the fit ===}
-\hlcom{# For a broad modification, the fit should look something like this,}
-\hlcom{# with a 'modified'-component that fits the thick tail of the distribution.}
-\hlkwd{plot}\hlstd{(model)}
-\end{alltt}
-\end{kframe}
-\includegraphics[width=\maxwidth]{figure/univariate_broad_plotting-1} 
-
-\end{knitrout}
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
-\includegraphics[width=\maxwidth]{figure/univariate_broad_H4K20me1-1} 
-
-\end{knitrout}
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlcom{## === Step 4: Export to genome browser ===}
-\hlcom{# We can export peak calls and binned read counts with}
-\hlkwd{exportUnivariates}\hlstd{(}\hlkwd{list}\hlstd{(model),} \hlkwc{filename}\hlstd{=}\hlstr{'your-file'}\hlstd{,} \hlkwc{what}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{'peaks'}\hlstd{,}\hlstr{'reads'}\hlstd{))}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
-\end{scriptsize}
-
-\subsection{Task 3: Peak calling for ATAC-seq, DNase-seq, FAIRE-seq, ...}
-
-Peak calling for ATAC-seq and DNase-seq is similar to the peak calling of a narrow histone modification (see section~\ref{sec:narrow}). FAIRE-seq experiments seem to exhibit a broad profile with our model, so the procedure is similar to the domain calling of a broad histone modification (see section~\ref{sec:broad}).
-
-\section{Multivariate analysis}
-\subsection{Task 1: Integrating multiple replicates}
-
-\Rpackage{chromstaR} can be used to call peaks with multiple replicates, without the need of prior merging. The underlying statistical model integrates information from all replicates to identify common peaks. It is, however, important to note that replicates with poor quality can affect the joint peak calling negatively. It is therefore recommended to first check the replicate quality and discard poor-quality replicates. The necessary steps for peak calling for an example ChIP-seq experiment with 4 replicates are detailed below.
-
-\begin{scriptsize}
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{library}\hlstd{(chromstaR)}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlcom{## === Step 1: Binning ===}
-\hlcom{# !!! Skip this step if you do not have package 'chromstaRExampleData' installed !!!}
-\hlkwd{library}\hlstd{(chromstaRExampleData)}
-\hlcom{# Let's get some example data with 3 replicates}
-\hlstd{bamfiles.good} \hlkwb{<-} \hlkwd{getExampleFilesBAM}\hlstd{(}\hlstr{'H3K27me3'}\hlstd{)[}\hlnum{3}\hlopt{:}\hlnum{5}\hlstd{]}
-\hlcom{# We fake a replicate with poor quality by taking a different mark entirely}
-\hlstd{bamfiles.poor} \hlkwb{<-} \hlkwd{getExampleFilesBAM}\hlstd{(}\hlstr{'H4K20me1'}\hlstd{)[}\hlnum{1}\hlstd{]}
-\hlstd{bamfiles} \hlkwb{<-} \hlkwd{c}\hlstd{(bamfiles.good, bamfiles.poor)}
+\hlcom{# Let's get some example data for H3K27me3 and H3K4me3 in rat liver}
+\hlstd{file.path} \hlkwb{<-} \hlkwd{system.file}\hlstd{(}\hlstr{"extdata"}\hlstd{,}\hlstr{"euratrans"}\hlstd{,} \hlkwc{package}\hlstd{=}\hlstr{'chromstaRData'}\hlstd{)}
+\hlstd{bedfiles} \hlkwb{<-} \hlkwd{list.files}\hlstd{(file.path,} \hlkwc{pattern}\hlstd{=}\hlstr{"liver.*H3K4me3|liver.*H3K27me3"}\hlstd{,}
+                       \hlkwc{full.names}\hlstd{=}\hlnum{TRUE}\hlstd{)}
+\hlcom{# This is only necessary for BED files. BAM files are handled automatically.}
+\hlkwd{data}\hlstd{(rn4_chrominfo)}
 \hlcom{# We use bin size 1000bp and chromosome 12 to keep the example quick}
 \hlstd{binned.data} \hlkwb{<-} \hlkwd{list}\hlstd{()}
-\hlkwa{for} \hlstd{(bamfile} \hlkwa{in} \hlstd{bamfiles) \{}
-  \hlstd{binned.data[[}\hlkwd{basename}\hlstd{(bamfile)]]} \hlkwb{<-} \hlkwd{bam2binned}\hlstd{(bamfile,} \hlkwc{bamindex}\hlstd{=bamfile,}
-                                                 \hlkwc{binsize}\hlstd{=}\hlnum{1000}\hlstd{,} \hlkwc{chromosomes}\hlstd{=}\hlstr{'chr12'}\hlstd{)}
+\hlkwa{for} \hlstd{(bedfile} \hlkwa{in} \hlstd{bedfiles) \{}
+  \hlstd{binned.data[[}\hlkwd{basename}\hlstd{(bedfile)]]} \hlkwb{<-} \hlkwd{binReads}\hlstd{(bedfile,} \hlkwc{format}\hlstd{=}\hlstr{'bed'}\hlstd{,} \hlkwc{binsize}\hlstd{=}\hlnum{1000}\hlstd{,}
+                                         \hlkwc{assembly}\hlstd{=rn4_chrominfo,} \hlkwc{chromosomes}\hlstd{=}\hlstr{'chr12'}\hlstd{)}
 \hlstd{\}}
 \end{alltt}
 \end{kframe}
@@ -308,12 +358,10 @@ Peak calling for ATAC-seq and DNase-seq is similar to the peak calling of a narr
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
 \hlcom{## === Step 2: Univariate peak calling ===}
-\hlcom{# We load the binned.data from step 1 (this is only necessary if step 1 was skipped)}
-\hlkwd{data}\hlstd{(replicateExample_binnedData)}
 \hlcom{# The univariate fit is obtained for each replicate}
 \hlstd{models} \hlkwb{<-} \hlkwd{list}\hlstd{()}
 \hlkwa{for} \hlstd{(i1} \hlkwa{in} \hlnum{1}\hlopt{:}\hlkwd{length}\hlstd{(binned.data)) \{}
-  \hlstd{models[[i1]]} \hlkwb{<-} \hlkwd{callPeaksUnivariate}\hlstd{(binned.data[[i1]],} \hlkwc{ID}\hlstd{=}\hlkwd{paste0}\hlstd{(}\hlstr{'Rep'}\hlstd{,i1),}
+  \hlstd{models[[i1]]} \hlkwb{<-} \hlkwd{callPeaksUnivariate}\hlstd{(binned.data[[i1]],} \hlkwc{ID}\hlstd{=}\hlkwd{names}\hlstd{(binned.data)[i1],}
                                       \hlkwc{max.time}\hlstd{=}\hlnum{60}\hlstd{)}
 \hlstd{\}}
 \end{alltt}
@@ -323,252 +371,32 @@ Peak calling for ATAC-seq and DNase-seq is similar to the peak calling of a narr
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlcom{## === Step 3: Check replicate correlation ===}
-\hlcom{# We run a multivariate peak calling on all 4 replicates}
-\hlcom{# A warning is issued because replicate 4 is very different from the others}
-\hlstd{multi.model} \hlkwb{<-} \hlkwd{callPeaksReplicates}\hlstd{(models,} \hlkwc{max.time}\hlstd{=}\hlnum{60}\hlstd{)}
-\end{alltt}
-
-
-{\ttfamily\noindent\color{warningcolor}{\#\# Warning in callPeaksReplicates(models, max.time = 60): Your replicates cluster in 2 groups. Consider redoing your analysis with only the group with the highest average coverage:\\\#\# Rep1\\\#\# Rep2\\\#\# Rep3\\\#\# Replicates from groups with lower coverage are:\\\#\# Rep4}}\end{kframe}
-\end{knitrout}
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlcom{# Checking the correlation confirms that Rep4 is very different from the others}
-\hlstd{multi.model}\hlopt{$}\hlstd{replicateInfo}\hlopt{$}\hlstd{correlation}
-\end{alltt}
-\begin{verbatim}
-##            Rep1       Rep2       Rep3       Rep4
-## Rep1  1.0000000  0.9976476  0.9977751 -0.4126249
-## Rep2  0.9976476  1.0000000  0.9984169 -0.4115774
-## Rep3  0.9977751  0.9984169  1.0000000 -0.4115570
-## Rep4 -0.4126249 -0.4115774 -0.4115570  1.0000000
-\end{verbatim}
-\end{kframe}
-\end{knitrout}
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlcom{## === Step 4: Peak calling with replicates ===}
-\hlcom{# We redo the previous step without the "bad" replicate}
-\hlcom{# Also, we force all replicates to agree in their peak calls}
-\hlstd{multi.model} \hlkwb{<-} \hlkwd{callPeaksReplicates}\hlstd{(models[}\hlnum{1}\hlopt{:}\hlnum{3}\hlstd{],} \hlkwc{force.equal}\hlstd{=}\hlnum{TRUE}\hlstd{,} \hlkwc{max.time}\hlstd{=}\hlnum{60}\hlstd{)}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlcom{## === Step 5: Export to genome browser ===}
-\hlcom{# Finally, we can export the results as BED file}
-\hlkwd{exportMultivariate}\hlstd{(multi.model,} \hlkwc{filename}\hlstd{=}\hlstr{'your-file'}\hlstd{,} \hlkwc{what}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{'peaks'}\hlstd{,}\hlstr{'reads'}\hlstd{))}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
-\end{scriptsize}
-
-\subsection{Task 2: Detecting differentially modified regions}
-
-\Rpackage{chromstaR} is extremely powerful in detecting differentially modified regions in two or more samples. The following example illustrates this on ChIP-seq data for H3K36me3 in 7 different human brain tissues. With 7 samples we can have $2^7 = 128$ combinatorial states, which can be readily interpreted as '0: all samples unmodified', '1-126: DMR' and '127: all samples modified'. Having several replicates for each sample makes it more complicated, but you get the idea ...
-
-\begin{scriptsize}
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{library}\hlstd{(chromstaR)}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlcom{## === Step 1: Binning ===}
-\hlcom{# !!! Skip this step if you do not have package 'chromstaRExampleData' installed !!!}
-\hlkwd{library}\hlstd{(chromstaRExampleData)}
-\hlcom{# Let's get some example data with 3 replicates}
-\hlstd{bedfiles} \hlkwb{<-} \hlkwd{getExampleFilesBED}\hlstd{()}
-\hlcom{# We use bin size 1000bp and chromosome 22 to keep the example quick}
-\hlstd{binned.data} \hlkwb{<-} \hlkwd{list}\hlstd{()}
-\hlkwa{for} \hlstd{(bedfile} \hlkwa{in} \hlstd{bedfiles) \{}
-  \hlstd{binned.data[[}\hlkwd{basename}\hlstd{(bedfile)]]} \hlkwb{<-} \hlkwd{bed2binned}\hlstd{(bedfile,} \hlkwc{assembly}\hlstd{=}\hlstr{'hg19'}\hlstd{,}
-                                                 \hlkwc{binsize}\hlstd{=}\hlnum{1000}\hlstd{,} \hlkwc{chromosomes}\hlstd{=}\hlstr{'chr22'}\hlstd{)}
-\hlstd{\}}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlcom{## === Step 2: Univariate peak calling ===}
-\hlcom{# We load the binned.data from step 1 (this is only necessary if step 1 was skipped)}
-\hlkwd{data}\hlstd{(differentialExample_binnedData)}
-\hlcom{# The univariate fit is obtained for each sample}
-\hlstd{models} \hlkwb{<-} \hlkwd{list}\hlstd{()}
-\hlkwa{for} \hlstd{(i1} \hlkwa{in} \hlnum{1}\hlopt{:}\hlkwd{length}\hlstd{(binned.data)) \{}
-  \hlkwd{message}\hlstd{(}\hlstr{"Fitting model "}\hlstd{, i1)}
-  \hlstd{models[[i1]]} \hlkwb{<-} \hlkwd{callPeaksUnivariate}\hlstd{(binned.data[[i1]],} \hlkwc{ID}\hlstd{=}\hlkwd{names}\hlstd{(binned.data)[i1],}
-                                      \hlkwc{max.time}\hlstd{=}\hlnum{60}\hlstd{,} \hlkwc{verbosity}\hlstd{=}\hlnum{0}\hlstd{)}
-\hlstd{\}}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
 \hlcom{## === Step 3: Constructing the combinatorial states ===}
 \hlcom{# This step is only necessary if you have replicates for each sample.}
 \hlcom{# To ensure that replicates are treated as such, and not as independent}
 \hlcom{# samples, we have to construct the proper combinatorial states:}
 
-\hlcom{# First, we get all the tissues (we could specify them by hand, but we are lazy)}
+\hlcom{# First, we get all the marks (we could specify them by hand, but we are lazy)}
 \hlstd{IDs} \hlkwb{<-} \hlkwd{names}\hlstd{(binned.data)}
-\hlstd{tissues} \hlkwb{<-} \hlkwd{unlist}\hlstd{(}\hlkwd{lapply}\hlstd{(}\hlkwd{strsplit}\hlstd{(IDs,} \hlstr{'.Brain_|\textbackslash{}\textbackslash{}.'}\hlstd{),} \hlstr{'[['}\hlstd{,} \hlnum{2}\hlstd{))}
-\hlkwd{print}\hlstd{(tissues)}
-\end{alltt}
-\begin{verbatim}
-##  [1] "Angular_Gyrus"          "Angular_Gyrus"         
-##  [3] "Anterior_Caudate"       "Anterior_Caudate"      
-##  [5] "Cingulate_Gyrus"        "Cingulate_Gyrus"       
-##  [7] "Hippocampus_Middle"     "Hippocampus_Middle"    
-##  [9] "Inferior_Temporal_Lobe" "Inferior_Temporal_Lobe"
-## [11] "Mid_Frontal_Lobe"       "Mid_Frontal_Lobe"      
-## [13] "Substantia_Nigra"       "Substantia_Nigra"
-\end{verbatim}
-\begin{alltt}
-\hlcom{# Second, we obtain the combinatorial states}
-\hlcom{# Look up ?stateBrewer on how to use this function}
-\hlstd{states} \hlkwb{<-} \hlkwd{stateBrewer}\hlstd{(}\hlkwc{statespec} \hlstd{=} \hlkwd{paste0}\hlstd{(}\hlstr{'r.'}\hlstd{, tissues))}
-\hlcom{# Third, we construct common states}
-\hlstd{common.states} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlkwd{stateBrewer}\hlstd{(}\hlkwc{statespec} \hlstd{=} \hlkwd{paste0}\hlstd{(}\hlstr{'1.'}\hlstd{, tissues)),}
-                   \hlkwd{stateBrewer}\hlstd{(}\hlkwc{statespec} \hlstd{=} \hlkwd{paste0}\hlstd{(}\hlstr{'0.'}\hlstd{, tissues)))}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlcom{## === Step 4: Multivariate peak calling ===}
-\hlstd{multi.model} \hlkwb{<-} \hlkwd{callPeaksMultivariate}\hlstd{(models,} \hlkwc{use.states}\hlstd{=states,} \hlkwc{eps}\hlstd{=}\hlnum{1}\hlstd{,} \hlkwc{max.time}\hlstd{=}\hlnum{60}\hlstd{)}
-\end{alltt}
-
-
-{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Extracting reads from modellist... 0.02s\\\#\# Getting combinatorial states... 0.08s\\\#\# Computing pre z-matrix... 0.01s\\\#\# Transfering values into z-matrix... 0.1s\\\#\# Computing inverse of correlation matrix... 4.52s\\\#\# \\\#\# Starting multivariate HMM\\\#\# Using the following combinatorial states, covering 86.8840636207703\% of the bins:\\\#\# 0 16383 3072 16380 192 13116 16371 12 768 3264 12300 13308 3084 15375 3120 3840 4095 15420 16188 3075 16128 16191 3 48 960 3123 3315 3903 4092 12540 15363 15612 16179 15 51 60 63 195 204 207 240 243 252 255 771 780 783 816 819 828 831 963 972 975 1008 1011 1020 1023 3087 3132 3135 3267 3276 3279 3312 3324 3327 3843 3852 3855 3888 3891 3900 4032 4035 4044 4047 4080 4083 12288 12291 12303 12336 12339 12348 12351 12480 12483 12492 12495 12528 12531 12543 13056 13059 13068 13071 13104 13107 13119 13248 13251 13260 13263 13296 13299 13311 15360 15372 15408 15411 15423 15552 15555 15564 15567 15600 15603 15615 16131 16140 16143 16176 16320 16323 16332 16335 16368}}\begin{verbatim}
-## HMM: number of states = 128
-## HMM: number of bins = 51304
-## HMM: maximum number of iterations = none
-## HMM: maximum running time = 60 sec
-## HMM: epsilon = 1
-## HMM: number of modifications = 14
-##  Iteration              log(P)             dlog(P)    Time in sec
-##          0                -inf                   -              0
-## HMM: Precomputing densities ...
-##  Iteration              log(P)             dlog(P)    Time in sec
-##          0                -inf                   -             13
-##          1     -1470427.292494                 inf             20
-##          2     -1463343.769468         7083.523026             27
-##          3     -1463199.730689          144.038780             33
-##          4     -1463181.468977           18.261712             40
-##          5     -1463178.007584            3.461393             47
-##          6     -1463176.926714            1.080870             54
-##          7     -1463176.529079            0.397635             61
-## HMM: Convergence reached!
-## HMM: Recoding posteriors ...
-\end{verbatim}
-
-
-{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Transforming posteriors to `per sample` representation ... 0.54s\\\#\# Calculating states from posteriors ... 0.01s\\\#\# Making segmentation ... 0.77s}}\end{kframe}
-\end{knitrout}
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlcom{## === Step 5: Export to genome browser ===}
-\hlcom{# Export only differential peaks by excluding the 'common.states'}
-\hlkwd{exportMultivariate}\hlstd{(multi.model,} \hlkwc{filename}\hlstd{=}\hlstr{'your-file'}\hlstd{,} \hlkwc{what}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{'peaks'}\hlstd{,}\hlstr{'reads'}\hlstd{),}
-                   \hlkwc{exclude.states}\hlstd{=common.states)}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
-\end{scriptsize}
-
-\subsection{Task 3: Finding combinatorial chromatin states}
-
-TODO: Introduction
-
-\begin{scriptsize}
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{library}\hlstd{(chromstaR)}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlcom{## === Step 1: Binning ===}
-\hlcom{# !!! Skip this step if you do not have package 'chromstaRExampleData' installed !!!}
-\hlkwd{library}\hlstd{(chromstaRExampleData)}
-\hlcom{# Let's get some example data with 3 replicates}
-\hlstd{bamfiles} \hlkwb{<-} \hlkwd{getExampleFilesBAM}\hlstd{()}
-\hlcom{# We use bin size 1000bp and chromosome 22 to keep the example quick}
-\hlstd{binned.data} \hlkwb{<-} \hlkwd{list}\hlstd{()}
-\hlkwa{for} \hlstd{(bamfile} \hlkwa{in} \hlstd{bamfiles) \{}
-  \hlstd{binned.data[[}\hlkwd{basename}\hlstd{(bamfile)]]} \hlkwb{<-} \hlkwd{bam2binned}\hlstd{(bamfile,} \hlkwc{bamindex}\hlstd{=bamfile,}
-                                                 \hlkwc{binsize}\hlstd{=}\hlnum{1000}\hlstd{,} \hlkwc{chromosomes}\hlstd{=}\hlstr{'chr12'}\hlstd{)}
-\hlstd{\}}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlcom{## === Step 2: Univariate peak calling ===}
-\hlcom{# We load the binned.data from step 1 (this is only necessary if step 1 was skipped)}
-\hlkwd{data}\hlstd{(combinatorialExample_binnedData)}
-\hlcom{# The univariate fit is obtained for each sample}
-\hlstd{models} \hlkwb{<-} \hlkwd{list}\hlstd{()}
-\hlkwa{for} \hlstd{(i1} \hlkwa{in} \hlnum{1}\hlopt{:}\hlkwd{length}\hlstd{(binned.data)) \{}
-  \hlkwd{message}\hlstd{(}\hlstr{"Fitting model "}\hlstd{, i1)}
-  \hlstd{models[[i1]]} \hlkwb{<-} \hlkwd{callPeaksUnivariate}\hlstd{(binned.data[[i1]],} \hlkwc{ID}\hlstd{=}\hlkwd{names}\hlstd{(binned.data)[i1],}
-                                      \hlkwc{max.time}\hlstd{=}\hlnum{60}\hlstd{,} \hlkwc{verbosity}\hlstd{=}\hlnum{0}\hlstd{)}
-\hlstd{\}}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlcom{## === Step 3: Constructing the combinatorial states ===}
-\hlcom{# This step is only necessary if you have replicates for each sample.}
-\hlcom{# To ensure that replicates are treated as such, and not as independent}
-\hlcom{# samples, we have to construct the proper combinatorial states:}
-
-\hlcom{# First, we get all the histone marks (we could specify them by hand, but we are lazy)}
-\hlstd{IDs} \hlkwb{<-} \hlkwd{names}\hlstd{(binned.data)}
-\hlstd{marks} \hlkwb{<-} \hlkwd{unlist}\hlstd{(}\hlkwd{lapply}\hlstd{(}\hlkwd{strsplit}\hlstd{(IDs,} \hlstr{'liver-|-BN'}\hlstd{),} \hlstr{'[['}\hlstd{,} \hlnum{2}\hlstd{))}
+\hlstd{marks} \hlkwb{<-} \hlkwd{sapply}\hlstd{(}\hlkwd{strsplit}\hlstd{(IDs,}\hlstr{'-'}\hlstd{),}\hlstr{'[['}\hlstd{,}\hlnum{2}\hlstd{)}
 \hlkwd{print}\hlstd{(marks)}
 \end{alltt}
 \begin{verbatim}
-##  [1] "H3K27me3" "H3K27me3" "H3K27me3" "H3K27me3" "H3K27me3" "H3K4me1" 
-##  [7] "H3K4me1"  "H3K4me1"  "H3K4me3"  "H3K4me3"  "H3K4me3"  "H4K20me1"
-## [13] "H4K20me1" "H4K20me1"
+## [1] "H3K27me3" "H3K27me3" "H3K27me3" "H3K4me3"  "H3K4me3"  "H3K4me3"
 \end{verbatim}
 \begin{alltt}
 \hlcom{# Second, we obtain the combinatorial states}
 \hlcom{# Look up ?stateBrewer on how to use this function}
-\hlstd{states} \hlkwb{<-} \hlkwd{stateBrewer}\hlstd{(}\hlkwc{statespec} \hlstd{=} \hlkwd{paste0}\hlstd{(}\hlstr{'r.'}\hlstd{, marks))}
+\hlstd{states} \hlkwb{<-} \hlkwd{stateBrewer}\hlstd{(marks)}
+\hlkwd{print}\hlstd{(states)}
 \end{alltt}
+\begin{verbatim}
+##        combination state
+## 1                      0
+## 2          H3K4me3     7
+## 3         H3K27me3    56
+## 4 H3K27me3+H3K4me3    63
+\end{verbatim}
 \end{kframe}
 \end{knitrout}
 
@@ -578,70 +406,28 @@ TODO: Introduction
 \hlcom{## === Step 4: Multivariate peak calling ===}
 \hlstd{multi.model} \hlkwb{<-} \hlkwd{callPeaksMultivariate}\hlstd{(models,} \hlkwc{use.states}\hlstd{=states,} \hlkwc{eps}\hlstd{=}\hlnum{1}\hlstd{,} \hlkwc{max.time}\hlstd{=}\hlnum{60}\hlstd{)}
 \end{alltt}
-
-
-{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Extracting reads from modellist... 0.02s\\\#\# Getting combinatorial states... 0.08s\\\#\# Computing pre z-matrix... 0.01s\\\#\# Transfering values into z-matrix... 0.09s\\\#\# Computing inverse of correlation matrix... 0.7s\\\#\# \\\#\# Starting multivariate HMM\\\#\# Using the following combinatorial states, covering 75.3879697319482\% of the bins:\\\#\# 15872 0 455 7 511 16320 16327 448 15879 16376 504 16383 15928 56 63 15935}}\begin{verbatim}
-## HMM: number of states = 16
+\begin{verbatim}
+## HMM: number of states = 4
 ## HMM: number of bins = 46782
 ## HMM: maximum number of iterations = none
 ## HMM: maximum running time = 60 sec
 ## HMM: epsilon = 1
-## HMM: number of modifications = 14
+## HMM: number of experiments = 6
 ##  Iteration              log(P)             dlog(P)    Time in sec
 ##          0                -inf                   -              0
 ## HMM: Precomputing densities ...
 ##  Iteration              log(P)             dlog(P)    Time in sec
-##          0                -inf                   -              1
-##          1     -1231904.209136                 inf              1
-##          2     -1224416.946008         7487.263128              1
-##          3     -1223638.704058          778.241950              1
-##          4     -1223445.365265          193.338793              1
-##          5     -1223381.336963           64.028302              1
-##          6     -1223357.087684           24.249278              1
-##          7     -1223346.956823           10.130861              2
-##          8     -1223342.290588            4.666234              2
-##          9     -1223339.918691            2.371897              2
-##         10     -1223338.599008            1.319683              2
-##         11     -1223337.808723            0.790285              2
+##          0                -inf                   -              0
+##          1      -629970.204822                 inf              0
+##          2      -628146.574559         1823.630263              0
+##          3      -627956.663999          189.910560              0
+##          4      -627909.013321           47.650678              0
+##          5      -627894.914770           14.098550              0
+##          6      -627889.957698            4.957072              0
+##          7      -627887.910231            2.047467              0
+##          8      -627886.945380            0.964851              0
 ## HMM: Convergence reached!
 ## HMM: Recoding posteriors ...
-\end{verbatim}
-
-
-{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Transforming posteriors to `per sample` representation ... 0.02s\\\#\# Calculating states from posteriors ... 0.01s\\\#\# Making segmentation ... 2.67s}}\begin{alltt}
-\hlcom{# Let's have a look at the results}
-\hlstd{multi.model}\hlopt{$}\hlstd{bins}
-\end{alltt}
-\begin{verbatim}
-## GRanges object with 46782 ranges and 3 metadata columns:
-##           seqnames               ranges strand   |        reads    state
-##              <Rle>            <IRanges>  <Rle>   |     <matrix> <factor>
-##       [1]    chr12         [   1, 1000]      *   |    0 0 0 ...       56
-##       [2]    chr12         [1001, 2000]      *   |    0 0 0 ...       56
-##       [3]    chr12         [2001, 3000]      *   |    0 0 0 ...       56
-##       [4]    chr12         [3001, 4000]      *   |    0 0 0 ...       56
-##       [5]    chr12         [4001, 5000]      *   |    0 0 0 ...        0
-##       ...      ...                  ...    ... ...          ...      ...
-##   [46778]    chr12 [46777001, 46778000]      *   | 13 20 41 ...    15872
-##   [46779]    chr12 [46778001, 46779000]      *   | 22 20 48 ...    15872
-##   [46780]    chr12 [46779001, 46780000]      *   | 16 16 25 ...    15872
-##   [46781]    chr12 [46780001, 46781000]      *   |   8 4 16 ...    15872
-##   [46782]    chr12 [46781001, 46782000]      *   |   7 6 31 ...    15872
-##           combination
-##              <factor>
-##       [1]     H3K4me3
-##       [2]     H3K4me3
-##       [3]     H3K4me3
-##       [4]     H3K4me3
-##       [5]            
-##       ...         ...
-##   [46778]    H3K27me3
-##   [46779]    H3K27me3
-##   [46780]    H3K27me3
-##   [46781]    H3K27me3
-##   [46782]    H3K27me3
-##   -------
-##   seqinfo: 1 sequence from an unspecified genome
 \end{verbatim}
 \end{kframe}
 \end{knitrout}
@@ -651,14 +437,65 @@ TODO: Introduction
 \begin{alltt}
 \hlcom{## === Step 5: Export to genome browser ===}
 \hlcom{# Export combinatorial states}
-\hlkwd{exportMultivariate}\hlstd{(multi.model,} \hlkwc{filename}\hlstd{=}\hlstr{'your-file'}\hlstd{,}
-                   \hlkwc{what}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{'combstates'}\hlstd{,}\hlstr{'peaks'}\hlstd{,}\hlstr{'reads'}\hlstd{))}
+\hlkwd{exportMultivariate}\hlstd{(multi.model,} \hlkwc{filename}\hlstd{=}\hlstr{'your-file'}\hlstd{,} \hlkwc{what}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{'peaks'}\hlstd{,}\hlstr{'counts'}\hlstd{))}
+\hlkwd{exportMultivariate}\hlstd{(multi.model,} \hlkwc{filename}\hlstd{=}\hlstr{'your-combstates'}\hlstd{,} \hlkwc{what}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{'combstates'}\hlstd{))}
 \end{alltt}
 \end{kframe}
 \end{knitrout}
-\end{scriptsize}
 
-\section{Example workflows}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{## === Step 6: Enrichment analysis ===}
+\hlcom{# Get coordinates of rat genes}
+\hlkwd{library}\hlstd{(biomaRt)}
+\hlstd{ensembl} \hlkwb{<-} \hlkwd{useMart}\hlstd{(}\hlstr{'ENSEMBL_MART_ENSEMBL'}\hlstd{,} \hlkwc{host}\hlstd{=}\hlstr{'may2012.archive.ensembl.org'}\hlstd{,}
+                    \hlkwc{dataset}\hlstd{=}\hlstr{'rnorvegicus_gene_ensembl'}\hlstd{)}
+\hlstd{genes} \hlkwb{<-} \hlkwd{getBM}\hlstd{(}\hlkwc{attributes}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{'ensembl_gene_id'}\hlstd{,} \hlstr{'chromosome_name'}\hlstd{,} \hlstr{'start_position'}\hlstd{,}
+                            \hlstr{'end_position'}\hlstd{,} \hlstr{'strand'}\hlstd{,} \hlstr{'external_gene_id'}\hlstd{),}
+               \hlkwc{mart}\hlstd{=ensembl)}
+\hlcom{# Transform to GRanges for easier handling}
+\hlstd{genes} \hlkwb{<-} \hlkwd{GRanges}\hlstd{(}\hlkwc{seqnames}\hlstd{=}\hlkwd{paste0}\hlstd{(}\hlstr{'chr'}\hlstd{,genes}\hlopt{$}\hlstd{chrom),}
+                 \hlkwc{ranges}\hlstd{=}\hlkwd{IRanges}\hlstd{(}\hlkwc{start}\hlstd{=genes}\hlopt{$}\hlstd{start,} \hlkwc{end}\hlstd{=genes}\hlopt{$}\hlstd{end),}
+                 \hlkwc{strand}\hlstd{=genes}\hlopt{$}\hlstd{strand,}
+                 \hlkwc{ID}\hlstd{=genes}\hlopt{$}\hlstd{ensembl_gene_id,} \hlkwc{name}\hlstd{=genes}\hlopt{$}\hlstd{external_gene_id)}
+\hlkwd{print}\hlstd{(genes)}
+\end{alltt}
+\begin{verbatim}
+## GRanges object with 29516 ranges and 2 metadata columns:
+##           seqnames                 ranges strand |                 ID
+##              <Rle>              <IRanges>  <Rle> |        <character>
+##       [1]    chr13     [1120899, 1121213]      - | ENSRNOG00000043314
+##       [2]    chr13     [1192186, 2293551]      - | ENSRNOG00000031539
+##       [3]    chr13     [3174383, 3175216]      + | ENSRNOG00000028603
+##       [4]    chr13     [4377731, 4379174]      - | ENSRNOG00000030028
+##       [5]    chr13     [4866302, 4866586]      - | ENSRNOG00000040235
+##       ...      ...                    ...    ... .                ...
+##   [29512]     chr6 [134310258, 134310338]      + | ENSRNOG00000035137
+##   [29513]     chr9 [  6920889,   6921049]      - | ENSRNOG00000035407
+##   [29514]    chr11 [ 40073746,  40073816]      - | ENSRNOG00000043706
+##   [29515]     chr2 [233090372, 233090478]      - | ENSRNOG00000035272
+##   [29516]     chr6 [ 92917449,  92917541]      + | ENSRNOG00000045521
+##                  name
+##           <character>
+##       [1]   LOC682397
+##       [2]   LOC304725
+##       [3]            
+##       [4]  D3ZPH4_RAT
+##       [5]  F1LZC7_RAT
+##       ...         ...
+##   [29512]    SNORD113
+##   [29513]          U1
+##   [29514]    SNORD19B
+##   [29515]          U6
+##   [29516]            
+##   -------
+##   seqinfo: 22 sequences from an unspecified genome; no seqlengths
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\end{scriptsize}
 
 \section{\label{sec:faq}FAQ}
 
@@ -670,8 +507,9 @@ TODO: Introduction
 \hlkwd{sessionInfo}\hlstd{()}
 \end{alltt}
 \begin{verbatim}
-## R version 3.1.0 (2014-04-10)
+## R Under development (unstable) (2016-02-17 r70182)
 ## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 14.04.4 LTS
 ## 
 ## locale:
 ##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
@@ -682,40 +520,32 @@ TODO: Introduction
 ## [11] LC_MEASUREMENT=nl_NL.UTF-8 LC_IDENTIFICATION=C       
 ## 
 ## attached base packages:
-## [1] parallel  stats4    stats     graphics  grDevices utils     datasets 
+## [1] stats4    parallel  stats     graphics  grDevices utils     datasets 
 ## [8] methods   base     
 ## 
 ## other attached packages:
-##  [1] XVector_0.6.0            chromstaRExampleData_0.9
-##  [3] chromstaR_0.9            reshape2_1.4.1          
-##  [5] ggplot2_1.0.1            GenomicRanges_1.18.4    
-##  [7] GenomeInfoDb_1.2.5       IRanges_2.0.1           
-##  [9] S4Vectors_0.4.0          BiocGenerics_0.12.1     
-## [11] knitr_1.10.5             devtools_1.8.0          
+##  [1] biomaRt_2.27.2        chromstaR_0.98.0      chromstaRData_0.99.0 
+##  [4] ggplot2_2.1.0         GenomicRanges_1.23.25 GenomeInfoDb_1.7.6   
+##  [7] IRanges_2.5.40        S4Vectors_0.9.44      BiocGenerics_0.17.3  
+## [10] knitr_1.12.3          devtools_1.10.0      
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] base64enc_0.1-2         BatchJobs_1.6          
-##  [3] BBmisc_1.9              BiocParallel_1.0.3     
-##  [5] Biostrings_2.34.1       bitops_1.0-6           
-##  [7] brew_1.0-6              BSgenome_1.34.1        
-##  [9] checkmate_1.5.3         codetools_0.2-11       
-## [11] colorspace_1.2-6        DBI_0.3.1              
-## [13] digest_0.6.8            evaluate_0.7           
-## [15] fail_1.2                foreach_1.4.2          
-## [17] formatR_1.2             GenomicAlignments_1.2.2
-## [19] git2r_0.10.1            grid_3.1.0             
-## [21] gtable_0.1.2            highr_0.5              
-## [23] iterators_1.0.7         labeling_0.3           
-## [25] magrittr_1.5            MASS_7.3-40            
-## [27] memoise_0.2.1           munsell_0.4.2          
-## [29] plyr_1.8.2              proto_0.3-10           
-## [31] Rcpp_0.11.6             RCurl_1.95-4.6         
-## [33] Rsamtools_1.18.3        RSQLite_1.0.0          
-## [35] rtracklayer_1.26.3      rversions_1.0.0        
-## [37] scales_0.2.4            sendmailR_1.2-1        
-## [39] stringi_0.4-1           stringr_1.0.0          
-## [41] tools_3.1.0             XML_3.98-1.1           
-## [43] zlibbioc_1.12.0
+##  [1] Rcpp_0.12.4                 AnnotationDbi_1.33.7       
+##  [3] XVector_0.11.7              magrittr_1.5               
+##  [5] GenomicAlignments_1.7.20    zlibbioc_1.17.1            
+##  [7] BiocParallel_1.5.21         munsell_0.4.3              
+##  [9] colorspace_1.2-6            highr_0.5.1                
+## [11] stringr_1.0.0               plyr_1.8.3                 
+## [13] tools_3.3.0                 SummarizedExperiment_1.1.22
+## [15] grid_3.3.0                  Biobase_2.31.3             
+## [17] gtable_0.2.0                DBI_0.3.1                  
+## [19] digest_0.6.9                reshape2_1.4.1             
+## [21] formatR_1.3                 bitops_1.0-6               
+## [23] RCurl_1.95-4.8              RSQLite_1.0.0              
+## [25] memoise_1.0.0               evaluate_0.8.3             
+## [27] stringi_1.0-1               Rsamtools_1.23.6           
+## [29] Biostrings_2.39.12          scales_0.4.0               
+## [31] XML_3.98-1.4
 \end{verbatim}
 \begin{alltt}
 \hlkwd{warnings}\hlstd{()}

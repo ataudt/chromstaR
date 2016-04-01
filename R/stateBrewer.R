@@ -17,8 +17,8 @@
 #' @param differential.states A logical specifying whether differential states shall be returned.
 #' @param min.diff The minimum number of differences between conditions.
 #' @param common.states A logical specifying whether common states shall be returned.
-#' @param conditions A vector with the same length as \code{replicates}. Similar entries will be treated as belonging to the same condition. If this parameter is specified, only states that are different between the conditions are returned.
-#' @param tracks2compare A vector with the same length as \code{replicates}. This vector defines the tracks between which conditions are compared.
+#' @param conditions A vector with the same length as \code{replicates}. Similar entries will be treated as belonging to the same condition. Usually your tissue or cell types or time points.
+#' @param tracks2compare A vector with the same length as \code{replicates}. This vector defines the tracks between which conditions are compared. Usually your histone marks.
 #' @param sep Separator used to separate the tracknames in the combinations. The default '+' should not be changed because it is assumed in follow-up functions.
 #' @param statespec If this parameter is specified, \code{replicates} will be ignored. A vector composed of any combination of the following entries: \code{'0.[]', '1.[]', 'x.[]', 'r.[]'}, where [] can be any string.
 #'   \itemize{

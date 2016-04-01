@@ -8,7 +8,7 @@ plotBinnedDataHistogram(binned.data, chromosomes = NULL, start = NULL,
   end = NULL)
 }
 \arguments{
-\item{binned.data}{A \code{\link{binned.data}} object containing binned read counts in meta-column 'reads'.}
+\item{binned.data}{A \code{\link{binned.data}} object containing binned read counts in meta-column 'counts'.}
 
 \item{chromosomes, start, end}{Plot the histogram only for the specified chromosomes, start and end position.}
 }

@@ -10,13 +10,14 @@ Depends:
     R (>= 3.3.0),
     GenomicRanges,
     ggplot2,
+    chromstaRData
 Imports:
     utils,
     grDevices,
     graphics,
     stats,
     S4Vectors,
-		GenomeInfoDb,
+    GenomeInfoDb,
     IRanges,
     reshape2,
     Rsamtools,

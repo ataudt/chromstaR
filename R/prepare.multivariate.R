@@ -6,12 +6,12 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 	IDs <- unlist(lapply(modellist, "[[", "ID"))
 	names(IDs) <- NULL
 
-	### Extract the reads ###
-	message("Extracting reads from modellist...", appendLF=FALSE)
+	### Extract the read counts ###
+	message("Extracting read counts from modellist...", appendLF=FALSE)
 	ptm <- proc.time()
-	reads <- sapply(modellist, function(x) { x$bins$counts })
-	colnames(reads) <- IDs
-	maxreads <- max(reads)
+	counts <- sapply(modellist, function(x) { x$bins$counts })
+	colnames(counts) <- IDs
+	maxcounts <- max(counts)
 	time <- proc.time() - ptm
 	message(" ",round(time[3], 2),"s")
 
@@ -49,12 +49,12 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 	# Clean up to reduce memory usage
 	remove(modellist)
 
-	## We pre-compute the z-values for each number of reads
+	## We pre-compute the z-values for each number of counts
 	message("Computing pre z-matrix...", appendLF=FALSE)
 	ptm <- proc.time()
-	z.per.read <- array(NA, dim=c(maxreads+1, nummod, 2))
-# 	z_per_read = matrix(rep(NA,(maxreads+1)*nummod*2), ncol=nummod*2)
-	xreads = 0:maxreads
+	z.per.read <- array(NA, dim=c(maxcounts+1, nummod, 2))
+# 	z_per_read = matrix(rep(NA,(maxcounts+1)*nummod*2), ncol=nummod*2)
+	xcounts = 0:maxcounts
 	for (imod in 1:nummod) {
 		# Go through unmodified and modified
 		for (i1 in 2:3) {
@@ -65,10 +65,10 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 			if (i1 == 2) {
 				# Unmodified with zero inflation
 				w = weights[[imod]][1] / (weights[[imod]][2] + weights[[imod]][1])
-				u = pzinbinom(xreads, w, size, prob)
+				u = pzinbinom(xcounts, w, size, prob)
 			} else if (i1 == 3) {
 				# Modified
-				u = stats::pnbinom(xreads, size, prob)
+				u = stats::pnbinom(xcounts, size, prob)
 			}
 
 			# Check for infinities in u and set them to max value which is not infinity
@@ -90,7 +90,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 	z.per.bin = array(NA, dim=c(numbins, nummod, 2), dimnames=list(bin=1:numbins, track=IDs, state.labels[2:3]))
 	for (imod in 1:nummod) {
 		for (i1 in 1:2) {
-			z.per.bin[ , imod, i1] <- z.per.read[reads[,imod]+1, imod, i1]
+			z.per.bin[ , imod, i1] <- z.per.read[counts[,imod]+1, imod, i1]
 		}
 	}
 
@@ -210,11 +210,11 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 # 			if (rownames(distributions[[imod]])[ind.modstate] == 'unmodified') {
 # 				size <- distributions[[imod]][ind.modstate,'size']
 # 				prob <- distributions[[imod]][ind.modstate,'prob']
-# 				product <- product * dzinbinom(reads[,imod], w=weights[[imod]]['zero-inflation'], size, prob)
+# 				product <- product * dzinbinom(counts[,imod], w=weights[[imod]]['zero-inflation'], size, prob)
 # 			} else if (rownames(distributions[[imod]])[ind.modstate] == 'modified') {
 # 				size <- distributions[[imod]][ind.modstate,'size']
 # 				prob <- distributions[[imod]][ind.modstate,'prob']
-# 				product <- product * stats::dnbinom(reads[,imod], size, prob)
+# 				product <- product * stats::dnbinom(counts[,imod], size, prob)
 # 			}
 # 		}
 # 		exponent <- -0.5 * apply( ( z.temp %*% (correlationMatrixInverse2use[ , , istate] - diag(nummod)) ) * z.temp, 1, sum)
@@ -224,7 +224,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 	# Return parameters
 	out = list(IDs = IDs,
 				bins = bins,
-				reads = reads,
+				counts = counts,
 				numbins = numbins,
 				nummod = nummod,
 				comb.states = comb.states2use,

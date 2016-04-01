@@ -38,7 +38,7 @@ callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=
 		hmms <- loadHmmsFromFiles(hmm.list)
 
 		## Univariate replicateInfo
-		ids <- unlist(lapply(hmms, '[[', 'ID'))
+		ids <- sapply(hmms, '[[', 'ID')
 		weight.univariate <- unlist(lapply(hmms, function(x) { x$weights['modified'] }))
 		total.count <- unlist(lapply(hmms, function(x) { sum(x$bins$counts) }))
 		info.df <- data.frame(total.count=total.count, weight.univariate=weight.univariate)
@@ -56,7 +56,6 @@ callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=
 			if (force.equal) {
 				states2use <- stateBrewer(rep(paste0('r.',paste(ids, collapse='-')),length(hmms)))
 				multimodel <- callPeaksMultivariate(hmms, use.states=states2use, eps=eps, max.iter=max.iter, max.time=max.time, keep.posteriors=keep.posteriors, num.threads=num.threads)
-				multimodel
 			} else {
 				states2use <- stateBrewer(paste0('x.', ids))
 				multimodel <- callPeaksMultivariate(hmms, use.states=states2use, num.states=num.states, eps=eps, max.iter=max.iter, max.time=max.time, keep.posteriors=keep.posteriors, num.threads=num.threads)

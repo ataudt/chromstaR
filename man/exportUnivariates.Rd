@@ -4,7 +4,7 @@
 \alias{exportUnivariates}
 \title{Export genome browser viewable files}
 \usage{
-exportUnivariates(hmm.list, filename, what = c("peaks", "reads"),
+exportUnivariates(hmm.list, filename, what = c("peaks", "counts"),
   header = TRUE, separate.files = FALSE, orderByScore = TRUE)
 }
 \arguments{
@@ -12,7 +12,7 @@ exportUnivariates(hmm.list, filename, what = c("peaks", "reads"),
 
 \item{filename}{The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.}
 
-\item{what}{A character vector specifying what will be exported. Supported are \code{c('peaks', 'reads')}.}
+\item{what}{A character vector specifying what will be exported. Supported are \code{c('peaks', 'counts')}.}
 
 \item{header}{A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).}
 
@@ -42,7 +42,7 @@ for (bedfile in bedfiles) {
                                             max.time=30, eps=0.01)
 }
 ## Export the binned read counts and peaks
-\donttest{exportUnivariates(uni.HMMs, filename='chromstaR-example_univariate.HMMs', what=c('reads','peaks'))}
+\donttest{exportUnivariates(uni.HMMs, filename='chromstaR-example_univariate.HMMs', what=c('counts','peaks'))}
 }
 \author{
 Aaron Taudt

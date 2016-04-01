@@ -2,11 +2,11 @@
 #'
 #' Fit a HMM to a ChIP-seq sample to determine the modification state of genomic regions, e.g. call peaks in the sample.
 #'
-#' This function is similar to \code{\link{callPeaksUnivariate}} but allows to pre-fit on a single chromosome instead of the whole genome. This gives a significant performance increase and can help to converge into a better fit in case of unsteady quality for some chromosomes.
+#' This function is similar to \code{\link{callPeaksUnivariateAllChr}} but allows to pre-fit on a single chromosome instead of the whole genome. This gives a significant performance increase and can help to converge into a better fit in case of unsteady quality for some chromosomes.
 #'
 #' @param binned.data A \link{GRanges} object with binned read counts.
 #' @param ID An identifier that will be used to identify this sample in various downstream functions. Could be the file name of the \code{binned.data} for example.
-#' @param prefit.on.chr A chromosome that is used to pre-fit the Hidden Markov Model.
+#' @param prefit.on.chr A chromosome that is used to pre-fit the Hidden Markov Model. Set to \code{NULL} if you don't want to prefit but use the whole genome instead.
 #' @param If \code{TRUE}, the second fitting step is only done with one iteration.
 #' @param eps Convergence threshold for the Baum-Welch algorithm.
 #' @param init One of the following initialization procedures:
@@ -42,22 +42,28 @@
 #'## Check if the fit is ok
 #'plot(hmm, type='histogram')
 #' @export
-callPeaksUnivariate2 <- function(binned.data, ID, prefit.on.chr, short=TRUE, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, FDR=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
+callPeaksUnivariate <- function(binned.data, ID, prefit.on.chr=NULL, short=TRUE, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, FDR=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
 
 	if (class(binned.data) == 'character') { 
 		message("Loading file ",binned.data)
 		binned.data <- get(load(binned.data))
 	}
 
-	pre.binned.data <- binned.data[seqnames(binned.data)==prefit.on.chr]
-	pre.model <- callPeaksUnivariate(pre.binned.data, ID=ID, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, FDR=FDR, control=control, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=verbosity)
+	if (is.null(prefit.on.chr)) {
+		model <- callPeaksUnivariateAllChr(binned.data, ID=ID, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, FDR=FDR, control=control, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=verbosity)
+	} else {
 
-	if (short) {
-		max.iter=1
+		pre.binned.data <- binned.data[seqnames(binned.data)==prefit.on.chr]
+		pre.model <- callPeaksUnivariateAllChr(pre.binned.data, ID=ID, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, FDR=FDR, control=control, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=verbosity)
+
+		if (short) {
+			max.iter=1
+		}
+		model <- pre.model
+		model$bins <- binned.data
+		model <- callPeaksUnivariateAllChr(model, ID=ID, eps=eps, max.time=max.time, max.iter=max.iter, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, FDR=FDR, control=control, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
+
 	}
-	model <- pre.model
-	model$bins <- binned.data
-	model <- callPeaksUnivariate(model, ID=ID, eps=eps, max.time=max.time, max.iter=max.iter, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, FDR=FDR, control=control, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
 
 	return(model)
 
@@ -108,11 +114,11 @@ callPeaksUnivariate2 <- function(binned.data, ID, prefit.on.chr, short=TRUE, eps
 #'## Bin the BED file into bin size 1000bp
 #'binned.data <- bed2binned(bedfile, assembly='hg19', binsize=1000, save.as.RData=FALSE)
 #'## Fit the univariate Hidden Markov Model
-#'hmm <- callPeaksUnivariate(binned.data, ID='example_H3K36me3', max.time=60)
+#'hmm <- callPeaksUnivariateAllChr(binned.data, ID='example_H3K36me3', max.time=60)
 #'## Check if the fit is ok
 #'plot(hmm, type='histogram')
 #' @export
-callPeaksUnivariate <- function(binned.data, ID, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, FDR=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, checkpoint.after.iter=NULL, checkpoint.after.time=NULL, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, verbosity=1) {
+callPeaksUnivariateAllChr <- function(binned.data, ID, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, FDR=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, checkpoint.after.iter=NULL, checkpoint.after.time=NULL, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, verbosity=1) {
 
 	### Define cleanup behaviour ###
 	on.exit(.C("C_univariate_cleanup"))

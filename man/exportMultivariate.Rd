@@ -5,7 +5,7 @@
 \title{Export genome browser viewable files}
 \usage{
 exportMultivariate(multi.hmm, filename, what = c("combstates", "peaks",
-  "reads"), exclude.states = 0, include.states = NULL, trackname = NULL,
+  "counts"), exclude.states = "", include.states = NULL, trackname = NULL,
   header = TRUE, separate.files = FALSE, orderByScore = TRUE)
 }
 \arguments{
@@ -13,17 +13,17 @@ exportMultivariate(multi.hmm, filename, what = c("combstates", "peaks",
 
 \item{filename}{The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for combinatorial states and peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.}
 
-\item{what}{A character vector specifying what will be exported. Supported are \code{c('combstates', 'peaks', 'reads')}.}
+\item{what}{A character vector specifying what will be exported. Supported are \code{c('combstates', 'peaks', 'counts')}.}
 
-\item{exclude.states}{A vector of combinatorial states that will be excluded from export.}
+\item{exclude.states}{A character vector with combinatorial states that will be excluded from export.}
 
-\item{include.states}{A vector of combinatorial states that will be exported. If specified, \code{exclude.states} is ignored.}
+\item{include.states}{A character vector with combinatorial states that will be exported. If specified, \code{exclude.states} is ignored.}
 
 \item{trackname}{Name that will be used in the "track name" field of the BED file.}
 
 \item{header}{A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).}
 
-\item{separate.files}{A logical indicating whether or not to produce separate files for peaks if \code{what} contains 'peaks' or 'reads'.}
+\item{separate.files}{A logical indicating whether or not to produce separate files for peaks if \code{what} contains 'peaks' or 'counts'.}
 
 \item{orderByScore}{Logical indicating whether or not to sort entries in BED file by score.}
 }
@@ -41,7 +41,7 @@ data(example.multi.HMM)
 \donttest{
 exportMultivariate(example.multi.HMM, exclude.states=c(0),
                   filename='chromstaR_example.multi.HMM',
-                  what=c('reads','peaks'))
+                  what=c('counts','peaks'))
 }
 }
 \author{

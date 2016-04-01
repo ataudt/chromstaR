@@ -10,7 +10,7 @@
 #' @author Aaron Taudt
 #' @param hmm.list A \code{list()} of \code{\link{chromstaR_univariateHMM}} objects or vector of files that contain such objects.
 #' @param filename The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.
-#' @param what A character vector specifying what will be exported. Supported are \code{c('peaks', 'reads')}.
+#' @param what A character vector specifying what will be exported. Supported are \code{c('peaks', 'counts')}.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @param separate.files A logical indicating whether or not to produce separate files for each hmm in \code{hmm.list}.
 #' @param orderByScore Logical indicating whether or not to sort entries in BED file by score.
@@ -31,13 +31,13 @@
 #'                                             max.time=30, eps=0.01)
 #'}
 #'## Export the binned read counts and peaks
-#'\donttest{exportUnivariates(uni.HMMs, filename='chromstaR-example_univariate.HMMs', what=c('reads','peaks'))}
+#'\donttest{exportUnivariates(uni.HMMs, filename='chromstaR-example_univariate.HMMs', what=c('counts','peaks'))}
 #' @export
-exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'reads'), header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
+exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'counts'), header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
 	if ('peaks' %in% what) {
 		exportUnivariatePeaks(hmm.list, filename, header=header, separate.files=separate.files, orderByScore=orderByScore)
 	}
-	if ('reads' %in% what) {
+	if ('counts' %in% what) {
 		exportUnivariateReadCounts(hmm.list, filename, header=header, separate.files=separate.files)
 	}
 }
@@ -163,7 +163,7 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 	if (!separate.files) {
 		filename.gz <- gzfile(filename, 'w')
 	}
-	readcol <- paste(grDevices::col2rgb(state.colors['reads']), collapse=',')
+	readcol <- paste(grDevices::col2rgb(state.colors['counts']), collapse=',')
 
 	# Write first line to file
 	if (!separate.files) {
@@ -215,12 +215,12 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 #' @author Aaron Taudt
 #' @param multi.hmm A \code{\link{chromstaR_multivariateHMM}} object or file that contains such an object.
 #' @param filename The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for combinatorial states and peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.
-#' @param what A character vector specifying what will be exported. Supported are \code{c('combstates', 'peaks', 'reads')}.
-#' @param exclude.states A vector of combinatorial states that will be excluded from export.
-#' @param include.states A vector of combinatorial states that will be exported. If specified, \code{exclude.states} is ignored.
+#' @param what A character vector specifying what will be exported. Supported are \code{c('combstates', 'peaks', 'counts')}.
+#' @param exclude.states A character vector with combinatorial states that will be excluded from export.
+#' @param include.states A character vector with combinatorial states that will be exported. If specified, \code{exclude.states} is ignored.
 #' @param trackname Name that will be used in the "track name" field of the BED file.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
-#' @param separate.files A logical indicating whether or not to produce separate files for peaks if \code{what} contains 'peaks' or 'reads'.
+#' @param separate.files A logical indicating whether or not to produce separate files for peaks if \code{what} contains 'peaks' or 'counts'.
 #' @param orderByScore Logical indicating whether or not to sort entries in BED file by score.
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportBinnedData}}
 #' @examples
@@ -231,18 +231,18 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 #'\donttest{
 #'exportMultivariate(example.multi.HMM, exclude.states=c(0),
 #'                   filename='chromstaR_example.multi.HMM',
-#'                   what=c('reads','peaks'))
+#'                   what=c('counts','peaks'))
 #'}
 #' @export
-exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks', 'reads'), exclude.states=0, include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
+exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks', 'counts'), exclude.states='', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
 	if ('combstates' %in% what) {
 		exportMultivariateCalls(multi.hmm, filename=paste0(filename, '_combstates'), separate.tracks=FALSE, exclude.states, include.states, trackname=trackname, header=header, orderByScore=orderByScore)
 	}
 	if ('peaks' %in% what) {
 		exportMultivariateCalls(multi.hmm, filename=paste0(filename, '_peaks'), separate.tracks=TRUE, exclude.states, include.states, header=header, separate.files=separate.files, orderByScore=orderByScore)
 	}
-	if ('reads' %in% what) {
-		exportMultivariateReadCounts(multi.hmm, filename=paste0(filename, '_reads'), header=header, separate.files=separate.files)
+	if ('counts' %in% what) {
+		exportMultivariateReadCounts(multi.hmm, filename=paste0(filename, '_counts'), header=header, separate.files=separate.files)
 	}
 }
 
@@ -251,13 +251,21 @@ exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks'
 #----------------------------------------------------
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
-exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateCalls", separate.tracks=TRUE, exclude.states=0, include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
+exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateCalls", separate.tracks=TRUE, exclude.states='', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
 
+	## Intercept user input
 	if (class(multi.hmm)!=class.multivariate.hmm) {
 		multi.hmm <- get(load(multi.hmm))
 		if (class(multi.hmm)!=class.multivariate.hmm) {
 			stop("argument 'multi.hmm' expects a multivariate hmm or a file which contains a multivariate hmm")
 		}
+	}
+
+	if (is.data.frame(exclude.states)) {
+		exclude.states <- exclude.states$combination
+	}
+	if (is.data.frame(include.states)) {
+		include.states <- include.states$combination
 	}
 
 	## Function definitions
@@ -271,7 +279,7 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 	}
 
 	## Variables
-	combstates <- levels(multi.hmm$bins$state)
+	combstates <- levels(multi.hmm$bins$combination)
 	numstates <- length(combstates)
 	if (is.null(include.states)) {
 		combstates2use <- setdiff(combstates, exclude.states)
@@ -284,7 +292,7 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 	segments.df <- as.data.frame(insertchr(multi.hmm$segments))
 
 	# Select only desired states
-	segments.df <- segments.df[segments.df$state %in% combstates2use,]
+	segments.df <- segments.df[segments.df$combination %in% combstates2use,]
 	if (nrow(segments.df) == 0) {
 		warning("No regions to export!")
 		return()
@@ -416,7 +424,7 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 		filename.gz <- gzfile(filename, 'w')
 	}
 	nummod <- length(multi.hmm$IDs)
-	readcol <- paste(grDevices::col2rgb(state.colors['reads']), collapse=',')
+	readcol <- paste(grDevices::col2rgb(state.colors['counts']), collapse=',')
 
 	# Write first line to file
 	if (!separate.files) {
@@ -523,7 +531,7 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", 
 	if (!separate.files) {
 		filename.gz <- gzfile(filename, 'w')
 	}
-	readcol <- paste(grDevices::col2rgb(state.colors['reads']), collapse=',')
+	readcol <- paste(grDevices::col2rgb(state.colors['counts']), collapse=',')
 
 	# Write first line to file
 	if (!separate.files) {
@@ -675,7 +683,7 @@ exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", h
 #'\donttest{
 #'exportMultivariate(example.multi.HMM, exclude.states=c(0),
 #'                   filename='chromstaR_example.multi.HMM',
-#'                   what=c('reads','peaks'))
+#'                   what=c('counts','peaks'))
 #'}
 #' @export
 exportCombinedMultivariate <- function(hmm, filename, what=c('combstates'), exclude.states='', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE) {
