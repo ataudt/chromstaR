@@ -5,10 +5,10 @@
 #'
 #' Export univariate peak-calls and read counts as genome browser viewable file
 #'
-#' Export \code{\link{chromstaR_univariateHMM}} objects as files which can be uploaded into a genome browser. Peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wig.gz).
+#' Export \code{\link{uniHMM}} objects as files which can be uploaded into a genome browser. Peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wig.gz).
 #'
 #' @author Aaron Taudt
-#' @param hmm.list A \code{list()} of \code{\link{chromstaR_univariateHMM}} objects or vector of files that contain such objects.
+#' @param hmm.list A \code{list()} of \code{\link{uniHMM}} objects or vector of files that contain such objects.
 #' @param filename The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.
 #' @param what A character vector specifying what will be exported. Supported are \code{c('peaks', 'counts')}.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
@@ -210,10 +210,10 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 #'
 #' Export multivariate calls and read counts as genome browser viewable file
 #'
-#' Export \code{\link{chromstaR_univariateHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states and peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wig.gz).
+#' Export \code{\link{uniHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states and peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wig.gz).
 #'
 #' @author Aaron Taudt
-#' @param multi.hmm A \code{\link{chromstaR_multivariateHMM}} object or file that contains such an object.
+#' @param multi.hmm A \code{\link{multiHMM}} object or file that contains such an object.
 #' @param filename The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for combinatorial states and peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.
 #' @param what A character vector specifying what will be exported. Supported are \code{c('combstates', 'peaks', 'counts')}.
 #' @param exclude.states A character vector with combinatorial states that will be excluded from export.

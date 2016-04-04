@@ -9,7 +9,7 @@ exportMultivariate(multi.hmm, filename, what = c("combstates", "peaks",
   header = TRUE, separate.files = FALSE, orderByScore = TRUE)
 }
 \arguments{
-\item{multi.hmm}{A \code{\link{chromstaR_multivariateHMM}} object or file that contains such an object.}
+\item{multi.hmm}{A \code{\link{multiHMM}} object or file that contains such an object.}
 
 \item{filename}{The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for combinatorial states and peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.}
 
@@ -31,7 +31,7 @@ exportMultivariate(multi.hmm, filename, what = c("combstates", "peaks",
 Export multivariate calls and read counts as genome browser viewable file
 }
 \details{
-Export \code{\link{chromstaR_univariateHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states and peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wig.gz).
+Export \code{\link{uniHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states and peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wig.gz).
 }
 \examples{
 ### Multivariate peak calling ###

@@ -7,15 +7,15 @@
 combineMultivariates(conditions = NULL, marks = NULL)
 }
 \arguments{
-\item{conditions}{A named \code{list()} with \code{\link{chromstaR_multivariateHMM}} objects. The names of the list are used to name the conditions. Alternatively a named character vector with filenames that contain \code{\link{chromstaR_multivariateHMM}} objects.}
+\item{conditions}{A named \code{list()} with \code{\link{multiHMM}} objects. The names of the list are used to name the conditions. Alternatively a named character vector with filenames that contain \code{\link{multiHMM}} objects.}
 
-\item{marks}{A named \code{list()} with \code{\link{chromstaR_multivariateHMM}} objects. The names of the list are used to name the marks. Alternatively a named character vector with filenames that contain \code{\link{chromstaR_multivariateHMM}} objects.}
+\item{marks}{A named \code{list()} with \code{\link{multiHMM}} objects. The names of the list are used to name the marks. Alternatively a named character vector with filenames that contain \code{\link{multiHMM}} objects.}
 }
 \value{
 A DataFrame with combinatorial states for each condition.
 }
 \description{
-Combine combinatorial states from several \code{\link{chromstaR_multivariateHMM}} objects. Combinatorial states can be combined across \code{conditions} (from a combinatorial analysis) or across \code{marks} (from a differential analysis).
+Combine combinatorial states from several \code{\link{multiHMM}} objects. Combinatorial states can be combined across \code{conditions} (from a combinatorial analysis) or across \code{marks} (from a differential analysis).
 }
 \author{
 Aaron Taudt

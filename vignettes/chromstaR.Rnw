@@ -336,7 +336,7 @@ exportMultivariate(multi.model, filename='your-file', what=c('peaks','counts'))
 exportMultivariate(multi.model, filename='your-combstates', what=c('combstates'))
 @
 
-<<multivariate_combinatorial_analysis, results='show', message=FALSE, eval=TRUE>>=
+<<multivariate_combinatorial_analysis, results='show', message=FALSE, eval=TRUE, fig.width=6, fig.height=4>>=
 ## === Step 6: Enrichment analysis ===
 # Get coordinates of rat genes
 library(biomaRt)
@@ -352,8 +352,15 @@ genes <- GRanges(seqnames=paste0('chr',genes$chrom),
                  name=genes$external_gene_id)
 print(genes)
 
-# Calculate enrichment
-enrich <- enrichmentCurve(multi.model, genes)
+# We expect promoter [H3K4me3] and bivalent-promoter signatures [H3K4me3+H3K27me3]
+# to be enriched at transcription start sites.
+plotEnrichment(hmm = multi.model, annotation = genes, bp.around.annotation = 15000) +
+  ggtitle('Fold enrichment around genes') +
+  xlab('distance from gene body')
+# Plot enrichment only at TSS. We make use of the fact that TSS is the start of a gene.
+plotEnrichment(multi.model, genes, region = 'start') +
+  ggtitle('Fold enrichment around TSS') +
+  xlab('distance from TSS in [bp]')
 
 @
 

@@ -21,7 +21,7 @@ NULL
 
 #' Univariate HMM object
 #'
-#' The univariate HMM object is output of the function \code{\link{callPeaksUnivariate}} and is basically a list with various entries. The class() attribute of this list was set to "chromstaR_univariateHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' and 'hmm$'.
+#' The univariate HMM object is output of the function \code{\link{callPeaksUnivariate}} and is basically a list with various entries. The class() attribute of this list was set to "uniHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' and 'hmm$'.
 #'
 #' @return
 #' A \code{list()} with the following entries:
@@ -46,14 +46,14 @@ NULL
 #' \item{convergenceInfo$loglik.delta}{Change in loglikelihood after the last iteration (should be smaller than \code{eps})}
 #' \item{convergenceInfo$num.iterations}{Number of iterations that the Baum-Welch needed to converge to the desired \code{eps}.}
 #' \item{convergenceInfo$time.sec}{Time in seconds that the Baum-Welch needed to converge to the desired \code{eps}.}
-#' @seealso \code{\link{callPeaksUnivariate}}, \code{\link{chromstaR_multivariateHMM}}
-#' @name chromstaR_univariateHMM
+#' @seealso \code{\link{callPeaksUnivariate}}, \code{\link{multiHMM}}
+#' @name uniHMM
 #' @aliases uni.hmm
 NULL
 
 #' Multivariate HMM object
 #'
-#' The multivariate HMM object is output of the function \code{\link{callPeaksMultivariate}} and is basically a list with various entries. The class() attribute of this list was set to "chromstaR_multivariateHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' and 'hmm$'.
+#' The multivariate HMM object is output of the function \code{\link{callPeaksMultivariate}} and is basically a list with various entries. The class() attribute of this list was set to "multiHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' and 'hmm$'.
 #' 
 #' @return
 #' A \code{list()} with the following entries:
@@ -79,15 +79,15 @@ NULL
 #' \item{convergenceInfo$num.iterations}{Number of iterations that the Baum-Welch needed to converge to the desired \code{eps}.}
 #' \item{convergenceInfo$time.sec}{Time in seconds that the Baum-Welch needed to converge to the desired \code{eps}.}
 #' \item{correlation.matrix}{Correlation matrix of transformed reads.}
-#' @seealso \code{\link{callPeaksMultivariate}}, \code{\link{chromstaR_univariateHMM}}
-#' @name chromstaR_multivariateHMM
+#' @seealso \code{\link{callPeaksMultivariate}}, \code{\link{uniHMM}}
+#' @name multiHMM
 #' @aliases multi.hmm
 NULL
 
 #' Multivariate Hidden Markov Model for usage in examples
 #'
-#' A \code{\link{chromstaR_multivariateHMM}} object, generated from the brain tissue dataset (H3K36me3, 7 tissues) in 'extdata/brain/'. This dataset is used in the example section of \pkg{chromstaR} functions.
+#' A \code{\link{multiHMM}} object, generated from the brain tissue dataset (H3K36me3, 7 tissues) in 'extdata/brain/'. This dataset is used in the example section of \pkg{chromstaR} functions.
 #'
-#' @format See \code{\link{chromstaR_multivariateHMM}} for a description of the format.
+#' @format See \code{\link{multiHMM}} for a description of the format.
 #' @name example.multi.HMM
 NULL

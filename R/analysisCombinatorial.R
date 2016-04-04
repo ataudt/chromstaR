@@ -2,7 +2,7 @@
 #'
 #' Compute the fold enrichment of combinatorial states in a given feature (e.g. TSS, exons, ...)
 #'
-#' @param multi.hmm A \code{\link{chromstaR_multivariateHMM}} or a file that contains such an object.
+#' @param multi.hmm A \code{\link{multiHMM}} or a file that contains such an object.
 #' @param feature A \code{\link{GRanges}} with coordinates of the feature to compute the fold enrichment to.
 #' @param featurelist A list with \code{\link{GRanges}} objects containing coordinates of multiple features. The names of the list entries will be used to name the return values.
 #' @param combinations A vector with combinations for which the fold enrichment will be calculated. If \code{NULL} all combinations will be considered.
@@ -59,7 +59,7 @@ foldEnrichment <- function(multi.hmm, featurelist, combinations=NULL, percentage
 #'
 #' Get the expression values that overlap with each combinatorial state.
 #'
-#' @param multi.hmm A \code{\link{chromstaR_multivariateHMM}} or a file that contains such an object.
+#' @param multi.hmm A \code{\link{multiHMM}} or a file that contains such an object.
 #' @param expression A \code{\link{GRanges}} object with metadata column 'expression', containing the expression value for each range.
 #' @param combinations A vector with combinations for which the expression overlap will be calculated. If \code{NULL} all combinations will be considered.
 #' @param return.marks Set to \code{TRUE} if expression values for marks instead of combinations should be returned.
@@ -101,7 +101,7 @@ expressionOverlap <- function(multi.hmm, expression, combinations=NULL, return.m
 #'
 #' Get the average expression for each percentage of overlap of combinatorial state with feature.
 #'
-#' @param multi.hmm A \code{\link{chromstaR_multivariateHMM}} or a file that contains such an object.
+#' @param multi.hmm A \code{\link{multiHMM}} or a file that contains such an object.
 #' @param expression A \code{\link{GRanges}} object with metadata column 'expression', containing the expression value for each range of the feature.
 #' @param combinations A vector with combinations for which the expression overlap will be calculated. If \code{NULL} all combinations will be considered.
 #' @return A list with vectors of mean expression values per percentile for each combinatorial state. 
@@ -144,7 +144,7 @@ expressionAtPercentageOverlap <- function(multi.hmm, expression, combinations=NU
 #'
 #' Get the genomewide frequency of each combinatorial state.
 #'
-#' @param multi.hmm A \code{\link{chromstaR_multivariateHMM}} or a file that contains such an object.
+#' @param multi.hmm A \code{\link{multiHMM}} or a file that contains such an object.
 #' @param combinations A vector with combinations for which the frequency will be calculated. If \code{NULL} all combinations will be considered.
 #' @return A table with frequencies of each combinatorial state.
 #' @author Aaron Taudt
@@ -169,9 +169,9 @@ combinatorialFrequency <- function(multi.hmm, combinations=NULL) {
 
 #' Transition frequencies of combinatorial states
 #'
-#' Get a table of transition frequencies between combinatorial states of different \code{\link{chromstaR_multivariateHMM}}s.
+#' Get a table of transition frequencies between combinatorial states of different \code{\link{multiHMM}}s.
 #'
-#' @param multi.hmms A list with \code{\link{chromstaR_multivariateHMM}} objects or a vector with filenames that contain such objects.
+#' @param multi.hmms A list with \code{\link{multiHMM}} objects or a vector with filenames that contain such objects.
 #' @param zero.states The string(s) which identifies the zero.states.
 #' @param combstates Alternative input instead of \code{multi.hmms}: A list of combinatorial state vectors instead of HMMs. If this is specified, \code{multi.hmms} will be ignored.
 #' @return A data.frame with transition frequencies.

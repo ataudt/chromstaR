@@ -7,7 +7,7 @@
 combinatorialFrequency(multi.hmm, combinations = NULL)
 }
 \arguments{
-\item{multi.hmm}{A \code{\link{chromstaR_multivariateHMM}} or a file that contains such an object.}
+\item{multi.hmm}{A \code{\link{multiHMM}} or a file that contains such an object.}
 
 \item{combinations}{A vector with combinations for which the frequency will be calculated. If \code{NULL} all combinations will be considered.}
 }

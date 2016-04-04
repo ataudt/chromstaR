@@ -78,6 +78,6 @@ plot(hmm, type='histogram')
 Aaron Taudt, Maria Coome Tatche
 }
 \seealso{
-\code{\link{chromstaR_univariateHMM}}, \code{\link{callPeaksMultivariate}}
+\code{\link{uniHMM}}, \code{\link{callPeaksMultivariate}}
 }
 

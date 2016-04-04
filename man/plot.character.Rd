@@ -7,7 +7,7 @@
 \method{plot}{character}(x, ...)
 }
 \arguments{
-\item{x}{A filename that contains either \code{\link{binned.data}}, a \code{\link{chromstaR_univariateHMM}} or a \code{\link{chromstaR_multivariateHMM}}.}
+\item{x}{A filename that contains either \code{\link{binned.data}}, a \code{\link{uniHMM}} or a \code{\link{multiHMM}}.}
 
 \item{...}{Additional arguments.}
 }

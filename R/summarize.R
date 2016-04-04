@@ -1,9 +1,9 @@
 #' Summary information about called peaks
 #'
-#' Get information about the peak calls in a \code{\link{chromstaR_multivariateHMM}} object.
+#' Get information about the peak calls in a \code{\link{multiHMM}} object.
 #'
 #' @author Aaron Taudt
-#' @param multi.hmm A \code{\link{chromstaR_multivariateHMM}} object.
+#' @param multi.hmm A \code{\link{multiHMM}} object.
 #' @return A \code{list()} object with various entries.
 #' @examples
 #'## Load example multivariate Hidden Markov Model
@@ -63,10 +63,10 @@ summarizePeaks <- function(multi.hmm) {
 
 #' Summary information about differential peak calls
 #'
-#' Get information about the differential peak calls in a \code{\link{chromstaR_multivariateHMM}} object.
+#' Get information about the differential peak calls in a \code{\link{multiHMM}} object.
 #'
 #' @author Aaron Taudt
-#' @param multi.hmm A \code{\link{chromstaR_multivariateHMM}} object.
+#' @param multi.hmm A \code{\link{multiHMM}} object.
 #' @return A \code{list()} object with various entries.
 #' @examples
 #'## Load example multivariate Hidden Markov Model

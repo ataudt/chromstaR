@@ -7,15 +7,15 @@
 loadMultiHmmsFromFiles(hmm.list, strict = FALSE)
 }
 \arguments{
-\item{hmm.list}{A list of files that contain \code{\link{chromstaR_multivariateHMM}} objects.}
+\item{hmm.list}{A list of files that contain \code{\link{multiHMM}} objects.}
 
-\item{strict}{If any of the loaded objects is not a \code{\link{chromstaR_multivariateHMM}} object, an error (\code{strict=TRUE}) or a warning (\code{strict=FALSE}) will be generated.}
+\item{strict}{If any of the loaded objects is not a \code{\link{multiHMM}} object, an error (\code{strict=TRUE}) or a warning (\code{strict=FALSE}) will be generated.}
 }
 \value{
-A \code{list()} containing all loaded \code{\link{chromstaR_multivariateHMM}} objects.
+A \code{list()} containing all loaded \code{\link{multiHMM}} objects.
 }
 \description{
-Load \code{\link{chromstaR_multivariateHMM}} objects from file into a list.
+Load \code{\link{multiHMM}} objects from file into a list.
 }
 \examples{
 \donttest{

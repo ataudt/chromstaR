@@ -7,13 +7,13 @@
 plotUnivariateKaryogram(model)
 }
 \arguments{
-\item{model}{A \code{\link{chromstaR_univariateHMM}} object or file that contains such an object.}
+\item{model}{A \code{\link{uniHMM}} object or file that contains such an object.}
 }
 \value{
 A \code{\link[ggplot2:ggplot]{ggplot}} object.
 }
 \description{
-Plot a karyogram with read counts and peak calls from a \code{\link{chromstaR_univariateHMM}} object.
+Plot a karyogram with read counts and peak calls from a \code{\link{uniHMM}} object.
 }
 \author{
 Aaron Taudt

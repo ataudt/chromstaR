@@ -30,7 +30,7 @@
 #' @param keep.densities If set to \code{TRUE} (default=\code{FALSE}), densities will be available in the output. This should only be needed debugging.
 #' @param verbosity Verbosity level for the fitting procedure. 0 - No output, 1 - Iterations are printed.
 #' @author Aaron Taudt, Maria Coome Tatche
-#' @seealso \code{\link{chromstaR_univariateHMM}}, \code{\link{callPeaksMultivariate}}
+#' @seealso \code{\link{uniHMM}}, \code{\link{callPeaksMultivariate}}
 #' @examples
 #'## Get an example BED-file with ChIP-seq reads for H3K36me3 in brain tissue
 #'bedfile <- system.file("extdata/brain/BI.Brain_Angular_Gyrus.H3K36me3.112.chr22.bed.gz",
@@ -105,7 +105,7 @@ callPeaksUnivariate <- function(binned.data, ID, prefit.on.chr=NULL, short=TRUE,
 #' @param checkpoint.use.existing If set to \code{TRUE}, the Baum-Welch fitting procedure will be continued from the HMM in the \code{checkpoint.file}.
 #' @param verbosity Verbosity level for the fitting procedure. 0 - No output, 1 - Iterations are printed.
 #' @author Aaron Taudt, Maria Coome Tatche
-#' @seealso \code{\link{chromstaR_univariateHMM}}, \code{\link{callPeaksMultivariate}}
+#' @seealso \code{\link{uniHMM}}, \code{\link{callPeaksMultivariate}}
 #' @importFrom stats runif
 #' @examples
 #'## Get an example BED-file with ChIP-seq reads for H3K36me3 in brain tissue

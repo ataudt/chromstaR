@@ -1,9 +1,9 @@
 #' Combine combinatorial states from several Multivariates
 #' 
-#' Combine combinatorial states from several \code{\link{chromstaR_multivariateHMM}} objects. Combinatorial states can be combined across \code{conditions} (from a combinatorial analysis) or across \code{marks} (from a differential analysis).
+#' Combine combinatorial states from several \code{\link{multiHMM}} objects. Combinatorial states can be combined across \code{conditions} (from a combinatorial analysis) or across \code{marks} (from a differential analysis).
 #' 
-#' @param conditions A named \code{list()} with \code{\link{chromstaR_multivariateHMM}} objects. The names of the list are used to name the conditions. Alternatively a named character vector with filenames that contain \code{\link{chromstaR_multivariateHMM}} objects.
-#' @param marks A named \code{list()} with \code{\link{chromstaR_multivariateHMM}} objects. The names of the list are used to name the marks. Alternatively a named character vector with filenames that contain \code{\link{chromstaR_multivariateHMM}} objects.
+#' @param conditions A named \code{list()} with \code{\link{multiHMM}} objects. The names of the list are used to name the conditions. Alternatively a named character vector with filenames that contain \code{\link{multiHMM}} objects.
+#' @param marks A named \code{list()} with \code{\link{multiHMM}} objects. The names of the list are used to name the marks. Alternatively a named character vector with filenames that contain \code{\link{multiHMM}} objects.
 #' @return A DataFrame with combinatorial states for each condition.
 #' @author Aaron Taudt
 #' @export

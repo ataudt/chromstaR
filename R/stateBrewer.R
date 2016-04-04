@@ -343,9 +343,9 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 	names(decstates) <- statenames[duplicate.mask]
 
 	## Put in data.frame and assign levels
-	decdf <- data.frame(combination=factor(names(decstates), levels=names(decstates.all)), state=factor(decstates, levels=decstates.all))
-	rownames(decdf) <- NULL
+	dec.df <- data.frame(combination=factor(paste0('[',names(decstates),']'), levels=paste0('[',names(decstates.all),']')), state=factor(decstates, levels=decstates.all))
+	rownames(dec.df) <- NULL
 
-	return(decdf)
+	return(dec.df)
 
 }

@@ -1,11 +1,11 @@
-#' Merge several \code{\link{chromstaR_multivariateHMM}}s into one object
+#' Merge several \code{\link{multiHMM}}s into one object
 #'
-#' Merge several \code{\link{chromstaR_multivariateHMM}}s into one object. This can be done to merge fits for separate chromosomes into one object for easier handling. Merging will only be done if all models have the same IDs.
+#' Merge several \code{\link{multiHMM}}s into one object. This can be done to merge fits for separate chromosomes into one object for easier handling. Merging will only be done if all models have the same IDs.
 #'
 #' @author Aaron Taudt
-#' @param multi.hmm.list A list of \code{\link{chromstaR_multivariateHMM}} objects.
-#' @param filename The file name where the merged object will be stored. If \code{filename} is not specified, a \code{\link{chromstaR_multivariateHMM}} is returned.
-#' @return A \code{\link{chromstaR_multivariateHMM}} object or NULL, depending on option \code{filename}.
+#' @param multi.hmm.list A list of \code{\link{multiHMM}} objects.
+#' @param filename The file name where the merged object will be stored. If \code{filename} is not specified, a \code{\link{multiHMM}} is returned.
+#' @return A \code{\link{multiHMM}} object or NULL, depending on option \code{filename}.
 #' @export
 mergeChroms <- function(multi.hmm.list, filename=NULL) {
 

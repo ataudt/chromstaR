@@ -1,5 +1,4 @@
 #' @import ggplot2
-#' @import reshape2
 NULL
 
 # =================================================================
@@ -9,7 +8,7 @@ NULL
 #'
 #' Convenience function that loads and plots a \pkg{\link{chromstaR}} object in one step.
 #'
-#' @param x A filename that contains either \code{\link{binned.data}}, a \code{\link{chromstaR_univariateHMM}} or a \code{\link{chromstaR_multivariateHMM}}.
+#' @param x A filename that contains either \code{\link{binned.data}}, a \code{\link{uniHMM}} or a \code{\link{multiHMM}}.
 #' @param ... Additional arguments.
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
 #' @method plot character
@@ -34,11 +33,11 @@ plot.GRanges <- function(x, chromosomes=NULL, start=NULL, end=NULL, ...) {
 	plotBinnedDataHistogram(x, chromosomes=NULL, start=NULL, end=NULL, ...)
 }
 
-#' Plotting function for \code{\link{chromstaR_univariateHMM}} objects
+#' Plotting function for \code{\link{uniHMM}} objects
 #'
-#' Make different types of plots for \code{\link{chromstaR_univariateHMM}} objects.
+#' Make different types of plots for \code{\link{uniHMM}} objects.
 #'
-#' @param x A \code{\link{chromstaR_univariateHMM}} object.
+#' @param x A \code{\link{uniHMM}} object.
 #' @param type Type of the plot, one of \code{c('histogram', 'karyogram', 'boxplot', 'normalTransformation')}. You can also specify the type with an integer number.
 #' \describe{
 #'   \item{\code{histogram}}{A histogram of binned read counts with fitted mixture distribution.}
@@ -52,9 +51,9 @@ plot.GRanges <- function(x, chromosomes=NULL, start=NULL, end=NULL, ...) {
 #'   \item{\code{chromosomes,start,end}}{Plot the \code{histogram} only for the specified chromosomes, start and end position.}
 #' }
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
-#' @method plot chromstaR_univariateHMM
+#' @method plot uniHMM
 #' @export
-plot.chromstaR_univariateHMM <- function(x, type='histogram', ...) {
+plot.uniHMM <- function(x, type='histogram', ...) {
 	
 	if (type == 'histogram' | type==1) {
 		plotUnivariateHistogram(x, ...)
@@ -68,11 +67,11 @@ plot.chromstaR_univariateHMM <- function(x, type='histogram', ...) {
 
 }
 
-#' Plotting function for \code{\link{chromstaR_multivariateHMM}} objects
+#' Plotting function for \code{\link{multiHMM}} objects
 #'
-#' Make different types of plots for \code{\link{chromstaR_multivariateHMM}} objects.
+#' Make different types of plots for \code{\link{multiHMM}} objects.
 #'
-#' @param x A \code{\link{chromstaR_multivariateHMM}} object.
+#' @param x A \code{\link{multiHMM}} object.
 #' @param type Type of the plot, one of \code{c('transitionMatrix','histograms','correlation')}. You can also specify the type with an integer number.
 #' \describe{
 #'   \item{\code{transitionMatrix}}{A heatmap with entries of the transition matrix.}
@@ -80,9 +79,9 @@ plot.chromstaR_univariateHMM <- function(x, type='histogram', ...) {
 #' }
 #' @param ... Additional arguments for the different plot types.
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
-#' @method plot chromstaR_multivariateHMM
+#' @method plot multiHMM
 #' @export
-plot.chromstaR_multivariateHMM <- function(x, type='transitionMatrix', ...) {
+plot.multiHMM <- function(x, type='transitionMatrix', ...) {
 
 	if (type == 'transitionMatrix' | type==1) {
 		plotMultivariateTransition(x, ...)
@@ -90,6 +89,8 @@ plot.chromstaR_multivariateHMM <- function(x, type='transitionMatrix', ...) {
 		plotMultivariateHistograms(x, ...)
 	} else if (type == 'correlation' | type==3) {
 		plotMultivariateCorrelation(x, ...)
+	} else if (type == 'enrichment' | type==4) {
+		plotEnrichment(x, ...)
 	}
 
 }
@@ -188,11 +189,12 @@ plotMultivariateHistograms <- function(multi.hmm) {
 # Plot count correlation heatmap for a multivariate HMM
 # =================================================================
 #' @importFrom stats dist hclust
+#' @importFrom reshape2 melt
 plotMultivariateCorrelation <- function(multi.hmm) {
 
 	cr <- cor(multi.hmm$bins$counts)
 	hc <- stats::hclust(stats::dist(cr))
-	df <- melt(cr, value.name='correlation')
+	df <- reshape2::melt(cr, value.name='correlation')
 	df$Var1 <- factor(df$Var1, levels=levels(df$Var1)[hc$order])
 	df$Var2 <- factor(df$Var2, levels=levels(df$Var2)[hc$order])
 	ggplt <- ggplot(df) + geom_tile(aes_string(x='Var1', y='Var2', fill='correlation')) + xlab('') + ylab('') + theme(axis.text.x = element_text(angle=45, hjust=1))
@@ -205,14 +207,15 @@ plotMultivariateCorrelation <- function(multi.hmm) {
 # ============================================================
 #' Plot a histogram of binned read counts with fitted mixture distribution
 #'
-#' Plot a histogram of binned read counts from with fitted mixture distributions from a \code{\link{chromstaR_univariateHMM}} object.
+#' Plot a histogram of binned read counts from with fitted mixture distributions from a \code{\link{uniHMM}} object.
 #'
-#' @param model A \code{\link{chromstaR_univariateHMM}} object.
+#' @param model A \code{\link{uniHMM}} object.
 #' @param state Plot the histogram only for the specified state. One of \code{c('unmodified','modified')}.
 #' @param chromosomes,start,end Plot the histogram only for the specified chromosomes, start and end position.
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
 #' @importFrom graphics hist
 #' @importFrom stats dnbinom
+#' @importFrom reshape2 melt
 plotUnivariateHistogram <- function(model, state=NULL, chromosomes=NULL, start=NULL, end=NULL, linewidth=1) {
 
 	## Check user input
@@ -272,7 +275,7 @@ plotUnivariateHistogram <- function(model, state=NULL, chromosomes=NULL, start=N
 	# Total
 	distributions$total <- distributions$unmodified + distributions$modified
 	# Convert to long format
-	df <- melt(distributions, id.vars='x', variable.name='state', value.name='y')
+	df <- reshape2::melt(distributions, id.vars='x', variable.name='state', value.name='y')
 
 	# Make legend
 	lmeans <- round(model$distributions[,'mu'], 2)[-1]
@@ -306,10 +309,10 @@ plotUnivariateHistogram <- function(model, state=NULL, chromosomes=NULL, start=N
 # ============================================================
 #' Plot a karyogram with read counts and univariate peak calls
 #'
-#' Plot a karyogram with read counts and peak calls from a \code{\link{chromstaR_univariateHMM}} object.
+#' Plot a karyogram with read counts and peak calls from a \code{\link{uniHMM}} object.
 #'
 #' @author Aaron Taudt
-#' @param model A \code{\link{chromstaR_univariateHMM}} object or file that contains such an object.
+#' @param model A \code{\link{uniHMM}} object or file that contains such an object.
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
 #' @export
 plotUnivariateKaryogram <- function(model) {
@@ -373,9 +376,10 @@ plotUnivariateBoxplot <- function(model) {
 # ============================================================
 # Plot a heat map of the transition probabilities
 # ============================================================
+#' @importFrom reshape2 melt
 plotMultivariateTransition <- function(multi.hmm) {
 
-	A <- melt(multi.hmm$transitionProbs, varnames=c('from','to'), value.name='prob')
+	A <- reshape2::melt(multi.hmm$transitionProbs, varnames=c('from','to'), value.name='prob')
 	A$from <- factor(A$from, levels=stateorderByTransition(multi.hmm))
 	A$to <- factor(A$to, levels=stateorderByTransition(multi.hmm))
 	ggplt <- ggplot(data=A) + geom_tile(aes_string(x='to', y='from', fill='prob')) + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + scale_fill_gradient(low="white", high="blue")

@@ -1,13 +1,13 @@
 #' Change the false discovery rate of a Hidden Markov Model
 #'
-#' Adjusts the peak calls of a \code{\link{chromstaR_univariateHMM}} or \code{\link{chromstaR_multivariateHMM}} object with the given false discovery rate (FDR).
+#' Adjusts the peak calls of a \code{\link{uniHMM}} or \code{\link{multiHMM}} object with the given false discovery rate (FDR).
 #'
 #' Peaks are called if the posterior for a state (univariate) or sample (multivariate) are \code{>= 1-FDR}.
 #'
 #' @author Aaron Taudt
-#' @param model A \code{\link{chromstaR_univariateHMM}} or \code{\link{chromstaR_multivariateHMM}} object with posteriors.
+#' @param model A \code{\link{uniHMM}} or \code{\link{multiHMM}} object with posteriors.
 #' @param FDR False discovery rate.
-#' @param separate.zeroinflation Only for \code{\link{chromstaR_univariateHMM}} objects: If set to TRUE, state 'zero-inflation' will be treated separately, otherwise it will be merged with state 'unmodified'.
+#' @param separate.zeroinflation Only for \code{\link{uniHMM}} objects: If set to TRUE, state 'zero-inflation' will be treated separately, otherwise it will be merged with state 'unmodified'.
 #' @param averages Whether or not averaged posteriors should appear in the segmentation.
 #' @return The input object is returned with adjusted peak calls.
 #' @examples

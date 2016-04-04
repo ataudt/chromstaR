@@ -2,20 +2,20 @@
 % Please edit documentation in R/mergeChroms.R
 \name{mergeChroms}
 \alias{mergeChroms}
-\title{Merge several \code{\link{chromstaR_multivariateHMM}}s into one object}
+\title{Merge several \code{\link{multiHMM}}s into one object}
 \usage{
 mergeChroms(multi.hmm.list, filename = NULL)
 }
 \arguments{
-\item{multi.hmm.list}{A list of \code{\link{chromstaR_multivariateHMM}} objects.}
+\item{multi.hmm.list}{A list of \code{\link{multiHMM}} objects.}
 
-\item{filename}{The file name where the merged object will be stored. If \code{filename} is not specified, a \code{\link{chromstaR_multivariateHMM}} is returned.}
+\item{filename}{The file name where the merged object will be stored. If \code{filename} is not specified, a \code{\link{multiHMM}} is returned.}
 }
 \value{
-A \code{\link{chromstaR_multivariateHMM}} object or NULL, depending on option \code{filename}.
+A \code{\link{multiHMM}} object or NULL, depending on option \code{filename}.
 }
 \description{
-Merge several \code{\link{chromstaR_multivariateHMM}}s into one object. This can be done to merge fits for separate chromosomes into one object for easier handling. Merging will only be done if all models have the same IDs.
+Merge several \code{\link{multiHMM}}s into one object. This can be done to merge fits for separate chromosomes into one object for easier handling. Merging will only be done if all models have the same IDs.
 }
 \author{
 Aaron Taudt

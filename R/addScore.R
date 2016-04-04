@@ -1,6 +1,6 @@
 #' Add score for differential export
 #'
-#' Add column 'score' to the 'segments' entry in a \code{\link{chromstaR_multivariateHMM}}. This score can be used to rank differential states.
+#' Add column 'score' to the 'segments' entry in a \code{\link{multiHMM}}. This score can be used to rank differential states.
 #'
 #' @author Aaron Taudt
 addScore <- function(multi.model, replicates, conditions, tracks2compare, reorderSegments=TRUE) {

@@ -8,7 +8,7 @@ transitionFrequencies(multi.hmms = NULL, zero.states = "",
   combstates = NULL)
 }
 \arguments{
-\item{multi.hmms}{A list with \code{\link{chromstaR_multivariateHMM}} objects or a vector with filenames that contain such objects.}
+\item{multi.hmms}{A list with \code{\link{multiHMM}} objects or a vector with filenames that contain such objects.}
 
 \item{zero.states}{The string(s) which identifies the zero.states.}
 
@@ -18,7 +18,7 @@ transitionFrequencies(multi.hmms = NULL, zero.states = "",
 A data.frame with transition frequencies.
 }
 \description{
-Get a table of transition frequencies between combinatorial states of different \code{\link{chromstaR_multivariateHMM}}s.
+Get a table of transition frequencies between combinatorial states of different \code{\link{multiHMM}}s.
 }
 \author{
 Aaron Taudt

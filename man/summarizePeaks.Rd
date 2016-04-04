@@ -7,13 +7,13 @@
 summarizePeaks(multi.hmm)
 }
 \arguments{
-\item{multi.hmm}{A \code{\link{chromstaR_multivariateHMM}} object.}
+\item{multi.hmm}{A \code{\link{multiHMM}} object.}
 }
 \value{
 A \code{list()} object with various entries.
 }
 \description{
-Get information about the peak calls in a \code{\link{chromstaR_multivariateHMM}} object.
+Get information about the peak calls in a \code{\link{multiHMM}} object.
 }
 \examples{
 ## Load example multivariate Hidden Markov Model

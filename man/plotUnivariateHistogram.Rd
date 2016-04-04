@@ -8,7 +8,7 @@ plotUnivariateHistogram(model, state = NULL, chromosomes = NULL,
   start = NULL, end = NULL, linewidth = 1)
 }
 \arguments{
-\item{model}{A \code{\link{chromstaR_univariateHMM}} object.}
+\item{model}{A \code{\link{uniHMM}} object.}
 
 \item{state}{Plot the histogram only for the specified state. One of \code{c('unmodified','modified')}.}
 
@@ -18,6 +18,6 @@ plotUnivariateHistogram(model, state = NULL, chromosomes = NULL,
 A \code{\link[ggplot2:ggplot]{ggplot}} object.
 }
 \description{
-Plot a histogram of binned read counts from with fitted mixture distributions from a \code{\link{chromstaR_univariateHMM}} object.
+Plot a histogram of binned read counts from with fitted mixture distributions from a \code{\link{uniHMM}} object.
 }
 

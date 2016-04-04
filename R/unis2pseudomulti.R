@@ -1,12 +1,12 @@
 #' Combine univariate HMMs to a multivariate HMM
 #'
-#' Combine multiple \code{\link{chromstaR_univariateHMM}}s to a \code{\link{chromstaR_multivariateHMM}} without running \code{\link{callPeaksMultivariate}}. This should only be done for comparison purposes.
+#' Combine multiple \code{\link{uniHMM}}s to a \code{\link{multiHMM}} without running \code{\link{callPeaksMultivariate}}. This should only be done for comparison purposes.
 #'
-#' Use this function if you want to combine ChIP-seq samples without actually running a multivariate Hidden Markov Model. The resulting object will be of class \code{\link{chromstaR_multivariateHMM}} but will not be truly multivariate.
+#' Use this function if you want to combine ChIP-seq samples without actually running a multivariate Hidden Markov Model. The resulting object will be of class \code{\link{multiHMM}} but will not be truly multivariate.
 #'
 #' @author Aaron Taudt
-#' @param uni.hmm.list A list of \code{\link{chromstaR_univariateHMM}}s, e.g. \code{list(hmm1, hmm2, ...)}.
-#' @return A \code{\link{chromstaR_multivariateHMM}} object.
+#' @param uni.hmm.list A list of \code{\link{uniHMM}}s, e.g. \code{list(hmm1, hmm2, ...)}.
+#' @return A \code{\link{multiHMM}} object.
 #' @examples
 #'## Get example BED-files with ChIP-seq reads for H3K36me3
 #' # in 7 different brain tissues (chr22)

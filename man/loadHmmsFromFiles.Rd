@@ -7,15 +7,15 @@
 loadHmmsFromFiles(hmm.list, strict = FALSE)
 }
 \arguments{
-\item{hmm.list}{A list of files that contain \code{\link{chromstaR_univariateHMM}} objects.}
+\item{hmm.list}{A list of files that contain \code{\link{uniHMM}} objects.}
 
-\item{strict}{If any of the loaded objects is not a \code{\link{chromstaR_univariateHMM}} object, an error (\code{strict=TRUE}) or a warning (\code{strict=FALSE}) will be generated.}
+\item{strict}{If any of the loaded objects is not a \code{\link{uniHMM}} object, an error (\code{strict=TRUE}) or a warning (\code{strict=FALSE}) will be generated.}
 }
 \value{
-A \code{list()} containing all loaded \code{\link{chromstaR_univariateHMM}} objects.
+A \code{list()} containing all loaded \code{\link{uniHMM}} objects.
 }
 \description{
-Load \code{\link{chromstaR_univariateHMM}} objects from file into a list.
+Load \code{\link{uniHMM}} objects from file into a list.
 }
 \examples{
 \donttest{

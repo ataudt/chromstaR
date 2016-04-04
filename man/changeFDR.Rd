@@ -8,11 +8,11 @@ changeFDR(model, FDR = 0.5, separate.zeroinflation = TRUE,
   averages = TRUE)
 }
 \arguments{
-\item{model}{A \code{\link{chromstaR_univariateHMM}} or \code{\link{chromstaR_multivariateHMM}} object with posteriors.}
+\item{model}{A \code{\link{uniHMM}} or \code{\link{multiHMM}} object with posteriors.}
 
 \item{FDR}{False discovery rate.}
 
-\item{separate.zeroinflation}{Only for \code{\link{chromstaR_univariateHMM}} objects: If set to TRUE, state 'zero-inflation' will be treated separately, otherwise it will be merged with state 'unmodified'.}
+\item{separate.zeroinflation}{Only for \code{\link{uniHMM}} objects: If set to TRUE, state 'zero-inflation' will be treated separately, otherwise it will be merged with state 'unmodified'.}
 
 \item{averages}{Whether or not averaged posteriors should appear in the segmentation.}
 }
@@ -20,7 +20,7 @@ changeFDR(model, FDR = 0.5, separate.zeroinflation = TRUE,
 The input object is returned with adjusted peak calls.
 }
 \description{
-Adjusts the peak calls of a \code{\link{chromstaR_univariateHMM}} or \code{\link{chromstaR_multivariateHMM}} object with the given false discovery rate (FDR).
+Adjusts the peak calls of a \code{\link{uniHMM}} or \code{\link{multiHMM}} object with the given false discovery rate (FDR).
 }
 \details{
 Peaks are called if the posterior for a state (univariate) or sample (multivariate) are \code{>= 1-FDR}.

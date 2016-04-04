@@ -8,7 +8,7 @@ expressionOverlap(multi.hmm, expression, combinations = NULL,
   return.marks = FALSE)
 }
 \arguments{
-\item{multi.hmm}{A \code{\link{chromstaR_multivariateHMM}} or a file that contains such an object.}
+\item{multi.hmm}{A \code{\link{multiHMM}} or a file that contains such an object.}
 
 \item{expression}{A \code{\link{GRanges}} object with metadata column 'expression', containing the expression value for each range.}
 

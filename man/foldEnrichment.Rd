@@ -8,7 +8,7 @@ foldEnrichment(multi.hmm, featurelist, combinations = NULL,
   percentages = FALSE)
 }
 \arguments{
-\item{multi.hmm}{A \code{\link{chromstaR_multivariateHMM}} or a file that contains such an object.}
+\item{multi.hmm}{A \code{\link{multiHMM}} or a file that contains such an object.}
 
 \item{featurelist}{A list with \code{\link{GRanges}} objects containing coordinates of multiple features. The names of the list entries will be used to name the return values.}
 

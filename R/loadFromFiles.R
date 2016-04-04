@@ -1,10 +1,10 @@
 #' Load HMMs from files
 #'
-#' Load \code{\link{chromstaR_univariateHMM}} objects from file into a list.
+#' Load \code{\link{uniHMM}} objects from file into a list.
 #'
-#' @param hmm.list A list of files that contain \code{\link{chromstaR_univariateHMM}} objects.
-#' @param strict If any of the loaded objects is not a \code{\link{chromstaR_univariateHMM}} object, an error (\code{strict=TRUE}) or a warning (\code{strict=FALSE}) will be generated.
-#' @return A \code{list()} containing all loaded \code{\link{chromstaR_univariateHMM}} objects.
+#' @param hmm.list A list of files that contain \code{\link{uniHMM}} objects.
+#' @param strict If any of the loaded objects is not a \code{\link{uniHMM}} object, an error (\code{strict=TRUE}) or a warning (\code{strict=FALSE}) will be generated.
+#' @return A \code{list()} containing all loaded \code{\link{uniHMM}} objects.
 #' @author Aaron Taudt
 #' @examples
 #'\donttest{
@@ -58,11 +58,11 @@ loadHmmsFromFiles <- function(hmm.list, strict=FALSE) {
 
 #' Load multivariate HMMs from files
 #'
-#' Load \code{\link{chromstaR_multivariateHMM}} objects from file into a list.
+#' Load \code{\link{multiHMM}} objects from file into a list.
 #'
-#' @param hmm.list A list of files that contain \code{\link{chromstaR_multivariateHMM}} objects.
-#' @param strict If any of the loaded objects is not a \code{\link{chromstaR_multivariateHMM}} object, an error (\code{strict=TRUE}) or a warning (\code{strict=FALSE}) will be generated.
-#' @return A \code{list()} containing all loaded \code{\link{chromstaR_multivariateHMM}} objects.
+#' @param hmm.list A list of files that contain \code{\link{multiHMM}} objects.
+#' @param strict If any of the loaded objects is not a \code{\link{multiHMM}} object, an error (\code{strict=TRUE}) or a warning (\code{strict=FALSE}) will be generated.
+#' @return A \code{list()} containing all loaded \code{\link{multiHMM}} objects.
 #' @author Aaron Taudt
 #' @examples
 #'\donttest{
