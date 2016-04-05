@@ -2,14 +2,96 @@
 #'
 #' Plot read counts around annotation as heatmap.
 #'
-#'
+#' @inheritParams enrichmentAtAnnotation
+#' @param max.rows An integer specifying the number of randomly subsampled rows that are plotted from the \code{annotation} object. This is necessary to avoid crashing for heatmaps with too many rows.
 #' @author Aaron Taudt
+#' @importFrom reshape2 melt
 #' @export
-plotHeatmap <- function(hmm, annotation, bp.around.annotation=10000) {
+plotHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=1000) {
 
-  ### Get read counts
-	enrich <- enrichmentAtAnnotation(hmm, annotation, bp.around.annotation=bp.around.annotation, region='start', what='counts', num.intervals=num.intervals)
-
+  # Variables
+  binsize <- width(hmm$bins)[1]
+  around <- round(bp.around.annotation/binsize)
+  
+  # Subsampling for plotting of huge data.frames
+  if (length(annotation)>max.rows) {
+    annotation <- sample(annotation, size=max.rows, replace=FALSE)
+  }
+  
+	# Get bins that overlap the start of annotation
+  ptm <- startTimedMessage("Overlaps with annotation ...")
+	index.plus <- findOverlaps(annotation[strand(annotation)=='+' | strand(annotation)=='*'], hmm$bins, select="first")
+	index.minus <- findOverlaps(annotation[strand(annotation)=='-'], hmm$bins, select="last")
+	index.plus <- index.plus[!is.na(index.plus)]
+	index.minus <- index.minus[!is.na(index.minus)]
+	index <- c(index.plus, index.minus)
+	stopTimedMessage(ptm)
+	
+	# Get surrounding indices
+	ptm <- startTimedMessage("Getting surrounding indices ...")
+	ext.index.plus <- array(NA, dim=c(length(index.plus), 2*around+1), dimnames=list(anno=1:length(index.plus), position=binsize*seq(-around, around, 1)))
+	for (i1 in 1:length(index.plus)) {
+	  ext.index.plus[i1,] <- seq(from=-around+index.plus[i1], to=index.plus[i1]+around)
+	}
+	if (length(index.minus)>0) {
+  	ext.index.minus <- array(NA, dim=c(length(index.minus), 2*around+1), dimnames=list(anno=1:length(index.minus), position=binsize*seq(-around, around, 1)))
+  	for (i1 in 1:length(index.minus)) {
+  	  ext.index.minus[i1,] <- rev( seq(from=-around+index.minus[i1], to=index.minus[i1]+around) )
+  	}
+  	ext.index <- rbind(ext.index.plus, ext.index.minus)
+	} else {
+	  ext.index <- ext.index.plus
+	}
+	ext.index[ext.index <= 0] <- NA
+	rownames(ext.index) <- 1:nrow(ext.index)
+	stopTimedMessage(ptm)
+	
+	## Go through combinations and then tracks to get the read counts
+	ptm <- startTimedMessage("Getting read counts")
+	counts <- list()
+	for (combination in levels(hmm$bins$combination)) {
+	  counts[[combination]] <- list()
+	  index.combination <- which(hmm$bins$combination[index]==combination)
+	  ext.index.combination <- ext.index[index.combination,]
+	  if (is.null(dim(ext.index.combination))) {
+	    ext.index.combination <- array(ext.index.combination, dim=c(1,dim(ext.index)[[2]]), dimnames=list(anno=rownames(ext.index)[index.combination], position=dimnames(ext.index)[[2]]))
+	  }
+	  for (ntrack in colnames(hmm$bins$counts)) {
+      counts[[combination]][[ntrack]] <- array(hmm$bins$counts[ext.index.combination,ntrack], dim=dim(ext.index.combination), dimnames=dimnames(ext.index.combination))
+	  }
+	}
+	stopTimedMessage(ptm)
+	
+	## Theme
+	custom_theme <- theme(
+	  panel.grid = element_blank(),
+	  panel.border = element_rect(fill='NA'),
+	  panel.background = element_rect(fill='white'),
+	  axis.text.y = element_blank()
+	)
+	
+	## Prepare data.frame
+	ptm <- startTimedMessage("Making the plot ...")
+	# Exclude rare combinations for plotting
+	num.comb <- sapply(counts, function(x) { nrow(x[[1]]) })
+	comb2keep <- names(num.comb)[num.comb/sum(num.comb) > 0.005]
+	counts <- counts[comb2keep]
+	df <- reshape2::melt(counts)
+	names(df) <- c('id','position','counts','track','combination')
+	df$id <- factor(df$id, levels=rev(unique(df$id)))
+	df$combination <- factor(df$combination, levels=unique(df$combination))
+	df$track <- factor(df$track, levels=colnames(hmm$bins$counts))
+	
+	## Plot as heatmap
+	ggplt <- ggplot(df) + geom_tile(aes_string(x='position', y='id', color='combination'), size=2)
+	ggplt <- ggplt + geom_tile(aes_string(x='position', y='id', fill='counts'), alpha=0.6)
+	ggplt <- ggplt + facet_wrap( ~ track, nrow=1) + custom_theme
+	ggplt <- ggplt + xlab('distance from annotation in [bp]') + ylab('')
+	breaks <- sort(c(0, 10^(0:5), max(df$counts, na.rm = TRUE)))
+	ggplt <- ggplt + scale_fill_continuous(trans='log1p', breaks=breaks, labels=breaks, low='white', high='black')
+	stopTimedMessage(ptm)
+	
+	return(ggplt)
 }
 
 
@@ -42,7 +124,7 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
   df$position[df$L1 == 'inside'] <- df$position[df$L1 == 'inside'] * bp.around.annotation
 
   ### Plot
-	ggplt <- ggplot(df) + geom_line(aes(x=position, y=value, col=combination), size=2)
+	ggplt <- ggplot(df) + geom_line(aes_string(x='position', y='value', col='combination'), size=2)
 	ggplt <- ggplt + theme_bw() + xlab('distance from annotation in [bp]') + ylab('fold enrichment')
 	if (length(region)>=2) {
 		breaks <- c(c(-1, -0.5, 0, 0.5, 1, 1.5, 2) * bp.around.annotation)

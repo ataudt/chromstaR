@@ -2,6 +2,7 @@
 % Please edit documentation in R/binReads.R
 \name{binReads}
 \alias{binReads}
+\alias{binning}
 \title{Convert aligned reads from various file formats into read counts in equidistant bins}
 \usage{
 binReads(file, format, assembly, ID = basename(file), bamindex = file,
@@ -79,8 +80,5 @@ binned <- binReads(bedfile, format='bed', assembly='mm10', binsize=1e6,
                   chromosomes=c(1:19,'X','Y'))
 print(binned)
 
-}
-\seealso{
-binning
 }
 

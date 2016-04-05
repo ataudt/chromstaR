@@ -25,10 +25,6 @@
 
 ChIP-seq has become the standard technique for assessing the genome-wide chromatin state of DNA. \Rpackage{chromstaR} provides functions for the joint analysis of multiple ChIP-seq samples. It allows peak calling for transcription factor binding and histone modifications with a narrow (e.g. H3K4me3, H3K27ac,~...) or broad (e.g. H3K36me3, H3K27me3,~...) profile. All analysis can be performed on each sample individually (=univariate), or in a joint analysis considering all samples simultaneously (=multivariate).
 
-<<annotate,echo=FALSE>>=
-options(fig.width=120)
-@
-
 \section{Outline of workflow}
 
 Every analysis with the \Rpackage{chromstaR} package starts from aligned reads in either BAM or BED format. In the first step, the genome is partitioned into non-overlapping, equally sized bins and the reads that fall into each bin are counted. These read counts serve as the basis for both the univariate and the multivariate peak- and broad-region calling. Univariate peak calling is done by fitting a three-state Hidden Markov Model to the binned read counts. Multivariate peak calling for $\mathcal{S}$ samples is done by fitting a $2^\mathcal{S}$-state Hidden Markov Model to all binned read counts.
@@ -53,7 +49,7 @@ Every analysis with the \Rpackage{chromstaR} package starts from aligned reads i
 %' # This is only necessary for BED files. BAM files are handled automatically.
 %' chrom.lengths <- data(rn4_chrominfo)
 %' # We use bin size 1000bp and chromosome 12 to keep the example quick
-%' binned.data <- binReads(bedfile, format='bed',assembly=rn4_chrominfo, binsizes=1000,
+%' binned.data <- binReads(bedfile, assembly=rn4_chrominfo, binsizes=1000,
 %'                         chromosomes='chr12')
 %' print(binned.data)
 %' @
@@ -97,7 +93,7 @@ Every analysis with the \Rpackage{chromstaR} package starts from aligned reads i
 %' # This is only necessary for BED files. BAM files are handled automatically.
 %' chrom.lengths <- data(rn4_chrominfo)
 %' # We use bin size 1000bp and chromosome 12 to keep the example quick
-%' binned.data <- binReads(bedfile, format='bed',assembly=rn4_chrominfo, binsizes=1000,
+%' binned.data <- binReads(bedfile, assembly=rn4_chrominfo, binsizes=1000,
 %'                         chromosomes='chr12')
 %' print(binned.data)
 %' @
@@ -127,7 +123,7 @@ Every analysis with the \Rpackage{chromstaR} package starts from aligned reads i
 %' bedfile <- system.file("extdata","euratrans","liver-H4K20me1-BN-male-bio1-tech1.bed.gz",
 %'                        package="chromstaRData")
 %' data(rn4_chrominfo)
-%' binned.data <- binReads(bedfile, format='bed',assembly=rn4_chrominfo, binsizes=1000,
+%' binned.data <- binReads(bedfile, assembly=rn4_chrominfo, binsizes=1000,
 %'                         chromosomes='chr12')
 %' model <- callPeaksUnivariate(binned.data, ID='H4K20me1', max.time=60, verbosity=0)
 %' plot(model)
@@ -162,7 +158,7 @@ Every analysis with the \Rpackage{chromstaR} package starts from aligned reads i
 %' # We use bin size 1000bp and chromosome 12 to keep the example quick
 %' binned.data <- list()
 %' for (bedfile in bedfiles) {
-%'   binned.data[[basename(bedfile)]] <- binReads(bedfile, format='bed', binsize=1000,
+%'   binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
 %'                                          assembly=rn4_chrominfo, chromosomes='chr12')
 %' }
 %' @
@@ -220,7 +216,7 @@ Every analysis with the \Rpackage{chromstaR} package starts from aligned reads i
 %' # We use bin size 1000bp and chromosome 12 to keep the example quick
 %' binned.data <- list()
 %' for (bedfile in bedfiles) {
-%'   binned.data[[basename(bedfile)]] <- binReads(bedfile, format='bed', binsize=1000,
+%'   binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
 %'                                          assembly=rn4_chrominfo, chromosomes='chr12')
 %' }
 %' @
@@ -293,7 +289,7 @@ data(rn4_chrominfo)
 # We use bin size 1000bp and chromosome 12 to keep the example quick
 binned.data <- list()
 for (bedfile in bedfiles) {
-  binned.data[[basename(bedfile)]] <- binReads(bedfile, format='bed', binsize=1000,
+  binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
                                          assembly=rn4_chrominfo, chromosomes='chr12')
 }
 @
@@ -336,12 +332,11 @@ exportMultivariate(multi.model, filename='your-file', what=c('peaks','counts'))
 exportMultivariate(multi.model, filename='your-combstates', what=c('combstates'))
 @
 
-<<multivariate_combinatorial_analysis, results='show', message=FALSE, eval=TRUE, fig.width=6, fig.height=4>>=
+<<multivariate_combinatorial_analysis, results='show', message=FALSE, eval=TRUE>>=
 ## === Step 6: Enrichment analysis ===
-# Get coordinates of rat genes
 library(biomaRt)
 ensembl <- useMart('ENSEMBL_MART_ENSEMBL', host='may2012.archive.ensembl.org',
-                    dataset='rnorvegicus_gene_ensembl')
+                   dataset='rnorvegicus_gene_ensembl')
 genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
                             'end_position', 'strand', 'external_gene_id'),
                mart=ensembl)
@@ -351,7 +346,9 @@ genes <- GRanges(seqnames=paste0('chr',genes$chrom),
                  strand=genes$strand,
                  name=genes$external_gene_id)
 print(genes)
+@
 
+<<multivariate_combinatorial_analysis_plot1, results='show', message=FALSE, eval=TRUE, fig.width=6, fig.height=4>>=
 # We expect promoter [H3K4me3] and bivalent-promoter signatures [H3K4me3+H3K27me3]
 # to be enriched at transcription start sites.
 plotEnrichment(hmm = multi.model, annotation = genes, bp.around.annotation = 15000) +
@@ -361,7 +358,16 @@ plotEnrichment(hmm = multi.model, annotation = genes, bp.around.annotation = 150
 plotEnrichment(multi.model, genes, region = 'start') +
   ggtitle('Fold enrichment around TSS') +
   xlab('distance from TSS in [bp]')
-
+# Note: If you want to facet the plot because you have many combinatorial states you
+# can do that with
+plotEnrichment(multi.model, genes, region = 'start') +
+  facet_wrap(~ combination)
+@
+<<multivariate_combinatorial_analysis_plot2, results='show', message=FALSE, eval=TRUE, fig.width=8, fig.height=4>>=
+# Another form of visualization that shows every TSS in a heatmap
+tss <- resize(genes, width = 3, fix = 'start')
+plotHeatmap(multi.model, tss) +
+  theme(strip.text.x = element_text(size=4))
 @
 
 \end{scriptsize}

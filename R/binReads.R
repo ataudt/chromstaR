@@ -6,8 +6,9 @@
 #'
 #' Convert aligned reads from .bam or .bed(.gz) files into read counts in equidistant windows (bins). This function uses \code{\link[GenomicRanges]{countOverlaps}} to calculate the read counts.
 #'
+#' @aliases binning
 #' @param file A file with aligned reads. Alternatively a \code{\link{GRanges}} with aligned reads if format is set to 'GRanges'.
-#' @param format One of \code{c('bam', 'bed', 'GRanges')}.
+#' @param format One of \code{c('bam', 'bed', 'GRanges')}. If set to \code{NULL}, the function will try to determine the format automatically from the file ending.
 #' @param ID An identifier that will be used to identify the file throughout the workflow and in plotting.
 #' @inheritParams bam2GRanges
 #' @inheritParams bed2GRanges
@@ -26,7 +27,6 @@
 #' @param reads.overwrite Whether or not an existing file with read fragments should be overwritten.
 #' @param reads.only If \code{TRUE} only read fragments are stored and/or returned and no binning is done.
 #' @return If only one bin size was specified for option \code{binsizes}, the function returns a single \code{\link{GRanges}} object with meta data column 'counts' that contains the read count. If multiple \code{binsizes} were specified , the function returns a \code{list()} of \link{GRanges} objects. Results can also be written to file (\code{save.as.RData=TRUE}).
-#' @seealso binning
 #' @export
 #'
 #'@examples
@@ -37,13 +37,21 @@
 #'                   chromosomes=c(1:19,'X','Y'))
 #'print(binned)
 #'
-binReads <- function(file, format, assembly, ID=basename(file), bamindex=file, chromosomes=NULL, pairedEndReads=FALSE, min.mapq=10, remove.duplicate.reads=TRUE, max.fragment.width=1000, blacklist=NULL, outputfolder.binned="binned_data", binsizes=1000, reads.per.bin=NULL, bins=NULL, variable.width.reference=NULL, stepsize=NULL, save.as.RData=FALSE, call=match.call(), reads.store=FALSE, outputfolder.reads="data", reads.return=FALSE, reads.overwrite=FALSE, reads.only=FALSE) {
+binReads <- function(file, format=NULL, assembly, ID=basename(file), bamindex=file, chromosomes=NULL, pairedEndReads=FALSE, min.mapq=10, remove.duplicate.reads=TRUE, max.fragment.width=1000, blacklist=NULL, outputfolder.binned="binned_data", binsizes=1000, reads.per.bin=NULL, bins=NULL, variable.width.reference=NULL, stepsize=NULL, save.as.RData=FALSE, call=match.call(), reads.store=FALSE, outputfolder.reads="data", reads.return=FALSE, reads.overwrite=FALSE, reads.only=FALSE) {
 
 	## Check user input
 	if (reads.return==FALSE & reads.only==FALSE) {
 		if (is.null(binsizes) & is.null(reads.per.bin) & is.null(bins)) {
 			stop("Please specify either argument 'binsizes' or 'reads.per.bin'")
 		}
+	}
+
+	## Determine format
+	if (is.character(file)) {
+		file.clean <- sub('\\.gz$','', file)
+		format <- rev(strsplit(file.clean, '\\.')[[1]])[1]
+	} else if (class(file)=='GRanges') {
+		format <- 'GRanges'
 	}
 
 	## Create outputfolder.binned if not exists

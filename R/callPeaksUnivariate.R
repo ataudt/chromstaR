@@ -42,7 +42,7 @@
 #'## Check if the fit is ok
 #'plot(hmm, type='histogram')
 #' @export
-callPeaksUnivariate <- function(binned.data, ID, prefit.on.chr=NULL, short=TRUE, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, FDR=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
+callPeaksUnivariate <- function(binned.data, ID, prefit.on.chr=NULL, short=TRUE, eps=0.01, init="standard", max.time=NULL, max.iter=5000, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, FDR=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
 
 	if (class(binned.data) == 'character') { 
 		message("Loading file ",binned.data)

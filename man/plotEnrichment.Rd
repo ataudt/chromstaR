@@ -22,7 +22,7 @@ plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
 A \code{\link[ggplot]} object containing the plot.
 }
 \description{
-Plot fold enrichment of combinatorial states around annotation.
+Plot fold enrichment of combinatorial states around and inside of annotation.
 }
 \author{
 Aaron Taudt

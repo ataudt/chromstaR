@@ -1,11 +1,3 @@
-#' Bin the genome
-#'
-#' Please see functions \code{\link{fixedWidthBins}} and \code{\link{variableWidthBins}} for further details.
-#'
-#' @name binning
-NULL
-
-
 #' Make fixed-width bins
 #'
 #' Make fixed-width bins based on given bin size.
