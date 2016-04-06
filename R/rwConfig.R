@@ -43,6 +43,7 @@ readConfig <- function(configfile) {
 #' @param configfile Filename of the outputfile.
 #' @return \code{NULL}
 #' @author Aaron Taudt
+#' @importFrom utils write.table
 writeConfig <- function(conf, configfile) {
 
 	## Printing function
@@ -57,6 +58,8 @@ writeConfig <- function(conf, configfile) {
 			string <- string
 		} else if (is.null(string)) {
 			string <- "NULL"
+		} else if (is.data.frame(string)) {
+		  string <- paste0("'", file.path(dirname(configfile), 'chrominfo.tsv'), "'")
 		}
 		return(string)
 	}
@@ -71,8 +74,15 @@ writeConfig <- function(conf, configfile) {
 	for (i1 in c('binsize', 'assembly', 'chromosomes', 'remove.duplicate.reads', 'min.mapq')) {
 		cat(i1," = ",formatstring(conf[[i1]]),"\n", file=f)
 	}
+	if (is.data.frame(conf[['assembly']])) {
+	  utils::write.table(conf[['assembly']], file=file.path(dirname(configfile),'chrominfo.tsv'), row.names=FALSE, quote=FALSE, sep='\t')
+	}
 	cat("\n[Univariate]\n", file=f)
 	for (i1 in c('prefit.on.chr', 'eps', 'max.time', 'max.iter', 'read.cutoff.absolute')) {
+		cat(i1," = ",formatstring(conf[[i1]]),"\n", file=f)
+	}
+	cat("\n[Multivariate]\n", file=f)
+	for (i1 in c('mode', 'num.states')) {
 		cat(i1," = ",formatstring(conf[[i1]]),"\n", file=f)
 	}
 	close(f, type='w')

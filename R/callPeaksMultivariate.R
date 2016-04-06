@@ -52,7 +52,6 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 	}
 	if (!is.null(use.states) & !is.null(num.states)) {
 		if (num.states > nrow(use.states)) {
-			warning("The specified number of states (num.states) is larger than the number of specified states (use.states). Setting num.states = nrow(use.states).")
 			num.states <- nrow(use.states)
 		}
 	}

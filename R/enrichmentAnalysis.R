@@ -100,7 +100,7 @@ plotHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=10
 #' Plot fold enrichment of combinatorial states around and inside of annotation.
 #'
 #' @inheritParams enrichmentAtAnnotation
-#' @return A \code{\link[ggplot]} object containing the plot.
+#' @return A \code{\link{ggplot}} object containing the plot.
 #' @author Aaron Taudt
 #' @importFrom reshape2 melt
 #' @export

@@ -215,7 +215,7 @@ binReads <- function(file, format=NULL, assembly, ID=basename(file), bamindex=fi
 		### Save or return the binned data ###
 		if (save.as.RData==TRUE) {
 			# Save to file
-			filename <- paste0(ID,"_binsize_",format(binsize, scientific=TRUE, trim=TRUE),"_reads.per.bin_",readsperbin,"_.RData")
+			filename <- paste0(ID,"_binsize",format(binsize, scientific=FALSE, trim=TRUE),".RData")
 			ptm <- startTimedMessage("Saving to file ...")
 # 			attr(binned.data, 'call') <- call # do not store along with GRanges because it inflates disk usage
 			save(binned.data, file=file.path(outputfolder.binned,filename) )

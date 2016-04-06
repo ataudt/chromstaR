@@ -16,6 +16,8 @@ Imports:
     grDevices,
     graphics,
     stats,
+    foreach,
+    doParallel,
     S4Vectors,
     GenomeInfoDb,
     IRanges,

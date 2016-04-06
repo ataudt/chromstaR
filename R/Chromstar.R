@@ -7,14 +7,20 @@
 #' @param experiment.table A \code{data.frame} or tab-separated text file with the structure of the experiment. See \code{\link{experiment.table}} for an example.
 #' @inheritParams binReads
 #' @inheritParams callPeaksUnivariate
-Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps=0.01, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=FALSE) {
-  
-  #=======================
-  ### Helper functions ###
-  #=======================
-  as.object <- function(x) {
-    return(eval(parse(text=x)))
-  }
+#' @param mode One of \code{c('condition','mark','full')}. The modes determine how the multivariate part is run. Here is some advice which mode to use:
+#' \describe{
+#'   \item{\code{mark}}{Each condition is analyzed separately with all marks combined. Choose this mode if you have more than ~7 conditions or you want to have a high sensitivity for detecting combinatorial states. Differences between conditions will be more noisy (more false positives) than in mode \code{'condition'} but combinatorial states are more precise.}
+#'   \item{\code{condition}}{Each mark is analyzed separately with all conditions combined. Choose this mode if you are interested in accurate differences. Combinatorial states will be more noisy (more false positives) than in mode \code{'mark'} but differences are more precise.}
+#'   \item{\code{full}}{Full analysis of all marks and conditions combined. Choose this mode only if (number of conditions * number of marks \eqn{\le} 8), otherwise it might be too slow or crash due to memory limitations.}
+#' }
+#' @param num.states The number of states to use in the multivariate part. If set to \code{NULL}, the maximum number of theoretically possible states is used. CAUTION: This can be very slow or crash if you have too many states. \pkg{\link{chromstaR}} has a built in mechanism to select the best states in case that less states than theoretically possible are specified.
+#' @import foreach
+#' @import doParallel
+#' @importFrom utils read.table
+#' @importFrom grDevices pdf dev.off
+#' @importFrom graphics plot
+#' @export
+Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps=0.01, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=FALSE, mode='mark', num.states=128) {
   
   #========================
   ### General variables ###
@@ -35,23 +41,59 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
   total.time <- proc.time()
   
   ## Put options into list and merge with conf
-  params <- list(numCPU=numCPU, binsize=binsize, assembly=assembly, chromosomes=chromosomes, remove.duplicate.reads=remove.duplicate.reads, min.mapq=min.mapq, prefit.on.chr=prefit.on.chr, eps=eps, max.time=max.time, max.iter=max.iter, read.cutoff.absolute=read.cutoff.absolute, keep.posteriors=keep.posteriors)
+  params <- list(numCPU=numCPU, binsize=binsize, assembly=assembly, chromosomes=chromosomes, remove.duplicate.reads=remove.duplicate.reads, min.mapq=min.mapq, prefit.on.chr=prefit.on.chr, eps=eps, max.time=max.time, max.iter=max.iter, read.cutoff.absolute=read.cutoff.absolute, keep.posteriors=keep.posteriors, mode=mode, num.states=num.states)
   conf <- c(conf, params[setdiff(names(params),names(conf))])
   
   ## Helpers
   binsize <- conf[['binsize']]
   numcpu <- conf[['numCPU']]
+  mode <- conf[['mode']]
+  
+  ## Read experiment table ##
+  exp.table <- utils::read.table(experiment.table, header=TRUE, comment.char='#')
+  if (!all(colnames(exp.table) == c('file','mark','condition','replicate','pairedEndReads'))) {
+    stop("Your 'experiment.table' must be a tab-separated file with column names 'file', 'mark', 'condition', 'replicate' and 'pairedEndReads'.")
+  }
+  rownames(exp.table) <- exp.table[,1]
+  
+  ## Check usage of modes
+  marks <- unique(as.character(exp.table[,'mark']))
+  conditions <- unique(as.character(exp.table[,'condition']))
+  if (length(conditions) <= 2 & conf[['mode']] == 'condition') {
+    stop("Mode 'condition' can only be used if two or more conditions are present.")
+  }
+  if (length(marks) <= 2 & conf[['mode']] == 'mark') {
+    stop("Mode 'mark' can only be used if two or more marks are present.")
+  }
+  
+  ## Check if assembly must be present
+  files <- file.path(inputfolder, exp.table$file)
+  files.clean <- sub('\\.gz$','', files)
+  format <- sapply(strsplit(files.clean, '\\.'), function(x) { rev(x)[1] })
+  if (any(format=='bed') & is.null(conf[['assembly']])) {
+    stop("Please specify an 'assembly' for the BED files.")
+  }
+  
+  ## Read in assembly if necessary
+  if (is.character(conf[['assembly']])) {
+    if (file.exists(conf[['assembly']])) {
+      conf[['assembly']] <- utils::read.table(conf[['assembly']], sep='\t', header=TRUE)
+    }
+  }
   
   ## Set up the directory structure ##
   binpath <- file.path(outputfolder, 'binned')
   unipath <- file.path(outputfolder, 'univariate')
+  plotpath <- file.path(outputfolder, 'plots')
   multipath <- file.path(outputfolder, 'multivariate')
+  combipath <- file.path(outputfolder, 'combined')
+  if (!file.exists(outputfolder)) {
+    dir.create(outputfolder)
+  }
+  filenames <- paste0(exp.table$file, "_binsize",format(binsize, scientific=FALSE, trim=TRUE),".RData")
   
   ## Make a copy of the conf file
-  writeConfig(conf, configfile=file.path(outputfolder, 'AneuFinder.config'))
-  
-  ## Read experiment table ##
-  exp.table <- read.table(conf[['experiment.table']], header=TRUE, comment.char='#')
+  writeConfig(conf, configfile=file.path(outputfolder, 'chromstaR.config'))
   
   ## Parallelization ##
   if (numcpu > 1) {
@@ -71,18 +113,11 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
   ### Binning ###
   #==============
   if (!file.exists(binpath)) { dir.create(binpath) }
-  files <- file.path(inputfolder, exp.table$file)
-  
-  ### Binning ###
   parallel.helper <- function(file) {
-    existing.binfiles <- grep(basename(file), list.files(binpath.uncorrected), value=TRUE)
-    existing.binsizes <- as.numeric(unlist(lapply(strsplit(existing.binfiles, split='binsize_|_reads.per.bin_|_\\.RData'), '[[', 2)))
-    existing.rpbin <- as.numeric(unlist(lapply(strsplit(existing.binfiles, split='binsize_|_reads.per.bin_|_\\.RData'), '[[', 3)))
-    binsizes.todo <- setdiff(binsizes, existing.binsizes)
-    rpbin.todo <- setdiff(reads.per.bins, existing.rpbin)
-    if (length(c(binsizes.todo,rpbin.todo)) > 0) {
+    savename <- file.path(binpath, paste0(basename(file),"_binsize",format(binsize, scientific=FALSE, trim=TRUE),".RData"))
+    if (!file.exists(savename)) {
       tC <- tryCatch({
-        binReads(file=file, format=conf[['format']], assembly=chrom.lengths.df, pairedEndReads=conf[['pairedEndReads']], binsizes=NULL, variable.width.reference=NULL, reads.per.bin=rpbin.todo, bins=bins[as.character(binsizes.todo)], stepsize=conf[['stepsize']], chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']], blacklist=conf[['blacklist']], outputfolder.binned=binpath.uncorrected, save.as.RData=TRUE, reads.store=TRUE, outputfolder.reads=readspath)
+        binReads(file=file, assembly=conf[['assembly']], pairedEndReads=exp.table[basename(file),'pairedEndReads'], binsize=binsize, chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']], outputfolder.binned=binpath, save.as.RData=TRUE)
       }, error = function(err) {
         stop(file,'\n',err)
       })
@@ -101,8 +136,113 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
   }
   
   
+  #==============================
+  ### Univariate peak calling ###
+  #==============================
+  if (!file.exists(unipath)) { dir.create(unipath) }
+  files <- file.path(binpath, filenames)
+  
+  parallel.helper <- function(file) {
+    savename <- file.path(unipath, basename(file))
+    if (!file.exists(savename)) {
+      tC <- tryCatch({
+        fields <- sapply(exp.table[sub('_binsize.*','',basename(file)),c('mark','condition','replicate')], as.character)
+        id <- paste0(fields[1], '-', fields[2], '-rep', fields[3])
+        model <- callPeaksUnivariate(file, ID=id, eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], read.cutoff.absolute=conf[['read.cutoff.absolute']], prefit.on.chr=conf[['prefit.on.chr']], keep.posteriors=conf[['keep.posteriors']])
+        save(model, file=savename)
+      }, error = function(err) {
+        stop(file,'\n',err)
+      })
+    }
+  }
+  if (numcpu > 1) {
+    ptm <- startTimedMessage("Univariate peak calling ...")
+    temp <- foreach (file = files, .packages=c("AneuFinder")) %dopar% {
+      parallel.helper(file)
+    }
+    stopTimedMessage(ptm)
+  } else {
+    temp <- foreach (file = files, .packages=c("AneuFinder")) %do% {
+      parallel.helper(file)
+    }
+  }
+  
+  #-----------------------
+  ## Plot distributions ##
+  #-----------------------
+  ptm <- startTimedMessage("Plotting univariate distributions ...")
+  if (!file.exists(plotpath)) { dir.create(plotpath) }
+  files <- file.path(unipath, filenames)
+  
+  savename <- file.path(plotpath, 'univariate-distributions.pdf')
+  grDevices::pdf(savename, width=7, height=5)
+  for (file in files) {
+    print(graphics::plot(file))
+  }
+  d <- grDevices::dev.off()
+  stopTimedMessage(ptm)
   
   
+  #================================
+  ### Multivariate peak calling ###
+  #================================
+  if (!file.exists(multipath)) { dir.create(multipath) }
+  
+  ## Run multivariate depending on mode
+  multimodels <- list()
+  if (mode == 'full') {
+    savename <- file.path(multipath, paste0('multivariate_mode-', mode, '.RData'))
+    if (!file.exists(savename)) {
+      files <- file.path(unipath, filenames)
+      reps <- paste0(exp.table[,'mark'], '-', exp.table[,'condition'])
+      states <- stateBrewer(replicates=reps)
+      multimodel <- callPeaksMultivariate(files, use.states=states, num.states=conf[['num.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']])
+      save(multimodel, file=savename)
+      multimodels[[1]] <- multimodel
+    } else {
+      multimodels[[1]] <- get(load(savename))
+    }
+    
+  } else if (mode == 'mark') {
+    for (condition in conditions) {
+      savename <- file.path(multipath, paste0('multivariate_mode-', mode, '_condition-', condition, '.RData'))
+      if (!file.exists(savename)) {
+        mask <- exp.table[,'condition'] == condition
+        files <- file.path(unipath, filenames)[mask]
+        reps <- exp.table[mask, 'mark']
+        states <- stateBrewer(replicates=reps)
+        multimodel <- callPeaksMultivariate(files, use.states=states, num.states=conf[['num.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']])
+        save(multimodel, file=savename)
+        multimodels[[as.character(condition)]] <- multimodel
+      } else {
+        multimodels[[as.character(condition)]] <- get(load(savename))
+      }
+    }
+    
+  } else if (mode == 'condition') {
+    for (mark in marks) {
+      savename <- file.path(multipath, paste0('multivariate_mode-', mode, '_mark-', mark, '.RData'))
+      if (!file.exists(savename)) {
+        mask <- exp.table[,'mark'] == mark
+        files <- file.path(unipath, filenames)[mask]
+        reps <- exp.table[mask, 'mark']
+        states <- stateBrewer(replicates=reps)
+        multimodel <- callPeaksMultivariate(files, use.states=states, num.states=conf[['num.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']])
+        save(multimodel, file=savename)
+        multimodels[[as.character(condition)]] <- multimodel
+      } else {
+        multimodels[[as.character(mark)]] <- get(load(savename))
+      }
+    }
+  }
+  
+  ## Combine into combinedMultiHMM
+  if (!file.exists(combipath)) { dir.create(combipath) }
+  savename <- file.path(combipath, paste0('multivariate_mode-', mode, '.RData'))
+  if (!file.exists(savename)) {
+    combinedModel <- combineMultivariates(multimodels, mode=mode, conditions=conditions)
+    save(combinedModel, file=savename)
+  }
   
   
   
