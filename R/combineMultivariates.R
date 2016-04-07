@@ -4,12 +4,25 @@
 #' 
 #' @param multi.hmm.list A named \code{list()} with \code{\link{multiHMM}} objects. The names of the list are used to name the conditions or marks. Alternatively a named character vector with filenames that contain \code{\link{multiHMM}} objects.
 #' @param mode Mode of combination. See \code{\link{Chromstar}} for a description of the \code{mode} parameter.
-#' @param conditions A character vector with conditions in case of \code{mode='full'}.
+#' @param conditions A character vector with conditions in case of \code{mode='full'} or \code{mode='condition'}.
 #' @return A \code{link{combinedHMM}} objects with combinatorial states for each condition.
 #' @author Aaron Taudt
 #' @export
-combineMultivariates <- function(multi.hmm.list, mode, conditions=NULL) {
+combineMultivariates <- function(multi.hmm.list, mode, conditions) {
 	
+  ## Helper function
+  getCondition <- function(combinations, condition) {
+		combinations <- sub('\\[','',combinations)
+		combinations <- sub('\\]','',combinations)
+	  combinations.split <- strsplit(as.character(combinations), '\\+')
+    condition.string <- paste0('\\<', condition, '\\>')
+    combinations.split.condition <- lapply(combinations.split, function(x) { grep(condition.string, x, value=TRUE) })
+    combinations.condition <- sapply(combinations.split.condition, paste, collapse='+')
+    combinations.condition <- gsub(paste0('-',condition.string), '', combinations.condition)
+    combinations.condition <- paste0('[', combinations.condition, ']')
+    return(combinations.condition)
+  }
+	  
 	if (mode == 'mark') {
 		if (is.null(names(multi.hmm.list))) {
 			stop("'multi.hmm.list' must be named.")
@@ -45,20 +58,20 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions=NULL) {
 			hmm <- suppressMessages( loadMultiHmmsFromFiles(multi.hmm.list[[mark]])[[1]] )
 			## Extract conditions
 			comblevels <- levels(hmm$bins$combination)
-			conds.split <- strsplit(comblevels,'-')
+			comblevels <- sub('\\[','', comblevels)
+			comblevels <- sub('\\]','', comblevels)
+			conds.split <- strsplit(as.character(comblevels),'\\+')
 			conds <- conds.split[[which.max(sapply(conds.split, length))]]
 			if (i1==1) {
 				bins <- hmm$bins
 				mcols(bins) <- NULL
-				comblevels.1 <- comblevels
-				conds.1 <- conds
 			}
-			if (!all.equal(conds.1, conds)) {
-				stop(paste0("levels(multi.hmm.list[[x]]$bins$combination) differ between x=1 and x=",i1,". They should be the same. Please check your input."))
+			if (any(!conds %in% conditions)) {
+				stop(paste0("Not all levels(multi.hmm.list[[",i1,"]]$bins$combination) in 'conditions'."))
 			}
 			## Make comblevel -> mark mappings and map differential states to mark
 			states[[mark]] <- list()
-			for (cond in conds) {
+			for (cond in conditions) {
 				mapping <- grepl(paste0('\\<',cond,'\\>'), conds.split)
 				names(mapping) <- comblevels
 				states[[mark]][[cond]] <- c('',mark)[mapping[hmm$bins$combination]+1] # no need to coerce to character here because the order is the same
@@ -66,9 +79,9 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions=NULL) {
 			stopTimedMessage(ptm)
 		}
 		### Paste the marks over each condition
-		ptm <- startTimedMessage("Pasting into combinatorial states")
+		message("Pasting into combinatorial states")
 		combs <- list()
-		for (cond in conds) {
+		for (cond in conditions) {
 			ptm <- startTimedMessage("  condition ",cond," ...")
 			l <- lapply(states, '[[', cond)
 			l$sep <- '+'
@@ -76,6 +89,7 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions=NULL) {
 			comb <- gsub('\\+{2,}','+', comb)
 			comb <- sub('^\\+','', comb)
 			comb <- sub('\\+$','', comb)
+			comb <- paste0('[', comb, ']')
 			combs[[cond]] <- comb
 			stopTimedMessage(ptm)
 		}
@@ -85,19 +99,6 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions=NULL) {
 	} else if (mode == 'full') {
 	  if (length(multi.hmm.list) > 1) {
 	    stop("'multi.hmm.list' must contain only one 'multiHMM' object when mode='full'.")
-	  }
-	  
-	  ## Helper function
-	  getCondition <- function(combinations, condition) {
-  		combinations <- sub('\\[','',combinations)
-  		combinations <- sub('\\]','',combinations)
-  	  combinations.split <- strsplit(as.character(combinations), '\\+')
-	    condition.string <- paste0('\\<', condition, '\\>')
-	    combinations.split.condition <- lapply(combinations.split, function(x) { grep(condition.string, x, value=TRUE) })
-	    combinations.condition <- sapply(combinations.split.condition, paste, collapse='+')
-	    combinations.condition <- gsub(paste0('-',condition.string), '', combinations.condition)
-	    combinations.condition <- paste0('[', combinations.condition, ']')
-	    return(combinations.condition)
 	  }
 	  
 		hmm <- suppressMessages( loadMultiHmmsFromFiles(multi.hmm.list[[1]])[[1]] )
@@ -121,6 +122,9 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions=NULL) {
 	} else {
 		stop("Please specify either 'conditions' or 'marks'.")
 	}
+  # Reassign levels such that all conditions have the same levels
+	comblevels <- sort(unique(unlist(lapply(combs.df, levels))))
+	combs.df <- endoapply(combs.df, function(x) { x <- factor(x, levels=comblevels) })
 	
 	### Redo the segmentation for all conditions combined
 	ptm <- startTimedMessage("Redoing segmentation for all conditions combined ...")

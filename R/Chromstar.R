@@ -59,10 +59,10 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
   ## Check usage of modes
   marks <- unique(as.character(exp.table[,'mark']))
   conditions <- unique(as.character(exp.table[,'condition']))
-  if (length(conditions) <= 2 & conf[['mode']] == 'condition') {
+  if (length(conditions) < 2 & conf[['mode']] == 'condition') {
     stop("Mode 'condition' can only be used if two or more conditions are present.")
   }
-  if (length(marks) <= 2 & conf[['mode']] == 'mark') {
+  if (length(marks) < 2 & conf[['mode']] == 'mark') {
     stop("Mode 'mark' can only be used if two or more marks are present.")
   }
   
@@ -87,6 +87,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
   plotpath <- file.path(outputfolder, 'plots')
   multipath <- file.path(outputfolder, 'multivariate')
   combipath <- file.path(outputfolder, 'combined')
+  browserpath <- file.path(outputfolder, 'browserfiles')
   if (!file.exists(outputfolder)) {
     dir.create(outputfolder)
   }
@@ -125,12 +126,12 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
   }
   if (numcpu > 1) {
     ptm <- startTimedMessage("Binning the data ...")
-    temp <- foreach (file = files, .packages=c("AneuFinder")) %dopar% {
+    temp <- foreach (file = files, .packages=c("chromstaR")) %dopar% {
       parallel.helper(file)
     }
     stopTimedMessage(ptm)
   } else {
-    temp <- foreach (file = files, .packages=c("AneuFinder")) %do% {
+    temp <- foreach (file = files, .packages=c("chromstaR")) %do% {
       parallel.helper(file)
     }
   }
@@ -157,12 +158,12 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
   }
   if (numcpu > 1) {
     ptm <- startTimedMessage("Univariate peak calling ...")
-    temp <- foreach (file = files, .packages=c("AneuFinder")) %dopar% {
+    temp <- foreach (file = files, .packages=c("chromstaR")) %dopar% {
       parallel.helper(file)
     }
     stopTimedMessage(ptm)
   } else {
-    temp <- foreach (file = files, .packages=c("AneuFinder")) %do% {
+    temp <- foreach (file = files, .packages=c("chromstaR")) %do% {
       parallel.helper(file)
     }
   }
@@ -225,11 +226,11 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
       if (!file.exists(savename)) {
         mask <- exp.table[,'mark'] == mark
         files <- file.path(unipath, filenames)[mask]
-        reps <- exp.table[mask, 'mark']
+        reps <- exp.table[mask, 'condition']
         states <- stateBrewer(replicates=reps)
         multimodel <- callPeaksMultivariate(files, use.states=states, num.states=conf[['num.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']])
         save(multimodel, file=savename)
-        multimodels[[as.character(condition)]] <- multimodel
+        multimodels[[as.character(mark)]] <- multimodel
       } else {
         multimodels[[as.character(mark)]] <- get(load(savename))
       }
@@ -242,8 +243,21 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
   if (!file.exists(savename)) {
     combinedModel <- combineMultivariates(multimodels, mode=mode, conditions=conditions)
     save(combinedModel, file=savename)
+  } else {
+    combinedModel <- get(load(savename))
   }
   
+  #-------------------------
+  ## Export browser files ##
+  #-------------------------
+  if (!file.exists(browserpath)) { dir.create(browserpath) }
+  savename <- file.path(browserpath, paste0('multivariate_mode-', mode))
+  if (!file.exists(paste0(savename,'.bed.gz'))) {
+    exportCombinedMultivariate(combinedModel, filename=savename)
+  }
+  
+  total.time <- proc.time() - total.time
+  message("==> Total time spent: ", round(total.time[3]), "s <==")
   
   
 }

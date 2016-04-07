@@ -33,7 +33,7 @@ Suggests:
     biovizBase,
     ggbio,
     testthat
-License: GPL-3
+License: Artistic-2.0
 LazyLoad: yes
 Packaged: 2014-05-03 00:00:00 CET+1; Taudt
 biocViews: Software, DifferentialPeakCalling, HiddenMarkovModel, ChIPSeq, MultipleComparison

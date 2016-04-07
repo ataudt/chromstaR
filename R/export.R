@@ -234,7 +234,7 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 #'                   what=c('counts','peaks'))
 #'}
 #' @export
-exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks', 'counts'), exclude.states='', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
+exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks', 'counts'), exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
 	if ('combstates' %in% what) {
 		exportMultivariateCalls(multi.hmm, filename=paste0(filename, '_combstates'), separate.tracks=FALSE, exclude.states, include.states, trackname=trackname, header=header, orderByScore=orderByScore)
 	}
@@ -251,7 +251,7 @@ exportMultivariate <- function(multi.hmm, filename, what=c('combstates', 'peaks'
 #----------------------------------------------------
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
-exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateCalls", separate.tracks=TRUE, exclude.states='', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
+exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateCalls", separate.tracks=TRUE, exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
 
 	## Intercept user input
 	if (class(multi.hmm)!=class.multivariate.hmm) {
@@ -686,7 +686,7 @@ exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", h
 #'                   what=c('counts','peaks'))
 #'}
 #' @export
-exportCombinedMultivariate <- function(hmm, filename, what=c('combstates'), exclude.states='', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE) {
+exportCombinedMultivariate <- function(hmm, filename, what=c('combstates'), exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE) {
 	if ('combstates' %in% what) {
 		exportCombinedMultivariateCalls(hmm, filename=filename, exclude.states=exclude.states, include.states=include.states, trackname=trackname, header=header, separate.files=separate.files)
 	}
@@ -697,7 +697,7 @@ exportCombinedMultivariate <- function(hmm, filename, what=c('combstates'), excl
 #----------------------------------------------------
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
-exportCombinedMultivariateCalls <- function(hmm, filename="chromstaR_combinedMultivariateCalls", exclude.states='', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE) {
+exportCombinedMultivariateCalls <- function(hmm, filename="chromstaR_combinedMultivariateCalls", exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE) {
 
 	if (class(hmm)!=class.combined.multivariate.hmm) {
 		hmm <- get(load(hmm))
@@ -742,9 +742,9 @@ exportCombinedMultivariateCalls <- function(hmm, filename="chromstaR_combinedMul
 
 		# Make header
 		if (is.null(trackname)) {
-			trackname.cond <- paste0('combinatorial states, condition ', cond)
+			trackname.cond <- paste0('condition: ', cond, ', combinatorial states')
 		} else {
-			trackname.cond <- paste0(trackname, ', condition ', cond)
+			trackname.cond <- paste0('condition: ', cond, ', ', trackname)
 		}
 		# Make filenames
 		if (separate.files) {
