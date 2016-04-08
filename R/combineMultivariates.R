@@ -24,6 +24,10 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
   }
 	  
 	if (mode == 'mark') {
+		if (length(multi.hmm.list)==1) {
+			warning("Only one object given. Need at least two to combine.")
+			return(multi.hmm.list[[1]])
+		}
 		if (is.null(names(multi.hmm.list))) {
 			stop("'multi.hmm.list' must be named.")
 		}
@@ -46,6 +50,10 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
 		combs.df <- as(combs,'DataFrame')
 		
 	} else if (mode == 'condition') {
+		if (length(multi.hmm.list)==1) {
+			warning("Only one object given. Need at least two to combine.")
+			return(multi.hmm.list[[1]])
+		}
 		if (is.null(names(multi.hmm.list))) {
 			stop("'multi.hmm.list' must be named.")
 		}

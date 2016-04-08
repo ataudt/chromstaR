@@ -1,3 +1,41 @@
+#' Obtain combinatorial states from experiment table
+#'
+#' This function computes combinatorial states from an \code{\link{experiment.table}}.
+#'
+#' The binary modification state (unmodified=0 or modified=1) of multiple ChIP-seq samples defines a (decimal) combinatorial state such as:
+#' \tabular{ccccccc}{
+#'  \tab sample1 \tab sample2 \tab sample3 \tab sample4 \tab sample5 \tab combinatorial state \cr
+#' bin1 \tab 0 \tab 0 \tab 1 \tab 0 \tab 0 \tab 4 \cr
+#' bin2 \tab 0 \tab 0 \tab 0 \tab 0 \tab 0 \tab 0 \cr
+#' bin3 \tab 0 \tab 1 \tab 0 \tab 1 \tab 0 \tab 10 \cr
+#' bin4 \tab 0 \tab 1 \tab 1 \tab 1 \tab 1 \tab 15 \cr
+#' bin5 \tab 0 \tab 0 \tab 1 \tab 0 \tab 1 \tab 5 \cr
+#' }
+#'
+#' @author Aaron Taudt
+#' @inheritParams state.brewer
+#' @param mode Mode of brewing. See \code{\link{Chromstar}} for a description of the parameter.
+#' @export
+stateBrewer <- function(experiment.table, mode, differential.states=FALSE, common.states=FALSE) {
+
+	if (check.experiment.table(experiment.table)!=0) {
+		stop("Argument 'experiment.table' expects a data.frame with columns 'file', 'mark', 'condition', 'replicate', 'pairedEndReads'.")
+	}
+	exp <- experiment.table
+	if (mode == 'full') {
+		combstates <- state.brewer(replicates=paste0(exp$mark, '-', exp$condition), conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states)
+	} else if (mode == 'mark') {
+		combstates <- state.brewer(replicates=exp$mark, conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states)
+	} else if (mode == 'condition') {
+		combstates <- state.brewer(replicates=exp$condition, conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states)
+	} else {
+		stop("Unknown mode.")
+	}
+		
+	return(combstates)
+}
+
+
 #' Obtain combinatorial states from specification
 #'
 #' This function returns all combinatorial (decimal) states that are consistent with a given abstract specification.
@@ -38,16 +76,15 @@
 #' @examples
 #'# Get all combinatorial states where sample1=0, sample2=1, sample3=(0 or 1),
 #'#  sample4=sample5
-#'stateBrewer(statespec=c('0.A','1.B','x.C','r.D','r.D'))
+#'state.brewer(statespec=c('0.A','1.B','x.C','r.D','r.D'))
 #'
 #'# Get all combinatorial states where sample1=sample2=sample3, sample4=sample5
-#'stateBrewer(statespec=c('r.A','r.A','r.A','r.B','r.B'))
+#'state.brewer(statespec=c('r.A','r.A','r.A','r.B','r.B'))
 #'
 #'# Get all combinatorial states where sample1=sample5, sample2=sample3=1,
 #'#  sample4=(0 or 1)
-#'stateBrewer(statespec=c('r.A','1.B','1.C','x.D','r.A'))
-#' @export
-stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, common.states=FALSE, conditions=NULL, tracks2compare=NULL, sep='+', statespec=NULL, diffstatespec=NULL) {
+#'state.brewer(statespec=c('r.A','1.B','1.C','x.D','r.A'))
+state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, common.states=FALSE, conditions=NULL, tracks2compare=NULL, sep='+', statespec=NULL, diffstatespec=NULL) {
 
 # 	## Debug
 # # 	conditions <- tissues
@@ -343,8 +380,12 @@ stateBrewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, 
 	names(decstates) <- statenames[duplicate.mask]
 
 	## Put in data.frame and assign levels
-	dec.df <- data.frame(combination=factor(paste0('[',names(decstates),']'), levels=paste0('[',names(decstates.all),']')), state=factor(decstates, levels=decstates.all))
-	rownames(dec.df) <- NULL
+	if (length(decstates)>0) {
+  	dec.df <- data.frame(combination=factor(paste0('[',names(decstates),']'), levels=paste0('[',names(decstates.all),']')), state=factor(decstates, levels=decstates.all))
+	  rownames(dec.df) <- NULL
+	} else {
+	  dec.df <- data.frame(combination=factor(), state=integer())
+	}
 
 	return(dec.df)
 

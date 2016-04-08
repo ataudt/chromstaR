@@ -10,10 +10,12 @@
 plotHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=1000) {
 
   # Variables
+	hmm <- loadMultiHmmsFromFiles(hmm)[[1]]
   binsize <- width(hmm$bins)[1]
   around <- round(bp.around.annotation/binsize)
   
   # Subsampling for plotting of huge data.frames
+	annotation <- subsetByOverlaps(annotation, hmm$bins)
   if (length(annotation)>max.rows) {
     annotation <- sample(annotation, size=max.rows, replace=FALSE)
   }

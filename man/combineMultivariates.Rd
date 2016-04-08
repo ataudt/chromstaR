@@ -4,18 +4,20 @@
 \alias{combineMultivariates}
 \title{Combine combinatorial states from several Multivariates}
 \usage{
-combineMultivariates(conditions = NULL, marks = NULL)
+combineMultivariates(multi.hmm.list, mode, conditions)
 }
 \arguments{
-\item{conditions}{A named \code{list()} with \code{\link{multiHMM}} objects. The names of the list are used to name the conditions. Alternatively a named character vector with filenames that contain \code{\link{multiHMM}} objects.}
+\item{multi.hmm.list}{A named \code{list()} with \code{\link{multiHMM}} objects. The names of the list are used to name the conditions or marks. Alternatively a named character vector with filenames that contain \code{\link{multiHMM}} objects.}
 
-\item{marks}{A named \code{list()} with \code{\link{multiHMM}} objects. The names of the list are used to name the marks. Alternatively a named character vector with filenames that contain \code{\link{multiHMM}} objects.}
+\item{mode}{Mode of combination. See \code{\link{Chromstar}} for a description of the \code{mode} parameter.}
+
+\item{conditions}{A character vector with conditions in case of \code{mode='full'} or \code{mode='condition'}.}
 }
 \value{
-A DataFrame with combinatorial states for each condition.
+A \code{link{combinedHMM}} objects with combinatorial states for each condition.
 }
 \description{
-Combine combinatorial states from several \code{\link{multiHMM}} objects. Combinatorial states can be combined across \code{conditions} (from a combinatorial analysis) or across \code{marks} (from a differential analysis).
+Combine combinatorial states from several \code{\link{multiHMM}} objects. Combinatorial states can be combined for objects containing multiple marks (\code{mode='mark'}) or multiple conditions (\code{mode='condition'}).
 }
 \author{
 Aaron Taudt

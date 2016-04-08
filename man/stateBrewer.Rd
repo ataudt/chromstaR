@@ -2,48 +2,20 @@
 % Please edit documentation in R/stateBrewer.R
 \name{stateBrewer}
 \alias{stateBrewer}
-\title{Obtain combinatorial states from specification}
+\title{Obtain combinatorial states from experiment table}
 \usage{
-stateBrewer(replicates = NULL, differential.states = FALSE, min.diff = 1,
-  common.states = FALSE, conditions = NULL, tracks2compare = NULL,
-  sep = "+", statespec = NULL, diffstatespec = NULL)
+stateBrewer(experiment.table, mode, differential.states = FALSE,
+  common.states = FALSE)
 }
 \arguments{
-\item{replicates}{A vector specifying the replicate structure. Similar entries will be treated as replicates.}
+\item{mode}{Mode of brewing. See \code{\link{Chromstar}} for a description of the parameter.}
 
 \item{differential.states}{A logical specifying whether differential states shall be returned.}
 
-\item{min.diff}{The minimum number of differences between conditions.}
-
 \item{common.states}{A logical specifying whether common states shall be returned.}
-
-\item{conditions}{A vector with the same length as \code{replicates}. Similar entries will be treated as belonging to the same condition. Usually your tissue or cell types or time points.}
-
-\item{tracks2compare}{A vector with the same length as \code{replicates}. This vector defines the tracks between which conditions are compared. Usually your histone marks.}
-
-\item{sep}{Separator used to separate the tracknames in the combinations. The default '+' should not be changed because it is assumed in follow-up functions.}
-
-\item{statespec}{If this parameter is specified, \code{replicates} will be ignored. A vector composed of any combination of the following entries: \code{'0.[]', '1.[]', 'x.[]', 'r.[]'}, where [] can be any string.
-\itemize{
-  \item \code{'0.A'}: sample A is 'unmodified'
-  \item \code{'1.B'}: sample B is 'modified'
-  \item \code{'x.C'}: sample C can be both 'unmodified' or 'modified'
-  \item \code{'r.D'}: all samples in group D have to be in the same state
-  \item \code{'r.[]'}: all samples in group [] have to be in the same state
-}}
-
-\item{diffstatespec}{A vector composed of any combination of the following entries: \code{'x.[]', 'd.[]'}, where [] can be any string.
-\itemize{
-  \item \code{'x.A'}: sample A can be both 'unmodified' or 'modified'
-  \item \code{'d.B'}: at least one sample in group B has to be different from the other samples in group A 
-  \item \code{'d[]'}: at least one sample in group [] has to be different from the other samples in group [] 
-}}
-}
-\value{
-A data.frame with combinations and their corresponding (decimal) combinatorial states.
 }
 \description{
-This function returns all combinatorial (decimal) states that are consistent with a given abstract specification.
+This function computes combinatorial states from an \code{\link{experiment.table}}.
 }
 \details{
 The binary modification state (unmodified=0 or modified=1) of multiple ChIP-seq samples defines a (decimal) combinatorial state such as:
@@ -55,18 +27,6 @@ bin3 \tab 0 \tab 1 \tab 0 \tab 1 \tab 0 \tab 10 \cr
 bin4 \tab 0 \tab 1 \tab 1 \tab 1 \tab 1 \tab 15 \cr
 bin5 \tab 0 \tab 0 \tab 1 \tab 0 \tab 1 \tab 5 \cr
 }
-}
-\examples{
-# Get all combinatorial states where sample1=0, sample2=1, sample3=(0 or 1),
-#  sample4=sample5
-stateBrewer(statespec=c('0.A','1.B','x.C','r.D','r.D'))
-
-# Get all combinatorial states where sample1=sample2=sample3, sample4=sample5
-stateBrewer(statespec=c('r.A','r.A','r.A','r.B','r.B'))
-
-# Get all combinatorial states where sample1=sample5, sample2=sample3=1,
-#  sample4=(0 or 1)
-stateBrewer(statespec=c('r.A','1.B','1.C','x.D','r.A'))
 }
 \author{
 Aaron Taudt

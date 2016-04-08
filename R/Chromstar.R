@@ -11,7 +11,7 @@
 #' \describe{
 #'   \item{\code{mark}}{Each condition is analyzed separately with all marks combined. Choose this mode if you have more than ~7 conditions or you want to have a high sensitivity for detecting combinatorial states. Differences between conditions will be more noisy (more false positives) than in mode \code{'condition'} but combinatorial states are more precise.}
 #'   \item{\code{condition}}{Each mark is analyzed separately with all conditions combined. Choose this mode if you are interested in accurate differences. Combinatorial states will be more noisy (more false positives) than in mode \code{'mark'} but differences are more precise.}
-#'   \item{\code{full}}{Full analysis of all marks and conditions combined. Choose this mode only if (number of conditions * number of marks \eqn{\le} 8), otherwise it might be too slow or crash due to memory limitations.}
+#'   \item{\code{full}}{Full analysis of all marks and conditions combined. Best of both, but: Choose this mode only if (number of conditions * number of marks \eqn{\le} 8), otherwise it might be too slow or crash due to memory limitations.}
 #' }
 #' @param num.states The number of states to use in the multivariate part. If set to \code{NULL}, the maximum number of theoretically possible states is used. CAUTION: This can be very slow or crash if you have too many states. \pkg{\link{chromstaR}} has a built in mechanism to select the best states in case that less states than theoretically possible are specified.
 #' @import foreach
@@ -49,12 +49,19 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
   numcpu <- conf[['numCPU']]
   mode <- conf[['mode']]
   
-  ## Read experiment table ##
-  exp.table <- utils::read.table(experiment.table, header=TRUE, comment.char='#')
-  if (!all(colnames(exp.table) == c('file','mark','condition','replicate','pairedEndReads'))) {
-    stop("Your 'experiment.table' must be a tab-separated file with column names 'file', 'mark', 'condition', 'replicate' and 'pairedEndReads'.")
-  }
-  rownames(exp.table) <- exp.table[,1]
+  ## Read in experiment table if necessary ##
+	if (is.character(experiment.table)) {
+		exp.table <- utils::read.table(experiment.table, header=TRUE, comment.char='#')
+		if (!all(colnames(exp.table) == c('file','mark','condition','replicate','pairedEndReads'))) {
+			stop("Your 'experiment.table' must be a tab-separated file with column names 'file', 'mark', 'condition', 'replicate' and 'pairedEndReads'.")
+		}
+		rownames(exp.table) <- exp.table[,1]
+	} else if (is.data.frame(experiment.table)) {
+		exp.table <- experiment.table
+		rownames(exp.table) <- exp.table[,1]
+	} else {
+		stop("Argument 'experiment.table' must be a data.frame or a tab-separated file.")
+	}
   
   ## Check usage of modes
   marks <- unique(as.character(exp.table[,'mark']))
@@ -171,23 +178,24 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
   #-----------------------
   ## Plot distributions ##
   #-----------------------
-  ptm <- startTimedMessage("Plotting univariate distributions ...")
-  if (!file.exists(plotpath)) { dir.create(plotpath) }
-  files <- file.path(unipath, filenames)
-  
-  savename <- file.path(plotpath, 'univariate-distributions.pdf')
-  grDevices::pdf(savename, width=7, height=5)
-  for (file in files) {
-    print(graphics::plot(file))
-  }
-  d <- grDevices::dev.off()
-  stopTimedMessage(ptm)
+  # ptm <- startTimedMessage("Plotting univariate distributions ...")
+  # if (!file.exists(plotpath)) { dir.create(plotpath) }
+  # files <- file.path(unipath, filenames)
+  # 
+  # savename <- file.path(plotpath, 'univariate-distributions.pdf')
+  # grDevices::pdf(savename, width=7, height=5)
+  # for (file in files) {
+  #   print(graphics::plot(file))
+  # }
+  # d <- grDevices::dev.off()
+  # stopTimedMessage(ptm)
   
   
   #================================
   ### Multivariate peak calling ###
   #================================
   if (!file.exists(multipath)) { dir.create(multipath) }
+  if (!file.exists(browserpath)) { dir.create(browserpath) }
   
   ## Run multivariate depending on mode
   multimodels <- list()
@@ -195,13 +203,21 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     savename <- file.path(multipath, paste0('multivariate_mode-', mode, '.RData'))
     if (!file.exists(savename)) {
       files <- file.path(unipath, filenames)
-      reps <- paste0(exp.table[,'mark'], '-', exp.table[,'condition'])
-      states <- stateBrewer(replicates=reps)
+      states <- stateBrewer(exp.table, mode=mode)
       multimodel <- callPeaksMultivariate(files, use.states=states, num.states=conf[['num.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']])
       save(multimodel, file=savename)
       multimodels[[1]] <- multimodel
     } else {
       multimodels[[1]] <- get(load(savename))
+    }
+    ## Export browser files
+    savename <- file.path(browserpath, paste0('multivariate_mode-', mode))
+    if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
+      trackname <- paste0('combinations, mode-', mode)
+      exportMultivariate(multimodels[[1]], filename=savename, what='combinations', trackname=trackname)
+    }
+    if (!file.exists(paste0(savename, '_counts.wig.gz'))) {
+      exportMultivariate(multimodels[[1]], filename=savename, what='counts')
     }
     
   } else if (mode == 'mark') {
@@ -210,13 +226,21 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
       if (!file.exists(savename)) {
         mask <- exp.table[,'condition'] == condition
         files <- file.path(unipath, filenames)[mask]
-        reps <- exp.table[mask, 'mark']
-        states <- stateBrewer(replicates=reps)
+        states <- stateBrewer(exp.table[mask,], mode=mode)
         multimodel <- callPeaksMultivariate(files, use.states=states, num.states=conf[['num.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']])
         save(multimodel, file=savename)
         multimodels[[as.character(condition)]] <- multimodel
       } else {
         multimodels[[as.character(condition)]] <- get(load(savename))
+      }
+      ## Export browser files
+      savename <- file.path(browserpath, paste0('multivariate_mode-', mode, '_condition-', condition))
+      if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
+        trackname <- paste0('combinations, mode-', mode)
+        exportMultivariate(multimodels[[1]], filename=savename, what='combinations', trackname=trackname)
+      }
+      if (!file.exists(paste0(savename, '_counts.wig.gz'))) {
+        exportMultivariate(multimodels[[1]], filename=savename, what='counts')
       }
     }
     
@@ -226,34 +250,49 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
       if (!file.exists(savename)) {
         mask <- exp.table[,'mark'] == mark
         files <- file.path(unipath, filenames)[mask]
-        reps <- exp.table[mask, 'condition']
-        states <- stateBrewer(replicates=reps)
+        states <- stateBrewer(exp.table[mask,], mode=mode)
         multimodel <- callPeaksMultivariate(files, use.states=states, num.states=conf[['num.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']])
         save(multimodel, file=savename)
         multimodels[[as.character(mark)]] <- multimodel
       } else {
         multimodels[[as.character(mark)]] <- get(load(savename))
       }
+      ## Export browser files
+      savename <- file.path(browserpath, paste0('multivariate_mode-', mode, '_mark-', mark))
+      if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
+        trackname <- paste0('combinations, mode-', mode)
+        exportMultivariate(multimodels[[1]], filename=savename, what='combinations', trackname=trackname)
+      }
+      if (!file.exists(paste0(savename, '_counts.wig.gz'))) {
+        exportMultivariate(multimodels[[1]], filename=savename, what='counts')
+      }
     }
   }
   
-  ## Combine into combinedMultiHMM
-  if (!file.exists(combipath)) { dir.create(combipath) }
-  savename <- file.path(combipath, paste0('multivariate_mode-', mode, '.RData'))
-  if (!file.exists(savename)) {
-    combinedModel <- combineMultivariates(multimodels, mode=mode, conditions=conditions)
-    save(combinedModel, file=savename)
-  } else {
-    combinedModel <- get(load(savename))
-  }
   
-  #-------------------------
-  ## Export browser files ##
-  #-------------------------
-  if (!file.exists(browserpath)) { dir.create(browserpath) }
-  savename <- file.path(browserpath, paste0('multivariate_mode-', mode))
-  if (!file.exists(paste0(savename,'.bed.gz'))) {
-    exportCombinedMultivariate(combinedModel, filename=savename)
+  #================================
+  ## Combine multiple conditions ##
+  #================================
+  if ((mode=='mark' & length(conditions)>=2) | (mode=='condition' & length(marks)>=2)) {
+    
+    if (!file.exists(combipath)) { dir.create(combipath) }
+    savename <- file.path(combipath, paste0('combined_mode-', mode, '.RData'))
+    if (!file.exists(savename)) {
+      combinedModel <- combineMultivariates(multimodels, mode=mode, conditions=conditions)
+      save(combinedModel, file=savename)
+    } else {
+      combinedModel <- get(load(savename))
+    }
+  
+    #-------------------------
+    ## Export browser files ##
+    #-------------------------
+    if (!file.exists(browserpath)) { dir.create(browserpath) }
+    savename <- file.path(browserpath, paste0('combined_mode-', mode))
+    if (!file.exists(paste0(savename,'.bed.gz'))) {
+      trackname <- paste0('combinations, mode-', mode)
+      exportCombinedMultivariate(combinedModel, filename=savename, trackname=trackname)
+    }
   }
   
   total.time <- proc.time() - total.time

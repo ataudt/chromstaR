@@ -4,16 +4,17 @@
 \alias{exportMultivariate}
 \title{Export genome browser viewable files}
 \usage{
-exportMultivariate(multi.hmm, filename, what = c("combstates", "peaks",
-  "counts"), exclude.states = "", include.states = NULL, trackname = NULL,
-  header = TRUE, separate.files = FALSE, orderByScore = TRUE)
+exportMultivariate(multi.hmm, filename, what = c("combinations", "peaks",
+  "counts"), exclude.states = "[]", include.states = NULL,
+  trackname = NULL, header = TRUE, separate.files = FALSE,
+  orderByScore = TRUE)
 }
 \arguments{
 \item{multi.hmm}{A \code{\link{multiHMM}} object or file that contains such an object.}
 
 \item{filename}{The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for combinatorial states and peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.}
 
-\item{what}{A character vector specifying what will be exported. Supported are \code{c('combstates', 'peaks', 'counts')}.}
+\item{what}{A character vector specifying what will be exported. Supported are \code{c('combinations', 'peaks', 'counts')}.}
 
 \item{exclude.states}{A character vector with combinatorial states that will be excluded from export.}
 

@@ -4,8 +4,8 @@
 \alias{exportCombinedMultivariate}
 \title{Export genome browser viewable files}
 \usage{
-exportCombinedMultivariate(hmm, filename, what = c("combstates"),
-  exclude.states = "", include.states = NULL, trackname = NULL,
+exportCombinedMultivariate(hmm, filename, what = c("combinations"),
+  exclude.states = "[]", include.states = NULL, trackname = NULL,
   header = TRUE, separate.files = FALSE)
 }
 \arguments{
@@ -13,7 +13,7 @@ exportCombinedMultivariate(hmm, filename, what = c("combstates"),
 
 \item{filename}{The name of the file that will be written. The ending ".bed.gz" for combinatorial states will be appended. Any existing file will be overwritten.}
 
-\item{what}{A character vector specifying what will be exported. Supported are \code{c('combstates')}.}
+\item{what}{A character vector specifying what will be exported. Supported are \code{c('combinations')}.}
 
 \item{exclude.states}{A vector of combinatorial states that will be excluded from export.}
 
