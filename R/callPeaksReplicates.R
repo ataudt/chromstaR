@@ -16,6 +16,28 @@
 #' @seealso \code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksMultivariate}}
 #' @importFrom stats hclust cutree dist
 #' @export
+#' @examples 
+#'# Let's get some example data with 3 replicates
+#'file.path <- system.file("extdata","euratrans", package='chromstaRData')
+#'bedfiles <- list.files(file.path, pattern="liver.*H3K27me3", full.names=TRUE)[1:3]
+#'# Obtain chromosome lengths. This is only necessary for BED files. BAM files are
+#'# handled automatically.
+#'data(rn4_chrominfo)
+#'# We use bin size 1000bp and chromosome 12 to keep the example quick
+#'binned.data <- list()
+#'for (bedfile in bedfiles) {
+#'  binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
+#'                                               assembly=rn4_chrominfo, chromosomes='chr12')
+#'}
+#'# The univariate fit is obtained for each replicate
+#'models <- list()
+#'for (i1 in 1:length(binned.data)) {
+#'  models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], ID=paste0('Rep',i1),
+#'                                      max.time=60, eps=1)
+#'}
+#'# Obtain peak calls considering information from all replicates
+#'multi.model <- callPeaksReplicates(models, force.equal=TRUE, max.time=60, eps=1)
+#'
 callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=0.01, max.iter=NULL, max.time=NULL, keep.posteriors=FALSE, num.threads=1, max.distance=0.2) {
 
 	## Enable reanalysis of multivariate HMM

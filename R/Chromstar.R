@@ -20,6 +20,23 @@
 #' @importFrom grDevices pdf dev.off
 #' @importFrom graphics plot
 #' @export
+#' 
+#' @examples 
+#'\dontrun{
+#'## Prepare the file paths. Exchange this with your input and output directories.
+#'inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
+#'outputfolder <- file.path(tempdir(), 'liver-example')
+#'## Define experiment structure
+#'data(experiment_table_liver)
+#'## Define assembly
+#'# This is only necessary if you have BED files, BAM files are handled automatically.
+#'# For common assemblies you can also specify them as 'hg19' for example.
+#'data(rn4_chrominfo)
+#'## Run ChromstaR
+#'Chromstar(inputfolder, experiment.table=experiment_table_liver,
+#'          outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
+#'          prefit.on.chr='chr12', mode='mark', eps=1)}
+#'
 Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps=0.01, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=FALSE, mode='mark', num.states=128) {
   
   #========================

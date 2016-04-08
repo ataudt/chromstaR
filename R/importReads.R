@@ -21,9 +21,10 @@
 #'
 #'@examples
 #'## Get an example BAM file with single-cell-sequencing reads
-#'bamfile <- system.file("extdata", "BB150803_IV_074.bam", package="AneuFinderData")
+#'bamfile <- system.file("extdata", "liver-H3K4me3-BN-male-bio2-tech1.bam",
+#'                       package="chromstaRData")
 #'## Read the file into a GRanges object
-#'reads <- bam2GRanges(bamfile, chromosomes=c(1:19,'X','Y'), pairedEndReads=FALSE,
+#'reads <- bam2GRanges(bamfile, chromosomes='chr12', pairedEndReads=FALSE,
 #'                     min.mapq=10, remove.duplicate.reads=TRUE)
 #'print(reads)
 #'
@@ -171,9 +172,12 @@ bam2GRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pairedEndRe
 #'
 #'@examples
 #'## Get an example BED file with single-cell-sequencing reads
-#'bedfile <- system.file("extdata", "KK150311_VI_07.bam.bed.gz", package="AneuFinderData")
+#'bedfile <- system.file("extdata", "euratrans",
+#'                       "liver-H3K27me3-BN-male-bio1-tech1.bed.gz",
+#'                        package="chromstaRData")
 #'## Read the file into a GRanges object
-#'reads <- bed2GRanges(bedfile, assembly='mm10', chromosomes=c(1:19,'X','Y'),
+#'data(rn4_chrominfo)
+#'reads <- bed2GRanges(bedfile, assembly=rn4_chrominfo, chromosomes='chr12',
 #'                     min.mapq=10, remove.duplicate.reads=TRUE)
 #'print(reads)
 #'

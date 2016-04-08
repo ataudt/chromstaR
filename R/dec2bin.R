@@ -5,14 +5,9 @@
 #' \pkg{\link{chromstaR}} uses decimal numbers to represent combinatorial states of peaks. These functions serve as a convenient way to get from the efficient decimal representation to a more human-readable binary representation.
 #' @return A vector of integers for \code{bin2dec} and a matrix of logicals with one state per row for \code{dec2bin}.
 #' @examples
-#'## Load example multivariate Hidden Markov Model
-#'data(example.multi.HMM)
-#'## Get the (decimal) combinatorial states
-#'states.decimal <- example.multi.HMM$bins$state
-#'## Transform them to binary representation
-#'states.binary <- dec2bin(states.decimal,ndigits=length(example.multi.HMM$IDs))
-#'## And back to decimal
-#'new.states.decimal <- bin2dec(states.binary)
+#'decimal.states <- c(0:31)
+#'binary.states <- dec2bin(decimal.states, colnames=paste0('mark',1:5))
+#'control.decimal.states <- bin2dec(binary.states)
 #' @name conversion
 NULL
 

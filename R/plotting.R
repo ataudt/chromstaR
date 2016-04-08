@@ -197,7 +197,7 @@ plotMultivariateCorrelation <- function(multi.hmm) {
 	df <- reshape2::melt(cr, value.name='correlation')
 	df$Var1 <- factor(df$Var1, levels=levels(df$Var1)[hc$order])
 	df$Var2 <- factor(df$Var2, levels=levels(df$Var2)[hc$order])
-	ggplt <- ggplot(df) + geom_tile(aes_string(x='Var1', y='Var2', fill='correlation')) + xlab('') + ylab('') + theme(axis.text.x = element_text(angle=45, hjust=1))
+	ggplt <- ggplot(df) + geom_tile(aes_string(x='Var1', y='Var2', fill='correlation')) + xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1)) + scale_fill_gradient(low='red', high='yellow')
 	return(ggplt)
 
 }
@@ -244,7 +244,7 @@ plotUnivariateHistogram <- function(model, state=NULL, chromosomes=NULL, start=N
 	if (!is.null(state)) {
 		selectmask <- selectmask & model$bins$state==state
 	}
-	if (length(which(selectmask)) != length(model$bins$counts)) {
+# 	if (length(which(selectmask)) != length(model$bins$counts)) {
 		counts <- model$bins$counts[selectmask]
 		states <- model$bins$state[selectmask]
 		weights <- rep(NA, 3)
@@ -252,10 +252,10 @@ plotUnivariateHistogram <- function(model, state=NULL, chromosomes=NULL, start=N
 		weights[2] <- length(which(states=="unmodified"))
 		weights[3] <- length(which(states=="modified"))
 		weights <- weights / length(states)
-	} else {
-		counts <- model$bins$counts
-		weights <- model$weights
-	}
+# 	} else {
+# 		counts <- model$bins$counts
+# 		weights <- model$weights
+# 	}
 
 
 	# Plot the histogram

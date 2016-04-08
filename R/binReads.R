@@ -31,10 +31,13 @@
 #'
 #'@examples
 #'## Get an example BED file with single-cell-sequencing reads
-#'bedfile <- system.file("extdata", "KK150311_VI_07.bam.bed.gz", package="AneuFinderData")
-#'## Bin the BED file into bin size 1Mb
-#'binned <- binReads(bedfile, format='bed', assembly='mm10', binsize=1e6,
-#'                   chromosomes=c(1:19,'X','Y'))
+#'bedfile <- system.file("extdata", "euratrans",
+#'                       "liver-H3K27me3-BN-male-bio1-tech1.bed.gz",
+#'                        package="chromstaRData")
+#'## Bin the BED file into bin size 1000bp
+#'data(rn4_chrominfo)
+#'binned <- binReads(bedfile, assembly=rn4_chrominfo, binsize=1000,
+#'                   chromosomes='chr12')
 #'print(binned)
 #'
 binReads <- function(file, format=NULL, assembly, ID=basename(file), bamindex=file, chromosomes=NULL, pairedEndReads=FALSE, min.mapq=10, remove.duplicate.reads=TRUE, max.fragment.width=1000, blacklist=NULL, outputfolder.binned="binned_data", binsizes=1000, reads.per.bin=NULL, bins=NULL, variable.width.reference=NULL, stepsize=NULL, save.as.RData=FALSE, call=match.call(), reads.store=FALSE, outputfolder.reads="data", reads.return=FALSE, reads.overwrite=FALSE, reads.only=FALSE) {

@@ -25,22 +25,34 @@
 #' @param verbosity Verbosity level for the fitting procedure. 0 - No output, 1 - Iterations are printed.
 #' @return Output is a \code{\link{multiHMM}} list object.
 #' @seealso \code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksReplicates}}
-#' @examples
-#'## Get example BED-files with ChIP-seq reads for H3K36me3
-#' # in 7 different brain tissues (chr22)
-#'path.to.example <- system.file(file.path("extdata","brain"), package="chromstaR")
-#'bedfiles <- list.files(path.to.example, full=TRUE)
-#'## Bin the data into bin size 1000bp and build the univariate HMM
-#'uni.HMMs <- list()
-#'for (bedfile in bedfiles) {
-#'  binned.data <- bed2binned(bedfile, assembly='hg19', binsize=1000,
-#'                            save.as.RData=FALSE)
-#'  uni.HMMs[[bedfile]] <- callPeaksUnivariate(binned.data, ID=basename(bedfile),
-#'                                             max.time=30, eps=0.01)
-#'}
-#'## Build the multivariate Hidden Markov Model from the list of univariate fits
-#'multi.hmm <- callPeaksMultivariate(uni.HMMs, eps=0.1, max.time=300)
 #' @export
+#' @examples
+#'# Get example BED files for 4 different marks in rat liver
+#'file.path <- system.file("extdata","euratrans", package='chromstaRData')
+#'bedfiles <- list.files(file.path, full.names=TRUE, pattern='liver')[c(1:2,4:5,7:8,10:11)]
+#'# Bin the data
+#'data(rn4_chrominfo)
+#'binned.data <- list()
+#'for (bedfile in bedfiles) {
+#'  binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
+#'                                               assembly=rn4_chrominfo, chromosomes='chr12')
+#'}
+#'# Obtain the univariate fits
+#'models <- list()
+#'for (i1 in 1:length(binned.data)) {
+#'  models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], ID=names(binned.data)[i1],
+#'                                      max.time=60, eps=1)
+#'}
+#'# Construct experiment structure
+#'exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
+#'                  condition=rep("liver",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
+#'states <- stateBrewer(exp, mode='mark')
+#'# Call multivariate peaks
+#'multimodel <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
+#'# Check some plots
+#'plot(multimodel, type='transitionMatrix')
+#'plot(multimodel, type='correlation')
+#'
 callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromosomes=NULL, eps=0.01, FDR=NULL, keep.posteriors=FALSE, num.threads=1, max.time=NULL, max.iter=NULL, checkpoint.after.iter=NULL, checkpoint.after.time=NULL, checkpoint.file=NULL, checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, A.initial=NULL, keep.densities=FALSE, verbosity=1) {
 
 	## Intercept user input
@@ -274,22 +286,23 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 				result$mapping <- mapping
 			}
 		## Parameters
+			combinations2use <- mapping[as.character(comb.states2use)]
 			# Weights
 			tstates <- table(hmm$states)
 			result$weights <- sort(tstates/sum(tstates), decreasing=TRUE)
 			result$weights.univariate <- weights
 			# Transition matrices
 			result$transitionProbs <- matrix(hmm$A, ncol=numstates2use, byrow=TRUE)
-			colnames(result$transitionProbs) <- comb.states2use
-			rownames(result$transitionProbs) <- comb.states2use
+			colnames(result$transitionProbs) <- combinations2use
+			rownames(result$transitionProbs) <- combinations2use
 			result$transitionProbs.initial <- matrix(hmm$A.initial, ncol=numstates2use, byrow=TRUE)
-			colnames(result$transitionProbs.initial) <- comb.states2use
-			rownames(result$transitionProbs.initial) <- comb.states2use
+			colnames(result$transitionProbs.initial) <- combinations2use
+			rownames(result$transitionProbs.initial) <- combinations2use
 			# Initial probs
 			result$startProbs <- hmm$proba
-			names(result$startProbs) <- paste0("P(",comb.states2use,")")
+			names(result$startProbs) <- combinations2use
 			result$startProbs.initial <- hmm$proba.initial
-			names(result$startProbs.initial) <- paste0("P(",comb.states2use,")")
+			names(result$startProbs.initial) <- combinations2use
 			# Distributions
 			result$distributions <- distributions
 			names(result$distributions) <- IDs

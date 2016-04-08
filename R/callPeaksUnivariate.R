@@ -31,17 +31,21 @@
 #' @param verbosity Verbosity level for the fitting procedure. 0 - No output, 1 - Iterations are printed.
 #' @author Aaron Taudt, Maria Coome Tatche
 #' @seealso \code{\link{uniHMM}}, \code{\link{callPeaksMultivariate}}
+#' @export
 #' @examples
-#'## Get an example BED-file with ChIP-seq reads for H3K36me3 in brain tissue
-#'bedfile <- system.file("extdata/brain/BI.Brain_Angular_Gyrus.H3K36me3.112.chr22.bed.gz",
-#'                       package="chromstaR")
+#'## Get an example BED file
+#'bedfile <- system.file("extdata", "euratrans",
+#'                       "liver-H3K27me3-BN-male-bio1-tech1.bed.gz",
+#'                        package="chromstaRData")
 #'## Bin the BED file into bin size 1000bp
-#'binned.data <- bed2binned(bedfile, assembly='hg19', binsize=1000, save.as.RData=FALSE)
+#'data(rn4_chrominfo)
+#'binned <- binReads(bedfile, assembly=rn4_chrominfo, binsize=1000,
+#'                   chromosomes='chr12')
 #'## Fit the univariate Hidden Markov Model
-#'hmm <- callPeaksUnivariate(binned.data, ID='example_H3K36me3', max.time=60)
+#'hmm <- callPeaksUnivariate(binned, ID='example_H3K27me3', max.time=60, eps=1)
 #'## Check if the fit is ok
 #'plot(hmm, type='histogram')
-#' @export
+#'
 callPeaksUnivariate <- function(binned.data, ID, prefit.on.chr=NULL, short=TRUE, eps=0.01, init="standard", max.time=NULL, max.iter=5000, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, FDR=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
 
 	if (class(binned.data) == 'character') { 
@@ -50,7 +54,7 @@ callPeaksUnivariate <- function(binned.data, ID, prefit.on.chr=NULL, short=TRUE,
 	}
 
 	if (is.null(prefit.on.chr)) {
-		model <- callPeaksUnivariateAllChr(binned.data, ID=ID, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, FDR=FDR, control=control, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=verbosity)
+		model <- callPeaksUnivariateAllChr(binned.data, ID=ID, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, FDR=FDR, control=control, keep.posteriors=keep.posteriors, keep.densities=FALSE, verbosity=verbosity)
 	} else {
 
 		pre.binned.data <- binned.data[seqnames(binned.data)==prefit.on.chr]
@@ -108,16 +112,19 @@ callPeaksUnivariate <- function(binned.data, ID, prefit.on.chr=NULL, short=TRUE,
 #' @seealso \code{\link{uniHMM}}, \code{\link{callPeaksMultivariate}}
 #' @importFrom stats runif
 #' @examples
-#'## Get an example BED-file with ChIP-seq reads for H3K36me3 in brain tissue
-#'bedfile <- system.file("extdata/brain/BI.Brain_Angular_Gyrus.H3K36me3.112.chr22.bed.gz",
-#'                       package="chromstaR")
+#'## Get an example BED file
+#'bedfile <- system.file("extdata", "euratrans",
+#'                       "liver-H3K27me3-BN-male-bio1-tech1.bed.gz",
+#'                        package="chromstaRData")
 #'## Bin the BED file into bin size 1000bp
-#'binned.data <- bed2binned(bedfile, assembly='hg19', binsize=1000, save.as.RData=FALSE)
+#'data(rn4_chrominfo)
+#'binned <- binReads(bedfile, assembly=rn4_chrominfo, binsize=1000,
+#'                   chromosomes='chr12')
 #'## Fit the univariate Hidden Markov Model
-#'hmm <- callPeaksUnivariateAllChr(binned.data, ID='example_H3K36me3', max.time=60)
+#'hmm <- callPeaksUnivariateAllChr(binned, ID='example_H3K27me3', max.time=60, eps=1)
 #'## Check if the fit is ok
 #'plot(hmm, type='histogram')
-#' @export
+#'
 callPeaksUnivariateAllChr <- function(binned.data, ID, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, FDR=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, checkpoint.after.iter=NULL, checkpoint.after.time=NULL, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, verbosity=1) {
 
 	### Define cleanup behaviour ###

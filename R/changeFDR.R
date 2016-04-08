@@ -26,6 +26,24 @@
 #'table(hmm$bins$state)
 #'table(hmm.adjusted$bins$state)
 #' @export
+#' @examples
+#'## Get an example BED file
+#'bedfile <- system.file("extdata", "euratrans",
+#'                       "liver-H3K27me3-BN-male-bio1-tech1.bed.gz",
+#'                        package="chromstaRData")
+#'## Bin the BED file into bin size 1000bp
+#'data(rn4_chrominfo)
+#'binned <- binReads(bedfile, assembly=rn4_chrominfo, binsize=1000,
+#'                   chromosomes='chr12')
+#'## Fit the univariate Hidden Markov Model
+#'# !Keep posteriors to change the FDR later!
+#'hmm <- callPeaksUnivariate(binned, ID='example_H3K27me3', max.time=60, eps=1,
+#'                           keep.posteriors=TRUE)
+#'## Compare fits with different FDRs
+#'plot(changeFDR(hmm, FDR=0.1), type='histogram') + ylim(0,0.25)
+#'plot(hmm, type='histogram') + ylim(0,0.25)
+#'plot(changeFDR(hmm, FDR=0.9), type='histogram') + ylim(0,0.25)
+#'
 changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, averages=TRUE) {
 
 	FDR <- suppressWarnings( as.numeric(FDR) )
@@ -63,10 +81,10 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, averages=TRUE
 		gr <- model$bins
 		df <- as.data.frame(gr)
 		if (averages==TRUE) {
-			red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c('reads','score','posteriors.P.modified.'), columns2drop=c('width','posteriors.P.zero.inflation.','posteriors.P.unmodified.')))
-			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], mean.reads=red.df[,'mean.reads'], state=red.df[,'state'], score=red.df[,'mean.score'], mean.posterior.modified=red.df[,'mean.posteriors.P.modified.'])
+			red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c('counts','score','posteriors.P.modified.'), columns2drop=c('width','posteriors.P.zero.inflation.','posteriors.P.unmodified.')))
+			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], mean.counts=red.df[,'mean.counts'], state=red.df[,'state'], score=red.df[,'mean.score'], mean.posterior.modified=red.df[,'mean.posteriors.P.modified.'])
 		} else {
-			red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2drop=c('width','posteriors.P.zero.inflation.','posteriors.P.unmodified.','posteriors.P.modified.','reads')))
+			red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2drop=c('width','posteriors.P.zero.inflation.','posteriors.P.unmodified.','posteriors.P.modified.','counts')))
 			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'])
 		}	
 		model$segments <- red.gr
@@ -93,7 +111,7 @@ changeFDR <- function(model, FDR=0.5, separate.zeroinflation=TRUE, averages=TRUE
 		## Redo segmentation
 		ptm <- startTimedMessage("Making segmentation ...")
 		df <- as.data.frame(model$bins)
-		ind.readcols <- grep('^reads', names(df))
+		ind.readcols <- grep('^counts', names(df))
 		ind.postcols <- grep('^posteriors', names(df))
 		ind.widthcol <- grep('width', names(df))
 		ind.scorecol <- grep('score', names(df))
