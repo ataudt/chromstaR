@@ -14,7 +14,6 @@
 #' @param repetitions Number of repetitions for each simulation.
 #' @param plot.progress If TRUE, the plot will be updated each time a simulation has finished. If FALSE, the plot will be returned only at the end.
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object with a bar plot of the number of miscalls dependent on the bin size.
-#' @export
 scanBinsizes = function(files.binned, outputfolder, chromosomes="chr10", eps=0.01, max.iter=100, max.time=300, repetitions=3, plot.progress=FALSE) {
 
 	## Create outputfolder if not existent

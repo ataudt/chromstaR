@@ -73,11 +73,14 @@ Convert aligned reads in .bam or .bed(.gz) format into read counts in equidistan
 Convert aligned reads from .bam or .bed(.gz) files into read counts in equidistant windows (bins). This function uses \code{\link[GenomicRanges]{countOverlaps}} to calculate the read counts.
 }
 \examples{
-## Get an example BED file with single-cell-sequencing reads
-bedfile <- system.file("extdata", "KK150311_VI_07.bam.bed.gz", package="AneuFinderData")
-## Bin the BED file into bin size 1Mb
-binned <- binReads(bedfile, format='bed', assembly='mm10', binsize=1e6,
-                  chromosomes=c(1:19,'X','Y'))
+## Get an example BED file with ChIP-seq reads
+bedfile <- system.file("extdata", "euratrans",
+                      "liver-H3K27me3-BN-male-bio1-tech1.bed.gz",
+                       package="chromstaRData")
+## Bin the BED file into bin size 1000bp
+data(rn4_chrominfo)
+binned <- binReads(bedfile, assembly=rn4_chrominfo, binsize=1000,
+                  chromosomes='chr12')
 print(binned)
 
 }

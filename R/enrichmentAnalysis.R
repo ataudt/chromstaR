@@ -4,13 +4,14 @@
 #'
 #' @inheritParams enrichmentAtAnnotation
 #' @param max.rows An integer specifying the number of randomly subsampled rows that are plotted from the \code{annotation} object. This is necessary to avoid crashing for heatmaps with too many rows.
+#' @return A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot.
 #' @author Aaron Taudt
 #' @importFrom reshape2 melt
 #' @export
 plotHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=1000) {
 
   # Variables
-	hmm <- loadMultiHmmsFromFiles(hmm)[[1]]
+	hmm <- loadHmmsFromFiles(hmm, check.class=class.multivariate.hmm)[[1]]
   binsize <- width(hmm$bins)[1]
   around <- round(bp.around.annotation/binsize)
   
@@ -102,7 +103,7 @@ plotHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=10
 #' Plot fold enrichment of combinatorial states around and inside of annotation.
 #'
 #' @inheritParams enrichmentAtAnnotation
-#' @return A \code{\link{ggplot}} object containing the plot.
+#' @return A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot.
 #' @author Aaron Taudt
 #' @importFrom reshape2 melt
 #' @export
@@ -158,7 +159,7 @@ enrichmentAtAnnotation <- function(hmm, annotation, bp.around.annotation=10000, 
 			stop("argument 'hmm' expects a multivariate HMM object or a file that contains such an object")
 		}
 	}
-	hmm <- loadMultiHmmsFromFiles(hmm)[[1]]
+	hmm <- loadHmmsFromFiles(hmm, check.class=class.multivariate.hmm)[[1]]
 
 	## Variables
 	binsize <- width(hmm$bins)[1]

@@ -7,13 +7,11 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 	names(IDs) <- NULL
 
 	### Extract the read counts ###
-	message("Extracting read counts from modellist...", appendLF=FALSE)
-	ptm <- proc.time()
+	ptm <- startTimedMessage("Extracting read counts from modellist...")
 	counts <- sapply(modellist, function(x) { x$bins$counts })
 	colnames(counts) <- IDs
 	maxcounts <- max(counts)
-	time <- proc.time() - ptm
-	message(" ",round(time[3], 2),"s")
+	stopTimedMessage(ptm)
 
 	### Extract bins and other stuff ###
 	bins <- modellist[[1]]$bins
@@ -22,8 +20,7 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 	weights <- lapply(modellist,"[[","weights")
 
 	### Get the combinatorial states ###
-	message("Getting combinatorial states...", appendLF=FALSE)
-	ptm <- proc.time()
+	ptm <- startTimedMessage("Getting combinatorial states...")
 	## Get the univariate states (zero inflation = 0, unmodified = 0, modified = 1) from the modellist
 	binary_statesmatrix <- matrix(rep(NA,numbins*nummod), ncol=nummod)
 	for (imod in 1:nummod) {
@@ -43,15 +40,13 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 		comb.states <- names(comb.states.table)
 		comb.states <- c(comb.states, setdiff(use.states$state, comb.states))
 	}
-	time <- proc.time() - ptm
-	message(" ",round(time[3], 2),"s")
+	stopTimedMessage(ptm)
 
 	# Clean up to reduce memory usage
 	remove(modellist)
 
 	## We pre-compute the z-values for each number of counts
-	message("Computing pre z-matrix...", appendLF=FALSE)
-	ptm <- proc.time()
+	ptm <- startTimedMessage("Computing pre z-matrix...")
 	z.per.read <- array(NA, dim=c(maxcounts+1, nummod, 2))
 # 	z_per_read = matrix(rep(NA,(maxcounts+1)*nummod*2), ncol=nummod*2)
 	xcounts = 0:maxcounts
@@ -81,12 +76,10 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 
 		}
 	}
-	time <- proc.time() - ptm
-	message(" ",round(time[3], 2),"s")
+	stopTimedMessage(ptm)
 
 	## Compute the z matrix
-	message("Transfering values into z-matrix...", appendLF=FALSE)
-	ptm <- proc.time()
+	ptm <- startTimedMessage("Transfering values into z-matrix...")
 	z.per.bin = array(NA, dim=c(numbins, nummod, 2), dimnames=list(bin=1:numbins, track=IDs, state.labels[2:3]))
 	for (imod in 1:nummod) {
 		for (i1 in 1:2) {
@@ -96,12 +89,10 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 
 	# Clean up to reduce memory usage
 	remove(z.per.read)
-	time <- proc.time() - ptm
-	message(" ",round(time[3], 2),"s")
+	stopTimedMessage(ptm)
 
 	### Calculate correlation matrix
-	message("Computing inverse of correlation matrix...", appendLF=FALSE)
-	ptm <- proc.time()
+	ptm <- startTimedMessage("Computing inverse of correlation matrix...")
 # 	covarianceMatrix = array(NA, dim=c(nummod,nummod,length(comb.states)))
 	correlationMatrix = array(NA, dim=c(nummod,nummod,length(comb.states)), dimnames=list(track=IDs, track=IDs, comb.state=comb.states))
 	correlationMatrixInverse = array(NA, dim=c(nummod,nummod,length(comb.states)), dimnames=list(track=IDs, track=IDs, comb.state=comb.states))
@@ -120,42 +111,36 @@ prepare.multivariate = function(modellist, use.states=NULL, num.states=NULL) {
 		for (i1 in 1:length(binary_state)) {
 			z.temp[,i1] <- z.per.bin[mask, i1, binary_state[i1]+1]
 		}
-		temp = tryCatch({
+		temp <- tryCatch({
 # 			covarianceMatrix[,,istate] = cov(z_temp)
 			if (nrow(z.temp) > 100) {
-				correlationMatrix[,,istate] = cor(z.temp)
-				determinant[istate] = det( correlationMatrix[,,istate] )
-				correlationMatrixInverse[,,istate] = solve(correlationMatrix[,,istate])
-				usestateTF[istate] = TRUE
+				correlationMatrix[,,istate] <- cor(z.temp)
+				determinant[istate] <- det( correlationMatrix[,,istate] )
+				correlationMatrixInverse[,,istate] <- solve(correlationMatrix[,,istate])
+				usestateTF[istate] <- TRUE
 			} else {
 				correlationMatrix[,,istate] <- diag(nummod)
 				determinant[istate] <- det( correlationMatrix[,,istate] )
 				correlationMatrixInverse[,,istate] <- solve(correlationMatrix[,,istate])
 				usestateTF[istate] <- TRUE
-# 				usestateTF[istate] = FALSE
 			}
 		}, warning = function(war) {
-			correlationMatrix[,,istate] <<- diag(nummod)
-			determinant[istate] <<- det( correlationMatrix[,,istate] )
-			correlationMatrixInverse[,,istate] <<- solve(correlationMatrix[,,istate])
-			usestateTF[istate] <<- TRUE
-# 			usestateTF[istate] <<- FALSE
-			war
+			1
 		}, error = function(err) {
-			correlationMatrix[,,istate] <<- diag(nummod)
-			determinant[istate] <<- det( correlationMatrix[,,istate] )
-			correlationMatrixInverse[,,istate] <<- solve(correlationMatrix[,,istate])
-			usestateTF[istate] <<- TRUE
-# 			usestateTF[istate] <<- FALSE
-			err
+			1
 		})
+		if (temp!=0) {
+			correlationMatrix[,,istate] <- diag(nummod)
+			determinant[istate] <- det( correlationMatrix[,,istate] )
+			correlationMatrixInverse[,,istate] <- solve(correlationMatrix[,,istate])
+			usestateTF[istate] <- TRUE
+		}
 		if (any(is.na(correlationMatrixInverse[,,istate]))) {
 			correlationMatrixInverse[,,istate] <- solve(diag(nummod))
 		}
 	}
 	remove(z.per.bin)
-	time <- proc.time() - ptm
-	message(" ",round(time[3], 2),"s")
+	stopTimedMessage(ptm)
 
 	# Determine how many (numstates2use) of the usable (usestateTF) states to use
 	ok.numstates = length(which(usestateTF==TRUE))

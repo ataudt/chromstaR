@@ -4,7 +4,7 @@
 \alias{transitionFrequencies}
 \title{Transition frequencies of combinatorial states}
 \usage{
-transitionFrequencies(multi.hmms = NULL, zero.states = "",
+transitionFrequencies(multi.hmms = NULL, zero.states = "[]",
   combstates = NULL)
 }
 \arguments{

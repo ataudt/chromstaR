@@ -15,6 +15,9 @@ plotHeatmap(hmm, annotation, bp.around.annotation = 10000, max.rows = 1000)
 
 \item{max.rows}{An integer specifying the number of randomly subsampled rows that are plotted from the \code{annotation} object. This is necessary to avoid crashing for heatmaps with too many rows.}
 }
+\value{
+A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot.
+}
 \description{
 Plot read counts around annotation as heatmap.
 }

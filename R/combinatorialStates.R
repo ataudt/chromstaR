@@ -19,23 +19,27 @@
 #' @return Output is a vector of integers representing the combinatorial state of each bin.
 #' @seealso \code{link{dec2bin}}, \code{\link{bin2dec}}
 #' @examples
-#'## Get example BED-files with ChIP-seq reads for H3K36me3
-#' # in 7 different brain tissues (chr22)
-#'path.to.example <- system.file(file.path("extdata","brain"), package="chromstaR")
-#'bedfiles <- list.files(path.to.example, full=TRUE)
-#'## Bin the data into bin size 1000bp and build the univariate HMM
-#'uni.HMMs <- list()
+#'# Get example BED files for 4 different marks in rat liver
+#'file.path <- system.file("extdata","euratrans", package='chromstaRData')
+#'bedfiles <- list.files(file.path, full.names=TRUE, pattern='liver')[c(1,4,7,10)]
+#'# Bin the data
+#'data(rn4_chrominfo)
+#'binned.data <- list()
 #'for (bedfile in bedfiles) {
-#'  binned.data <- bed2binned(bedfile, assembly='hg19', binsize=1000,
-#'                            save.as.RData=FALSE)
-#'  uni.HMMs[[bedfile]] <- callPeaksUnivariate(binned.data, ID=basename(bedfile),
-#'                                             max.time=30, eps=0.01)
+#'  binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
+#'                                               assembly=rn4_chrominfo, chromosomes='chr12')
+#'}
+#'# Obtain the univariate fits
+#'models <- list()
+#'for (i1 in 1:length(binned.data)) {
+#'  models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], ID=names(binned.data)[i1],
+#'                                      max.time=60, eps=1)
 #'}
 #'## Get the decimal representation of the combinatorial state of this combination of models
-#'states <- combinatorialStates(uni.HMMs, binary=FALSE)
+#'states <- combinatorialStates(models, binary=FALSE)
 #'## Show number of each state
 #'table(states)
-#' @export
+#'
 combinatorialStates = function(hmm.list, binary=FALSE) {
 	
 # 	# Combine the input

@@ -1,22 +1,7 @@
 #' Binned read counts
 #'
-#' A \link{GRanges} object which contains binned read counts as meta data column \code{reads}. It is output of the various \link{binning} functions.
+#' A \link{GRanges} object which contains binned read counts as meta data column \code{counts}. It is output of the \code{\link{binReads}} function.
 #' @name binned.data
-NULL
-
-#' Format of the \code{chrom.length.file}
-#'
-#' The chrom.length.file can be used in the following \pkg{\link{chromstaR}} functions: \code{\link{bed2binned}}, \code{\link{bedGraph2binned}}, \code{\link{bed2GRanges}}.
-#'
-#'In the first column, it contains the chromosome names and in the second column, it contains the chromosome lengths in basepairs. The file has no header. Example:
-#'\tabular{ll}{
-#'chr1 \tab 249250621 \cr
-#'chr2 \tab 243199373 \cr
-#'chr3 \tab 198022430 \cr
-#'chr4 \tab 191154276 \cr
-#'... \tab ... \cr
-#'}
-#' @name chrom.length.file
 NULL
 
 #' Univariate HMM object
@@ -82,12 +67,4 @@ NULL
 #' @seealso \code{\link{callPeaksMultivariate}}, \code{\link{uniHMM}}
 #' @name multiHMM
 #' @aliases multi.hmm
-NULL
-
-#' Multivariate Hidden Markov Model for usage in examples
-#'
-#' A \code{\link{multiHMM}} object, generated from the brain tissue dataset (H3K36me3, 7 tissues) in 'extdata/brain/'. This dataset is used in the example section of \pkg{chromstaR} functions.
-#'
-#' @format See \code{\link{multiHMM}} for a description of the format.
-#' @name example.multi.HMM
 NULL

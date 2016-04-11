@@ -7,7 +7,6 @@
 #' @param sample.reads The number of reads that will be retained.
 #' @return A \code{\link{GRanges}} object with downsampled read counts.
 #' @importFrom stats rbinom
-#' @export
 subsample <- function(binned.data, sample.reads) {
 
 	total.reads <- sum(binned.data$counts)

@@ -16,6 +16,9 @@ exportBinnedData(binned.data.list, filename = "chromstaR_ReadCounts",
 
 \item{separate.files}{A logical indicating whether or not to produce separate files for each object in \code{binned.data.list}.}
 }
+\value{
+\code{NULL}
+}
 \description{
 Export read counts as genome browser viewable file
 }

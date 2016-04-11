@@ -35,14 +35,9 @@ Convert combinatorial states in decimal representation to combinatorial states i
 \item \code{bin2dec}: Binary to decimal conversion.
 }}
 \examples{
-## Load example multivariate Hidden Markov Model
-data(example.multi.HMM)
-## Get the (decimal) combinatorial states
-states.decimal <- example.multi.HMM$bins$state
-## Transform them to binary representation
-states.binary <- dec2bin(states.decimal,ndigits=length(example.multi.HMM$IDs))
-## And back to decimal
-new.states.decimal <- bin2dec(states.binary)
+decimal.states <- c(0:31)
+binary.states <- dec2bin(decimal.states, colnames=paste0('mark',1:5))
+control.decimal.states <- bin2dec(binary.states)
 }
 \author{
 Aaron Taudt

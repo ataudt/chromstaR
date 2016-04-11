@@ -13,7 +13,7 @@
 #' @export
 foldEnrichment <- function(multi.hmm, featurelist, combinations=NULL, percentages=FALSE) {
 	
-	multi.hmm <- loadMultiHmmsFromFiles(multi.hmm)[[1]]
+	multi.hmm <- loadHmmsFromFiles(multi.hmm, check.class=class.multivariate.hmm)[[1]]
 	## Variables
 	bins <- multi.hmm$bins
 	if (is.null(combinations)) {
@@ -68,7 +68,7 @@ foldEnrichment <- function(multi.hmm, featurelist, combinations=NULL, percentage
 #' @export
 expressionOverlap <- function(multi.hmm, expression, combinations=NULL, return.marks=FALSE) {
 	
-	multi.hmm <- loadMultiHmmsFromFiles(multi.hmm)[[1]]
+	multi.hmm <- loadHmmsFromFiles(multi.hmm, check.class=class.multivariate.hmm)[[1]]
 	## Variables
 	bins <- multi.hmm$bins
 	if (is.null(combinations)) {
@@ -110,7 +110,7 @@ expressionOverlap <- function(multi.hmm, expression, combinations=NULL, return.m
 #' @export
 expressionAtPercentageOverlap <- function(multi.hmm, expression, combinations=NULL) {
 
-	multi.hmm <- loadMultiHmmsFromFiles(multi.hmm)[[1]]
+	multi.hmm <- loadHmmsFromFiles(multi.hmm, check.class=class.multivariate.hmm)[[1]]
 	## Variables
 	bins <- multi.hmm$bins
 	if (is.null(combinations)) {
@@ -140,30 +140,61 @@ expressionAtPercentageOverlap <- function(multi.hmm, expression, combinations=NU
 }
 
 
-#' Frequency of combinatorial states
+#' Frequencies of combinatorial states
 #'
 #' Get the genomewide frequency of each combinatorial state.
 #'
-#' @param multi.hmm A \code{\link{multiHMM}} or a file that contains such an object.
+#' @param multi.hmm A \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object or a file that contains such an object.
 #' @param combinations A vector with combinations for which the frequency will be calculated. If \code{NULL} all combinations will be considered.
 #' @return A table with frequencies of each combinatorial state.
 #' @author Aaron Taudt
 #' @export
-combinatorialFrequency <- function(multi.hmm, combinations=NULL) {
+#' @examples
+#'## Prepare the file paths. Exchange this with your input and output directories.
+#'inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
+#'outputfolder <- file.path(tempdir(), 'liver-example')
+#'## Define experiment structure
+#'data(experiment_table_liver)
+#'## Define assembly
+#'# This is only necessary if you have BED files, BAM files are handled automatically.
+#'# For common assemblies you can also specify them as 'hg19' for example.
+#'data(rn4_chrominfo)
+#'## Run ChromstaR
+#'Chromstar(inputfolder, experiment.table=experiment_table_liver,
+#'          outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
+#'          prefit.on.chr='chr12', mode='mark', eps=1)
+#'## Load a multivariate file and get frequencies
+#'multimodel <- file.path(outputfolder,'multivariate',
+#'                        'multivariate_mode-mark_condition-liver.RData')
+#'genomicFrequencies(multimodel)
+genomicFrequencies <- function(multi.hmm, combinations=NULL) {
 
-	multi.hmm <- loadMultiHmmsFromFiles(multi.hmm)[[1]]
-	## Variables
+	multi.hmm <- loadHmmsFromFiles(multi.hmm, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
 	bins <- multi.hmm$bins
-	if (is.null(combinations)) {
-		comb.levels <- levels(bins$combination)
-	} else {
-		comb.levels <- combinations
+  	
+	if (class(multi.hmm)==class.multivariate.hmm) {
+
+  	if (is.null(combinations)) {
+  		comb.levels <- levels(bins$combination)
+  	} else {
+  		comb.levels <- combinations
+  	}
+  	t <- table(bins$combination) / length(bins)
+  	t <- t[names(t) %in% comb.levels]
+  	return(t)
+  	
+	} else if (class(multi.hmm)==class.combined.multivariate.hmm) {
+	  
+  	if (is.null(combinations)) {
+  		comb.levels <- unique(as.vector(sapply(mcols(bins), levels)))
+  	} else {
+  		comb.levels <- combinations
+  	}
+    t <- sapply(mcols(bins), function(x) { table(x) / length(bins) })
+    t <- t[rownames(t) %in% comb.levels,]
+    return(t)
+	  
 	}
-
-	t <- table(bins$combination) / length(bins)
-	t <- t[names(t) %in% comb.levels]
-
-	return(t)
 }
 
 
@@ -177,13 +208,13 @@ combinatorialFrequency <- function(multi.hmm, combinations=NULL) {
 #' @return A data.frame with transition frequencies.
 #' @author Aaron Taudt
 #' @export
-transitionFrequencies <- function(multi.hmms=NULL, zero.states="", combstates=NULL) {
+transitionFrequencies <- function(multi.hmms=NULL, zero.states="[]", combstates=NULL) {
 
 	if (is.null(combstates)) {
 		## Get combinatorial states in loop to save memory
 		combstates <- list()
 		for (imodel in 1:length(multi.hmms)) {
-			multi.hmm <- suppressMessages( loadMultiHmmsFromFiles(multi.hmms[[imodel]])[[1]] )
+			multi.hmm <- suppressMessages( loadHmmsFromFiles(multi.hmms[[imodel]], check.class=class.multivariate.hmm)[[1]] )
 			combstates[[imodel]] <- multi.hmm$bins$combination
 		}
 		names(combstates) <- names(multi.hmms)
@@ -201,12 +232,12 @@ transitionFrequencies <- function(multi.hmms=NULL, zero.states="", combstates=NU
 
 	### Assigning groups for frequency table ###
 	freqtrans$group <- 'other'
-	freqtrans$transition <- gsub('-','_',freqtrans$transition) # words separated with underscore will be treated as one when searching with \\<XXX\\>
+	freqtrans$transition <- gsub('+','_',freqtrans$transition) # words separated with underscore will be treated as one when searching with \\<XXX\\>
 	# Stage-specific and constant states
 	combstates$sep <- NULL
 	levels.combstates <- unique(unlist(lapply(combstates, levels)))
 	levels.combstates <- setdiff(levels.combstates, zero.states)
-	levels.combstates <- gsub('-','_',levels.combstates)
+	levels.combstates <- gsub('+','_',levels.combstates)
 	for (combination in levels.combstates) {
 		mask <- intersect(grep(paste0('\\<',combination,'\\>'), freqtrans$transition), grep(paste(paste0('\\<',setdiff(levels.combstates,combination),'\\>'), collapse='|'), freqtrans$transition, invert=TRUE))
 		freqtrans$group[mask] <- paste0('stage-specific ',combination)

@@ -41,7 +41,27 @@ Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
 
 \item{num.states}{The number of states to use in the multivariate part. If set to \code{NULL}, the maximum number of theoretically possible states is used. CAUTION: This can be very slow or crash if you have too many states. \pkg{\link{chromstaR}} has a built in mechanism to select the best states in case that less states than theoretically possible are specified.}
 }
+\value{
+\code{NULL}
+}
 \description{
 This function performs \code{\link[chromstaR:binReads]{binning}}, \code{\link[chromstaR:callPeaksUnivariate]{univariate peak calling}} and \code{\link[chromstaR:callPeaksMultivariate]{multivariate peak calling}} from a list of input files.
+}
+\examples{
+\dontrun{
+## Prepare the file paths. Exchange this with your input and output directories.
+inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
+outputfolder <- file.path(tempdir(), 'liver-example')
+## Define experiment structure
+data(experiment_table_liver)
+## Define assembly
+# This is only necessary if you have BED files, BAM files are handled automatically.
+# For common assemblies you can also specify them as 'hg19' for example.
+data(rn4_chrominfo)
+## Run ChromstaR
+Chromstar(inputfolder, experiment.table=experiment_table_liver,
+         outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
+         prefit.on.chr='chr12', mode='mark', eps=1)}
+
 }
 

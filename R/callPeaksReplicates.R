@@ -57,7 +57,7 @@ callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=
 	### Call peaks for several replicates ###
 	} else {
 
-		hmms <- loadHmmsFromFiles(hmm.list)
+		hmms <- loadHmmsFromFiles(hmm.list, check.class=class.univariate.hmm)
 
 		## Univariate replicateInfo
 		ids <- sapply(hmms, '[[', 'ID')

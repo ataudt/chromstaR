@@ -12,16 +12,7 @@ state.distributions <- factor(c('delta','dnbinom','dnbinom'), levels=c('delta','
 class.univariate.hmm <- "uniHMM"
 class.multivariate.hmm <- "multiHMM"
 class.combined.multivariate.hmm <- "combinedMultiHMM"
-state.colors <- c("zero-inflation"="gray30","unmodified"="gray48","modified"="orangered3", "total"="black", "counts"="grey35")
 
-get.state.labels <- function() { return(state.labels) }
-
-#' Get state colors
-#'
-#' Get the colors that are used for plotting
-#' @export
-get.state.colors <- function() { return(state.colors[state.labels]) }
- 
 # ============================================================================
 # Functions for a Negative Binomial to transform (mean,variance)<->(size,prob)
 # ============================================================================

@@ -4,8 +4,17 @@
 \alias{addScore}
 \title{Add score for differential export}
 \usage{
-addScore(multi.model, replicates, conditions, tracks2compare,
-  reorderSegments = TRUE)
+addScore(multi.model, tracks2compare, reorderSegments = TRUE)
+}
+\arguments{
+\item{multi.model}{A \code{\link{multiHMM}} object or a file that contains such an object.}
+
+\item{tracks2compare}{A vector with the same length as \code{replicates}. This vector defines the tracks between which conditions are compared. Usually your histone marks.}
+
+\item{reorderSegments}{If \code{TRUE} segments will be reordered by score.}
+}
+\value{
+The input \code{\link{multiHMM}} with additional column 'score' in \code{multi.model$segments}
 }
 \description{
 Add column 'score' to the 'segments' entry in a \code{\link{multiHMM}}. This score can be used to rank differential states.

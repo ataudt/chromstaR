@@ -9,7 +9,7 @@ exportCombinedMultivariate(hmm, filename, what = c("combinations"),
   header = TRUE, separate.files = FALSE)
 }
 \arguments{
-\item{hmm}{A \code{\link{chromstaR_combinedMultiHMM}} object or file that contains such an object.}
+\item{hmm}{A \code{\link{combinedMultiHMM}} object or file that contains such an object.}
 
 \item{filename}{The name of the file that will be written. The ending ".bed.gz" for combinatorial states will be appended. Any existing file will be overwritten.}
 
@@ -25,11 +25,14 @@ exportCombinedMultivariate(hmm, filename, what = c("combinations"),
 
 \item{separate.files}{A logical indicating whether or not to produce separate files for each condition.}
 }
+\value{
+\code{NULL}
+}
 \description{
 Export multivariate calls as genome browser viewable file
 }
 \details{
-Export \code{\link{chromstaR_combinedMultiHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states are exported in BED format (.bed.gz).
+Export \code{\link{combinedMultiHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states are exported in BED format (.bed.gz).
 }
 \examples{
 ### Multivariate peak calling ###

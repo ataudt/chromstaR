@@ -142,15 +142,16 @@ fixedWidthBins <- function(bamfile=NULL, assembly=NULL, chrom.lengths=NULL, chro
 #' @export
 #'
 #'@examples
-#'## Get an example BED file with single-cell-sequencing reads
-#'bedfile <- system.file("extdata", "KK150311_VI_07.bam.bed.gz", package="AneuFinderData")
+#'## Get an example BAM file with ChIP-seq reads
+#'bamfile <- system.file("extdata", "liver-H3K4me3-BN-male-bio2-tech1.bam",
+#'                       package="chromstaRData")
 #'## Read the file into a GRanges object
-#'reads <- bed2GRanges(bedfile, assembly='mm10', chromosomes=c(1:19,'X','Y'),
+#'reads <- bam2GRanges(bamfile, chromosomes='chr12', pairedEndReads=FALSE,
 #'                     min.mapq=10, remove.duplicate.reads=TRUE)
-#'## Make variable-width bins of size 500kb and 1Mb
-#'bins <- variableWidthBins(reads, binsizes=c(5e5,1e6))
+#'## Make variable-width bins of size 1000bp
+#'bins <- variableWidthBins(reads, binsizes=1000)
 #'## Plot the distribution of binsizes
-#'hist(width(bins[['1e+06']]), breaks=50)
+#'hist(width(bins[['1000']]), breaks=50)
 #'
 variableWidthBins <- function(reads, binsizes, chromosomes=NULL) {
 	
@@ -178,7 +179,7 @@ variableWidthBins <- function(reads, binsizes, chromosomes=NULL) {
 
 	## Make fixed width bins
 	ptm <- startTimedMessage("Binning reads in fixed-width windows ...")
-	binned.list <- suppressMessages( binReads(reads, format='GRanges', assembly=NULL, binsizes=binsizes, calc.complexity=FALSE, chromosomes=chromosomes) )
+	binned.list <- suppressMessages( binReads(reads, format='GRanges', assembly=NULL, binsizes=binsizes, chromosomes=chromosomes) )
 	stopTimedMessage(ptm)
 	
 	## Sort the reads
@@ -190,7 +191,11 @@ variableWidthBins <- function(reads, binsizes, chromosomes=NULL) {
 	for (i1 in 1:length(binsizes)) {
 		binsize <- binsizes[i1]
 		ptm <- startTimedMessage("Making variable-width windows for bin size ", binsize, " ...")
-		binned <- binned.list[[i1]]
+		if (class(binned.list)=='GRanges') {
+		  binned <- binned.list
+		} else {
+  		binned <- binned.list[[i1]]
+		}
 		## Get mode of histogram
 		tab <- table(binned$counts)
 		modecount <- as.integer(names(which.max(tab[names(tab)!=0])))

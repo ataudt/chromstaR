@@ -5,28 +5,41 @@
 #' Use this function if you want to combine ChIP-seq samples without actually running a multivariate Hidden Markov Model. The resulting object will be of class \code{\link{multiHMM}} but will not be truly multivariate.
 #'
 #' @author Aaron Taudt
-#' @param uni.hmm.list A list of \code{\link{uniHMM}}s, e.g. \code{list(hmm1, hmm2, ...)}.
+#' @param uni.hmm.list A named list of \code{\link{uniHMM}} objects. Names will be used to generate the combinations.
 #' @return A \code{\link{multiHMM}} object.
+#' @export
 #' @examples
-#'## Get example BED-files with ChIP-seq reads for H3K36me3
-#' # in 7 different brain tissues (chr22)
-#'path.to.example <- system.file(file.path("extdata","brain"), package="chromstaR")
-#'bedfiles <- list.files(path.to.example, full=TRUE)
-#'## Bin the data into bin size 1000bp and build the univariate HMM
-#'uni.HMMs <- list()
+#'# Get example BED files for 4 different marks in rat liver
+#'file.path <- system.file("extdata","euratrans", package='chromstaRData')
+#'bedfiles <- list.files(file.path, full.names=TRUE, pattern='liver')[c(1,7)]
+#'# Bin the data
+#'data(rn4_chrominfo)
+#'binned.data <- list()
 #'for (bedfile in bedfiles) {
-#'  binned.data <- bed2binned(bedfile, assembly='hg19', binsize=1000,
-#'                            save.as.RData=FALSE)
-#'  uni.HMMs[[bedfile]] <- callPeaksUnivariate(binned.data, ID=basename(bedfile),
-#'                                             max.time=30, eps=0.01)
+#'  binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
+#'                                               assembly=rn4_chrominfo, chromosomes='chr12')
+#'}
+#'# Obtain the univariate fits
+#'models <- list()
+#'for (i1 in 1:length(binned.data)) {
+#'  models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], ID=names(binned.data)[i1],
+#'                                      max.time=60, eps=1)
 #'}
 #'## Combine the univariate HMMs without fitting a multivariate HMM
-#'pseudo.multi.HMM <- unis2pseudomulti(uni.HMMs)
-#' @export
+#'names(models) <- c('H3K27me3','H3K4me3')
+#'pseudo.multi.HMM <- unis2pseudomulti(models)
+#'## Compare frequencies with real multivariate HMM
+#'exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K4me3"),
+#'                  condition=rep("liver",2), replicate=c(1,1), pairedEndReads=FALSE)
+#'states <- stateBrewer(exp, mode='mark')
+#'real.multi.HMM <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
+#'genomicFrequencies(real.multi.HMM)
+#'genomicFrequencies(pseudo.multi.HMM)
+#'
 unis2pseudomulti <- function(uni.hmm.list) {
 
 	# Load models
-	uni.hmm.list <- loadHmmsFromFiles(uni.hmm.list)
+	uni.hmm.list <- loadHmmsFromFiles(uni.hmm.list, check.class=class.univariate.hmm)
 
 	# Extract coordinates and other stuff
 	nummod = length(uni.hmm.list)
@@ -40,7 +53,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
 	weights = lapply(uni.hmm.list,"[[","weights")
 
 	# Extract the reads
-	message("Extracting reads from uni.hmm.list...", appendLF=FALSE)
+	ptm <- startTimedMessage("Extracting read counts from uni.hmm.list...")
 	reads = matrix(NA, ncol=nummod, nrow=numbins)
 	colnames(reads) <- IDs
 	for (imod in 1:nummod) {
@@ -48,19 +61,32 @@ unis2pseudomulti <- function(uni.hmm.list) {
 	}
 	maxreads = max(reads)
 	bins$counts <- reads
-	message(" done")
+	stopTimedMessage(ptm)
 
 	## Get combinatorial states
-	message("Getting combinatorial states...", appendLF=FALSE)
+	ptm <- startTimedMessage("Getting combinatorial states")
 	combstates.per.bin = combinatorialStates(uni.hmm.list)
 	comb.states.table = table(combstates.per.bin)
 	comb.states = as.numeric(names(sort(comb.states.table, decreasing=TRUE)))
 	numstates <- length(comb.states)
 	bins$state <- factor(combstates.per.bin, levels=comb.states)
-	message(" done")
+	binary.comb.states <- dec2bin(comb.states, colnames=names(uni.hmm.list))
+	binary.comb.states.list <- list()
+	for (icol in 1:ncol(binary.comb.states)) {
+	  binary.comb.states.list[[colnames(binary.comb.states)[icol]]] <- c('',colnames(binary.comb.states)[icol])[binary.comb.states[,icol]+1]
+	}
+	binary.comb.states.list$sep='+'
+	mapping <- do.call(paste, binary.comb.states.list)
+	mapping <- gsub('\\+{2,}', '+', mapping)
+	mapping <- sub('^\\+', '', mapping)
+	mapping <- sub('\\+$', '', mapping)
+	mapping <- paste0('[', mapping, ']')
+	names(mapping) <- rownames(binary.comb.states)
+	bins$combination <- factor(mapping[as.character(bins$state)], levels=mapping)
+	stopTimedMessage(ptm)
 	
 	## Calculate transition matrix
-	message("Estimating transition matrix...", appendLF=FALSE)
+	ptm <- startTimedMessage("Estimating transition matrix...")
 	A.estimated = matrix(0, ncol=2^nummod, nrow=2^nummod)
 	colnames(A.estimated) = 1:2^nummod-1
 	rownames(A.estimated) = 1:2^nummod-1
@@ -72,46 +98,39 @@ unis2pseudomulti <- function(uni.hmm.list) {
 	A.estimated = sweep(A.estimated, 1, rowSums(A.estimated), "/")
 	# Select only states that are in data
 	A.estimated = A.estimated[as.character(comb.states),as.character(comb.states)]
-	message(" done")
+	stopTimedMessage(ptm)
 
 	## Return multi.hmm
-	multi.hmm <- list()
-	multi.hmm$IDs <- IDs
-	multi.hmm$bins <- bins
+	result <- list()
+	result$IDs <- IDs
+	result$bins <- bins
 	## Segmentation
-		message("Making segmentation ...", appendLF=FALSE)
-		ptm <- proc.time()
-		gr <- multi.hmm$bins
-		red.gr.list <- GRangesList()
-		for (state in comb.states) {
-			red.gr <- GenomicRanges::reduce(gr[gr$state==state])
-			mcols(red.gr)$state <- rep(factor(state, levels=levels(gr$state)),length(red.gr))
-			if (length(gr)>0) {
-				red.gr.list[[length(red.gr.list)+1]] <- red.gr
-			}
-		}
-		red.gr <- GenomicRanges::sort(unlist(red.gr.list))
-		multi.hmm$segments <- red.gr
-		seqlengths(multi.hmm$segments) <- seqlengths(multi.hmm$bins)
-		time <- proc.time() - ptm
-		message(" ",round(time[3],2),"s")
+  	df <- as.data.frame(result$bins)
+  	ind.readcols <- grep('^counts', names(df))
+  	ind.widthcol <- grep('width', names(df))
+  	ind.scorecol <- grep('score', names(df))
+  	red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2drop=c(ind.readcols, ind.widthcol)))
+  	red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], combination=red.df[,'combination'])
+  	result$segments <- red.gr
+  	seqlengths(result$segments) <- seqlengths(result$bins)
 	## Parameters
+  	result$mapping <- mapping
 		# Weights
 		tstates <- table(combstates.per.bin)
-		multi.hmm$weights <- sort(tstates/sum(tstates), decreasing=TRUE)
+		result$weights <- sort(tstates/sum(tstates), decreasing=TRUE)
 		# Transition matrices
-		multi.hmm$transitionProbs <- A.estimated
+		result$transitionProbs <- A.estimated
 		# Distributions
-		multi.hmm$distributions <- distributions
-		names(multi.hmm$distributions) <- IDs
+		result$distributions <- distributions
+		names(result$distributions) <- IDs
 	## Convergence info
 		convergenceInfo <- list(eps=Inf, loglik=Inf, loglik.delta=Inf, num.iterations=Inf, time.sec=Inf)
-		multi.hmm$convergenceInfo <- convergenceInfo
+		result$convergenceInfo <- convergenceInfo
 	## Correlation matrices
-# 		multi.hmm$correlation.matrix <- correlationMatrix2use
+# 		result$correlation.matrix <- correlationMatrix2use
 	## Add class
-		class(multi.hmm) <- class.multivariate.hmm
+		class(result) <- class.multivariate.hmm
 
-	return(multi.hmm)
+	return(result)
 
 }

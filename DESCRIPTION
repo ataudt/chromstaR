@@ -4,7 +4,7 @@ Title: Combinatorial and Differential Chromatin State Analysis for ChIP-Seq Data
 Version: 0.98.0
 Date: 2014-05-03
 Author: Aaron Taudt, Maria Colome Tatche, Matthias Heinig, Minh Anh Nguyen
-Maintainer: Aaron Taudt <a.s.taudt@umcg.nl>
+Maintainer: Aaron Taudt <aaron.taudt@gmail.com>
 Description: This package implements functions for combinatorial and differential analysis of ChIP-seq data. It includes uni- and multivariate peak-calling, export to genome browser viewable files, and functions for enrichment analyses.
 Depends:
     R (>= 3.3.0),
@@ -23,18 +23,18 @@ Imports:
     IRanges,
     reshape2,
     Rsamtools,
-    GenomicAlignments,
-    BSgenome,
-    BiocGenerics
+    GenomicAlignments
 Suggests:
-    grid,
-    rtracklayer,
+		knitr,
+		testthat,
     biomaRt,
     biovizBase,
+    rtracklayer,
     ggbio,
-    testthat
+		gtools
 License: Artistic-2.0
 LazyLoad: yes
+VignetteBuilder: knitr
 Packaged: 2014-05-03 00:00:00 CET+1; Taudt
 biocViews: Software, DifferentialPeakCalling, HiddenMarkovModel, ChIPSeq, MultipleComparison
 RoxygenNote: 5.0.1

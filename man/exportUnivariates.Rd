@@ -20,6 +20,9 @@ exportUnivariates(hmm.list, filename, what = c("peaks", "counts"),
 
 \item{orderByScore}{Logical indicating whether or not to sort entries in BED file by score.}
 }
+\value{
+\code{NULL}
+}
 \description{
 Export univariate peak-calls and read counts as genome browser viewable file
 }

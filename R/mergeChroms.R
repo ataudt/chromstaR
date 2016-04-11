@@ -10,7 +10,7 @@
 mergeChroms <- function(multi.hmm.list, filename=NULL) {
 
 	## Check user input
-	multi.hmm.list <- loadMultiHmmsFromFiles(multi.hmm.list)
+	multi.hmm.list <- loadHmmsFromFiles(multi.hmm.list, check.class=class.multivariate.hmm)
 	## Check if all models have the same ID
 	same.IDs <- Reduce('|', unlist(lapply(multi.hmm.list, function(x) { x$IDs == multi.hmm.list[[1]]$IDs })))
 	if (!same.IDs) {

@@ -14,6 +14,9 @@ stateBrewer(experiment.table, mode, differential.states = FALSE,
 
 \item{common.states}{A logical specifying whether common states shall be returned.}
 }
+\value{
+A data.frame with combinations and their corresponding (decimal) combinatorial states.
+}
 \description{
 This function computes combinatorial states from an \code{\link{experiment.table}}.
 }

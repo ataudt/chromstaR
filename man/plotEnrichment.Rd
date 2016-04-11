@@ -19,7 +19,7 @@ plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
 \item{num.intervals}{Number of intervals for enrichment 'inside' of annotation.}
 }
 \value{
-A \code{\link{ggplot}} object containing the plot.
+A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot.
 }
 \description{
 Plot fold enrichment of combinatorial states around and inside of annotation.

@@ -20,7 +20,7 @@
 #' @export
 #'
 #'@examples
-#'## Get an example BAM file with single-cell-sequencing reads
+#'## Get an example BAM file with ChIP-seq reads
 #'bamfile <- system.file("extdata", "liver-H3K4me3-BN-male-bio2-tech1.bam",
 #'                       package="chromstaRData")
 #'## Read the file into a GRanges object

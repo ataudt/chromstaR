@@ -15,6 +15,10 @@
 #' @importFrom grDevices col2rgb
 #' @importFrom stats dist
 #' @export
+#' @examples
+#'cols <- getDistinctColors(5)
+#'pie(rep(1,5), labels=cols, col=cols)
+#'
 getDistinctColors <- function(n, start.color='blue4', exclude.colors=c('white','black','gray','grey'), exclude.rgb.above=210) {
 	
 	cols <- grDevices::colors()

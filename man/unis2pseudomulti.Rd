@@ -7,7 +7,7 @@
 unis2pseudomulti(uni.hmm.list)
 }
 \arguments{
-\item{uni.hmm.list}{A list of \code{\link{uniHMM}}s, e.g. \code{list(hmm1, hmm2, ...)}.}
+\item{uni.hmm.list}{A named list of \code{\link{uniHMM}} objects. Names will be used to generate the combinations.}
 }
 \value{
 A \code{\link{multiHMM}} object.
@@ -19,20 +19,33 @@ Combine multiple \code{\link{uniHMM}}s to a \code{\link{multiHMM}} without runni
 Use this function if you want to combine ChIP-seq samples without actually running a multivariate Hidden Markov Model. The resulting object will be of class \code{\link{multiHMM}} but will not be truly multivariate.
 }
 \examples{
-## Get example BED-files with ChIP-seq reads for H3K36me3
-# in 7 different brain tissues (chr22)
-path.to.example <- system.file(file.path("extdata","brain"), package="chromstaR")
-bedfiles <- list.files(path.to.example, full=TRUE)
-## Bin the data into bin size 1000bp and build the univariate HMM
-uni.HMMs <- list()
+# Get example BED files for 4 different marks in rat liver
+file.path <- system.file("extdata","euratrans", package='chromstaRData')
+bedfiles <- list.files(file.path, full.names=TRUE, pattern='liver')[c(1,7)]
+# Bin the data
+data(rn4_chrominfo)
+binned.data <- list()
 for (bedfile in bedfiles) {
- binned.data <- bed2binned(bedfile, assembly='hg19', binsize=1000,
-                           save.as.RData=FALSE)
- uni.HMMs[[bedfile]] <- callPeaksUnivariate(binned.data, ID=basename(bedfile),
-                                            max.time=30, eps=0.01)
+ binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
+                                              assembly=rn4_chrominfo, chromosomes='chr12')
+}
+# Obtain the univariate fits
+models <- list()
+for (i1 in 1:length(binned.data)) {
+ models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], ID=names(binned.data)[i1],
+                                     max.time=60, eps=1)
 }
 ## Combine the univariate HMMs without fitting a multivariate HMM
-pseudo.multi.HMM <- unis2pseudomulti(uni.HMMs)
+names(models) <- c('H3K27me3','H3K4me3')
+pseudo.multi.HMM <- unis2pseudomulti(models)
+## Compare frequencies with real multivariate HMM
+exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K4me3"),
+                 condition=rep("liver",2), replicate=c(1,1), pairedEndReads=FALSE)
+states <- stateBrewer(exp, mode='mark')
+real.multi.HMM <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
+genomicFrequencies(real.multi.HMM)
+genomicFrequencies(pseudo.multi.HMM)
+
 }
 \author{
 Aaron Taudt

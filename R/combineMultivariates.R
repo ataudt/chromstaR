@@ -5,9 +5,60 @@
 #' @param multi.hmm.list A named \code{list()} with \code{\link{multiHMM}} objects. The names of the list are used to name the conditions or marks. Alternatively a named character vector with filenames that contain \code{\link{multiHMM}} objects.
 #' @param mode Mode of combination. See \code{\link{Chromstar}} for a description of the \code{mode} parameter.
 #' @param conditions A character vector with conditions in case of \code{mode='full'} or \code{mode='condition'}.
-#' @return A \code{link{combinedHMM}} objects with combinatorial states for each condition.
+#' @return A \code{link{combinedMultiHMM}} objects with combinatorial states for each condition.
 #' @author Aaron Taudt
 #' @export
+#' @examples
+#'### Multivariate peak calling for liver tissue ###
+#'# Get example BED files for 2 different marks in rat liver
+#'file.path <- system.file("extdata","euratrans", package='chromstaRData')
+#'bedfiles <- list.files(file.path, full.names=TRUE, pattern='liver')[c(1:2,7:8)]
+#'# Bin the data
+#'data(rn4_chrominfo)
+#'binned.data <- list()
+#'for (bedfile in bedfiles) {
+#'  binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
+#'                                               assembly=rn4_chrominfo, chromosomes='chr12')
+#'}
+#'# Obtain the univariate fits
+#'models <- list()
+#'for (i1 in 1:length(binned.data)) {
+#'  models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], ID=names(binned.data)[i1],
+#'                                      max.time=60, eps=1)
+#'}
+#'# Construct experiment structure
+#'exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
+#'                  condition=rep("liver",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
+#'states <- stateBrewer(exp, mode='mark')
+#'# Call multivariate peaks
+#'multimodel.liver <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
+#'
+#'#'### Multivariate peak calling for left-ventricle tissue ###
+#'# Get example BED files for 2 different marks in rat liver
+#'file.path <- system.file("extdata","euratrans", package='chromstaRData')
+#'bedfiles <- list.files(file.path, full.names=TRUE, pattern='lv')[c(1:2,7:8)]
+#'# Bin the data
+#'data(rn4_chrominfo)
+#'binned.data <- list()
+#'for (bedfile in bedfiles) {
+#'  binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
+#'                                               assembly=rn4_chrominfo, chromosomes='chr12')
+#'}
+#'# Obtain the univariate fits
+#'models <- list()
+#'for (i1 in 1:length(binned.data)) {
+#'  models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], ID=names(binned.data)[i1],
+#'                                      max.time=60, eps=1)
+#'}
+#'# Construct experiment structure
+#'exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
+#'                  condition=rep("lv",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
+#'states <- stateBrewer(exp, mode='mark')
+#'# Call multivariate peaks
+#'multimodel.lv <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
+#'
+#'### Combine multivariates ###
+#'comb.model <- combineMultivariates(list(liver=multimodel.liver, lv=multimodel.lv), mode='mark')
 combineMultivariates <- function(multi.hmm.list, mode, conditions) {
 	
   ## Helper function
@@ -33,7 +84,7 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
 		}
 		## Load first HMM for coordinates
 		ptm <- startTimedMessage("Processing condition ",names(multi.hmm.list)[1]," ...")
-		hmm <- suppressMessages( loadMultiHmmsFromFiles(multi.hmm.list[[1]])[[1]] )
+		hmm <- suppressMessages( loadHmmsFromFiles(multi.hmm.list[[1]], check.class=class.multivariate.hmm)[[1]] )
 		bins <- hmm$bins
 		mcols(bins) <- NULL
 		## Add combinatorial states
@@ -43,7 +94,7 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
 		
 		for (i1 in 2:length(multi.hmm.list)) {
 			ptm <- startTimedMessage("Processing condition ",names(multi.hmm.list)[i1]," ...")
-			hmm <- suppressMessages( loadMultiHmmsFromFiles(multi.hmm.list[[i1]])[[1]] )
+			hmm <- suppressMessages( loadHmmsFromFiles(multi.hmm.list[[i1]], check.class=class.multivariate.hmm)[[1]] )
 			combs[[names(multi.hmm.list)[i1]]] <- hmm$bins$combination
 			stopTimedMessage(ptm)
 		}
@@ -63,7 +114,7 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
 			ptm <- startTimedMessage("Processing mark ",mark," ...")
 			i1 <- which(mark==names(multi.hmm.list))
 			## Load HMM
-			hmm <- suppressMessages( loadMultiHmmsFromFiles(multi.hmm.list[[mark]])[[1]] )
+			hmm <- suppressMessages( loadHmmsFromFiles(multi.hmm.list[[mark]], check.class=class.multivariate.hmm)[[1]] )
 			## Extract conditions
 			comblevels <- levels(hmm$bins$combination)
 			comblevels <- sub('\\[','', comblevels)
@@ -109,7 +160,7 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
 	    stop("'multi.hmm.list' must contain only one 'multiHMM' object when mode='full'.")
 	  }
 	  
-		hmm <- suppressMessages( loadMultiHmmsFromFiles(multi.hmm.list[[1]])[[1]] )
+		hmm <- suppressMessages( loadHmmsFromFiles(multi.hmm.list[[1]], check.class=class.multivariate.hmm)[[1]] )
 		bins <- hmm$bins
 		mcols(bins) <- NULL
 	  combs <- list()

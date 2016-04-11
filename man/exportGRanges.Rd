@@ -18,6 +18,9 @@ exportGRanges(gr, trackname, filename = "chromstaR_GRanges_regions",
 
 \item{append}{Whether or not to append to an existing file.}
 }
+\value{
+\code{NULL}
+}
 \description{
 Export GRanges as genome browser viewable file
 }

@@ -1,4 +1,4 @@
-%\VignetteIndexEntry{The chromstaR users guide}
+%\VignetteIndexEntry{The chromstaR user's guide}
 %\VignetteEngine{knitr::knitr}
 \documentclass[11pt]{article}
 \usepackage{hyperref}
@@ -20,6 +20,7 @@
 \maketitle
 
 \tableofcontents
+\clearpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
 
@@ -40,7 +41,7 @@ Examples of histone modifications with a narrow profile are H3K4me3, H3K9ac and 
 library(chromstaR)
 @
 
-<<univariate_narrow_binning, results='show', message=FALSE, eval=TRUE>>=
+<<univariate_narrow_binning, results='markup', message=FALSE, eval=TRUE>>=
 ## === Step 1: Binning ===
 # Get an example BED file
 bedfile <- system.file("extdata","euratrans","liver-H3K4me3-BN-male-bio2-tech1.bed.gz",
@@ -146,7 +147,7 @@ Peak calling for ATAC-seq and DNase-seq is similar to the peak calling of a narr
 library(chromstaR)
 @
 
-<<multivariate_replicate_binning, results='show', message=FALSE, eval=TRUE>>=
+<<multivariate_replicate_binning, results='markup', message=FALSE, eval=TRUE>>=
 ## === Step 1: Binning ===
 # Let's get some example data with 3 replicates
 file.path <- system.file("extdata","euratrans", package='chromstaRData')
@@ -176,7 +177,7 @@ for (i1 in 1:length(binned.data)) {
 }
 @
 
-<<multivariate_replicate_peak_calling, results='show', message=FALSE, eval=TRUE>>=
+<<multivariate_replicate_peak_calling, results='markup', message=FALSE, eval=TRUE>>=
 ## === Step 3: Check replicate correlation ===
 # We run a multivariate peak calling on all 4 replicates
 # A warning is issued because replicate 4 is very different from the others
@@ -209,7 +210,7 @@ exportMultivariate(multi.model, filename='your-read-file', what='counts')
 library(chromstaR)
 @
 
-<<multivariate_differential_preparation, results='show', message=FALSE, eval=TRUE>>=
+<<multivariate_differential_preparation, results='markup', message=FALSE, eval=TRUE>>=
 #=== Step 1: Preparation ===
 ## Prepare the file paths. Exchange this with your input and output directories.
 inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
@@ -233,7 +234,7 @@ Chromstar(inputfolder, experiment.table=experiment_table_H4K20me1,
           outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
           prefit.on.chr='chr12', mode='condition')
 @
-<<multivariate_differential_listfiles, results='show', message=FALSE, eval=TRUE>>=
+<<multivariate_differential_listfiles, results='markup', message=FALSE, eval=TRUE>>=
 ## Results are stored in 'outputfolder' and can be loaded for further processing
 list.files(outputfolder)
 model <- get(load(file.path(outputfolder,'multivariate',
@@ -271,7 +272,7 @@ Most experimental studies that probe several histone modifications are intereste
 library(chromstaR)
 @
 
-<<multivariate_combinatorial_preparation, results='show', message=FALSE, eval=TRUE>>=
+<<multivariate_combinatorial_preparation, results='markup', message=FALSE, eval=TRUE>>=
 #=== Step 1: Preparation ===
 ## Prepare the file paths. Exchange this with your input and output directories.
 inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
@@ -296,17 +297,19 @@ Chromstar(inputfolder, experiment.table=experiment_table_liver,
           prefit.on.chr='chr12', mode='mark')
 @
 
-<<multivariate_combinatorial_listfiles, results='show', message=FALSE, eval=TRUE, fig.width=4, fig.height=3>>=
+<<multivariate_combinatorial_listfiles, results='markup', message=FALSE, eval=TRUE, fig.width=4, fig.height=3>>=
 ## Results are stored in 'outputfolder' and can be loaded for further processing
 list.files(outputfolder)
 model <- get(load(file.path(outputfolder,'multivariate',
                             'multivariate_mode-mark_condition-liver.RData')))
+# Obtain genomic frequencies for combinatorial states
+genomicFrequencies(model)
 # Plot transition probabilities and read count correlation
-plot(model, type='transitionMatrix')
-plot(model, type='correlation')
+plot(model, type='transitionMatrix') # or plot(model, type=1)
+plot(model, type='correlation') # or plot(model, type=3)
 @
 
-<<multivariate_combinatorial_analysis, results='show', message=FALSE, eval=TRUE>>=
+<<multivariate_combinatorial_analysis, results='markup', message=FALSE, eval=TRUE>>=
 ## === Step 3: Enrichment analysis ===
 library(biomaRt)
 ensembl <- useMart('ENSEMBL_MART_ENSEMBL', host='may2012.archive.ensembl.org',
@@ -322,7 +325,7 @@ genes <- GRanges(seqnames=paste0('chr',genes$chrom),
 print(genes)
 @
 
-<<multivariate_combinatorial_analysis_plot1, results='show', message=FALSE, eval=TRUE, fig.width=6, fig.height=4>>=
+<<multivariate_combinatorial_analysis_plot1, results='markup', message=FALSE, eval=TRUE, fig.width=6, fig.height=4>>=
 # We expect promoter [H3K4me3] and bivalent-promoter signatures [H3K4me3+H3K27me3]
 # to be enriched at transcription start sites.
 plotEnrichment(hmm = model, annotation = genes, bp.around.annotation = 15000) +
@@ -337,7 +340,7 @@ plotEnrichment(model, genes, region = 'start') +
 plotEnrichment(model, genes, region = 'start') +
   facet_wrap(~ combination)
 @
-<<multivariate_combinatorial_analysis_plot2, results='show', message=FALSE, eval=TRUE, fig.width=8, fig.height=4>>=
+<<multivariate_combinatorial_analysis_plot2, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4>>=
 # Another form of visualization that shows every TSS in a heatmap
 tss <- resize(genes, width = 3, fix = 'start')
 plotHeatmap(model, tss) +
@@ -361,7 +364,7 @@ Consider bivalent promoters defined by [H3K4me3+H3K27me3] at two different devel
 library(chromstaR)
 @
 
-<<combined_preparation, results='show', message=FALSE, eval=TRUE>>=
+<<combined_preparation, results='markup', message=FALSE, eval=TRUE>>=
 #=== Step 1: Preparation ===
 ## Prepare the file paths. Exchange this with your input and output directories.
 inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
@@ -385,13 +388,13 @@ Chromstar(inputfolder, experiment.table=experiment_table,
           outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
           prefit.on.chr='chr12', mode='mark')
 @
-<<combined_listfiles, results='show', message=FALSE, eval=TRUE>>=
+<<combined_listfiles, results='markup', message=FALSE, eval=TRUE>>=
 ## Results are stored in 'outputfolder' and can be loaded for further processing
 list.files(outputfolder)
-model <- get(load(file.path(outputfolder,'combined', 'combined_mode-mark.RData')))
+model <- get(load(file.path(outputfolder,'multivariate-combined', 'combined_mode-mark.RData')))
 @
 
-<<combined_analysis, results='show', message=FALSE, eval=TRUE>>=
+<<combined_analysis, results='markup', message=FALSE, eval=TRUE>>=
 ## Obtain all genomic regions where the two tissues have different states
 segments <- model$combined.segments
 diff.segments <- segments[segments$liver != segments$lv]

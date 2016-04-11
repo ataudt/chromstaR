@@ -1,12 +1,6 @@
 stateorderByTransition <- function(multi.hmm) {
 
-	## Intercept user input
-	if (check.multivariate.model(multi.hmm)!=0) {
-		message("Loading multivariate HMM from file ...", appendLF=FALSE)
-		multi.hmm <- get(load(multi.hmm))
-		message(" done")
-		if (check.multivariate.model(multi.hmm)!=0) stop("argument 'multi.hmm' expects a multivariate hmm object or a file that contains a multivariate hmm (type ?multi.hmm for help)")
-	}
+	multi.hmm <- loadHmmsFromFiles(multi.hmm, check.class=class.multivariate.hmm)[[1]]
 
 	## Calculate distance matrix
 	distances <- matrix(NA, ncol=ncol(multi.hmm$transitionProbs), nrow=nrow(multi.hmm$transitionProbs))

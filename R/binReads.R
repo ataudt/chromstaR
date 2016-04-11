@@ -30,7 +30,7 @@
 #' @export
 #'
 #'@examples
-#'## Get an example BED file with single-cell-sequencing reads
+#'## Get an example BED file with ChIP-seq reads
 #'bedfile <- system.file("extdata", "euratrans",
 #'                       "liver-H3K27me3-BN-male-bio1-tech1.bed.gz",
 #'                        package="chromstaRData")

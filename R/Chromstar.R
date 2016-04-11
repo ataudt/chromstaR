@@ -14,6 +14,7 @@
 #'   \item{\code{full}}{Full analysis of all marks and conditions combined. Best of both, but: Choose this mode only if (number of conditions * number of marks \eqn{\le} 8), otherwise it might be too slow or crash due to memory limitations.}
 #' }
 #' @param num.states The number of states to use in the multivariate part. If set to \code{NULL}, the maximum number of theoretically possible states is used. CAUTION: This can be very slow or crash if you have too many states. \pkg{\link{chromstaR}} has a built in mechanism to select the best states in case that less states than theoretically possible are specified.
+#' @return \code{NULL}
 #' @import foreach
 #' @import doParallel
 #' @importFrom utils read.table
@@ -110,7 +111,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
   unipath <- file.path(outputfolder, 'univariate')
   plotpath <- file.path(outputfolder, 'plots')
   multipath <- file.path(outputfolder, 'multivariate')
-  combipath <- file.path(outputfolder, 'combined')
+  combipath <- file.path(outputfolder, 'multivariate-combined')
   browserpath <- file.path(outputfolder, 'browserfiles')
   if (!file.exists(outputfolder)) {
     dir.create(outputfolder)
@@ -142,7 +143,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     savename <- file.path(binpath, paste0(basename(file),"_binsize",format(binsize, scientific=FALSE, trim=TRUE),".RData"))
     if (!file.exists(savename)) {
       tC <- tryCatch({
-        binReads(file=file, assembly=conf[['assembly']], pairedEndReads=exp.table[basename(file),'pairedEndReads'], binsize=binsize, chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']], outputfolder.binned=binpath, save.as.RData=TRUE)
+        binReads(file=file, assembly=conf[['assembly']], pairedEndReads=exp.table[basename(file),'pairedEndReads'], binsizes=binsize, chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']], outputfolder.binned=binpath, save.as.RData=TRUE)
       }, error = function(err) {
         stop(file,'\n',err)
       })

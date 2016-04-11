@@ -15,6 +15,7 @@
 #' @author Aaron Taudt
 #' @inheritParams state.brewer
 #' @param mode Mode of brewing. See \code{\link{Chromstar}} for a description of the parameter.
+#' @return A data.frame with combinations and their corresponding (decimal) combinatorial states.
 #' @export
 stateBrewer <- function(experiment.table, mode, differential.states=FALSE, common.states=FALSE) {
 
@@ -192,7 +193,7 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
 				mask1 <- apply(as.matrix(binstates[,track.index]), 1, function(x) { Reduce('&', x) })
 				mask <- !(mask0 | mask1)
 			} else if (grepl('^x\\.', diffgroup)) {
-				mask <- rep(T, nrow(binstates))
+				mask <- rep(TRUE, nrow(binstates))
 			}
 			binstates <- binstates[mask,]
 			if (class(binstates)!='matrix') {
@@ -263,7 +264,7 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
 					mask1 <- apply(as.matrix(binstates.irow[,track.index]), 1, function(x) { Reduce('&', x) }) # rows where all group members are 1
 					mask <- !(mask0 | mask1) # rows where not all group members are either 0 or 1
 				} else if (grepl('^x\\.', diffgroup)) {
-					mask <- rep(T, nrow(binstates.irow))
+					mask <- rep(TRUE, nrow(binstates.irow))
 				}
 				binstates.irow <- binstates.irow[mask,]
 				if (class(binstates.irow)!='matrix') {

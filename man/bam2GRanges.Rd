@@ -34,10 +34,11 @@ A \code{\link{GRanges}} object containing the reads.
 Import aligned reads from a BAM file into a \code{\link{GRanges}} object.
 }
 \examples{
-## Get an example BAM file with single-cell-sequencing reads
-bamfile <- system.file("extdata", "BB150803_IV_074.bam", package="AneuFinderData")
+## Get an example BAM file with ChIP-seq reads
+bamfile <- system.file("extdata", "liver-H3K4me3-BN-male-bio2-tech1.bam",
+                      package="chromstaRData")
 ## Read the file into a GRanges object
-reads <- bam2GRanges(bamfile, chromosomes=c(1:19,'X','Y'), pairedEndReads=FALSE,
+reads <- bam2GRanges(bamfile, chromosomes='chr12', pairedEndReads=FALSE,
                     min.mapq=10, remove.duplicate.reads=TRUE)
 print(reads)
 

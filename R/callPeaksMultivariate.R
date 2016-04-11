@@ -23,13 +23,13 @@
 #' @param A.initial A transition matrix to start the Baum-Welch from.
 #' @param keep.densities If set to \code{TRUE} (default=\code{FALSE}), densities will be available in the output. This should only be needed debugging.
 #' @param verbosity Verbosity level for the fitting procedure. 0 - No output, 1 - Iterations are printed.
-#' @return Output is a \code{\link{multiHMM}} list object.
+#' @return A \code{\link{multiHMM}} object.
 #' @seealso \code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksReplicates}}
 #' @export
 #' @examples
-#'# Get example BED files for 4 different marks in rat liver
+#'# Get example BED files for 2 different marks in rat liver
 #'file.path <- system.file("extdata","euratrans", package='chromstaRData')
-#'bedfiles <- list.files(file.path, full.names=TRUE, pattern='liver')[c(1:2,4:5,7:8,10:11)]
+#'bedfiles <- list.files(file.path, full.names=TRUE, pattern='liver')[c(1:2,7:8)]
 #'# Bin the data
 #'data(rn4_chrominfo)
 #'binned.data <- list()
@@ -81,7 +81,7 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 		if (FDR>1 | FDR<0) stop("argument 'FDR' has to be between 0 and 1 if specified")
 	}
 	get.posteriors <- TRUE
-	modellist <- loadHmmsFromFiles(modellist)
+	modellist <- loadHmmsFromFiles(modellist, check.class=class.univariate.hmm)
 	if (check.univariate.modellist(modellist)!=0) stop("argument 'modellist' expects a list of univariate hmms or a list of files that contain univariate hmms")
 	if (length(modellist)<=1) {
 		stop("argument 'modellist' is of length=1. Cannot call multivariate peaks with only one model.")
@@ -257,6 +257,13 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 				result$bins$densities <- matrix(hmm$densities, ncol=hmm$num.states)
 				colnames(result$bins$densities) <- hmm$comb.states
 			}
+		## Add combinations
+			mapping <- NULL
+			if (!is.null(use.states)) {
+				mapping <- use.states$combination
+				names(mapping) <- use.states$state
+				result$bins$combination <- factor(mapping[as.character(result$bins$state)], levels=levels(use.states$combination))
+			}
 			
 		## Segmentation
 			ptm <- startTimedMessage("Making segmentation ...")
@@ -269,7 +276,7 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 			mean.posteriors <- matrix(unlist(red.df[,grepl('^mean.posteriors',names(red.df))]), ncol=length(result$IDs))
 			colnames(mean.posteriors) <- result$IDs
 			mean.score <- red.df[,grepl('^mean.score', names(red.df))]
-			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], score=mean.score)
+			red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], combination=red.df[,'combination'], score=mean.score)
 			red.gr$mean.posteriors <- mean.posteriors
 			result$segments <- red.gr
 			seqlengths(result$segments) <- seqlengths(result$bins)
@@ -286,6 +293,7 @@ callPeaksMultivariate <- function(modellist, use.states, num.states=NULL, chromo
 				result$mapping <- mapping
 			}
 		## Parameters
+			result$mapping <- mapping
 			combinations2use <- mapping[as.character(comb.states2use)]
 			# Weights
 			tstates <- table(hmm$states)

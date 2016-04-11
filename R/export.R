@@ -14,6 +14,7 @@
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @param separate.files A logical indicating whether or not to produce separate files for each hmm in \code{hmm.list}.
 #' @param orderByScore Logical indicating whether or not to sort entries in BED file by score.
+#' @return \code{NULL}
 #' @seealso \code{\link{exportBinnedData}}, \code{\link{exportMultivariate}}
 #' @examples
 #'### Univariate peak calling ###
@@ -60,7 +61,7 @@ exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCa
 	}
 
 	## Load models
-	hmm.list <- loadHmmsFromFiles(hmm.list)
+	hmm.list <- loadHmmsFromFiles(hmm.list, check.class=class.univariate.hmm)
 
 	## Transform to GRanges
 	hmm.grl <- lapply(hmm.list, '[[', 'segments')
@@ -74,7 +75,7 @@ exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCa
 	}
 
 	# Generate the colors
-	colors <- state.colors[levels(hmm.grl[[1]]$state)]
+	colors <- getStateColors(levels(hmm.grl[[1]]$state))
 	RGBs <- t(grDevices::col2rgb(colors))
 	RGBs <- apply(RGBs,1,paste,collapse=",")
 
@@ -151,7 +152,7 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 	}
 
 	## Load models
-	hmm.list <- loadHmmsFromFiles(hmm.list)
+	hmm.list <- loadHmmsFromFiles(hmm.list, check.class=class.univariate.hmm)
 
 	## Transform to GRanges
 	grl <- lapply(hmm.list, '[[', 'bins')
@@ -163,7 +164,7 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 	if (!separate.files) {
 		filename.gz <- gzfile(filename, 'w')
 	}
-	readcol <- paste(grDevices::col2rgb(state.colors['counts']), collapse=',')
+	readcol <- paste(grDevices::col2rgb(getStateColors('counts')), collapse=',')
 
 	# Write first line to file
 	if (!separate.files) {
@@ -222,6 +223,7 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @param separate.files A logical indicating whether or not to produce separate files for peaks if \code{what} contains 'peaks' or 'counts'.
 #' @param orderByScore Logical indicating whether or not to sort entries in BED file by score.
+#' @return \code{NULL}
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportBinnedData}}
 #' @examples
 #'### Multivariate peak calling ###
@@ -340,7 +342,7 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 			df$start <- df$start - 1
 			df$thickStart <- df$start
 			df$thickEnd <- df$end
-			RGB <- t(grDevices::col2rgb(state.colors['modified']))
+			RGB <- t(grDevices::col2rgb(getStateColors('modified')))
 			RGB <- apply(RGB,1,paste,collapse=",")
 			df$itemRgb <- rep(RGB, numsegments)
 			if (header) {
@@ -424,7 +426,7 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 		filename.gz <- gzfile(filename, 'w')
 	}
 	nummod <- length(multi.hmm$IDs)
-	readcol <- paste(grDevices::col2rgb(state.colors['counts']), collapse=',')
+	readcol <- paste(grDevices::col2rgb(getStateColors('counts')), collapse=',')
 
 	# Write first line to file
 	if (!separate.files) {
@@ -482,6 +484,7 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 #' @param filename The name of the file that will be written. The ending ".wig.gz" for read counts will be appended. Any existing file will be overwritten.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @param separate.files A logical indicating whether or not to produce separate files for each object in \code{binned.data.list}.
+#' @return \code{NULL}
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
@@ -531,7 +534,7 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", 
 	if (!separate.files) {
 		filename.gz <- gzfile(filename, 'w')
 	}
-	readcol <- paste(grDevices::col2rgb(state.colors['counts']), collapse=',')
+	readcol <- paste(grDevices::col2rgb(getStateColors('counts')), collapse=',')
 
 	# Write first line to file
 	if (!separate.files) {
@@ -586,6 +589,7 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", 
 #' @param filename The name of the file that will be written. The ending ".bed.gz". Any existing file will be overwritten.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @param append Whether or not to append to an existing file.
+#' @return \code{NULL}
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
 #' @importFrom utils write.table
 #' @export
@@ -664,10 +668,10 @@ exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", h
 #'
 #' Export multivariate calls as genome browser viewable file
 #'
-#' Export \code{\link{chromstaR_combinedMultiHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states are exported in BED format (.bed.gz).
+#' Export \code{\link{combinedMultiHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states are exported in BED format (.bed.gz).
 #'
 #' @author Aaron Taudt
-#' @param hmm A \code{\link{chromstaR_combinedMultiHMM}} object or file that contains such an object.
+#' @param hmm A \code{\link{combinedMultiHMM}} object or file that contains such an object.
 #' @param filename The name of the file that will be written. The ending ".bed.gz" for combinatorial states will be appended. Any existing file will be overwritten.
 #' @param what A character vector specifying what will be exported. Supported are \code{c('combinations')}.
 #' @param exclude.states A vector of combinatorial states that will be excluded from export.
@@ -675,6 +679,7 @@ exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", h
 #' @param trackname Name that will be used in the "track name" field of the BED file.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @param separate.files A logical indicating whether or not to produce separate files for each condition.
+#' @return \code{NULL}
 #' @examples
 #'### Multivariate peak calling ###
 #'## Load example multivariate Hidden Markov Model
