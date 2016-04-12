@@ -4,10 +4,12 @@
 \alias{heatmapCombinations}
 \title{Plot a heatmap of combinatorial states}
 \usage{
-heatmapCombinations(marks, vertical = FALSE)
+heatmapCombinations(hmm = NULL, marks = NULL, vertical = FALSE)
 }
 \arguments{
-\item{marks}{A character vector.}
+\item{hmm}{A \code{\link{multiHMM}} object.}
+
+\item{marks}{A character vector with histone marks. If specified, \code{hmm} will be ignored.}
 }
 \value{
 A \code{\link[ggplot2]{ggplot}} object containing the plot.
@@ -17,7 +19,7 @@ Plot a heatmap that shows the binary presence/absence of marks for the different
 }
 \examples{
 marks <- c('H3K4me3','H3K27me3','H4K20me1')
-heatmapCombinations(marks, vertical=FALSE)
+heatmapCombinations(marks=marks, vertical=FALSE)
 
 }
 \author{

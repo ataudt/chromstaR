@@ -424,7 +424,7 @@ plotMultivariateTransition <- function(multi.hmm) {
 #' @author Aaron Taudt
 #' @examples 
 #'marks <- c('H3K4me3','H3K27me3','H4K20me1')
-#'heatmapCombinations(marks, vertical=FALSE)
+#'heatmapCombinations(marks=marks, vertical=FALSE)
 #'
 heatmapCombinations <- function(hmm=NULL, marks=NULL, vertical=FALSE) {
 
