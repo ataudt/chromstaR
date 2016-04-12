@@ -4,7 +4,7 @@
 \alias{getStateColors}
 \title{Get state colors}
 \usage{
-getStateColors(labels)
+getStateColors(labels = NULL)
 }
 \arguments{
 \item{labels}{Any combination of \code{c("zero-inflation","unmodified","modified", "total", "counts")}.}
@@ -14,5 +14,9 @@ A character vector with colors.
 }
 \description{
 Get the colors that are used for plotting.
+}
+\examples{
+cols <- getStateColors()
+pie(1:length(cols), col=cols, labels=names(cols))
 }
 

@@ -13,6 +13,7 @@
 \describe{
   \item{\code{transitionMatrix}}{A heatmap with entries of the transition matrix.}
   \item{\code{histograms}}{Fitted histograms of all underlying univariate distributions.}
+  \item{\code{correlation}}{Correlation between read counts of the different experiments.}
 }}
 
 \item{...}{Additional arguments for the different plot types.}

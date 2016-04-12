@@ -173,7 +173,7 @@ bam2GRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pairedEndRe
 #'@examples
 #'## Get an example BED file with single-cell-sequencing reads
 #'bedfile <- system.file("extdata", "euratrans",
-#'                       "liver-H3K27me3-BN-male-bio1-tech1.bed.gz",
+#'                       "lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
 #'                        package="chromstaRData")
 #'## Read the file into a GRanges object
 #'data(rn4_chrominfo)

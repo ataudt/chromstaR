@@ -31,6 +31,16 @@ bin4 \tab 0 \tab 1 \tab 1 \tab 1 \tab 1 \tab 15 \cr
 bin5 \tab 0 \tab 0 \tab 1 \tab 0 \tab 1 \tab 5 \cr
 }
 }
+\examples{
+## Construct an experiment table
+data(experiment_table)
+print(experiment_table)
+## Construct combinatorial states
+stateBrewer(experiment_table, mode='mark')
+stateBrewer(experiment_table, mode='condition')
+stateBrewer(experiment_table, mode='full', common.states=TRUE)
+
+}
 \author{
 Aaron Taudt
 }

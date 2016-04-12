@@ -9,9 +9,9 @@
 #' @return A \code{\link{multiHMM}} object.
 #' @export
 #' @examples
-#'# Get example BED files for 4 different marks in rat liver
+#'# Get example BED files for 4 different marks in hypertensive rat (SHR)
 #'file.path <- system.file("extdata","euratrans", package='chromstaRData')
-#'bedfiles <- list.files(file.path, full.names=TRUE, pattern='liver')[c(1,7)]
+#'bedfiles <- list.files(file.path, full.names=TRUE, pattern='SHR')[c(1,7)]
 #'# Bin the data
 #'data(rn4_chrominfo)
 #'binned.data <- list()
@@ -30,7 +30,7 @@
 #'pseudo.multi.HMM <- unis2pseudomulti(models)
 #'## Compare frequencies with real multivariate HMM
 #'exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K4me3"),
-#'                  condition=rep("liver",2), replicate=c(1,1), pairedEndReads=FALSE)
+#'                  condition=rep("SHR",2), replicate=c(1,1), pairedEndReads=FALSE)
 #'states <- stateBrewer(exp, mode='mark')
 #'real.multi.HMM <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
 #'genomicFrequencies(real.multi.HMM)

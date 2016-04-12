@@ -19,9 +19,9 @@
 #' @return Output is a vector of integers representing the combinatorial state of each bin.
 #' @seealso \code{link{dec2bin}}, \code{\link{bin2dec}}
 #' @examples
-#'# Get example BED files for 4 different marks in rat liver
+#'# Get example BED files for 4 different marks in hypertensive rat (SHR)
 #'file.path <- system.file("extdata","euratrans", package='chromstaRData')
-#'bedfiles <- list.files(file.path, full.names=TRUE, pattern='liver')[c(1,4,7,10)]
+#'bedfiles <- list.files(file.path, full.names=TRUE, pattern='SHR')[c(1,4,7,10)]
 #'# Bin the data
 #'data(rn4_chrominfo)
 #'binned.data <- list()

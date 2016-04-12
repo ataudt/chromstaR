@@ -27,9 +27,9 @@
 #' @seealso \code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksReplicates}}
 #' @export
 #' @examples
-#'# Get example BED files for 2 different marks in rat liver
+#'# Get example BED files for 2 different marks in hypertensive rat
 #'file.path <- system.file("extdata","euratrans", package='chromstaRData')
-#'bedfiles <- list.files(file.path, full.names=TRUE, pattern='liver')[c(1:2,7:8)]
+#'bedfiles <- list.files(file.path, full.names=TRUE, pattern='SHR')[c(1:2,7:8)]
 #'# Bin the data
 #'data(rn4_chrominfo)
 #'binned.data <- list()
@@ -45,7 +45,7 @@
 #'}
 #'# Construct experiment structure
 #'exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
-#'                  condition=rep("liver",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
+#'                  condition=rep("SHR",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
 #'states <- stateBrewer(exp, mode='mark')
 #'# Call multivariate peaks
 #'multimodel <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)

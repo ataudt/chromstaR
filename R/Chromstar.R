@@ -23,20 +23,19 @@
 #' @export
 #' 
 #' @examples 
-#'\dontrun{
 #'## Prepare the file paths. Exchange this with your input and output directories.
 #'inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
-#'outputfolder <- file.path(tempdir(), 'liver-example')
+#'outputfolder <- file.path(tempdir(), 'SHR-example')
 #'## Define experiment structure
-#'data(experiment_table_liver)
+#'data(experiment_table_SHR)
 #'## Define assembly
 #'# This is only necessary if you have BED files, BAM files are handled automatically.
 #'# For common assemblies you can also specify them as 'hg19' for example.
 #'data(rn4_chrominfo)
 #'## Run ChromstaR
-#'Chromstar(inputfolder, experiment.table=experiment_table_liver,
+#'Chromstar(inputfolder, experiment.table=experiment_table_SHR,
 #'          outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
-#'          prefit.on.chr='chr12', mode='mark', eps=1)}
+#'          prefit.on.chr='chr12', mode='mark', eps=1)
 #'
 Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps=0.01, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=FALSE, mode='mark', num.states=128) {
   
@@ -113,9 +112,8 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
   multipath <- file.path(outputfolder, 'multivariate')
   combipath <- file.path(outputfolder, 'multivariate-combined')
   browserpath <- file.path(outputfolder, 'browserfiles')
-  if (!file.exists(outputfolder)) {
-    dir.create(outputfolder)
-  }
+  if (!file.exists(outputfolder)) { dir.create(outputfolder) }
+  if (!file.exists(plotpath)) { dir.create(plotpath) }
   filenames <- paste0(exp.table$file, "_binsize",format(binsize, scientific=FALSE, trim=TRUE),".RData")
   
   ## Make a copy of the conf file
@@ -197,7 +195,6 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
   ## Plot distributions ##
   #-----------------------
   # ptm <- startTimedMessage("Plotting univariate distributions ...")
-  # if (!file.exists(plotpath)) { dir.create(plotpath) }
   # files <- file.path(unipath, filenames)
   # 
   # savename <- file.path(plotpath, 'univariate-distributions.pdf')
@@ -214,9 +211,27 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
   #================================
   if (!file.exists(multipath)) { dir.create(multipath) }
   if (!file.exists(browserpath)) { dir.create(browserpath) }
+
+	## Plot helper ##
+	plothelper <- function(savename, multimodel) {
+	  char.per.cm <- 10
+	  legend.cm <- 3
+		savename1 <- paste0(savename, '_correlation.pdf')
+		ggplt <- graphics::plot(multimodel, type='correlation')
+		width <- length(multimodel$IDs) + max(sapply(multimodel$IDs, nchar)) / char.per.cm + legend.cm
+		height <- length(multimodel$IDs) + max(sapply(multimodel$IDs, nchar)) / char.per.cm
+		ggsave(savename1, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
+
+		savename2 <- paste0(savename, '_transitionMatrix.pdf')
+		ggplt <- graphics::plot(multimodel, type='transitionMatrix')
+		width <- length(levels(multimodel$bins$combination)) + max(sapply(levels(multimodel$bins$combination), nchar)) / char.per.cm + legend.cm
+		height <- length(levels(multimodel$bins$combination)) + max(sapply(levels(multimodel$bins$combination), nchar)) / char.per.cm + 1
+		ggsave(savename2, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
+	}
   
   ## Run multivariate depending on mode
   multimodels <- list()
+	#--------------------
   if (mode == 'full') {
     savename <- file.path(multipath, paste0('multivariate_mode-', mode, '.RData'))
     if (!file.exists(savename)) {
@@ -224,20 +239,24 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
       states <- stateBrewer(exp.table, mode=mode)
       multimodel <- callPeaksMultivariate(files, use.states=states, num.states=conf[['num.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']])
       save(multimodel, file=savename)
-      multimodels[[1]] <- multimodel
     } else {
-      multimodels[[1]] <- get(load(savename))
+      multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
     }
+		multimodels[[1]] <- multimodel
     ## Export browser files
     savename <- file.path(browserpath, paste0('multivariate_mode-', mode))
     if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
       trackname <- paste0('combinations, mode-', mode)
-      exportMultivariate(multimodels[[1]], filename=savename, what='combinations', trackname=trackname)
+      exportMultivariate(multimodel, filename=savename, what='combinations', trackname=trackname)
     }
     if (!file.exists(paste0(savename, '_counts.wig.gz'))) {
-      exportMultivariate(multimodels[[1]], filename=savename, what='counts')
+      exportMultivariate(multimodel, filename=savename, what='counts')
     }
+		## Plot transition and correlations
+		savename <- file.path(plotpath, paste0('multivariate_mode-', mode))
+		plothelper(savename, multimodel)
     
+	#---------------------------
   } else if (mode == 'mark') {
     for (condition in conditions) {
       savename <- file.path(multipath, paste0('multivariate_mode-', mode, '_condition-', condition, '.RData'))
@@ -247,21 +266,25 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         states <- stateBrewer(exp.table[mask,], mode=mode)
         multimodel <- callPeaksMultivariate(files, use.states=states, num.states=conf[['num.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']])
         save(multimodel, file=savename)
-        multimodels[[as.character(condition)]] <- multimodel
       } else {
-        multimodels[[as.character(condition)]] <- get(load(savename))
+				multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
       }
+			multimodels[[as.character(condition)]] <- multimodel
       ## Export browser files
       savename <- file.path(browserpath, paste0('multivariate_mode-', mode, '_condition-', condition))
       if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
         trackname <- paste0('combinations, mode-', mode)
-        exportMultivariate(multimodels[[1]], filename=savename, what='combinations', trackname=trackname)
+        exportMultivariate(multimodel, filename=savename, what='combinations', trackname=trackname)
       }
       if (!file.exists(paste0(savename, '_counts.wig.gz'))) {
-        exportMultivariate(multimodels[[1]], filename=savename, what='counts')
+        exportMultivariate(multimodel, filename=savename, what='counts')
       }
+			## Plot transition and correlations
+			savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_condition-', condition))
+			plothelper(savename, multimodel)
     }
     
+	#--------------------------------
   } else if (mode == 'condition') {
     for (mark in marks) {
       savename <- file.path(multipath, paste0('multivariate_mode-', mode, '_mark-', mark, '.RData'))
@@ -271,22 +294,25 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         states <- stateBrewer(exp.table[mask,], mode=mode)
         multimodel <- callPeaksMultivariate(files, use.states=states, num.states=conf[['num.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']])
         save(multimodel, file=savename)
-        multimodels[[as.character(mark)]] <- multimodel
       } else {
-        multimodels[[as.character(mark)]] <- get(load(savename))
+				multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
       }
+			multimodels[[as.character(mark)]] <- multimodel
       ## Export browser files
       savename <- file.path(browserpath, paste0('multivariate_mode-', mode, '_mark-', mark))
       if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
         trackname <- paste0('combinations, mode-', mode)
-        exportMultivariate(multimodels[[1]], filename=savename, what='combinations', trackname=trackname)
+        exportMultivariate(multimodel, filename=savename, what='combinations', trackname=trackname)
       }
       if (!file.exists(paste0(savename, '_counts.wig.gz'))) {
-        exportMultivariate(multimodels[[1]], filename=savename, what='counts')
+        exportMultivariate(multimodel, filename=savename, what='counts')
       }
+			## Plot transition and correlations
+			savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_mark-', mark))
+			plothelper(savename, multimodel)
     }
   }
-  
+
   
   #================================
   ## Combine multiple conditions ##
@@ -299,7 +325,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
       combinedModel <- combineMultivariates(multimodels, mode=mode, conditions=conditions)
       save(combinedModel, file=savename)
     } else {
-      combinedModel <- get(load(savename))
+			combinedModel <- loadHmmsFromFiles(savename, check.class=class.combined.multivariate.hmm)[[1]]
     }
   
     #-------------------------

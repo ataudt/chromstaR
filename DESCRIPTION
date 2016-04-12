@@ -28,10 +28,7 @@ Suggests:
 		knitr,
 		testthat,
     biomaRt,
-    biovizBase,
-    rtracklayer,
-    ggbio,
-		gtools
+    ggbio
 License: Artistic-2.0
 LazyLoad: yes
 VignetteBuilder: knitr

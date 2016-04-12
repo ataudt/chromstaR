@@ -75,7 +75,7 @@ Convert aligned reads from .bam or .bed(.gz) files into read counts in equidista
 \examples{
 ## Get an example BED file with ChIP-seq reads
 bedfile <- system.file("extdata", "euratrans",
-                      "liver-H3K27me3-BN-male-bio1-tech1.bed.gz",
+                      "lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
                        package="chromstaRData")
 ## Bin the BED file into bin size 1000bp
 data(rn4_chrominfo)

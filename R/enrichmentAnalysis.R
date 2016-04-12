@@ -1,11 +1,56 @@
-#' Plot read counts around annotation
-#'
-#' Plot read counts around annotation as heatmap.
-#'
-#' @inheritParams enrichmentAtAnnotation
-#' @param max.rows An integer specifying the number of randomly subsampled rows that are plotted from the \code{annotation} object. This is necessary to avoid crashing for heatmaps with too many rows.
+#' Enrichment analysis
+#' 
+#' Plotting functions for enrichment analysis of \code{\link{multiHMM}} objects with any annotation of interest, specified as a \code{\link[GenomicRanges:Granges]{GRanges}} object.
+#' 
+#' @name enrichment_analysis
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot.
 #' @author Aaron Taudt
+#' @examples 
+#'## Get an example multiHMM
+#'file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+#'                     package="chromstaR")
+#'model <- get(load(file))
+#'
+#'## Obtain gene coordinates for rat from biomaRt
+#'library(biomaRt)
+#'ensembl <- useMart('ENSEMBL_MART_ENSEMBL', host='may2012.archive.ensembl.org',
+#'                   dataset='rnorvegicus_gene_ensembl')
+#'genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
+#'                            'end_position', 'strand', 'external_gene_id'),
+#'               mart=ensembl)
+#'# Transform to GRanges for easier handling
+#'genes <- GRanges(seqnames=paste0('chr',genes$chrom),
+#'                 ranges=IRanges(start=genes$start, end=genes$end),
+#'                 strand=genes$strand,
+#'                 name=genes$external_gene_id)
+#'print(genes)
+#'
+#'## Make the enrichment plots
+#'# We expect promoter [H3K4me3] and bivalent-promoter signatures [H3K4me3+H3K27me3]
+#'# to be enriched at transcription start sites.
+#'plotEnrichment(hmm = model, annotation = genes, bp.around.annotation = 15000) +
+#'  ggtitle('Fold enrichment around genes') +
+#'  xlab('distance from gene body')
+#'# Plot enrichment only at TSS. We make use of the fact that TSS is the start of a gene.
+#'plotEnrichment(model, genes, region = 'start') +
+#'  ggtitle('Fold enrichment around TSS') +
+#'  xlab('distance from TSS in [bp]')
+#'# Note: If you want to facet the plot because you have many combinatorial states you
+#'# can do that with
+#'plotEnrichment(model, genes, region = 'start') +
+#'  facet_wrap(~ combination)
+#'# Another form of visualization that shows every TSS in a heatmap
+#'# If transparency is not supported try to plot to pdf() instead.
+#'tss <- resize(genes, width = 3, fix = 'start')
+#'plotHeatmap(model, tss) +
+#'  theme(strip.text.x = element_text(size=6))
+#'
+NULL
+
+
+#' @describeIn enrichment_analysis Plot read counts around annotation as heatmap.
+#' @inheritParams enrichmentAtAnnotation
+#' @param max.rows An integer specifying the number of randomly subsampled rows that are plotted from the \code{annotation} object. This is necessary to avoid crashing for heatmaps with too many rows.
 #' @importFrom reshape2 melt
 #' @export
 plotHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=1000) {
@@ -98,13 +143,8 @@ plotHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=10
 }
 
 
-#' Plot enrichment around annotation
-#'
-#' Plot fold enrichment of combinatorial states around and inside of annotation.
-#'
+#' @describeIn enrichment_analysis Plot fold enrichment of combinatorial states around and inside of annotation.
 #' @inheritParams enrichmentAtAnnotation
-#' @return A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot.
-#' @author Aaron Taudt
 #' @importFrom reshape2 melt
 #' @export
 plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c("start","inside","end"), num.intervals=20) {
@@ -299,4 +339,63 @@ enrichmentAtAnnotation <- function(hmm, annotation, bp.around.annotation=10000, 
 	return(enrich)
 
 }
+
+
+#' Fold enrichment of combinatorial states
+#'
+#' Compute the fold enrichment of combinatorial states in a given feature (e.g. TSS, exons, ...)
+#'
+#' @param multi.hmm A \code{\link{multiHMM}} or a file that contains such an object.
+#' @param feature A \code{\link{GRanges}} with coordinates of the feature to compute the fold enrichment to.
+#' @param featurelist A list with \code{\link{GRanges}} objects containing coordinates of multiple features. The names of the list entries will be used to name the return values.
+#' @param combinations A vector with combinations for which the fold enrichment will be calculated. If \code{NULL} all combinations will be considered.
+#' @param percentages Set to \code{TRUE} if you want to have percentages (0 to 1) instead of fold enrichments returned. Note that in this case different features are not directly comparable.
+#' @return A named array with fold enrichments. If \code{percentages=TRUE} a list with arrays of percentage (0 to 1) enrichments.
+#' @author Aaron Taudt
+#' @importFrom S4Vectors subjectHits queryHits
+#' @export
+foldEnrichment <- function(multi.hmm, featurelist, combinations=NULL, percentages=FALSE) {
+	
+	multi.hmm <- loadHmmsFromFiles(multi.hmm, check.class=class.multivariate.hmm)[[1]]
+	## Variables
+	bins <- multi.hmm$bins
+	if (is.null(combinations)) {
+		comb.levels <- levels(bins$combination)
+	} else {
+		comb.levels <- combinations
+	}
+	genome <- sum(as.numeric(width(bins)))
+	feature.lengths <- lapply(featurelist, function(x) { sum(as.numeric(width(x))) })
+	
+	## Fold enrichment
+	fold <- array(NA, dim=c(length(featurelist), length(comb.levels)), dimnames=list(feature=names(featurelist), combination=comb.levels))
+	perc.combstate.in.feature <- fold
+	perc.feature.in.combstate <- fold
+	for (icomb in 1:length(comb.levels)) {
+		mask <- bins$combination == comb.levels[icomb]
+		bins.mask <- bins[mask]
+		combstate.length <- sum(as.numeric(width(bins.mask)))
+		for (ifeat in 1:length(featurelist)) {
+			feature <- featurelist[[ifeat]]
+			ind <- findOverlaps(bins.mask, feature)
+
+			binsinfeature <- bins.mask[unique(S4Vectors::queryHits(ind))]
+			sum.binsinfeature <- sum(as.numeric(width(binsinfeature)))
+			perc.combstate.in.feature[ifeat,icomb] <- sum.binsinfeature / combstate.length
+
+			featuresinbins <- feature[unique(S4Vectors::subjectHits(ind))]
+			sum.featuresinbins <- sum(as.numeric(width(featuresinbins)))
+			perc.feature.in.combstate[ifeat,icomb] <- sum.featuresinbins / feature.lengths[[ifeat]]
+
+			fold[ifeat,icomb] <- sum.binsinfeature / combstate.length / feature.lengths[[ifeat]] * genome
+		}
+	}
+	
+	if (percentages) {
+		return(list(combstate.in.feature=perc.combstate.in.feature, feature.in.combstate=perc.feature.in.combstate))
+	}
+	return(fold)
+}
+
+
 

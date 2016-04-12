@@ -21,7 +21,7 @@ Wrapper to load \pkg{\link{chromstaR}} objects from file and check the class of 
 \examples{
 ## Get an example BED file
 bedfile <- system.file("extdata", "euratrans",
-                      "liver-H3K27me3-BN-male-bio1-tech1.bed.gz",
+                      "lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
                        package="chromstaRData")
 ## Bin the BED file into bin size 1000bp
 data(rn4_chrominfo)

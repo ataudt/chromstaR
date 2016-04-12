@@ -19,7 +19,7 @@
 #' @examples 
 #'# Let's get some example data with 3 replicates
 #'file.path <- system.file("extdata","euratrans", package='chromstaRData')
-#'bedfiles <- list.files(file.path, pattern="liver.*H3K27me3", full.names=TRUE)[1:3]
+#'bedfiles <- list.files(file.path, pattern="H3K27me3.*SHR", full.names=TRUE)[1:3]
 #'# Obtain chromosome lengths. This is only necessary for BED files. BAM files are
 #'# handled automatically.
 #'data(rn4_chrominfo)

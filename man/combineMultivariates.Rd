@@ -20,10 +20,10 @@ A \code{link{combinedMultiHMM}} objects with combinatorial states for each condi
 Combine combinatorial states from several \code{\link{multiHMM}} objects. Combinatorial states can be combined for objects containing multiple marks (\code{mode='mark'}) or multiple conditions (\code{mode='condition'}).
 }
 \examples{
-### Multivariate peak calling for liver tissue ###
-# Get example BED files for 2 different marks in rat liver
+### Multivariate peak calling for spontaneous hypertensive rat (SHR) ###
+# Get example BED files for 2 different marks in hypertensive rat (SHR)
 file.path <- system.file("extdata","euratrans", package='chromstaRData')
-bedfiles <- list.files(file.path, full.names=TRUE, pattern='liver')[c(1:2,7:8)]
+bedfiles <- list.files(file.path, full.names=TRUE, pattern='SHR')[c(1:2,7:8)]
 # Bin the data
 data(rn4_chrominfo)
 binned.data <- list()
@@ -39,15 +39,15 @@ for (i1 in 1:length(binned.data)) {
 }
 # Construct experiment structure
 exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
-                 condition=rep("liver",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
+                 condition=rep("SHR",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
 states <- stateBrewer(exp, mode='mark')
 # Call multivariate peaks
-multimodel.liver <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
+multimodel.SHR <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
 
-#'### Multivariate peak calling for left-ventricle tissue ###
-# Get example BED files for 2 different marks in rat liver
+#'### Multivariate peak calling for brown norway (BN) rat ###
+# Get example BED files for 2 different marks in brown norway rat
 file.path <- system.file("extdata","euratrans", package='chromstaRData')
-bedfiles <- list.files(file.path, full.names=TRUE, pattern='lv')[c(1:2,7:8)]
+bedfiles <- list.files(file.path, full.names=TRUE, pattern='BN')[c(1:2,7:8)]
 # Bin the data
 data(rn4_chrominfo)
 binned.data <- list()
@@ -63,13 +63,14 @@ for (i1 in 1:length(binned.data)) {
 }
 # Construct experiment structure
 exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
-                 condition=rep("lv",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
+                 condition=rep("BN",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
 states <- stateBrewer(exp, mode='mark')
 # Call multivariate peaks
-multimodel.lv <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
+multimodel.BN <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
 
 ### Combine multivariates ###
-comb.model <- combineMultivariates(list(liver=multimodel.liver, lv=multimodel.lv), mode='mark')
+comb.model <- combineMultivariates(list(SHR=multimodel.SHR, BN=multimodel.BN), mode='mark')
+
 }
 \author{
 Aaron Taudt

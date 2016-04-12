@@ -17,6 +17,15 @@
 #' @param mode Mode of brewing. See \code{\link{Chromstar}} for a description of the parameter.
 #' @return A data.frame with combinations and their corresponding (decimal) combinatorial states.
 #' @export
+#' @examples 
+#'## Construct an experiment table
+#'data(experiment_table)
+#'print(experiment_table)
+#'## Construct combinatorial states
+#'stateBrewer(experiment_table, mode='mark')
+#'stateBrewer(experiment_table, mode='condition')
+#'stateBrewer(experiment_table, mode='full', common.states=TRUE)
+#'
 stateBrewer <- function(experiment.table, mode, differential.states=FALSE, common.states=FALSE) {
 
 	if (check.experiment.table(experiment.table)!=0) {

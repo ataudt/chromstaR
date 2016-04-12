@@ -48,20 +48,19 @@ Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
 This function performs \code{\link[chromstaR:binReads]{binning}}, \code{\link[chromstaR:callPeaksUnivariate]{univariate peak calling}} and \code{\link[chromstaR:callPeaksMultivariate]{multivariate peak calling}} from a list of input files.
 }
 \examples{
-\dontrun{
 ## Prepare the file paths. Exchange this with your input and output directories.
 inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
-outputfolder <- file.path(tempdir(), 'liver-example')
+outputfolder <- file.path(tempdir(), 'SHR-example')
 ## Define experiment structure
-data(experiment_table_liver)
+data(experiment_table_SHR)
 ## Define assembly
 # This is only necessary if you have BED files, BAM files are handled automatically.
 # For common assemblies you can also specify them as 'hg19' for example.
 data(rn4_chrominfo)
 ## Run ChromstaR
-Chromstar(inputfolder, experiment.table=experiment_table_liver,
+Chromstar(inputfolder, experiment.table=experiment_table_SHR,
          outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
-         prefit.on.chr='chr12', mode='mark', eps=1)}
+         prefit.on.chr='chr12', mode='mark', eps=1)
 
 }
 

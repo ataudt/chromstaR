@@ -69,7 +69,7 @@ This function is similar to \code{\link{callPeaksUnivariateAllChr}} but allows t
 \examples{
 ## Get an example BED file
 bedfile <- system.file("extdata", "euratrans",
-                      "liver-H3K27me3-BN-male-bio1-tech1.bed.gz",
+                      "lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
                        package="chromstaRData")
 ## Bin the BED file into bin size 1000bp
 data(rn4_chrominfo)

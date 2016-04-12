@@ -27,6 +27,22 @@ Export GRanges as genome browser viewable file
 \details{
 Export regions from \code{\link{GRanges}} as a file which can be uploaded into a genome browser. Regions are exported in BED format (.bed.gz).
 }
+\examples{
+### Export regions with read counts above 20 ###
+# Get an example BED file with ChIP-seq reads
+bedfile <- system.file("extdata", "euratrans",
+                      "lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
+                       package="chromstaRData")
+# Bin the BED file into bin size 1000bp
+data(rn4_chrominfo)
+binned <- binReads(bedfile, assembly=rn4_chrominfo, binsize=1000,
+                  chromosomes='chr12')
+plot(binned)
+# Export regions with read count above 20
+exportGRanges(binned[binned$counts > 20], filename=tempfile(),
+             trackname='read counts above 20')
+
+}
 \author{
 Aaron Taudt
 }

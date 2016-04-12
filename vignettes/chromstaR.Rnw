@@ -44,7 +44,7 @@ library(chromstaR)
 <<univariate_narrow_binning, results='markup', message=FALSE, eval=TRUE>>=
 ## === Step 1: Binning ===
 # Get an example BED file
-bedfile <- system.file("extdata","euratrans","liver-H3K4me3-BN-male-bio2-tech1.bed.gz",
+bedfile <- system.file("extdata","euratrans","lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
                         package="chromstaRData")
 # Get the chromosome lengths (see ?GenomeInfoDb::fetchExtendedChromInfoFromUCSC)
 # This is only necessary for BED files. BAM files are handled automatically.
@@ -89,7 +89,7 @@ library(chromstaR)
 <<univariate_broad_binning, results='hide', message=FALSE, eval=TRUE>>=
 ## === Step 1: Binning ===
 # Get an example BED file
-bedfile <- system.file("extdata","euratrans","liver-H3K27me3-BN-male-bio1-tech1.bed.gz",
+bedfile <- system.file("extdata","euratrans","lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
                         package="chromstaRData")
 # Get the chromosome lengths (see ?GenomeInfoDb::fetchExtendedChromInfoFromUCSC)
 # This is only necessary for BED files. BAM files are handled automatically.
@@ -122,7 +122,7 @@ exportUnivariates(list(model), filename='your-read-file', what='counts')
 
 <<univariate_broad_H4K20me1, echo=TRUE, results='hide', message=FALSE, fig.width=6, fig.height=4>>=
 ## === Step 1-3: Another example for mark H4K20me1 ===
-bedfile <- system.file("extdata","euratrans","liver-H4K20me1-BN-male-bio1-tech1.bed.gz",
+bedfile <- system.file("extdata","euratrans","lv-H4K20me1-BN-male-bio1-tech1.bed.gz",
                        package="chromstaRData")
 data(rn4_chrominfo)
 binned.data <- binReads(bedfile, assembly=rn4_chrominfo, binsizes=1000,
@@ -149,11 +149,11 @@ library(chromstaR)
 
 <<multivariate_replicate_binning, results='markup', message=FALSE, eval=TRUE>>=
 ## === Step 1: Binning ===
-# Let's get some example data with 3 replicates
+# Let's get some example data with 3 replicates in spontaneous hypertensive rat (SHR)
 file.path <- system.file("extdata","euratrans", package='chromstaRData')
-bedfiles.good <- list.files(file.path, pattern="liver.*H3K27me3", full.names=TRUE)[1:3]
+bedfiles.good <- list.files(file.path, pattern="H3K27me3.*SHR", full.names=TRUE)[1:3]
 # We fake a replicate with poor quality by taking a different mark entirely
-bedfiles.poor <- list.files(file.path, pattern="liver.*H4K20me1", full.names=TRUE)[1]
+bedfiles.poor <- list.files(file.path, pattern="H4K20me1.*SHR", full.names=TRUE)[1]
 bedfiles <- c(bedfiles.good, bedfiles.poor)
 # Obtain chromosome lengths. This is only necessary for BED files. BAM files are
 # handled automatically.
@@ -203,7 +203,7 @@ exportMultivariate(multi.model, filename='your-read-file', what='counts')
 
 \subsection{Task 2: Detecting differentially modified regions}
 
-\Rpackage{chromstaR} is extremely powerful in detecting differentially modified regions in two or more samples. The following example illustrates this on ChIP-seq data for H4K20me1 in liver and heart (left-ventricle) tissues from rat. The mode of analysis is called \emph{condition}, because all conditions are analyzed simultaneously.
+\Rpackage{chromstaR} is extremely powerful in detecting differentially modified regions in two or more samples. The following example illustrates this on ChIP-seq data for H4K20me1 in brown norway (BN) and spontaneous hypertensive rat (SHR) in left-ventricle (lv) heart tissue. The mode of analysis is called \emph{condition}, because all conditions are analyzed simultaneously.
 
 \begin{scriptsize}
 <<multivariate_differential_library, results='hide', message=FALSE, eval=TRUE>>=
@@ -276,11 +276,11 @@ library(chromstaR)
 #=== Step 1: Preparation ===
 ## Prepare the file paths. Exchange this with your input and output directories.
 inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
-outputfolder <- file.path(tempdir(), 'liver-example')
+outputfolder <- file.path(tempdir(), 'SHR-example')
 
-## Define experiment structure
-data(experiment_table_liver)
-print(experiment_table_liver)
+## Define experiment structure (SHR = spontaneous hypertensive rat)
+data(experiment_table_SHR)
+print(experiment_table_SHR)
 
 ## Define assembly
 # This is only necessary if you have BED files, BAM files are handled automatically.
@@ -292,7 +292,7 @@ head(rn4_chrominfo)
 <<multivariate_combinatorial_Chromstar, results='hide', message=FALSE, eval=TRUE>>=
 #=== Step 2: Run Chromstar ===
 ## Run ChromstaR
-Chromstar(inputfolder, experiment.table=experiment_table_liver,
+Chromstar(inputfolder, experiment.table=experiment_table_SHR,
           outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
           prefit.on.chr='chr12', mode='mark')
 @
@@ -301,7 +301,7 @@ Chromstar(inputfolder, experiment.table=experiment_table_liver,
 ## Results are stored in 'outputfolder' and can be loaded for further processing
 list.files(outputfolder)
 model <- get(load(file.path(outputfolder,'multivariate',
-                            'multivariate_mode-mark_condition-liver.RData')))
+                            'multivariate_mode-mark_condition-SHR.RData')))
 # Obtain genomic frequencies for combinatorial states
 genomicFrequencies(model)
 # Plot transition probabilities and read count correlation
@@ -350,7 +350,7 @@ plotHeatmap(model, tss) +
 
 \subsection{Task 4: Finding differences between combinatorial chromatin states}
 
-Consider bivalent promoters defined by [H3K4me3+H3K27me3] at two different developmental stages. This is an example where one is interested in \emph{differences} between \emph{combinatorial states}. The following example demonstrates how such an analysis can be done with \Rpackage{chromstaR}. We use the same data set as before with bivalent promoters in heart (left-ventricle) and liver tissue.
+Consider bivalent promoters defined by [H3K4me3+H3K27me3] at two different developmental stages, or in two different strains or tissues. This is an example where one is interested in \emph{differences} between \emph{combinatorial states}. The following example demonstrates how such an analysis can be done with \Rpackage{chromstaR}. We use a data set from the Euratrans project (downsampled to chr12) to find differences in bivalent promoters between brown norway (BN) and spontaneous hypertensive rat (SHR) in left-ventricle (lv) heart tissue.
 
 \Rfunction{Chromstar} can be run in three different modes:
 \begin{itemize}
@@ -368,7 +368,7 @@ library(chromstaR)
 #=== Step 1: Preparation ===
 ## Prepare the file paths. Exchange this with your input and output directories.
 inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
-outputfolder <- file.path(tempdir(), 'liver-lv-example')
+outputfolder <- file.path(tempdir(), 'SHR-BN-example')
 
 ## Define experiment structure
 data(experiment_table)
@@ -391,15 +391,20 @@ Chromstar(inputfolder, experiment.table=experiment_table,
 <<combined_listfiles, results='markup', message=FALSE, eval=TRUE>>=
 ## Results are stored in 'outputfolder' and can be loaded for further processing
 list.files(outputfolder)
-model <- get(load(file.path(outputfolder,'multivariate-combined', 'combined_mode-mark.RData')))
+model <- get(load(file.path(outputfolder,'multivariate-combined',
+                            'combined_mode-mark.RData')))
 @
 
 <<combined_analysis, results='markup', message=FALSE, eval=TRUE>>=
+#=== Step 3: Analysis and export ===
 ## Obtain all genomic regions where the two tissues have different states
 segments <- model$combined.segments
-diff.segments <- segments[segments$liver != segments$lv]
-exportGRanges(diff.segments, trackname='differential chromatin states',
+diff.segments <- segments[segments$SHR != segments$BN]
+exportGRanges(diff.segments, trackname='differential_chromatin_states',
               filename=tempfile())
+## Get genomic frequencies
+transFreqs <- transitionFrequencies(combined.hmm=model)
+print(transFreqs)
 @
 \end{scriptsize}
 

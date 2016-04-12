@@ -31,9 +31,9 @@ bin \tab modification state \tab \tab \tab \tab decimal state\cr
 }
 }
 \examples{
-# Get example BED files for 4 different marks in rat liver
+# Get example BED files for 4 different marks in hypertensive rat (SHR)
 file.path <- system.file("extdata","euratrans", package='chromstaRData')
-bedfiles <- list.files(file.path, full.names=TRUE, pattern='liver')[c(1,4,7,10)]
+bedfiles <- list.files(file.path, full.names=TRUE, pattern='SHR')[c(1,4,7,10)]
 # Bin the data
 data(rn4_chrominfo)
 binned.data <- list()
