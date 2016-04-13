@@ -23,7 +23,7 @@ Combine combinatorial states from several \code{\link{multiHMM}} objects. Combin
 ### Multivariate peak calling for spontaneous hypertensive rat (SHR) ###
 # Get example BED files for 2 different marks in hypertensive rat (SHR)
 file.path <- system.file("extdata","euratrans", package='chromstaRData')
-bedfiles <- list.files(file.path, full.names=TRUE, pattern='SHR')[c(1:2,7:8)]
+bedfiles <- list.files(file.path, full.names=TRUE, pattern='SHR')[c(1:2,6:7)]
 # Bin the data
 data(rn4_chrominfo)
 binned.data <- list()

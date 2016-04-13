@@ -19,9 +19,9 @@ Combine multiple \code{\link{uniHMM}}s to a \code{\link{multiHMM}} without runni
 Use this function if you want to combine ChIP-seq samples without actually running a multivariate Hidden Markov Model. The resulting object will be of class \code{\link{multiHMM}} but will not be truly multivariate.
 }
 \examples{
-# Get example BED files for 4 different marks in hypertensive rat (SHR)
+# Get example BED files for 2 different marks in hypertensive rat (SHR)
 file.path <- system.file("extdata","euratrans", package='chromstaRData')
-bedfiles <- list.files(file.path, full.names=TRUE, pattern='SHR')[c(1,7)]
+bedfiles <- list.files(file.path, full.names=TRUE, pattern='SHR')[c(1,6)]
 # Bin the data
 data(rn4_chrominfo)
 binned.data <- list()

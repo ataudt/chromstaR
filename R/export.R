@@ -16,30 +16,27 @@
 #' @param orderByScore Logical indicating whether or not to sort entries in BED file by score.
 #' @return \code{NULL}
 #' @seealso \code{\link{exportBinnedData}}, \code{\link{exportMultivariate}}
-#' @examples
-#'### Univariate peak calling ###
-#'## Get example BED-files with ChIP-seq reads for H3K36me3
-#' # in 7 different brain tissues (chr22)
-#'bedfiles <- list.files(system.file(file.path("extdata","brain"),
-#'                       package="chromstaR"), full=TRUE)
-#'## Bin the data into bin size 1000bp and build the univariate Hidden Markov Model (HMM)
-#'binned.data.list <- list()
-#'uni.HMMs <- list()
-#'for (bedfile in bedfiles) {
-#'  binned.data <- bed2binned(bedfile, assembly='hg19', binsize=1000, save.as.RData=FALSE)
-#'  binned.data.list[[bedfile]] <- binned.data
-#'  uni.HMMs[[bedfile]] <- callPeaksUnivariate(binned.data, ID=basename(bedfile),
-#'                                             max.time=30, eps=0.01)
-#'}
-#'## Export the binned read counts and peaks
-#'\donttest{exportUnivariates(uni.HMMs, filename='chromstaR-example_univariate.HMMs', what=c('counts','peaks'))}
 #' @export
+#' @examples
+#'## Get an example BED file
+#'bedfile <- system.file("extdata", "euratrans",
+#'                       "lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
+#'                        package="chromstaRData")
+#'## Bin the BED file into bin size 1000bp
+#'data(rn4_chrominfo)
+#'binned <- binReads(bedfile, assembly=rn4_chrominfo, binsize=1000,
+#'                   chromosomes='chr12')
+#'## Fit the univariate Hidden Markov Model
+#'hmm <- callPeaksUnivariate(binned, ID='example_H3K27me3', max.time=60, eps=1)
+#'## Export
+#'exportUnivariates(list(hmm), filename=tempfile(), what=c('peaks','counts'))
+#'
 exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'counts'), header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
     if ('peaks' %in% what) {
-        exportUnivariatePeaks(hmm.list, filename, header=header, separate.files=separate.files, orderByScore=orderByScore)
+        exportUnivariatePeaks(hmm.list, filename=paste0(filename, '_peaks'), header=header, separate.files=separate.files, orderByScore=orderByScore)
     }
     if ('counts' %in% what) {
-        exportUnivariateReadCounts(hmm.list, filename, header=header, separate.files=separate.files)
+        exportUnivariateReadCounts(hmm.list, filename=paste0(filename, '_counts'), header=header, separate.files=separate.files)
     }
 }
 
