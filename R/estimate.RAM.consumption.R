@@ -16,7 +16,7 @@
 # # double 8bytes
 # # int 4bytes
 # # bool 4bytes
-# 	ram <- 8 * (num.bins + num.bins*num.states *5 + num.states^2 *2) + 4 * (num.mods*num.bins) + 4 * (num.states*num.mods)
-# 	ram.Mb <- as.integer(ram / 2^20)
-# 	return(ram.Mb)
+#     ram <- 8 * (num.bins + num.bins*num.states *5 + num.states^2 *2) + 4 * (num.mods*num.bins) + 4 * (num.states*num.mods)
+#     ram.Mb <- as.integer(ram / 2^20)
+#     return(ram.Mb)
 # }

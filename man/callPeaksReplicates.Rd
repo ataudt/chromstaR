@@ -21,7 +21,7 @@ callPeaksReplicates(hmm.list, max.states = 32, force.equal = FALSE,
 
 \item{max.time}{The maximum running time in seconds for the Baum-Welch algorithm. If this time is reached, the Baum-Welch will terminate after the current iteration finishes. The default \code{NULL} is no limit.}
 
-\item{keep.posteriors}{If set to \code{TRUE}, posteriors will be available in the output. This is useful to change the FDR later, but increases the necessary disk space to store the result immense.}
+\item{keep.posteriors}{If set to \code{TRUE}, posteriors will be available in the output. This is useful to change the post.cutoff later, but increases the necessary disk space to store the result immense.}
 
 \item{num.threads}{Number of threads to use. Setting this to >1 may give increased performance.}
 

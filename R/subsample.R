@@ -9,15 +9,15 @@
 #' @importFrom stats rbinom
 subsample <- function(binned.data, sample.reads) {
 
-	total.reads <- sum(binned.data$counts)
-	if (sample.reads >= total.reads) {
-		warning("Not resampling reads because sample.reads is bigger than the actual number of reads in the sample.")
-		return(binned.data)
-	}
+    total.reads <- sum(binned.data$counts)
+    if (sample.reads >= total.reads) {
+        warning("Not resampling reads because sample.reads is bigger than the actual number of reads in the sample.")
+        return(binned.data)
+    }
 
-	p <- sample.reads / total.reads
-	binned.data$counts <- stats::rbinom(binned.data$counts, binned.data$counts, p)
+    p <- sample.reads / total.reads
+    binned.data$counts <- stats::rbinom(binned.data$counts, binned.data$counts, p)
 
-	return(binned.data)
+    return(binned.data)
 }
-	
+    

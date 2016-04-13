@@ -38,99 +38,99 @@
 #'
 unis2pseudomulti <- function(uni.hmm.list) {
 
-	# Load models
-	uni.hmm.list <- loadHmmsFromFiles(uni.hmm.list, check.class=class.univariate.hmm)
+    # Load models
+    uni.hmm.list <- loadHmmsFromFiles(uni.hmm.list, check.class=class.univariate.hmm)
 
-	# Extract coordinates and other stuff
-	nummod = length(uni.hmm.list)
-	bins <- uni.hmm.list[[1]]$bins
-	bins$counts <- NULL
-	bins$state <- NULL
-	numbins = length(uni.hmm.list[[1]]$bins)
-	IDs <- unlist(lapply(uni.hmm.list, "[[", "ID"))
-	names(IDs) <- NULL
-	distributions = lapply(uni.hmm.list,"[[","distributions")
-	weights = lapply(uni.hmm.list,"[[","weights")
+    # Extract coordinates and other stuff
+    nummod = length(uni.hmm.list)
+    bins <- uni.hmm.list[[1]]$bins
+    bins$counts <- NULL
+    bins$state <- NULL
+    numbins = length(uni.hmm.list[[1]]$bins)
+    IDs <- unlist(lapply(uni.hmm.list, "[[", "ID"))
+    names(IDs) <- NULL
+    distributions = lapply(uni.hmm.list,"[[","distributions")
+    weights = lapply(uni.hmm.list,"[[","weights")
 
-	# Extract the reads
-	ptm <- startTimedMessage("Extracting read counts from uni.hmm.list...")
-	reads = matrix(NA, ncol=nummod, nrow=numbins)
-	colnames(reads) <- IDs
-	for (imod in 1:nummod) {
-		reads[,imod] = uni.hmm.list[[imod]]$bins$counts
-	}
-	maxreads = max(reads)
-	bins$counts <- reads
-	stopTimedMessage(ptm)
+    # Extract the reads
+    ptm <- startTimedMessage("Extracting read counts from uni.hmm.list...")
+    reads = matrix(NA, ncol=nummod, nrow=numbins)
+    colnames(reads) <- IDs
+    for (imod in 1:nummod) {
+        reads[,imod] = uni.hmm.list[[imod]]$bins$counts
+    }
+    maxreads = max(reads)
+    bins$counts <- reads
+    stopTimedMessage(ptm)
 
-	## Get combinatorial states
-	ptm <- startTimedMessage("Getting combinatorial states")
-	combstates.per.bin = combinatorialStates(uni.hmm.list)
-	comb.states.table = table(combstates.per.bin)
-	comb.states = as.numeric(names(sort(comb.states.table, decreasing=TRUE)))
-	numstates <- length(comb.states)
-	bins$state <- factor(combstates.per.bin, levels=comb.states)
-	binary.comb.states <- dec2bin(comb.states, colnames=names(uni.hmm.list))
-	binary.comb.states.list <- list()
-	for (icol in 1:ncol(binary.comb.states)) {
-	  binary.comb.states.list[[colnames(binary.comb.states)[icol]]] <- c('',colnames(binary.comb.states)[icol])[binary.comb.states[,icol]+1]
-	}
-	binary.comb.states.list$sep='+'
-	mapping <- do.call(paste, binary.comb.states.list)
-	mapping <- gsub('\\+{2,}', '+', mapping)
-	mapping <- sub('^\\+', '', mapping)
-	mapping <- sub('\\+$', '', mapping)
-	mapping <- paste0('[', mapping, ']')
-	names(mapping) <- rownames(binary.comb.states)
-	bins$combination <- factor(mapping[as.character(bins$state)], levels=mapping)
-	stopTimedMessage(ptm)
-	
-	## Calculate transition matrix
-	ptm <- startTimedMessage("Estimating transition matrix...")
-	A.estimated = matrix(0, ncol=2^nummod, nrow=2^nummod)
-	colnames(A.estimated) = 1:2^nummod-1
-	rownames(A.estimated) = 1:2^nummod-1
-	for (i1 in 1:(length(combstates.per.bin)-1)) {
-		from = combstates.per.bin[i1] + 1
-		to = combstates.per.bin[i1+1] + 1
-		A.estimated[from,to] = A.estimated[from,to] + 1
-	}
-	A.estimated = sweep(A.estimated, 1, rowSums(A.estimated), "/")
-	# Select only states that are in data
-	A.estimated = A.estimated[as.character(comb.states),as.character(comb.states)]
-	stopTimedMessage(ptm)
+    ## Get combinatorial states
+    ptm <- startTimedMessage("Getting combinatorial states")
+    combstates.per.bin = combinatorialStates(uni.hmm.list)
+    comb.states.table = table(combstates.per.bin)
+    comb.states = as.numeric(names(sort(comb.states.table, decreasing=TRUE)))
+    numstates <- length(comb.states)
+    bins$state <- factor(combstates.per.bin, levels=comb.states)
+    binary.comb.states <- dec2bin(comb.states, colnames=names(uni.hmm.list))
+    binary.comb.states.list <- list()
+    for (icol in 1:ncol(binary.comb.states)) {
+      binary.comb.states.list[[colnames(binary.comb.states)[icol]]] <- c('',colnames(binary.comb.states)[icol])[binary.comb.states[,icol]+1]
+    }
+    binary.comb.states.list$sep='+'
+    mapping <- do.call(paste, binary.comb.states.list)
+    mapping <- gsub('\\+{2,}', '+', mapping)
+    mapping <- sub('^\\+', '', mapping)
+    mapping <- sub('\\+$', '', mapping)
+    mapping <- paste0('[', mapping, ']')
+    names(mapping) <- rownames(binary.comb.states)
+    bins$combination <- factor(mapping[as.character(bins$state)], levels=mapping)
+    stopTimedMessage(ptm)
+    
+    ## Calculate transition matrix
+    ptm <- startTimedMessage("Estimating transition matrix...")
+    A.estimated = matrix(0, ncol=2^nummod, nrow=2^nummod)
+    colnames(A.estimated) = 1:2^nummod-1
+    rownames(A.estimated) = 1:2^nummod-1
+    for (i1 in 1:(length(combstates.per.bin)-1)) {
+        from = combstates.per.bin[i1] + 1
+        to = combstates.per.bin[i1+1] + 1
+        A.estimated[from,to] = A.estimated[from,to] + 1
+    }
+    A.estimated = sweep(A.estimated, 1, rowSums(A.estimated), "/")
+    # Select only states that are in data
+    A.estimated = A.estimated[as.character(comb.states),as.character(comb.states)]
+    stopTimedMessage(ptm)
 
-	## Return multi.hmm
-	result <- list()
-	result$IDs <- IDs
-	result$bins <- bins
-	## Segmentation
-  	df <- as.data.frame(result$bins)
-  	ind.readcols <- grep('^counts', names(df))
-  	ind.widthcol <- grep('width', names(df))
-  	ind.scorecol <- grep('score', names(df))
-  	red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2drop=c(ind.readcols, ind.widthcol)))
-  	red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], combination=red.df[,'combination'])
-  	result$segments <- red.gr
-  	seqlengths(result$segments) <- seqlengths(result$bins)
-	## Parameters
-  	result$mapping <- mapping
-		# Weights
-		tstates <- table(combstates.per.bin)
-		result$weights <- sort(tstates/sum(tstates), decreasing=TRUE)
-		# Transition matrices
-		result$transitionProbs <- A.estimated
-		# Distributions
-		result$distributions <- distributions
-		names(result$distributions) <- IDs
-	## Convergence info
-		convergenceInfo <- list(eps=Inf, loglik=Inf, loglik.delta=Inf, num.iterations=Inf, time.sec=Inf)
-		result$convergenceInfo <- convergenceInfo
-	## Correlation matrices
-# 		result$correlation.matrix <- correlationMatrix2use
-	## Add class
-		class(result) <- class.multivariate.hmm
+    ## Return multi.hmm
+    result <- list()
+    result$IDs <- IDs
+    result$bins <- bins
+    ## Segmentation
+      df <- as.data.frame(result$bins)
+      ind.readcols <- grep('^counts', names(df))
+      ind.widthcol <- grep('width', names(df))
+      ind.scorecol <- grep('score', names(df))
+      red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2drop=c(ind.readcols, ind.widthcol)))
+      red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], combination=red.df[,'combination'])
+      result$segments <- red.gr
+      seqlengths(result$segments) <- seqlengths(result$bins)
+    ## Parameters
+      result$mapping <- mapping
+        # Weights
+        tstates <- table(combstates.per.bin)
+        result$weights <- sort(tstates/sum(tstates), decreasing=TRUE)
+        # Transition matrices
+        result$transitionProbs <- A.estimated
+        # Distributions
+        result$distributions <- distributions
+        names(result$distributions) <- IDs
+    ## Convergence info
+        convergenceInfo <- list(eps=Inf, loglik=Inf, loglik.delta=Inf, num.iterations=Inf, time.sec=Inf)
+        result$convergenceInfo <- convergenceInfo
+    ## Correlation matrices
+#         result$correlation.matrix <- correlationMatrix2use
+    ## Add class
+        class(result) <- class.multivariate.hmm
 
-	return(result)
+    return(result)
 
 }

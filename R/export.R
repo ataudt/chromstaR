@@ -35,12 +35,12 @@
 #'\donttest{exportUnivariates(uni.HMMs, filename='chromstaR-example_univariate.HMMs', what=c('counts','peaks'))}
 #' @export
 exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'counts'), header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
-	if ('peaks' %in% what) {
-		exportUnivariatePeaks(hmm.list, filename, header=header, separate.files=separate.files, orderByScore=orderByScore)
-	}
-	if ('counts' %in% what) {
-		exportUnivariateReadCounts(hmm.list, filename, header=header, separate.files=separate.files)
-	}
+    if ('peaks' %in% what) {
+        exportUnivariatePeaks(hmm.list, filename, header=header, separate.files=separate.files, orderByScore=orderByScore)
+    }
+    if ('counts' %in% what) {
+        exportUnivariateReadCounts(hmm.list, filename, header=header, separate.files=separate.files)
+    }
 }
 
 #----------------------------------------------------
@@ -50,86 +50,86 @@ exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'counts'), hea
 #' @importFrom grDevices col2rgb
 exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCalls", header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
 
-	## Function definitions
-	insertchr <- function(hmm.gr) {
-		# Change chromosome names from '1' to 'chr1' if necessary
-		mask <- which(!grepl('chr', seqnames(hmm.gr)))
-		mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
-		mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
-		mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
-		return(hmm.gr)
-	}
+    ## Function definitions
+    insertchr <- function(hmm.gr) {
+        # Change chromosome names from '1' to 'chr1' if necessary
+        mask <- which(!grepl('chr', seqnames(hmm.gr)))
+        mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
+        mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
+        mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
+        return(hmm.gr)
+    }
 
-	## Load models
-	hmm.list <- loadHmmsFromFiles(hmm.list, check.class=class.univariate.hmm)
+    ## Load models
+    hmm.list <- loadHmmsFromFiles(hmm.list, check.class=class.univariate.hmm)
 
-	## Transform to GRanges
-	hmm.grl <- lapply(hmm.list, '[[', 'segments')
-	hmm.grl <- lapply(hmm.grl, insertchr)
+    ## Transform to GRanges
+    hmm.grl <- lapply(hmm.list, '[[', 'segments')
+    hmm.grl <- lapply(hmm.grl, insertchr)
 
-	# Variables
-	nummod <- length(hmm.list)
-	filename <- paste0(filename,".bed.gz")
-	if (!separate.files) {
-		filename.gz <- gzfile(filename, 'w')
-	}
+    # Variables
+    nummod <- length(hmm.list)
+    filename <- paste0(filename,".bed.gz")
+    if (!separate.files) {
+        filename.gz <- gzfile(filename, 'w')
+    }
 
-	# Generate the colors
-	colors <- getStateColors(levels(hmm.grl[[1]]$state))
-	RGBs <- t(grDevices::col2rgb(colors))
-	RGBs <- apply(RGBs,1,paste,collapse=",")
+    # Generate the colors
+    colors <- getStateColors(levels(hmm.grl[[1]]$state))
+    RGBs <- t(grDevices::col2rgb(colors))
+    RGBs <- apply(RGBs,1,paste,collapse=",")
 
-	# Write first line to file
-	if (!separate.files) {
-		message('Writing to file ',filename)
-		cat("", file=filename.gz)
-	}
-	
-	### Write every model to file ###
-	for (imod in 1:nummod) {
-		message('  Writing track ',imod,' / ',nummod)
-		hmm <- hmm.list[[imod]]
-		if (separate.files) {
-			filename.sep <- paste0(sub('.bed.gz$', '', filename), '_', hmm$ID, '.bed.gz')
-			filename.gz <- gzfile(filename.sep, 'w')
-			message('Writing to file ',filename.sep)
-			cat("", file=filename.gz)
-		}
-		hmm.gr <- hmm.grl[[imod]]
-		priority <- 51 + 4*imod
-		if (header) {
-			cat(paste0("track name=\"univariate calls for ",hmm$ID,"\" description=\"univariate calls for ",hmm$ID,"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
-		}
-		if (is.null(hmm.gr$score)) {
-			hmm.gr$score <- 0
-		}
-		collapsed.calls <- as.data.frame(hmm.gr)[c('chromosome','start','end','state','score')]
-		# Make score integer
-		collapsed.calls$score <- round(collapsed.calls$score*1000)
-		itemRgb <- RGBs[as.character(collapsed.calls$state)]
-		numsegments <- nrow(collapsed.calls)
-		df <- cbind(collapsed.calls, strand=rep(".",numsegments), thickStart=collapsed.calls$start, thickEnd=collapsed.calls$end, itemRgb=itemRgb)
-		# Reorder
-		if (orderByScore) {
-			df <- df[rev(order(df$score)),]
-		}
-		# Convert from 1-based closed to 0-based half open
-		df$start <- df$start - 1
-		df$thickStart <- df$thickStart - 1
-		df <- df[df$state=='modified',]
-		if (nrow(df) == 0) {
-			warning('hmm ',imod,' does not contain any \'modified\' calls')
-		} else {
-			utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
-		}
-		if (separate.files) {
-			close(filename.gz)
-		}
-	}
-	if (!separate.files) {
-		close(filename.gz)
-	}
-	message('')
+    # Write first line to file
+    if (!separate.files) {
+        message('Writing to file ',filename)
+        cat("", file=filename.gz)
+    }
+    
+    ### Write every model to file ###
+    for (imod in 1:nummod) {
+        message('  Writing track ',imod,' / ',nummod)
+        hmm <- hmm.list[[imod]]
+        if (separate.files) {
+            filename.sep <- paste0(sub('.bed.gz$', '', filename), '_', hmm$ID, '.bed.gz')
+            filename.gz <- gzfile(filename.sep, 'w')
+            message('Writing to file ',filename.sep)
+            cat("", file=filename.gz)
+        }
+        hmm.gr <- hmm.grl[[imod]]
+        priority <- 51 + 4*imod
+        if (header) {
+            cat(paste0("track name=\"univariate calls for ",hmm$ID,"\" description=\"univariate calls for ",hmm$ID,"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
+        }
+        if (is.null(hmm.gr$score)) {
+            hmm.gr$score <- 0
+        }
+        collapsed.calls <- as.data.frame(hmm.gr)[c('chromosome','start','end','state','score')]
+        # Make score integer
+        collapsed.calls$score <- round(collapsed.calls$score*1000)
+        itemRgb <- RGBs[as.character(collapsed.calls$state)]
+        numsegments <- nrow(collapsed.calls)
+        df <- cbind(collapsed.calls, strand=rep(".",numsegments), thickStart=collapsed.calls$start, thickEnd=collapsed.calls$end, itemRgb=itemRgb)
+        # Reorder
+        if (orderByScore) {
+            df <- df[rev(order(df$score)),]
+        }
+        # Convert from 1-based closed to 0-based half open
+        df$start <- df$start - 1
+        df$thickStart <- df$thickStart - 1
+        df <- df[df$state=='modified',]
+        if (nrow(df) == 0) {
+            warning('hmm ',imod,' does not contain any \'modified\' calls')
+        } else {
+            utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
+        }
+        if (separate.files) {
+            close(filename.gz)
+        }
+    }
+    if (!separate.files) {
+        close(filename.gz)
+    }
+    message('')
 
 }
 
@@ -141,66 +141,66 @@ exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCa
 #' @importFrom grDevices col2rgb
 exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateReadCounts", header=TRUE, separate.files=FALSE) {
 
-	## Function definitions
-	insertchr <- function(hmm.gr) {
-		# Change chromosome names from '1' to 'chr1' if necessary
-		mask <- which(!grepl('chr', seqnames(hmm.gr)))
-		mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
-		mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
-		mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
-		return(hmm.gr)
-	}
+    ## Function definitions
+    insertchr <- function(hmm.gr) {
+        # Change chromosome names from '1' to 'chr1' if necessary
+        mask <- which(!grepl('chr', seqnames(hmm.gr)))
+        mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
+        mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
+        mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
+        return(hmm.gr)
+    }
 
-	## Load models
-	hmm.list <- loadHmmsFromFiles(hmm.list, check.class=class.univariate.hmm)
+    ## Load models
+    hmm.list <- loadHmmsFromFiles(hmm.list, check.class=class.univariate.hmm)
 
-	## Transform to GRanges
-	grl <- lapply(hmm.list, '[[', 'bins')
-	hmm.grl <- lapply(grl, insertchr)
+    ## Transform to GRanges
+    grl <- lapply(hmm.list, '[[', 'bins')
+    hmm.grl <- lapply(grl, insertchr)
 
-	# Variables
-	nummod <- length(hmm.list)
-	filename <- paste0(filename,".wig.gz")
-	if (!separate.files) {
-		filename.gz <- gzfile(filename, 'w')
-	}
-	readcol <- paste(grDevices::col2rgb(getStateColors('counts')), collapse=',')
+    # Variables
+    nummod <- length(hmm.list)
+    filename <- paste0(filename,".wig.gz")
+    if (!separate.files) {
+        filename.gz <- gzfile(filename, 'w')
+    }
+    readcol <- paste(grDevices::col2rgb(getStateColors('counts')), collapse=',')
 
-	# Write first line to file
-	if (!separate.files) {
-		message('Writing to file ',filename)
-		cat("", file=filename.gz)
-	}
-	
-	### Write every model to file ###
-	for (imod in 1:nummod) {
-		message('  Writing track ',imod,' / ',nummod)
-		hmm <- hmm.list[[imod]]
-		if (separate.files) {
-			filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', hmm$ID, '.wig.gz')
-			filename.gz <- gzfile(filename.sep, 'w')
-			message('Writing to file ',filename.sep)
-			cat("", file=filename.gz)
-		}
-		hmm.gr <- hmm.grl[[imod]]
-		priority <- 50 + 4*imod
-		binsize <- width(hmm.gr[1])
-		if (header) {
-			cat(paste0('track type=wiggle_0 name="read count for ',hmm$ID,'" description="read count for ',hmm$ID,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
-		}
-		# Write read data
-		for (chrom in unique(hmm.gr$chromosome)) {
-			cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-			utils::write.table(mcols(hmm.gr[hmm.gr$chromosome==chrom])$counts, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
-		}
-		if (separate.files) {
-			close(filename.gz)
-		}
-	}
-	if (!separate.files) {
-		close(filename.gz)
-	}
-	message('')
+    # Write first line to file
+    if (!separate.files) {
+        message('Writing to file ',filename)
+        cat("", file=filename.gz)
+    }
+    
+    ### Write every model to file ###
+    for (imod in 1:nummod) {
+        message('  Writing track ',imod,' / ',nummod)
+        hmm <- hmm.list[[imod]]
+        if (separate.files) {
+            filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', hmm$ID, '.wig.gz')
+            filename.gz <- gzfile(filename.sep, 'w')
+            message('Writing to file ',filename.sep)
+            cat("", file=filename.gz)
+        }
+        hmm.gr <- hmm.grl[[imod]]
+        priority <- 50 + 4*imod
+        binsize <- width(hmm.gr[1])
+        if (header) {
+            cat(paste0('track type=wiggle_0 name="read count for ',hmm$ID,'" description="read count for ',hmm$ID,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
+        }
+        # Write read data
+        for (chrom in unique(hmm.gr$chromosome)) {
+            cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
+            utils::write.table(mcols(hmm.gr[hmm.gr$chromosome==chrom])$counts, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
+        }
+        if (separate.files) {
+            close(filename.gz)
+        }
+    }
+    if (!separate.files) {
+        close(filename.gz)
+    }
+    message('')
 }
 
 
@@ -225,27 +225,25 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
 #' @param orderByScore Logical indicating whether or not to sort entries in BED file by score.
 #' @return \code{NULL}
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportBinnedData}}
-#' @examples
-#'### Multivariate peak calling ###
-#'## Load example multivariate Hidden Markov Model
-#'data(example.multi.HMM)
-#'## Export the binned read counts and peaks for each track
-#'\donttest{
-#'exportMultivariate(example.multi.HMM, exclude.states=c(0),
-#'                   filename='chromstaR_example.multi.HMM',
-#'                   what=c('counts','peaks'))
-#'}
 #' @export
+#' @examples
+#'## Get an example multiHMM
+#'file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+#'                     package="chromstaR")
+#'model <- get(load(file))
+#'## Export peak calls and combinatorial states
+#'exportMultivariate(model, filename=tempfile(), what=c('peaks','combinations'))
+#'
 exportMultivariate <- function(multi.hmm, filename, what=c('combinations', 'peaks', 'counts'), exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
-	if ('combinations' %in% what) {
-		exportMultivariateCalls(multi.hmm, filename=paste0(filename, '_combinations'), separate.tracks=FALSE, exclude.states, include.states, trackname=trackname, header=header, orderByScore=orderByScore)
-	}
-	if ('peaks' %in% what) {
-		exportMultivariateCalls(multi.hmm, filename=paste0(filename, '_peaks'), separate.tracks=TRUE, exclude.states, include.states, header=header, separate.files=separate.files, orderByScore=orderByScore)
-	}
-	if ('counts' %in% what) {
-		exportMultivariateReadCounts(multi.hmm, filename=paste0(filename, '_counts'), header=header, separate.files=separate.files)
-	}
+    if ('combinations' %in% what) {
+        exportMultivariateCalls(multi.hmm, filename=paste0(filename, '_combinations'), separate.tracks=FALSE, exclude.states, include.states, trackname=trackname, header=header, orderByScore=orderByScore)
+    }
+    if ('peaks' %in% what) {
+        exportMultivariateCalls(multi.hmm, filename=paste0(filename, '_peaks'), separate.tracks=TRUE, exclude.states, include.states, header=header, separate.files=separate.files, orderByScore=orderByScore)
+    }
+    if ('counts' %in% what) {
+        exportMultivariateReadCounts(multi.hmm, filename=paste0(filename, '_counts'), header=header, separate.files=separate.files)
+    }
 }
 
 #----------------------------------------------------
@@ -255,143 +253,143 @@ exportMultivariate <- function(multi.hmm, filename, what=c('combinations', 'peak
 #' @importFrom grDevices col2rgb
 exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateCalls", separate.tracks=TRUE, exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE, orderByScore=TRUE) {
 
-	## Intercept user input
-	if (class(multi.hmm)!=class.multivariate.hmm) {
-		multi.hmm <- get(load(multi.hmm))
-		if (class(multi.hmm)!=class.multivariate.hmm) {
-			stop("argument 'multi.hmm' expects a multivariate hmm or a file which contains a multivariate hmm")
-		}
-	}
+    ## Intercept user input
+    if (class(multi.hmm)!=class.multivariate.hmm) {
+        multi.hmm <- get(load(multi.hmm))
+        if (class(multi.hmm)!=class.multivariate.hmm) {
+            stop("argument 'multi.hmm' expects a multivariate hmm or a file which contains a multivariate hmm")
+        }
+    }
 
-	if (is.data.frame(exclude.states)) {
-		exclude.states <- exclude.states$combination
-	}
-	if (is.data.frame(include.states)) {
-		include.states <- include.states$combination
-	}
+    if (is.data.frame(exclude.states)) {
+        exclude.states <- exclude.states$combination
+    }
+    if (is.data.frame(include.states)) {
+        include.states <- include.states$combination
+    }
 
-	## Function definitions
-	insertchr <- function(hmm.gr) {
-		# Change chromosome names from '1' to 'chr1' if necessary
-		mask <- which(!grepl('chr', seqnames(hmm.gr)))
-		mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
-		mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
-		mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
-		return(hmm.gr)
-	}
+    ## Function definitions
+    insertchr <- function(hmm.gr) {
+        # Change chromosome names from '1' to 'chr1' if necessary
+        mask <- which(!grepl('chr', seqnames(hmm.gr)))
+        mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
+        mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
+        mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
+        return(hmm.gr)
+    }
 
-	## Variables
-	combstates <- levels(multi.hmm$bins$combination)
-	numstates <- length(combstates)
-	if (is.null(include.states)) {
-		combstates2use <- setdiff(combstates, exclude.states)
-	} else {
-		combstates2use <- intersect(combstates, include.states)
-	}
-	numstates <- length(combstates2use)
+    ## Variables
+    combstates <- levels(multi.hmm$bins$combination)
+    numstates <- length(combstates)
+    if (is.null(include.states)) {
+        combstates2use <- setdiff(combstates, exclude.states)
+    } else {
+        combstates2use <- intersect(combstates, include.states)
+    }
+    numstates <- length(combstates2use)
 
-	## Insert chromosome if missing
-	segments.df <- as.data.frame(insertchr(multi.hmm$segments))
+    ## Insert chromosome if missing
+    segments.df <- as.data.frame(insertchr(multi.hmm$segments))
 
-	# Select only desired states
-	segments.df <- segments.df[segments.df$combination %in% combstates2use,]
-	if (nrow(segments.df) == 0) {
-		warning("No regions to export!")
-		return()
-	}
+    # Select only desired states
+    segments.df <- segments.df[segments.df$combination %in% combstates2use,]
+    if (nrow(segments.df) == 0) {
+        warning("No regions to export!")
+        return()
+    }
 
-	# Write first line to file
-	filename <- paste0(filename,".bed.gz")
-	if (!separate.files) {
-		filename.gz <- gzfile(filename, 'w')
-		message('Writing to file ',filename)
-		cat("", file=filename.gz)
-	}
+    # Write first line to file
+    filename <- paste0(filename,".bed.gz")
+    if (!separate.files) {
+        filename.gz <- gzfile(filename, 'w')
+        message('Writing to file ',filename)
+        cat("", file=filename.gz)
+    }
 
-	if (separate.tracks) {
-		## Export peak calls
-		bin <- dec2bin(segments.df$state, ndigits=length(multi.hmm$IDs))
-		colnames(bin) <- multi.hmm$IDs
-		for (icol in 1:ncol(bin)) {
-			if (separate.files) {
-				filename.sep <- paste0(sub('.bed.gz$', '', filename), '_', colnames(bin)[icol], '.bed.gz')
-				filename.gz <- gzfile(filename.sep, 'w')
-				message('Writing to file ',filename.sep)
-				cat("", file=filename.gz)
-			}
-			numsegments <- length(which(bin[,icol]))
-			priority <- 52 + 4*icol
-			mask <- bin[,icol]
-			if (length(grep('^mean.posteriors', names(segments.df)))==ncol(bin)) {
-				segments.df$score <- segments.df[,grep('^mean.posteriors', names(segments.df))[icol]]
-			} else {
-				segments.df$score <- 0
-			}
-			if (is.null(segments.df$combination)) {
-				df <- cbind(segments.df[mask,c('chromosome','start','end','state','score')], strand=rep(".",numsegments))
-			} else {
-				df <- cbind(segments.df[mask,c('chromosome','start','end','combination','score')], strand=rep(".",numsegments))
-			}
-			# Make score integer
-			df$score <- round(df$score*1000)
-			# Reorder
-			if (orderByScore) {
-				df <- df[rev(order(df$score)),]
-			}
-			# Convert from 1-based closed to 0-based half open
-			df$start <- df$start - 1
-			df$thickStart <- df$start
-			df$thickEnd <- df$end
-			RGB <- t(grDevices::col2rgb(getStateColors('modified')))
-			RGB <- apply(RGB,1,paste,collapse=",")
-			df$itemRgb <- rep(RGB, numsegments)
-			if (header) {
-				cat(paste0("track name=\"multivariate calls for ",colnames(bin)[icol],"\" description=\"multivariate calls for ",colnames(bin)[icol],"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
-			}
-			utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
-			if (separate.files) {
-				close(filename.gz)
-			}
-		}
-	} else {
-		## Export combinatorial states
-		# Generate the colors for each combinatorial state
-		colors <- getDistinctColors(length(levels(segments.df$combination)))
-		RGBs <- t(grDevices::col2rgb(colors))
-		RGBs <- apply(RGBs,1,paste,collapse=",")
-		itemRgb <- RGBs[as.integer(factor(segments.df$combination, levels=sort(levels(segments.df$combination))))]
+    if (separate.tracks) {
+        ## Export peak calls
+        bin <- dec2bin(segments.df$state, ndigits=length(multi.hmm$IDs))
+        colnames(bin) <- multi.hmm$IDs
+        for (icol in 1:ncol(bin)) {
+            if (separate.files) {
+                filename.sep <- paste0(sub('.bed.gz$', '', filename), '_', colnames(bin)[icol], '.bed.gz')
+                filename.gz <- gzfile(filename.sep, 'w')
+                message('Writing to file ',filename.sep)
+                cat("", file=filename.gz)
+            }
+            numsegments <- length(which(bin[,icol]))
+            priority <- 52 + 4*icol
+            mask <- bin[,icol]
+            if (length(grep('^mean.posteriors', names(segments.df)))==ncol(bin)) {
+                segments.df$score <- segments.df[,grep('^mean.posteriors', names(segments.df))[icol]]
+            } else {
+                segments.df$score <- 0
+            }
+            if (is.null(segments.df$combination)) {
+                df <- cbind(segments.df[mask,c('chromosome','start','end','state','score')], strand=rep(".",numsegments))
+            } else {
+                df <- cbind(segments.df[mask,c('chromosome','start','end','combination','score')], strand=rep(".",numsegments))
+            }
+            # Make score integer
+            df$score <- round(df$score*1000)
+            # Reorder
+            if (orderByScore) {
+                df <- df[rev(order(df$score)),]
+            }
+            # Convert from 1-based closed to 0-based half open
+            df$start <- df$start - 1
+            df$thickStart <- df$start
+            df$thickEnd <- df$end
+            RGB <- t(grDevices::col2rgb(getStateColors('modified')))
+            RGB <- apply(RGB,1,paste,collapse=",")
+            df$itemRgb <- rep(RGB, numsegments)
+            if (header) {
+                cat(paste0("track name=\"multivariate calls for ",colnames(bin)[icol],"\" description=\"multivariate calls for ",colnames(bin)[icol],"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
+            }
+            utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
+            if (separate.files) {
+                close(filename.gz)
+            }
+        }
+    } else {
+        ## Export combinatorial states
+        # Generate the colors for each combinatorial state
+        colors <- getDistinctColors(length(levels(segments.df$combination)))
+        RGBs <- t(grDevices::col2rgb(colors))
+        RGBs <- apply(RGBs,1,paste,collapse=",")
+        itemRgb <- RGBs[as.integer(factor(segments.df$combination, levels=sort(levels(segments.df$combination))))]
 
-		# Write to file
-		numsegments <- nrow(segments.df)
-		if (is.null(segments.df$score)) {
-			segments.df$score <- 0
-		}
-		if (is.null(segments.df$combination)) {
-			df <- cbind(segments.df[,c('chromosome','start','end','state','score')], strand=rep(".",numsegments), thickStart=segments.df$start, thickEnd=segments.df$end, itemRgb=itemRgb)
-		} else {
-			df <- cbind(segments.df[,c('chromosome','start','end','combination','score')], strand=rep(".",numsegments), thickStart=segments.df$start, thickEnd=segments.df$end, itemRgb=itemRgb)
-		}
-		# Make score integer
-		df$score <- round(df$score*1000)
-		# Reorder
-		if (orderByScore) {
-			df <- df[rev(order(df$score)),]
-		}
-		# Convert from 1-based closed to 0-based half open
-		df$start <- df$start - 1
-		df$thickStart <- df$thickStart - 1
-		if (header) {
-			if (is.null(trackname)) {
-				cat(paste0('track name="combinations" description="combinations" visibility=1 itemRgb=On priority=49\n'), file=filename.gz, append=TRUE)
-			} else {
-				cat(paste0('track name="',trackname,'" description="',trackname,'" visibility=1 itemRgb=On priority=49\n'), file=filename.gz, append=TRUE)
-			}
-		}
-		utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
-	}
-	if (!separate.files) {
-		close(filename.gz)
-	}
+        # Write to file
+        numsegments <- nrow(segments.df)
+        if (is.null(segments.df$score)) {
+            segments.df$score <- 0
+        }
+        if (is.null(segments.df$combination)) {
+            df <- cbind(segments.df[,c('chromosome','start','end','state','score')], strand=rep(".",numsegments), thickStart=segments.df$start, thickEnd=segments.df$end, itemRgb=itemRgb)
+        } else {
+            df <- cbind(segments.df[,c('chromosome','start','end','combination','score')], strand=rep(".",numsegments), thickStart=segments.df$start, thickEnd=segments.df$end, itemRgb=itemRgb)
+        }
+        # Make score integer
+        df$score <- round(df$score*1000)
+        # Reorder
+        if (orderByScore) {
+            df <- df[rev(order(df$score)),]
+        }
+        # Convert from 1-based closed to 0-based half open
+        df$start <- df$start - 1
+        df$thickStart <- df$thickStart - 1
+        if (header) {
+            if (is.null(trackname)) {
+                cat(paste0('track name="combinations" description="combinations" visibility=1 itemRgb=On priority=49\n'), file=filename.gz, append=TRUE)
+            } else {
+                cat(paste0('track name="',trackname,'" description="',trackname,'" visibility=1 itemRgb=On priority=49\n'), file=filename.gz, append=TRUE)
+            }
+        }
+        utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
+    }
+    if (!separate.files) {
+        close(filename.gz)
+    }
 
 }
 
@@ -403,70 +401,70 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
 #' @importFrom grDevices col2rgb
 exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivariateReadCounts", header=TRUE, separate.files=FALSE) {
 
-	if (class(multi.hmm)!=class.multivariate.hmm) {
-		multi.hmm <- get(load(multi.hmm))
-		if (class(multi.hmm)!=class.multivariate.hmm) {
-			stop("argument 'multi.hmm' expects a multivariate hmm or a file which contains a multivariate hmm")
-		}
-	}
+    if (class(multi.hmm)!=class.multivariate.hmm) {
+        multi.hmm <- get(load(multi.hmm))
+        if (class(multi.hmm)!=class.multivariate.hmm) {
+            stop("argument 'multi.hmm' expects a multivariate hmm or a file which contains a multivariate hmm")
+        }
+    }
 
-	## Function definitions
-	insertchr <- function(hmm.gr) {
-		# Change chromosome names from '1' to 'chr1' if necessary
-		mask <- which(!grepl('chr', seqnames(hmm.gr)))
-		mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
-		mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
-		mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
-		return(hmm.gr)
-	}
+    ## Function definitions
+    insertchr <- function(hmm.gr) {
+        # Change chromosome names from '1' to 'chr1' if necessary
+        mask <- which(!grepl('chr', seqnames(hmm.gr)))
+        mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
+        mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
+        mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
+        return(hmm.gr)
+    }
 
-	## Variables
-	filename <- paste0(filename,".wig.gz")
-	if (!separate.files) {
-		filename.gz <- gzfile(filename, 'w')
-	}
-	nummod <- length(multi.hmm$IDs)
-	readcol <- paste(grDevices::col2rgb(getStateColors('counts')), collapse=',')
+    ## Variables
+    filename <- paste0(filename,".wig.gz")
+    if (!separate.files) {
+        filename.gz <- gzfile(filename, 'w')
+    }
+    nummod <- length(multi.hmm$IDs)
+    readcol <- paste(grDevices::col2rgb(getStateColors('counts')), collapse=',')
 
-	# Write first line to file
-	if (!separate.files) {
-		message('Writing to file ',filename)
-		cat("", file=filename.gz)
-	}
-	
-	### Write every model to file ###
-	for (imod in 1:nummod) {
-		message('  Writing track ',imod,' / ',nummod)
-		ID <- multi.hmm$IDs[imod]
-		if (separate.files) {
-			filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', ID, '.wig.gz')
-			filename.gz <- gzfile(filename.sep, 'w')
-			message('Writing to file ',filename.sep)
-			cat("", file=filename.gz)
-		}
-		priority <- 50 + 4*imod
-		binsize <- width(multi.hmm$bins[1])
-		if (header) {
-			cat(paste0('track type=wiggle_0 name="read count for ',ID,'" description="read count for ',ID,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
-		}
-		# Write read data
-		for (chrom in seqlevels(multi.hmm$bins)) {
-			if (!grepl('chr', chrom)) {
-				chromr <- sub(pattern='^', replacement='chr', chrom)
-			} else {
-				chromr <- chrom
-			}
-			cat(paste0("fixedStep chrom=",chromr," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-			utils::write.table(multi.hmm$bins[seqnames(multi.hmm$bins)==chrom]$counts[,imod], file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
-		}
-		if (separate.files) {
-			close(filename.gz)
-		}
-	}
-	if (!separate.files) {
-		close(filename.gz)
-	}
-	message('')
+    # Write first line to file
+    if (!separate.files) {
+        message('Writing to file ',filename)
+        cat("", file=filename.gz)
+    }
+    
+    ### Write every model to file ###
+    for (imod in 1:nummod) {
+        message('  Writing track ',imod,' / ',nummod)
+        ID <- multi.hmm$IDs[imod]
+        if (separate.files) {
+            filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', ID, '.wig.gz')
+            filename.gz <- gzfile(filename.sep, 'w')
+            message('Writing to file ',filename.sep)
+            cat("", file=filename.gz)
+        }
+        priority <- 50 + 4*imod
+        binsize <- width(multi.hmm$bins[1])
+        if (header) {
+            cat(paste0('track type=wiggle_0 name="read count for ',ID,'" description="read count for ',ID,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
+        }
+        # Write read data
+        for (chrom in seqlevels(multi.hmm$bins)) {
+            if (!grepl('chr', chrom)) {
+                chromr <- sub(pattern='^', replacement='chr', chrom)
+            } else {
+                chromr <- chrom
+            }
+            cat(paste0("fixedStep chrom=",chromr," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
+            utils::write.table(multi.hmm$bins[seqnames(multi.hmm$bins)==chrom]$counts[,imod], file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
+        }
+        if (separate.files) {
+            close(filename.gz)
+        }
+    }
+    if (!separate.files) {
+        close(filename.gz)
+    }
+    message('')
 }
 
 
@@ -504,73 +502,73 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
 #' @export
 exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", header=TRUE, separate.files=FALSE) {
 
-	## Load data
-	if (is.character(binned.data.list)) {
-		ptm <- startTimedMessage('Loading binned.data from files ...')
-		binfiles <- binned.data.list
-		binned.data.list <- list()
-		for (binfile in binfiles) {
-			binned.data.list[[binfile]] <- get(load(binfile))
-		}
-		stopTimedMessage(ptm)
-	}
+    ## Load data
+    if (is.character(binned.data.list)) {
+        ptm <- startTimedMessage('Loading binned.data from files ...')
+        binfiles <- binned.data.list
+        binned.data.list <- list()
+        for (binfile in binfiles) {
+            binned.data.list[[binfile]] <- get(load(binfile))
+        }
+        stopTimedMessage(ptm)
+    }
 
-	## Function definitions
-	insertchr <- function(hmm.gr) {
-		# Change chromosome names from '1' to 'chr1' if necessary
-		mask <- which(!grepl('chr', seqnames(hmm.gr)))
-		mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
-		mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
-		mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
-		return(hmm.gr)
-	}
+    ## Function definitions
+    insertchr <- function(hmm.gr) {
+        # Change chromosome names from '1' to 'chr1' if necessary
+        mask <- which(!grepl('chr', seqnames(hmm.gr)))
+        mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
+        mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
+        mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
+        return(hmm.gr)
+    }
 
-	## Transform to GRanges
-	binned.data.list <- lapply(binned.data.list, insertchr)
+    ## Transform to GRanges
+    binned.data.list <- lapply(binned.data.list, insertchr)
 
-	# Variables
-	nummod <- length(binned.data.list)
-	filename <- paste0(filename,".wig.gz")
-	if (!separate.files) {
-		filename.gz <- gzfile(filename, 'w')
-	}
-	readcol <- paste(grDevices::col2rgb(getStateColors('counts')), collapse=',')
+    # Variables
+    nummod <- length(binned.data.list)
+    filename <- paste0(filename,".wig.gz")
+    if (!separate.files) {
+        filename.gz <- gzfile(filename, 'w')
+    }
+    readcol <- paste(grDevices::col2rgb(getStateColors('counts')), collapse=',')
 
-	# Write first line to file
-	if (!separate.files) {
-		message('Writing to file ',filename)
-		cat("", file=filename.gz)
-	}
-	
-	### Write every model to file ###
-	for (imod in 1:nummod) {
-		message('Writing track ',imod,' / ',nummod)
-		b <- binned.data.list[[imod]]
-		if (separate.files) {
-			filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', imod, '.wig.gz')
-			filename.gz <- gzfile(filename.sep, 'w')
-			message('Writing to file ',filename.sep)
-			cat("", file=filename.gz)
-		}
-		priority <- 50 + 4*imod
-		binsize <- width(b[1])
-		name <- names(binned.data.list)[imod]
-		if (header) {
-			cat(paste0('track type=wiggle_0 name="read count for ',name,'" description="read count for ',name,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
-		}
-		# Write read data
-		for (chrom in unique(b$chromosome)) {
-			cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-			utils::write.table(mcols(b[b$chromosome==chrom])$counts, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
-		}
-		if (separate.files) {
-			close(filename.gz)
-		}
-	}
-	if (!separate.files) {
-		close(filename.gz)
-	}
-	message('')
+    # Write first line to file
+    if (!separate.files) {
+        message('Writing to file ',filename)
+        cat("", file=filename.gz)
+    }
+    
+    ### Write every model to file ###
+    for (imod in 1:nummod) {
+        message('Writing track ',imod,' / ',nummod)
+        b <- binned.data.list[[imod]]
+        if (separate.files) {
+            filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', imod, '.wig.gz')
+            filename.gz <- gzfile(filename.sep, 'w')
+            message('Writing to file ',filename.sep)
+            cat("", file=filename.gz)
+        }
+        priority <- 50 + 4*imod
+        binsize <- width(b[1])
+        name <- names(binned.data.list)[imod]
+        if (header) {
+            cat(paste0('track type=wiggle_0 name="read count for ',name,'" description="read count for ',name,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
+        }
+        # Write read data
+        for (chrom in unique(b$chromosome)) {
+            cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
+            utils::write.table(mcols(b[b$chromosome==chrom])$counts, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
+        }
+        if (separate.files) {
+            close(filename.gz)
+        }
+    }
+    if (!separate.files) {
+        close(filename.gz)
+    }
+    message('')
 }
 
 
@@ -588,6 +586,7 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", 
 #' @param trackname The name that will be used as track name and description in the header.
 #' @param filename The name of the file that will be written. The ending ".bed.gz". Any existing file will be overwritten.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
+#' @param orderByScore If set to \code{TRUE}, the lines in the output will be ordered by column 'score' in descending order.
 #' @param append Whether or not to append to an existing file.
 #' @return \code{NULL}
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
@@ -608,70 +607,70 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", 
 #'exportGRanges(binned[binned$counts > 20], filename=tempfile(),
 #'              trackname='read counts above 20')
 #'
-exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", header=TRUE, orderByScore=TRUE, append=FALSE) {
+exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", header=TRUE, orderByScore=FALSE, append=FALSE) {
 
-	if (length(gr)==0) {
-		warning("Supplied GRanges object contains no ranges.")
-		return()
-	}
+    if (length(gr)==0) {
+        warning("Supplied GRanges object contains no ranges.")
+        return()
+    }
 
-	## Function definitions
-	insertchr <- function(hmm.gr) {
-		# Change chromosome names from '1' to 'chr1' if necessary
-		mask <- which(!grepl('chr', seqnames(hmm.gr)))
-		mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
-		mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
-		mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
-		return(hmm.gr)
-	}
+    ## Function definitions
+    insertchr <- function(hmm.gr) {
+        # Change chromosome names from '1' to 'chr1' if necessary
+        mask <- which(!grepl('chr', seqnames(hmm.gr)))
+        mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
+        mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
+        mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
+        return(hmm.gr)
+    }
 
-	## Transform to GRanges
-	gr <- insertchr(gr)
+    ## Transform to GRanges
+    gr <- insertchr(gr)
 
-	# Variables
-	filename <- paste0(filename,".bed.gz")
-	if (append) {
-		filename.gz <- gzfile(filename, 'a')
-	} else {
-		filename.gz <- gzfile(filename, 'w')
-	}
+    # Variables
+    filename <- paste0(filename,".bed.gz")
+    if (append) {
+        filename.gz <- gzfile(filename, 'a')
+    } else {
+        filename.gz <- gzfile(filename, 'w')
+    }
 
-	# Write first line to file
-	if (append) {
-		message('appending to file ',filename)
-	} else {
-		message('Writing to file ',filename)
-		cat("", file=filename.gz)
-	}
-	
-	### Write every model to file ###
-	if (header) {
-		cat(paste0("track name=\"",trackname,"\" description=\"",trackname,"\" visibility=1 itemRgb=Off\n"), file=filename.gz, append=TRUE)
-	}
-	if (is.null(gr$score)) {
-		gr$score <- 0
-	} else {
-		if (orderByScore) {
-			gr <- gr[rev(order(gr$score))]
-		}
-	}
-	regions <- as.data.frame(gr)[c('chromosome','start','end','score')]
-	regions$name <- paste0('region_', 1:nrow(regions))
-	regions <- regions[c('chromosome','start','end','name','score')]
-	# Make score integer
-	regions$score <- round(regions$score*1000)
-	numsegments <- nrow(regions)
-	df <- cbind(regions, strand=rep(".",numsegments), thickStart=regions$start, thickEnd=regions$end)
-	# Convert from 1-based closed to 0-based half open
-	df$start <- df$start - 1
-	df$thickStart <- df$thickStart - 1
-	if (nrow(df) == 0) {
-		warning('No regions in input')
-	} else {
-		utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
-	}
+    # Write first line to file
+    if (append) {
+        message('appending to file ',filename)
+    } else {
+        message('Writing to file ',filename)
+        cat("", file=filename.gz)
+    }
+    
+    ### Write every model to file ###
+    if (header) {
+        cat(paste0("track name=\"",trackname,"\" description=\"",trackname,"\" visibility=1 itemRgb=Off\n"), file=filename.gz, append=TRUE)
+    }
+    if (is.null(gr$score)) {
+        gr$score <- 0
+    } else {
+        if (orderByScore) {
+            gr <- gr[rev(order(gr$score))]
+        }
+    }
+    regions <- as.data.frame(gr)[c('chromosome','start','end','score')]
+    regions$name <- paste0('region_', 1:nrow(regions))
+    regions <- regions[c('chromosome','start','end','name','score')]
+    # Make score integer
+    regions$score <- round(regions$score*1000)
+    numsegments <- nrow(regions)
+    df <- cbind(regions, strand=rep(".",numsegments), thickStart=regions$start, thickEnd=regions$end)
+    # Convert from 1-based closed to 0-based half open
+    df$start <- df$start - 1
+    df$thickStart <- df$thickStart - 1
+    if (nrow(df) == 0) {
+        warning('No regions in input')
+    } else {
+        utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
+    }
 
-	close(filename.gz)
+    close(filename.gz)
 
 }
 
@@ -695,21 +694,11 @@ exportGRanges <- function(gr, trackname, filename="chromstaR_GRanges_regions", h
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @param separate.files A logical indicating whether or not to produce separate files for each condition.
 #' @return \code{NULL}
-#' @examples
-#'### Multivariate peak calling ###
-#'## Load example multivariate Hidden Markov Model
-#'data(example.multi.HMM)
-#'## Export the binned read counts and peaks for each track
-#'\donttest{
-#'exportMultivariate(example.multi.HMM, exclude.states=c(0),
-#'                   filename='chromstaR_example.multi.HMM',
-#'                   what=c('counts','peaks'))
-#'}
 #' @export
 exportCombinedMultivariate <- function(hmm, filename, what=c('combinations'), exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE) {
-	if ('combinations' %in% what) {
-		exportCombinedMultivariateCalls(hmm, filename=filename, exclude.states=exclude.states, include.states=include.states, trackname=trackname, header=header, separate.files=separate.files)
-	}
+    if ('combinations' %in% what) {
+        exportCombinedMultivariateCalls(hmm, filename=filename, exclude.states=exclude.states, include.states=include.states, trackname=trackname, header=header, separate.files=separate.files)
+    }
 }
 
 #----------------------------------------------------
@@ -719,94 +708,94 @@ exportCombinedMultivariate <- function(hmm, filename, what=c('combinations'), ex
 #' @importFrom grDevices col2rgb
 exportCombinedMultivariateCalls <- function(hmm, filename="chromstaR_combinedMultivariateCalls", exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE) {
 
-	if (class(hmm)!=class.combined.multivariate.hmm) {
-		hmm <- get(load(hmm))
-		if (class(hmm)!=class.combined.multivariate.hmm) {
-			stop("argument 'hmm' expects a combined multivariate hmm or a file which contains an object")
-		}
-	}
+    if (class(hmm)!=class.combined.multivariate.hmm) {
+        hmm <- get(load(hmm))
+        if (class(hmm)!=class.combined.multivariate.hmm) {
+            stop("argument 'hmm' expects a combined multivariate hmm or a file which contains an object")
+        }
+    }
 
-	## Function definitions
-	insertchr <- function(hmm.gr) {
-		# Change chromosome names from '1' to 'chr1' if necessary
-		mask <- which(!grepl('chr', seqnames(hmm.gr)))
-		mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
-		mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
-		mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
-		return(hmm.gr)
-	}
+    ## Function definitions
+    insertchr <- function(hmm.gr) {
+        # Change chromosome names from '1' to 'chr1' if necessary
+        mask <- which(!grepl('chr', seqnames(hmm.gr)))
+        mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
+        mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
+        mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
+        return(hmm.gr)
+    }
 
-	## Write first line to file
-	if (!separate.files) {
-		filename <- paste0(filename,".bed.gz")
-		filename.gz <- gzfile(filename, 'w')
-		message('Writing to file ',filename)
-		cat("", file=filename.gz)
-	}
+    ## Write first line to file
+    if (!separate.files) {
+        filename <- paste0(filename,".bed.gz")
+        filename.gz <- gzfile(filename, 'w')
+        message('Writing to file ',filename)
+        cat("", file=filename.gz)
+    }
 
-	## Export the combinatorial states from individual segments
-	conditions <- names(hmm$segments)
-	for (cond in conditions) {
-		segments <- hmm$segments[[cond]]
+    ## Export the combinatorial states from individual segments
+    conditions <- names(hmm$segments)
+    for (cond in conditions) {
+        segments <- hmm$segments[[cond]]
 
-		# Exclude and include states
-		combstates <- levels(segments$combination)
-		if (is.null(include.states)) {
-			combstates2use <- setdiff(combstates, exclude.states)
-		} else {
-			combstates2use <- intersect(combstates, include.states)
-		}
-		segments <- segments[mcols(segments)$combination %in% combstates2use]
-		segments <- insertchr(segments)
-		segments.df <- as.data.frame(segments)
+        # Exclude and include states
+        combstates <- levels(segments$combination)
+        if (is.null(include.states)) {
+            combstates2use <- setdiff(combstates, exclude.states)
+        } else {
+            combstates2use <- intersect(combstates, include.states)
+        }
+        segments <- segments[mcols(segments)$combination %in% combstates2use]
+        segments <- insertchr(segments)
+        segments.df <- as.data.frame(segments)
 
-		# Make header
-		if (is.null(trackname)) {
-			trackname.cond <- paste0('condition: ', cond, ', combinatorial states')
-		} else {
-			trackname.cond <- paste0('condition: ', cond, ', ', trackname)
-		}
-		# Make filenames
-		if (separate.files) {
-			filename.cond <- paste0(filename, '_', cond, '.bed.gz')
-			filename.gz <- gzfile(filename.cond, 'w')
-			message('Writing to file ',filename.cond)
-			cat("", file=filename.gz)
-		}
+        # Make header
+        if (is.null(trackname)) {
+            trackname.cond <- paste0('condition: ', cond, ', combinatorial states')
+        } else {
+            trackname.cond <- paste0('condition: ', cond, ', ', trackname)
+        }
+        # Make filenames
+        if (separate.files) {
+            filename.cond <- paste0(filename, '_', cond, '.bed.gz')
+            filename.gz <- gzfile(filename.cond, 'w')
+            message('Writing to file ',filename.cond)
+            cat("", file=filename.gz)
+        }
 
-		## Export combinatorial states
-		# Generate the colors for each combinatorial state
-		colors <- getDistinctColors(length(levels(segments.df$combination)))
-		RGBs <- t(grDevices::col2rgb(colors))
-		RGBs <- apply(RGBs,1,paste,collapse=",")
-		itemRgb <- RGBs[as.integer(factor(segments.df$combination, levels=sort(levels(segments.df$combination))))]
+        ## Export combinatorial states
+        # Generate the colors for each combinatorial state
+        colors <- getDistinctColors(length(levels(segments.df$combination)))
+        RGBs <- t(grDevices::col2rgb(colors))
+        RGBs <- apply(RGBs,1,paste,collapse=",")
+        itemRgb <- RGBs[as.integer(factor(segments.df$combination, levels=sort(levels(segments.df$combination))))]
 
-		# Write to file
-		numsegments <- nrow(segments.df)
-		if (is.null(segments.df$score)) {
-			segments.df$score <- 0
-		}
-		df <- cbind(segments.df[,c('chromosome','start','end','combination','score')], strand=rep(".",numsegments), thickStart=segments.df$start, thickEnd=segments.df$end, itemRgb=itemRgb)
-		# Make score integer
-		df$score <- round(df$score*1000)
-		# Reorder
-# 		if (orderByScore) {
-# 			df <- df[rev(order(df$score)),]
-# 		}
-		# Convert from 1-based closed to 0-based half open
-		df$start <- df$start - 1
-		df$thickStart <- df$thickStart - 1
-		if (header) {
-			cat(paste0('track name="',trackname.cond, '" description="', trackname.cond, '" visibility=1 itemRgb=On priority=49\n'), file=filename.gz, append=TRUE)
-		}
-		utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
+        # Write to file
+        numsegments <- nrow(segments.df)
+        if (is.null(segments.df$score)) {
+            segments.df$score <- 0
+        }
+        df <- cbind(segments.df[,c('chromosome','start','end','combination','score')], strand=rep(".",numsegments), thickStart=segments.df$start, thickEnd=segments.df$end, itemRgb=itemRgb)
+        # Make score integer
+        df$score <- round(df$score*1000)
+        # Reorder
+#         if (orderByScore) {
+#             df <- df[rev(order(df$score)),]
+#         }
+        # Convert from 1-based closed to 0-based half open
+        df$start <- df$start - 1
+        df$thickStart <- df$thickStart - 1
+        if (header) {
+            cat(paste0('track name="',trackname.cond, '" description="', trackname.cond, '" visibility=1 itemRgb=On priority=49\n'), file=filename.gz, append=TRUE)
+        }
+        utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
 
-		if (separate.files) {
-			close(filename.gz)
-		}
-	}
-	if (!separate.files) {
-		close(filename.gz)
-	}
+        if (separate.files) {
+            close(filename.gz)
+        }
+    }
+    if (!separate.files) {
+        close(filename.gz)
+    }
 
 }

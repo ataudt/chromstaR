@@ -7,7 +7,7 @@
 callPeaksUnivariateAllChr(binned.data, ID, eps = 0.01, init = "standard",
   max.time = NULL, max.iter = NULL, num.trials = 1, eps.try = NULL,
   num.threads = 1, read.cutoff = TRUE, read.cutoff.quantile = 1,
-  read.cutoff.absolute = 500, max.mean = Inf, FDR = 0.5,
+  read.cutoff.absolute = 500, max.mean = Inf, post.cutoff = 0.5,
   control = FALSE, keep.posteriors = FALSE, keep.densities = FALSE,
   checkpoint.after.iter = NULL, checkpoint.after.time = NULL,
   checkpoint.file = paste0("chromstaR_checkpoint_", ID, ".cpt"),
@@ -46,11 +46,11 @@ callPeaksUnivariateAllChr(binned.data, ID, eps = 0.01, init = "standard",
 
 \item{max.mean}{If \code{mean(counts)>max.mean}, bins with low read counts will be set to 0. This is a workaround to obtain good fits in the case of large bin sizes.}
 
-\item{FDR}{False discovery rate. code{NULL} means that the state with maximum posterior probability will be chosen, irrespective of its absolute probability (default=code{NULL}).}
+\item{post.cutoff}{False discovery rate. code{NULL} means that the state with maximum posterior probability will be chosen, irrespective of its absolute probability (default=code{NULL}).}
 
 \item{control}{If set to \code{TRUE}, the binned data will be treated as control experiment. That means only state 'zero-inflation' and 'unmodified' will be used in the HMM.}
 
-\item{keep.posteriors}{If set to \code{TRUE} (default=\code{FALSE}), posteriors will be available in the output. This is useful to change the FDR later, but increases the necessary disk space to store the result.}
+\item{keep.posteriors}{If set to \code{TRUE} (default=\code{FALSE}), posteriors will be available in the output. This is useful to change the post.cutoff later, but increases the necessary disk space to store the result.}
 
 \item{keep.densities}{If set to \code{TRUE} (default=\code{FALSE}), densities will be available in the output. This should only be needed debugging.}
 
@@ -74,21 +74,6 @@ Fit a HMM to a ChIP-seq sample to determine the modification state of genomic re
 }
 \details{
 The Hidden Markov Model which is used to classify the bins uses 3 states: state 'zero-inflation' with a delta function as emission densitiy (only zero read counts), 'unmodified' and 'modified' with Negative Binomials as emission densities. A Baum-Welch algorithm is employed to estimate the parameters of the distributions. See our paper TODO:insert paper for a detailed description of the method.
-}
-\examples{
-## Get an example BED file
-bedfile <- system.file("extdata", "euratrans",
-                      "lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
-                       package="chromstaRData")
-## Bin the BED file into bin size 1000bp
-data(rn4_chrominfo)
-binned <- binReads(bedfile, assembly=rn4_chrominfo, binsize=1000,
-                  chromosomes='chr12')
-## Fit the univariate Hidden Markov Model
-hmm <- callPeaksUnivariateAllChr(binned, ID='example_H3K27me3', max.time=60, eps=1)
-## Check if the fit is ok
-plot(hmm, type='histogram')
-
 }
 \author{
 Aaron Taudt, Maria Coome Tatche

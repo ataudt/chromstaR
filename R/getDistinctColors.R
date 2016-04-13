@@ -20,27 +20,27 @@
 #'pie(rep(1,5), labels=cols, col=cols)
 #'
 getDistinctColors <- function(n, start.color='blue4', exclude.colors=c('white','black','gray','grey'), exclude.rgb.above=210) {
-	
-	cols <- grDevices::colors()
-	# Exclude unwanted colors
-	cols <- grep(paste(exclude.colors, collapse='|'), cols, invert=TRUE, value=TRUE)
-	# Get RGB values
-	rgbs <- t(grDevices::col2rgb(cols))
-	rownames(rgbs) <- cols
-	# Exclude whitish colors
-	rgbs <- rgbs[apply(rgbs, 1, function(x) { !all(x>exclude.rgb.above) }), ]
-	# Calculate distance
-	coldist <- as.matrix(stats::dist(rgbs, method='euclidean'))
-	
-	# Iteratively select colors
-	selected.cols <- character()
-	selected.cols[1] <- start.color
-	for (i1 in 2:n) {
-		m <- as.matrix(coldist[,selected.cols])
-		closest.dist <- apply(m, 1, min)
-		furthest.dist <- which.max(closest.dist)
-		selected.cols[i1] <- names(furthest.dist)
-	}
-	return(selected.cols)
-	
+    
+    cols <- grDevices::colors()
+    # Exclude unwanted colors
+    cols <- grep(paste(exclude.colors, collapse='|'), cols, invert=TRUE, value=TRUE)
+    # Get RGB values
+    rgbs <- t(grDevices::col2rgb(cols))
+    rownames(rgbs) <- cols
+    # Exclude whitish colors
+    rgbs <- rgbs[apply(rgbs, 1, function(x) { !all(x>exclude.rgb.above) }), ]
+    # Calculate distance
+    coldist <- as.matrix(stats::dist(rgbs, method='euclidean'))
+    
+    # Iteratively select colors
+    selected.cols <- character()
+    selected.cols[1] <- start.color
+    for (i1 in 2:n) {
+        m <- as.matrix(coldist[,selected.cols])
+        closest.dist <- apply(m, 1, min)
+        furthest.dist <- which.max(closest.dist)
+        selected.cols[i1] <- names(furthest.dist)
+    }
+    return(selected.cols)
+    
 }

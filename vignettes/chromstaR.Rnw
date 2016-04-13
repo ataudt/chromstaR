@@ -309,23 +309,26 @@ plot(model, type='transitionMatrix') # or plot(model, type=1)
 plot(model, type='correlation') # or plot(model, type=3)
 @
 
-<<multivariate_combinatorial_analysis, results='markup', message=FALSE, eval=TRUE>>=
+<<multivariate_combinatorial_enrichment, results='markup', message=FALSE, eval=TRUE>>=
 ## === Step 3: Enrichment analysis ===
+# Annotations can easily be obtained with the biomaRt package. Of course, you can
+# also load them from file if you already have annotation files available.
 library(biomaRt)
 ensembl <- useMart('ENSEMBL_MART_ENSEMBL', host='may2012.archive.ensembl.org',
                    dataset='rnorvegicus_gene_ensembl')
 genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
-                            'end_position', 'strand', 'external_gene_id'),
+                            'end_position', 'strand', 'external_gene_id',
+                            'gene_biotype'),
                mart=ensembl)
 # Transform to GRanges for easier handling
-genes <- GRanges(seqnames=paste0('chr',genes$chrom),
+genes <- GRanges(seqnames=paste0('chr',genes$chromosome_name),
                  ranges=IRanges(start=genes$start, end=genes$end),
                  strand=genes$strand,
-                 name=genes$external_gene_id)
+                 name=genes$external_gene_id, biotype=genes$gene_biotype)
 print(genes)
 @
 
-<<multivariate_combinatorial_analysis_plot1, results='markup', message=FALSE, eval=TRUE, fig.width=6, fig.height=4>>=
+<<multivariate_combinatorial_enrichment_plot1, results='markup', message=FALSE, eval=TRUE, fig.width=6, fig.height=4>>=
 # We expect promoter [H3K4me3] and bivalent-promoter signatures [H3K4me3+H3K27me3]
 # to be enriched at transcription start sites.
 plotEnrichment(hmm = model, annotation = genes, bp.around.annotation = 15000) +
@@ -338,13 +341,55 @@ plotEnrichment(model, genes, region = 'start') +
 # Note: If you want to facet the plot because you have many combinatorial states you
 # can do that with
 plotEnrichment(model, genes, region = 'start') +
-  facet_wrap(~ combination)
+  facet_wrap(~ combination) + ggtitle('Fold enrichment around TSS')
 @
-<<multivariate_combinatorial_analysis_plot2, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4>>=
+<<multivariate_combinatorial_enrichment_plot2, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4>>=
 # Another form of visualization that shows every TSS in a heatmap
 tss <- resize(genes, width = 3, fix = 'start')
 plotHeatmap(model, tss) +
-  theme(strip.text.x = element_text(size=6))
+  theme(strip.text.x = element_text(size=6)) +
+  ggtitle('Read count around TSS')
+@
+<<multivariate_combinatorial_enrichment_plot3, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4>>=
+# Fold enrichment with different biotypes, showing that protein coding genes are
+# enriched with (bivalent) promoter combinations [H3K4me3] and [H3K4me3+H3K27me3],
+# while rRNA is enriched with the empty [] and repressive combinations [H3K27me3].
+biotypes <- split(tss, tss$biotype)
+plotMultipleEnrichment(model, annotations=biotypes) + coord_flip() +
+  ggtitle('Fold enrichment with different biotypes')
+@
+
+<<multivariate_combinatorial_expression, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4>>=
+# === Step 4: Expression analysis ===
+# Suppose you have expression data as well for your experiment. The following code
+# shows you how to get the expression values for each combinatorial state.
+data(expression_lv)
+head(expression_lv)
+
+# We need to get coordinates for each of the genes
+library(biomaRt)
+ensembl <- useMart('ENSEMBL_MART_ENSEMBL', host='may2012.archive.ensembl.org',
+                   dataset='rnorvegicus_gene_ensembl')
+genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
+                            'end_position', 'strand', 'external_gene_id',
+                            'gene_biotype'),
+               mart=ensembl)
+expr <- merge(genes, expression_lv, by='ensembl_gene_id')
+# Transform to GRanges
+expression.SHR <- GRanges(seqnames=paste0('chr',expr$chromosome_name),
+                          ranges=IRanges(start=expr$start, end=expr$end),
+                          strand=expr$strand, name=expr$external_gene_id,
+                          biotype=expr$gene_biotype,
+                          expression=expr$expression_SHR)
+# We apply an asinh transformation to reduce the effect of outliers
+expression.SHR$expression <- asinh(expression.SHR$expression)
+
+## Plot
+plotExpression(model, expression.SHR) +
+  theme(axis.text.x=element_text(angle=0, hjust=0.5)) +
+  ggtitle('Expression of genes overlapping combinatorial states')
+plotExpression(model, expression.SHR, return.marks=TRUE) +
+  ggtitle('Expression of marks overlapping combinatorial states')
 @
 \end{scriptsize}
 

@@ -20,117 +20,117 @@
 #'
 fixedWidthBins <- function(bamfile=NULL, assembly=NULL, chrom.lengths=NULL, chromosome.format, binsizes=1e6, chromosomes=NULL) {
 
-	### Check user input ###
-	if (is.null(bamfile) & is.null(assembly) & is.null(chrom.lengths)) {
-		stop("Please specify either a 'bamfile', 'assembly' or 'chrom.lengths'")
-	}
-	if (is.null(bamfile) & is.null(chrom.lengths)) {
-		trigger.error <- chromosome.format
-	}
+    ### Check user input ###
+    if (is.null(bamfile) & is.null(assembly) & is.null(chrom.lengths)) {
+        stop("Please specify either a 'bamfile', 'assembly' or 'chrom.lengths'")
+    }
+    if (is.null(bamfile) & is.null(chrom.lengths)) {
+        trigger.error <- chromosome.format
+    }
 
-	### Get chromosome lengths ###
-	if (!is.null(bamfile)) {
-		ptm <- startTimedMessage(paste0("Reading header from ", bamfile, " ..."))
-		file.header <- Rsamtools::scanBamHeader(bamfile)[[1]]
-		chrom.lengths <- file.header$targets
-		stopTimedMessage(ptm)
-	} else if (!is.null(assembly)) {
-		if (is.character(assembly)) {
-			ptm <- startTimedMessage("Fetching chromosome lengths from UCSC ...")
-			df <- GenomeInfoDb::fetchExtendedChromInfoFromUCSC(assembly)
-			stopTimedMessage(ptm)
-		} else if (is.data.frame(assembly)) {
-			df <- assembly
-		} else {
-			stop("Unknown assembly")
-		}
-		chrom.lengths <- df$UCSC_seqlength
-		if (chromosome.format=='UCSC') {
-			names(chrom.lengths) <- df$UCSC_seqlevel
-		} else if (chromosome.format=='NCBI') {
-			names(chrom.lengths) <- df$NCBI_seqlevel
-		}
-		chrom.lengths <- chrom.lengths[!is.na(names(chrom.lengths))]
-		chrom.lengths <- chrom.lengths[!is.na(chrom.lengths)]
-	} else if (!is.null(chrom.lengths)) {
-		chrom.lengths <- chrom.lengths[!is.na(names(chrom.lengths))]
-		chrom.lengths <- chrom.lengths[!is.na(chrom.lengths)]
-	}
-	chroms.in.data <- names(chrom.lengths)
-	if (is.null(chromosomes)) {
-		chromosomes <- chroms.in.data
-	}
-	chroms2use <- intersect(chromosomes, chroms.in.data)
-	## Stop if none of the specified chromosomes exist
-	if (length(chroms2use)==0) {
-		chrstring <- paste0(chromosomes, collapse=', ')
-		stop('Could not find length information for any of the specified chromosomes: ', chrstring)
-	}
-	## Issue warning for non-existent chromosomes
-	diff <- setdiff(chromosomes, chroms.in.data)
-	if (length(diff)>0) {
-		diffs <- paste0(diff, collapse=', ')
-		warning('Could not find length information for the following chromosomes: ', diffs)
-	}
+    ### Get chromosome lengths ###
+    if (!is.null(bamfile)) {
+        ptm <- startTimedMessage(paste0("Reading header from ", bamfile, " ..."))
+        file.header <- Rsamtools::scanBamHeader(bamfile)[[1]]
+        chrom.lengths <- file.header$targets
+        stopTimedMessage(ptm)
+    } else if (!is.null(assembly)) {
+        if (is.character(assembly)) {
+            ptm <- startTimedMessage("Fetching chromosome lengths from UCSC ...")
+            df <- GenomeInfoDb::fetchExtendedChromInfoFromUCSC(assembly)
+            stopTimedMessage(ptm)
+        } else if (is.data.frame(assembly)) {
+            df <- assembly
+        } else {
+            stop("Unknown assembly")
+        }
+        chrom.lengths <- df$UCSC_seqlength
+        if (chromosome.format=='UCSC') {
+            names(chrom.lengths) <- df$UCSC_seqlevel
+        } else if (chromosome.format=='NCBI') {
+            names(chrom.lengths) <- df$NCBI_seqlevel
+        }
+        chrom.lengths <- chrom.lengths[!is.na(names(chrom.lengths))]
+        chrom.lengths <- chrom.lengths[!is.na(chrom.lengths)]
+    } else if (!is.null(chrom.lengths)) {
+        chrom.lengths <- chrom.lengths[!is.na(names(chrom.lengths))]
+        chrom.lengths <- chrom.lengths[!is.na(chrom.lengths)]
+    }
+    chroms.in.data <- names(chrom.lengths)
+    if (is.null(chromosomes)) {
+        chromosomes <- chroms.in.data
+    }
+    chroms2use <- intersect(chromosomes, chroms.in.data)
+    ## Stop if none of the specified chromosomes exist
+    if (length(chroms2use)==0) {
+        chrstring <- paste0(chromosomes, collapse=', ')
+        stop('Could not find length information for any of the specified chromosomes: ', chrstring)
+    }
+    ## Issue warning for non-existent chromosomes
+    diff <- setdiff(chromosomes, chroms.in.data)
+    if (length(diff)>0) {
+        diffs <- paste0(diff, collapse=', ')
+        warning('Could not find length information for the following chromosomes: ', diffs)
+    }
 
-	### Making fixed-width bins ###
-	bins.list <- list()
-	for (binsize in binsizes) {
-		ptm <- startTimedMessage("Making fixed-width bins for bin size ", binsize, " ...")
-		bins <- GenomicRanges::GRangesList()
-		skipped.chroms <- character()
-		## Loop over chromosomes
-		for (chromosome in chroms2use) {
-			## Check last incomplete bin
-			incomplete.bin <- chrom.lengths[chromosome] %% binsize > 0
-			if (incomplete.bin) {
-				numbin <- floor(chrom.lengths[chromosome]/binsize)	# floor: we don't want incomplete bins, ceiling: we want incomplete bins at the end
-			} else {
-				numbin <- chrom.lengths[chromosome]/binsize
-			}
-			if (numbin == 0) {
-				skipped.chroms[chromosome] <- chromosome
-				next
-			}
-			## Initialize vectors
-			chroms <- rep(chromosome,numbin)
-			reads <- rep(0,numbin)
-			start <- seq(from=1, by=binsize, length.out=numbin)
-			end <- seq(from=binsize, by=binsize, length.out=numbin)
-	# 		end[length(end)] <- seqlengths(data)[chromosome] # last ending coordinate is size of chromosome, only if incomplete bins are desired
+    ### Making fixed-width bins ###
+    bins.list <- list()
+    for (binsize in binsizes) {
+        ptm <- startTimedMessage("Making fixed-width bins for bin size ", binsize, " ...")
+        bins <- GenomicRanges::GRangesList()
+        skipped.chroms <- character()
+        ## Loop over chromosomes
+        for (chromosome in chroms2use) {
+            ## Check last incomplete bin
+            incomplete.bin <- chrom.lengths[chromosome] %% binsize > 0
+            if (incomplete.bin) {
+                numbin <- floor(chrom.lengths[chromosome]/binsize)    # floor: we don't want incomplete bins, ceiling: we want incomplete bins at the end
+            } else {
+                numbin <- chrom.lengths[chromosome]/binsize
+            }
+            if (numbin == 0) {
+                skipped.chroms[chromosome] <- chromosome
+                next
+            }
+            ## Initialize vectors
+            chroms <- rep(chromosome,numbin)
+            reads <- rep(0,numbin)
+            start <- seq(from=1, by=binsize, length.out=numbin)
+            end <- seq(from=binsize, by=binsize, length.out=numbin)
+    #         end[length(end)] <- seqlengths(data)[chromosome] # last ending coordinate is size of chromosome, only if incomplete bins are desired
 
-			## Create binned chromosome as GRanges object
-			bins.chr <- GenomicRanges::GRanges(seqnames = rep(chromosome, numbin),
-							ranges = IRanges(start=start, end=end),
-							strand = rep(strand("*"), numbin)
-							)
-			suppressWarnings(
-				bins[[chromosome]] <- bins.chr
-			)
+            ## Create binned chromosome as GRanges object
+            bins.chr <- GenomicRanges::GRanges(seqnames = rep(chromosome, numbin),
+                            ranges = IRanges(start=start, end=end),
+                            strand = rep(strand("*"), numbin)
+                            )
+            suppressWarnings(
+                bins[[chromosome]] <- bins.chr
+            )
 
-		}
-		## end loop chromosomes
+        }
+        ## end loop chromosomes
 
-		### Concatenate all chromosomes
-		bins <- unlist(bins, use.names=FALSE)
-		seqlengths(bins) <- as.integer(chrom.lengths[names(seqlengths(bins))])
-		bins.list[[as.character(binsize)]] <- bins
-		stopTimedMessage(ptm)
+        ### Concatenate all chromosomes
+        bins <- unlist(bins, use.names=FALSE)
+        seqlengths(bins) <- as.integer(chrom.lengths[names(seqlengths(bins))])
+        bins.list[[as.character(binsize)]] <- bins
+        stopTimedMessage(ptm)
 
-		if (length(skipped.chroms)>0) {
-			warning("The following chromosomes were skipped because they are smaller than binsize ", binsize, ": ", paste0(skipped.chroms, collapse=', '))
-		}
+        if (length(skipped.chroms)>0) {
+            warning("The following chromosomes were skipped because they are smaller than binsize ", binsize, ": ", paste0(skipped.chroms, collapse=', '))
+        }
 
-	}
+    }
 
-	return(bins.list)
+    return(bins.list)
 
 }
 
 
 #' Make variable-width bins
 #' 
-#' Make variable-width bins based on a reference BAM file. This can be a simulated file (produced by \code{\link{simulateReads}} and aligned with your favourite aligner) or a real reference.
+#' Make variable-width bins based on a reference BAM file. This can be a simulated file (produced by \code{\link[AneuFinder]{simulateReads}} and aligned with your favourite aligner) or a real reference.
 #' 
 #' Variable-width bins are produced by first binning the reference BAM file with fixed-width bins and selecting the desired number of reads per bin as the (non-zero) maximum of the histogram. A new set of bins is then generated such that every bin contains the desired number of reads.
 #' 
@@ -154,86 +154,86 @@ fixedWidthBins <- function(bamfile=NULL, assembly=NULL, chrom.lengths=NULL, chro
 #'hist(width(bins[['1000']]), breaks=50)
 #'
 variableWidthBins <- function(reads, binsizes, chromosomes=NULL) {
-	
-	### Check user input ###
-	chroms.in.data <- seqlevels(reads)
-	if (is.null(chromosomes)) {
-		chromosomes <- chroms.in.data
-	}
-	chroms2use <- intersect(chromosomes, chroms.in.data)
-	## Stop if non of the specified chromosomes exist
-	if (length(chroms2use)==0) {
-		chrstring <- paste0(chromosomes, collapse=', ')
-		stop('Could not find length information for any of the specified chromosomes: ', chrstring)
-	}
-	## Issue warning for non-existent chromosomes
-	diff <- setdiff(chromosomes, chroms.in.data)
-	if (length(diff)>0) {
-		diffs <- paste0(diff, collapse=', ')
-		warning('Could not find length information for the following chromosomes: ', diffs)
-	}
+    
+    ### Check user input ###
+    chroms.in.data <- seqlevels(reads)
+    if (is.null(chromosomes)) {
+        chromosomes <- chroms.in.data
+    }
+    chroms2use <- intersect(chromosomes, chroms.in.data)
+    ## Stop if non of the specified chromosomes exist
+    if (length(chroms2use)==0) {
+        chrstring <- paste0(chromosomes, collapse=', ')
+        stop('Could not find length information for any of the specified chromosomes: ', chrstring)
+    }
+    ## Issue warning for non-existent chromosomes
+    diff <- setdiff(chromosomes, chroms.in.data)
+    if (length(diff)>0) {
+        diffs <- paste0(diff, collapse=', ')
+        warning('Could not find length information for the following chromosomes: ', diffs)
+    }
 
-	## Drop unwanted seqlevels
-	reads <- reads[seqnames(reads) %in% chroms2use]
-	reads <- keepSeqlevels(reads, chroms2use)
+    ## Drop unwanted seqlevels
+    reads <- reads[seqnames(reads) %in% chroms2use]
+    reads <- keepSeqlevels(reads, chroms2use)
 
-	## Make fixed width bins
-	ptm <- startTimedMessage("Binning reads in fixed-width windows ...")
-	binned.list <- suppressMessages( binReads(reads, format='GRanges', assembly=NULL, binsizes=binsizes, chromosomes=chromosomes) )
-	stopTimedMessage(ptm)
-	
-	## Sort the reads
-	strand(reads) <- '*'
-	reads <- sort(reads)
-	
-	## Loop over binsizes
-	bins.list <- list()
-	for (i1 in 1:length(binsizes)) {
-		binsize <- binsizes[i1]
-		ptm <- startTimedMessage("Making variable-width windows for bin size ", binsize, " ...")
-		if (class(binned.list)=='GRanges') {
-		  binned <- binned.list
-		} else {
-  		binned <- binned.list[[i1]]
-		}
-		## Get mode of histogram
-		tab <- table(binned$counts)
-		modecount <- as.integer(names(which.max(tab[names(tab)!=0])))
-		## Pick only every modecount read
-		subreads <- GRangesList()
-		skipped.chroms <- character()
-		for (chrom in chroms2use) {
-			reads.chr <- reads[seqnames(reads)==chrom]
-			if (length(reads.chr) >= modecount) {
-				idx <- seq(modecount, length(reads.chr), by=modecount)
-				subreads[[chrom]] <- reads.chr[idx]
-			} else {
-				skipped.chroms[chrom] <- chrom
-			}
-		}
-		if (length(skipped.chroms)>0) {
-			warning("The following chromosomes were skipped because they are smaller than binsize ", binsize, ": ", paste0(skipped.chroms, collapse=', '))
-		}
-		subreads <- unlist(subreads, use.names=FALSE)
-		## Adjust length of reads to get consecutive bins
-		subreads <- resize(subreads, width=1)
-		## Make new bins
-		bins <- gaps(subreads, start=1L, end=seqlengths(subreads)-1L) # gaps until seqlengths-1 because we have to add 1 later to get consecutive bins
-		bins <- bins[strand(bins)=='*']
-		end(bins) <- end(bins) + 1
-		## We don't want incomplete bins at the end
-		bins.split <- split(bins, seqnames(bins))
-		bins.split <- endoapply(bins.split, function(x) { x[-length(x)] })
-		bins <- unlist(bins.split, use.names=FALSE)
-		## Remove skipped chromosomes
-		bins <- bins[!seqnames(bins) %in% skipped.chroms]
-		bins <- keepSeqlevels(bins, setdiff(seqlevels(bins), skipped.chroms))
+    ## Make fixed width bins
+    ptm <- startTimedMessage("Binning reads in fixed-width windows ...")
+    binned.list <- suppressMessages( binReads(reads, format='GRanges', assembly=NULL, binsizes=binsizes, chromosomes=chromosomes) )
+    stopTimedMessage(ptm)
+    
+    ## Sort the reads
+    strand(reads) <- '*'
+    reads <- sort(reads)
+    
+    ## Loop over binsizes
+    bins.list <- list()
+    for (i1 in 1:length(binsizes)) {
+        binsize <- binsizes[i1]
+        ptm <- startTimedMessage("Making variable-width windows for bin size ", binsize, " ...")
+        if (class(binned.list)=='GRanges') {
+          binned <- binned.list
+        } else {
+          binned <- binned.list[[i1]]
+        }
+        ## Get mode of histogram
+        tab <- table(binned$counts)
+        modecount <- as.integer(names(which.max(tab[names(tab)!=0])))
+        ## Pick only every modecount read
+        subreads <- GRangesList()
+        skipped.chroms <- character()
+        for (chrom in chroms2use) {
+            reads.chr <- reads[seqnames(reads)==chrom]
+            if (length(reads.chr) >= modecount) {
+                idx <- seq(modecount, length(reads.chr), by=modecount)
+                subreads[[chrom]] <- reads.chr[idx]
+            } else {
+                skipped.chroms[chrom] <- chrom
+            }
+        }
+        if (length(skipped.chroms)>0) {
+            warning("The following chromosomes were skipped because they are smaller than binsize ", binsize, ": ", paste0(skipped.chroms, collapse=', '))
+        }
+        subreads <- unlist(subreads, use.names=FALSE)
+        ## Adjust length of reads to get consecutive bins
+        subreads <- resize(subreads, width=1)
+        ## Make new bins
+        bins <- gaps(subreads, start=1L, end=seqlengths(subreads)-1L) # gaps until seqlengths-1 because we have to add 1 later to get consecutive bins
+        bins <- bins[strand(bins)=='*']
+        end(bins) <- end(bins) + 1
+        ## We don't want incomplete bins at the end
+        bins.split <- split(bins, seqnames(bins))
+        bins.split <- endoapply(bins.split, function(x) { x[-length(x)] })
+        bins <- unlist(bins.split, use.names=FALSE)
+        ## Remove skipped chromosomes
+        bins <- bins[!seqnames(bins) %in% skipped.chroms]
+        bins <- keepSeqlevels(bins, setdiff(seqlevels(bins), skipped.chroms))
 
-		bins.list[[as.character(binsize)]] <- bins
-		stopTimedMessage(ptm)
-	}
-	
-	return(bins.list)
+        bins.list[[as.character(binsize)]] <- bins
+        stopTimedMessage(ptm)
+    }
+    
+    return(bins.list)
 
 }
 

@@ -38,15 +38,13 @@ Export multivariate calls and read counts as genome browser viewable file
 Export \code{\link{uniHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states and peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wig.gz).
 }
 \examples{
-### Multivariate peak calling ###
-## Load example multivariate Hidden Markov Model
-data(example.multi.HMM)
-## Export the binned read counts and peaks for each track
-\donttest{
-exportMultivariate(example.multi.HMM, exclude.states=c(0),
-                  filename='chromstaR_example.multi.HMM',
-                  what=c('counts','peaks'))
-}
+## Get an example multiHMM
+file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+                    package="chromstaR")
+model <- get(load(file))
+## Export peak calls and combinatorial states
+exportMultivariate(model, filename=tempfile(), what=c('peaks','combinations'))
+
 }
 \author{
 Aaron Taudt

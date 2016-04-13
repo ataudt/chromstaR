@@ -21,14 +21,14 @@ dec2bin = function(dec, colnames=NULL, ndigits=NULL) {
 
   # Check user input
   dec <- as.numeric(as.character(dec))
-	maxdec = max(dec)
-	if (!is.null(colnames)) {
-		ndigits <- length(colnames)
-	} else {
-		if (!is.null(ndigits)) {
-			if (check.positive.integer(ndigits)!=0) stop("argument 'ndigits' expects a positive integer")
-		}
-	}
+    maxdec = max(dec)
+    if (!is.null(colnames)) {
+        ndigits <- length(colnames)
+    } else {
+        if (!is.null(ndigits)) {
+            if (check.positive.integer(ndigits)!=0) stop("argument 'ndigits' expects a positive integer")
+        }
+    }
   
   modulos <- list()
   mod <- 1
@@ -44,21 +44,21 @@ dec2bin = function(dec, colnames=NULL, ndigits=NULL) {
   }
   binary.states <- matrix(0, nrow=length(dec), ncol=ndigits)
   if (length(modulos)>0) {
-		if (ndigits>length(modulos)) {
-			binary.states[,1:length(modulos)] <- as.matrix(as.data.frame(modulos))
-		} else {
-			binary.states[,1:ndigits] <- as.matrix(as.data.frame(modulos))[,1:ndigits]
-		}
+        if (ndigits>length(modulos)) {
+            binary.states[,1:length(modulos)] <- as.matrix(as.data.frame(modulos))
+        } else {
+            binary.states[,1:ndigits] <- as.matrix(as.data.frame(modulos))[,1:ndigits]
+        }
   }
   binary.states <- binary.states[,ncol(binary.states):1]
   if (class(binary.states)!='matrix') {
     binary.states <- matrix(binary.states, nrow=length(dec))
   }
 
-	colnames(binary.states) <- colnames
-	rownames(binary.states) <- dec
+    colnames(binary.states) <- colnames
+    rownames(binary.states) <- dec
   mode(binary.states) <- 'logical'
-	return(binary.states)
+    return(binary.states)
 
 }
 
@@ -66,15 +66,15 @@ dec2bin = function(dec, colnames=NULL, ndigits=NULL) {
 #' @param bin A matrix with only 0 and 1 (or TRUE and FALSE) as entries. One combinatorial state per row.
 #' @export
 bin2dec = function(bin) {
-	if (!is.matrix(bin)) {
-		bin <- matrix(bin, nrow=1)
-		warning("Argument 'bin' is not a matrix. Interpreting 'bin' as matrix with one row.")
-	}
-	dec = rep(0,nrow(bin))
-	for (i1 in 1:ncol(bin)) {
-		dec = dec + 2^(ncol(bin)-i1) * bin[,i1]
-	}
-	return(dec)
+    if (!is.matrix(bin)) {
+        bin <- matrix(bin, nrow=1)
+        warning("Argument 'bin' is not a matrix. Interpreting 'bin' as matrix with one row.")
+    }
+    dec = rep(0,nrow(bin))
+    for (i1 in 1:ncol(bin)) {
+        dec = dec + 2^(ncol(bin)-i1) * bin[,i1]
+    }
+    return(dec)
 }
 
 

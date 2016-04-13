@@ -2,8 +2,8 @@
 #'
 #' Wrapper to load \pkg{\link{chromstaR}} objects from file and check the class of the loaded objects.
 #'
-#' @param files A list of \code{\link{chromstaR-objects}} or a vector of files that contain such objects 
-#' @param check.class Any combination of \code{c('uniHMM', 'multiHMM', 'combinedMultiHMM')}. If any of the loaded objects does not belong to the specified class, an error is thrown
+#' @param files A list of \code{\link{chromstaR-objects}} or a vector of files that contain such objects.
+#' @param check.class Any combination of \code{c('uniHMM', 'multiHMM', 'combinedMultiHMM')}. If any of the loaded objects does not belong to the specified class, an error is thrown.
 #' @return A \code{\link[chromstaR:chromstaR-objects]{chromstaR-object}}.
 #' @export
 #' @examples
@@ -23,34 +23,34 @@
 #'class(loaded.hmm)
 loadHmmsFromFiles <- function(files, check.class=c('uniHMM', 'multiHMM', 'combinedMultiHMM')) {
 
-	ptm <- startTimedMessage("Loading HMMs from files ...")
-	if (any(! check.class %in% c(class.univariate.hmm, class.multivariate.hmm, class.combined.multivariate.hmm))) {
-		stop("Argument 'check.class' must contain any combination of c('", paste0(c(class.univariate.hmm, class.multivariate.hmm, class.combined.multivariate.hmm), collapse="', '"), "').")
-	}
-	modellist <- list()
-	if (is.character(files)) {
-		for (file in files) {
-			temp.env <- new.env()
-			model <- get(load(file, envir=temp.env), envir=temp.env)
-			if (! class(model) %in% check.class) {
-				stop("File '", file, "' does not contain an object of class ", paste0(check.class, collapse=' or '), ".")
-			}
-			modellist[[basename(file)]] <- model
-		}
-	} else if (class(files) %in% check.class) {
-		modellist[[1]] <- files
-	} else if (is.list(files)) {
-		for (file in files) {
-			model <- file
-			if (! class(model) %in% check.class) {
-				stop("File '", file, "' does not contain an object of class ", paste0(check.class, collapse=' or '), ".")
-			}
-			modellist[[length(modellist)+1]] <- model
-		}
-		names(modellist) <- names(files)
-	}
-	stopTimedMessage(ptm)
-	return(modellist)
+    ptm <- startTimedMessage("Loading HMMs from files ...")
+    if (any(! check.class %in% c(class.univariate.hmm, class.multivariate.hmm, class.combined.multivariate.hmm))) {
+        stop("Argument 'check.class' must contain any combination of c('", paste0(c(class.univariate.hmm, class.multivariate.hmm, class.combined.multivariate.hmm), collapse="', '"), "').")
+    }
+    modellist <- list()
+    if (is.character(files)) {
+        for (file in files) {
+            temp.env <- new.env()
+            model <- get(load(file, envir=temp.env), envir=temp.env)
+            if (! class(model) %in% check.class) {
+                stop("File '", file, "' does not contain an object of class ", paste0(check.class, collapse=' or '), ".")
+            }
+            modellist[[basename(file)]] <- model
+        }
+    } else if (class(files) %in% check.class) {
+        modellist[[1]] <- files
+    } else if (is.list(files)) {
+        for (file in files) {
+            model <- file
+            if (! class(model) %in% check.class) {
+                stop("File '", file, "' does not contain an object of class ", paste0(check.class, collapse=' or '), ".")
+            }
+            modellist[[length(modellist)+1]] <- model
+        }
+        names(modellist) <- names(files)
+    }
+    stopTimedMessage(ptm)
+    return(modellist)
 
 }
 

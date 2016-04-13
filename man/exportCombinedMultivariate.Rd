@@ -34,17 +34,6 @@ Export multivariate calls as genome browser viewable file
 \details{
 Export \code{\link{combinedMultiHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states are exported in BED format (.bed.gz).
 }
-\examples{
-### Multivariate peak calling ###
-## Load example multivariate Hidden Markov Model
-data(example.multi.HMM)
-## Export the binned read counts and peaks for each track
-\donttest{
-exportMultivariate(example.multi.HMM, exclude.states=c(0),
-                  filename='chromstaR_example.multi.HMM',
-                  what=c('counts','peaks'))
-}
-}
 \author{
 Aaron Taudt
 }

@@ -4,7 +4,7 @@
 \alias{heatmapCombinations}
 \title{Plot a heatmap of combinatorial states}
 \usage{
-heatmapCombinations(hmm = NULL, marks = NULL, vertical = FALSE)
+heatmapCombinations(hmm = NULL, marks = NULL)
 }
 \arguments{
 \item{hmm}{A \code{\link{multiHMM}} object.}
@@ -19,7 +19,11 @@ Plot a heatmap that shows the binary presence/absence of marks for the different
 }
 \examples{
 marks <- c('H3K4me3','H3K27me3','H4K20me1')
-heatmapCombinations(marks=marks, vertical=FALSE)
+heatmapCombinations(marks=marks)
+
+file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+                    package="chromstaR")
+heatmapCombinations(file)
 
 }
 \author{

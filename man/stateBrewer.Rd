@@ -8,6 +8,8 @@ stateBrewer(experiment.table, mode, differential.states = FALSE,
   common.states = FALSE)
 }
 \arguments{
+\item{experiment.table}{A \code{data.frame} specifying the experiment structure. See \code{\link{experiment.table}}.}
+
 \item{mode}{Mode of brewing. See \code{\link{Chromstar}} for a description of the parameter.}
 
 \item{differential.states}{A logical specifying whether differential states shall be returned.}

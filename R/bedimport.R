@@ -20,24 +20,24 @@
 #'
 importBed <- function(bedfile, skip=0, chromosome.format='NCBI') {
 
-	# File with reads, determine classes first for faster import (0-based)
-	classes <- c('character','numeric','numeric','character','integer','character')
-	data <- utils::read.table(bedfile, colClasses=classes, skip=skip)
-	# GRanges compatible strand information
-	data[,6] <- sub('.','*',data[,6])
-	# Adjust chromosome format
-	data[,1] <- sub('^chr', '', data[,1])
-	if (chromosome.format=='UCSC') {
-		data[,1] <- paste0('chr', data[,1])
-	}
-	# Convert to GRanges object
-	gr <- GenomicRanges::GRanges(seqnames=data[,1],
-																	ranges=IRanges(start=data[,2]+1, end=data[,3]+1),	# +1 to match coordinate systems
-																	strand=data[,6],
-																	name=data[,4],
-																	score=data[,5])
+    # File with reads, determine classes first for faster import (0-based)
+    classes <- c('character','numeric','numeric','character','integer','character')
+    data <- utils::read.table(bedfile, colClasses=classes, skip=skip)
+    # GRanges compatible strand information
+    data[,6] <- sub('.','*',data[,6])
+    # Adjust chromosome format
+    data[,1] <- sub('^chr', '', data[,1])
+    if (chromosome.format=='UCSC') {
+        data[,1] <- paste0('chr', data[,1])
+    }
+    # Convert to GRanges object
+    gr <- GenomicRanges::GRanges(seqnames=data[,1],
+                                                                    ranges=IRanges(start=data[,2]+1, end=data[,3]+1),    # +1 to match coordinate systems
+                                                                    strand=data[,6],
+                                                                    name=data[,4],
+                                                                    score=data[,5])
 
-	return(gr)
+    return(gr)
 
 }
 

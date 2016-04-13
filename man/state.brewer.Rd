@@ -59,14 +59,15 @@ bin5 \tab 0 \tab 0 \tab 1 \tab 0 \tab 1 \tab 5 \cr
 \examples{
 # Get all combinatorial states where sample1=0, sample2=1, sample3=(0 or 1),
 #  sample4=sample5
-state.brewer(statespec=c('0.A','1.B','x.C','r.D','r.D'))
+chromstaR:::state.brewer(statespec=c('0.A','1.B','x.C','r.D','r.D'))
 
 # Get all combinatorial states where sample1=sample2=sample3, sample4=sample5
-state.brewer(statespec=c('r.A','r.A','r.A','r.B','r.B'))
+chromstaR:::state.brewer(statespec=c('r.A','r.A','r.A','r.B','r.B'))
 
 # Get all combinatorial states where sample1=sample5, sample2=sample3=1,
 #  sample4=(0 or 1)
-state.brewer(statespec=c('r.A','1.B','1.C','x.D','r.A'))
+chromstaR:::state.brewer(statespec=c('r.A','1.B','1.C','x.D','r.A'))
+
 }
 \author{
 Aaron Taudt

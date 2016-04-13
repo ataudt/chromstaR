@@ -42,201 +42,201 @@
 #'
 binReads <- function(file, format=NULL, assembly, ID=basename(file), bamindex=file, chromosomes=NULL, pairedEndReads=FALSE, min.mapq=10, remove.duplicate.reads=TRUE, max.fragment.width=1000, blacklist=NULL, outputfolder.binned="binned_data", binsizes=1000, reads.per.bin=NULL, bins=NULL, variable.width.reference=NULL, stepsize=NULL, save.as.RData=FALSE, call=match.call(), reads.store=FALSE, outputfolder.reads="data", reads.return=FALSE, reads.overwrite=FALSE, reads.only=FALSE) {
 
-	## Check user input
-	if (reads.return==FALSE & reads.only==FALSE) {
-		if (is.null(binsizes) & is.null(reads.per.bin) & is.null(bins)) {
-			stop("Please specify either argument 'binsizes' or 'reads.per.bin'")
-		}
-	}
+    ## Check user input
+    if (reads.return==FALSE & reads.only==FALSE) {
+        if (is.null(binsizes) & is.null(reads.per.bin) & is.null(bins)) {
+            stop("Please specify either argument 'binsizes' or 'reads.per.bin'")
+        }
+    }
 
-	## Determine format
-	if (is.character(file)) {
-		file.clean <- sub('\\.gz$','', file)
-		format <- rev(strsplit(file.clean, '\\.')[[1]])[1]
-	} else if (class(file)=='GRanges') {
-		format <- 'GRanges'
-	}
+    ## Determine format
+    if (is.character(file)) {
+        file.clean <- sub('\\.gz$','', file)
+        format <- rev(strsplit(file.clean, '\\.')[[1]])[1]
+    } else if (class(file)=='GRanges') {
+        format <- 'GRanges'
+    }
 
-	## Create outputfolder.binned if not exists
-	if (!file.exists(outputfolder.binned) & save.as.RData==TRUE) {
-		dir.create(outputfolder.binned)
-	}
+    ## Create outputfolder.binned if not exists
+    if (!file.exists(outputfolder.binned) & save.as.RData==TRUE) {
+        dir.create(outputfolder.binned)
+    }
 
-	### Read in the data
-	if (format == "bed") {
-		## BED (0-based)
-		if (!remove.duplicate.reads) {
-			data <- bed2GRanges(file, assembly=assembly, chromosomes=chromosomes, remove.duplicate.reads=FALSE, min.mapq=min.mapq, max.fragment.width=max.fragment.width, blacklist=blacklist)
-		} else {
-			data <- bed2GRanges(file, assembly=assembly, chromosomes=chromosomes, remove.duplicate.reads=TRUE, min.mapq=min.mapq, max.fragment.width=max.fragment.width, blacklist=blacklist)
-		}
-	} else if (format == "bam") {
-		## BAM (1-based)
-		if (!remove.duplicate.reads) {
-			data <- bam2GRanges(file, bamindex, chromosomes=chromosomes, pairedEndReads=pairedEndReads, remove.duplicate.reads=FALSE, min.mapq=min.mapq, max.fragment.width=max.fragment.width, blacklist=blacklist)
-		} else {
-			data <- bam2GRanges(file, bamindex, chromosomes=chromosomes, pairedEndReads=pairedEndReads, remove.duplicate.reads=TRUE, min.mapq=min.mapq, max.fragment.width=max.fragment.width, blacklist=blacklist)
-		}
-	} else if (format == "GRanges") {
-		## GRanges (1-based)
-		data <- file
-		err <- tryCatch({
-			!is.character(ID)
-		}, error = function(err) {
-			TRUE
-		})
-		if (err) {
-			ID <- 'GRanges'
-		}
-	}
+    ### Read in the data
+    if (format == "bed") {
+        ## BED (0-based)
+        if (!remove.duplicate.reads) {
+            data <- bed2GRanges(file, assembly=assembly, chromosomes=chromosomes, remove.duplicate.reads=FALSE, min.mapq=min.mapq, max.fragment.width=max.fragment.width, blacklist=blacklist)
+        } else {
+            data <- bed2GRanges(file, assembly=assembly, chromosomes=chromosomes, remove.duplicate.reads=TRUE, min.mapq=min.mapq, max.fragment.width=max.fragment.width, blacklist=blacklist)
+        }
+    } else if (format == "bam") {
+        ## BAM (1-based)
+        if (!remove.duplicate.reads) {
+            data <- bam2GRanges(file, bamindex, chromosomes=chromosomes, pairedEndReads=pairedEndReads, remove.duplicate.reads=FALSE, min.mapq=min.mapq, max.fragment.width=max.fragment.width, blacklist=blacklist)
+        } else {
+            data <- bam2GRanges(file, bamindex, chromosomes=chromosomes, pairedEndReads=pairedEndReads, remove.duplicate.reads=TRUE, min.mapq=min.mapq, max.fragment.width=max.fragment.width, blacklist=blacklist)
+        }
+    } else if (format == "GRanges") {
+        ## GRanges (1-based)
+        data <- file
+        err <- tryCatch({
+            !is.character(ID)
+        }, error = function(err) {
+            TRUE
+        })
+        if (err) {
+            ID <- 'GRanges'
+        }
+    }
 
-	## Select chromosomes to bin
-	if (is.null(chromosomes)) {
-		chromosomes <- seqlevels(data)
-	}
-	chroms2use <- intersect(chromosomes, seqlevels(data))
+    ## Select chromosomes to bin
+    if (is.null(chromosomes)) {
+        chromosomes <- seqlevels(data)
+    }
+    chroms2use <- intersect(chromosomes, seqlevels(data))
 
-	## Select only desired chromosomes
-	data <- data[seqnames(data) %in% chroms2use]
-	data <- keepSeqlevels(data, as.character(unique(seqnames(data))))
-	## Drop seqlevels where seqlength is NA
-	na.seqlevels <- seqlevels(data)[is.na(seqlengths(data))]
-	data <- data[seqnames(data) %in% seqlevels(data)[!is.na(seqlengths(data))]]
-	data <- keepSeqlevels(data, as.character(unique(seqnames(data))))
-	if (length(na.seqlevels) > 0) {
-		warning("Dropped seqlevels because no length information was available: ", paste0(na.seqlevels, collapse=', '))
-	}
+    ## Select only desired chromosomes
+    data <- data[seqnames(data) %in% chroms2use]
+    data <- keepSeqlevels(data, as.character(unique(seqnames(data))))
+    ## Drop seqlevels where seqlength is NA
+    na.seqlevels <- seqlevels(data)[is.na(seqlengths(data))]
+    data <- data[seqnames(data) %in% seqlevels(data)[!is.na(seqlengths(data))]]
+    data <- keepSeqlevels(data, as.character(unique(seqnames(data))))
+    if (length(na.seqlevels) > 0) {
+        warning("Dropped seqlevels because no length information was available: ", paste0(na.seqlevels, collapse=', '))
+    }
  
-	### Return fragments if desired ###
-	if (reads.store) {
-		if (!file.exists(outputfolder.reads)) { dir.create(outputfolder.reads) }
-		filename <- file.path(outputfolder.reads,paste0(ID,'.RData'))
-		if (reads.overwrite | !file.exists(filename)) {
-			ptm <- startTimedMessage(paste0("Saving fragments to ", filename, " ..."))
-			save(data, file=filename)
-			stopTimedMessage(ptm)
-		}
-	}
-	if (reads.return) {
-		return(data)
-	}
-	if (reads.only) {
-		return()
-	}
+    ### Return fragments if desired ###
+    if (reads.store) {
+        if (!file.exists(outputfolder.reads)) { dir.create(outputfolder.reads) }
+        filename <- file.path(outputfolder.reads,paste0(ID,'.RData'))
+        if (reads.overwrite | !file.exists(filename)) {
+            ptm <- startTimedMessage(paste0("Saving fragments to ", filename, " ..."))
+            save(data, file=filename)
+            stopTimedMessage(ptm)
+        }
+    }
+    if (reads.return) {
+        return(data)
+    }
+    if (reads.only) {
+        return()
+    }
 
-	### Coverage and percentage of genome covered ###
-	ptm <- startTimedMessage("Calculating coverage ...")
-	genome.length <- sum(as.numeric(seqlengths(data)))
-	data.strand <- data
-	strand(data.strand) <- '*'
-	coverage <- sum(as.numeric(width(data.strand))) / genome.length
-	genome.covered <- sum(as.numeric(width(reduce(data.strand)))) / genome.length
-	## Per chromosome
-	coverage.per.chrom <- numeric()
-	genome.covered.per.chrom <- numeric()
-	for (chr in chroms2use) {
-		data.strand.chr <- data.strand[seqnames(data.strand)==chr]
-		coverage.per.chrom[chr] <- sum(as.numeric(width(data.strand.chr))) / seqlengths(data.strand)[chr]
-		genome.covered.per.chrom[chr] <- sum(as.numeric(width(reduce(data.strand.chr)))) / seqlengths(data.strand)[chr]
-	}
-	coverage <- list(coverage=coverage, genome.covered=genome.covered, coverage.per.chrom=coverage.per.chrom, genome.covered.per.chrom=genome.covered.per.chrom)
-	stopTimedMessage(ptm)
+    ### Coverage and percentage of genome covered ###
+    ptm <- startTimedMessage("Calculating coverage ...")
+    genome.length <- sum(as.numeric(seqlengths(data)))
+    data.strand <- data
+    strand(data.strand) <- '*'
+    coverage <- sum(as.numeric(width(data.strand))) / genome.length
+    genome.covered <- sum(as.numeric(width(reduce(data.strand)))) / genome.length
+    ## Per chromosome
+    coverage.per.chrom <- numeric()
+    genome.covered.per.chrom <- numeric()
+    for (chr in chroms2use) {
+        data.strand.chr <- data.strand[seqnames(data.strand)==chr]
+        coverage.per.chrom[chr] <- sum(as.numeric(width(data.strand.chr))) / seqlengths(data.strand)[chr]
+        genome.covered.per.chrom[chr] <- sum(as.numeric(width(reduce(data.strand.chr)))) / seqlengths(data.strand)[chr]
+    }
+    coverage <- list(coverage=coverage, genome.covered=genome.covered, coverage.per.chrom=coverage.per.chrom, genome.covered.per.chrom=genome.covered.per.chrom)
+    stopTimedMessage(ptm)
 
 
-	## Pad binsizes and reads.per.bin with each others value
-	numcountsperbp <- length(data) / sum(as.numeric(seqlengths(data)))
-	binsizes.add <- round(reads.per.bin / numcountsperbp, -2)
-	reads.per.bin.add <- round(binsizes * numcountsperbp, 2)
-	binsizes <- c(binsizes, binsizes.add)
-	reads.per.bin <- c(reads.per.bin.add, reads.per.bin)
+    ## Pad binsizes and reads.per.bin with each others value
+    numcountsperbp <- length(data) / sum(as.numeric(seqlengths(data)))
+    binsizes.add <- round(reads.per.bin / numcountsperbp, -2)
+    reads.per.bin.add <- round(binsizes * numcountsperbp, 2)
+    binsizes <- c(binsizes, binsizes.add)
+    reads.per.bin <- c(reads.per.bin.add, reads.per.bin)
 
-	if (!is.null(variable.width.reference)) {
-		### Variable width bins ###
-		message("Making variable width bins:")
-		if (format == 'bam') {
-			refreads <- bam2GRanges(variable.width.reference, bamindex=variable.width.reference, chromosomes=chroms2use, pairedEndReads=pairedEndReads, remove.duplicate.reads=remove.duplicate.reads, min.mapq=min.mapq, max.fragment.width=max.fragment.width, blacklist=blacklist)
-		} else if (format == 'bed') {
-			refreads <- bed2GRanges(variable.width.reference, assembly=assembly, chromosomes=chroms2use, remove.duplicate.reads=remove.duplicate.reads, min.mapq=min.mapq, max.fragment.width=max.fragment.width, blacklist=blacklist)
-		}
-		bins.list <- variableWidthBins(refreads, binsizes=binsizes, chromosomes=chroms2use)
-		message("Finished making variable width bins.")
-	} else {
-		### Fixed width bins ###
-		bins.list <- fixedWidthBins(chrom.lengths=seqlengths(data), binsizes=binsizes, chromosomes=chroms2use)
-	}
-	## Append precalculated bins ##
-	bins.list <- c(bins.list, bins)
+    if (!is.null(variable.width.reference)) {
+        ### Variable width bins ###
+        message("Making variable width bins:")
+        if (format == 'bam') {
+            refreads <- bam2GRanges(variable.width.reference, bamindex=variable.width.reference, chromosomes=chroms2use, pairedEndReads=pairedEndReads, remove.duplicate.reads=remove.duplicate.reads, min.mapq=min.mapq, max.fragment.width=max.fragment.width, blacklist=blacklist)
+        } else if (format == 'bed') {
+            refreads <- bed2GRanges(variable.width.reference, assembly=assembly, chromosomes=chroms2use, remove.duplicate.reads=remove.duplicate.reads, min.mapq=min.mapq, max.fragment.width=max.fragment.width, blacklist=blacklist)
+        }
+        bins.list <- variableWidthBins(refreads, binsizes=binsizes, chromosomes=chroms2use)
+        message("Finished making variable width bins.")
+    } else {
+        ### Fixed width bins ###
+        bins.list <- fixedWidthBins(chrom.lengths=seqlengths(data), binsizes=binsizes, chromosomes=chroms2use)
+    }
+    ## Append precalculated bins ##
+    bins.list <- c(bins.list, bins)
 
-	### Loop over all binsizes ###
-	data.plus <- data[strand(data)=='+']
-	data.minus <- data[strand(data)=='-']
-	data.star <- data[strand(data)=='*']
-	binned.data.list <- list()
-	for (ibinsize in 1:length(bins.list)) {
-		binsize <- as.numeric(names(bins.list)[ibinsize])
-		readsperbin <- round(length(data) / sum(as.numeric(seqlengths(data))) * binsize, 2)
-		message("Binning into bin size ",binsize," with on average ",readsperbin," reads per bin")
-		binned.data <- bins.list[[ibinsize]]
+    ### Loop over all binsizes ###
+    data.plus <- data[strand(data)=='+']
+    data.minus <- data[strand(data)=='-']
+    data.star <- data[strand(data)=='*']
+    binned.data.list <- list()
+    for (ibinsize in 1:length(bins.list)) {
+        binsize <- as.numeric(names(bins.list)[ibinsize])
+        readsperbin <- round(length(data) / sum(as.numeric(seqlengths(data))) * binsize, 2)
+        message("Binning into bin size ",binsize," with on average ",readsperbin," reads per bin")
+        binned.data <- bins.list[[ibinsize]]
 
-		### Loop over offsets ###
-		countmatrices <- list()
-# 		if (is.null(stepsize)) {
-			offsets <- 0
-# 		} else {
-# 			offsets <- seq(from=0, to=binsize, by=as.integer(stepsize*binsize))
-# 		}
-		for (ioff in offsets) {
-			## Count overlaps
-			ptm <- startTimedMessage(paste0("Counting overlaps for offset ",ioff," ..."))
-			binned.data.shift <- suppressWarnings( shift(binned.data, shift=ioff) )
-			scounts <- suppressWarnings( GenomicRanges::countOverlaps(binned.data.shift, data.star) )
-			mcounts <- suppressWarnings( GenomicRanges::countOverlaps(binned.data.shift, data.minus) )
-			pcounts <- suppressWarnings( GenomicRanges::countOverlaps(binned.data.shift, data.plus) )
-			counts <- mcounts + pcounts + scounts
-			countmatrix <- matrix(c(counts,mcounts,pcounts), ncol=3)
-			colnames(countmatrix) <- c('counts','mcounts','pcounts')
-			countmatrices[[as.character(ioff)]] <- countmatrix
-			stopTimedMessage(ptm)
-		}
-# 		mcols(binned.data) <- as(countmatrices[['0']],'DataFrame') # counts, mcounts, pcounts
-		mcols(binned.data)$counts <- countmatrices[['0']][,'counts']
-# 		attr(binned.data,'offset.counts') <- countmatrices
+        ### Loop over offsets ###
+        countmatrices <- list()
+#         if (is.null(stepsize)) {
+            offsets <- 0
+#         } else {
+#             offsets <- seq(from=0, to=binsize, by=as.integer(stepsize*binsize))
+#         }
+        for (ioff in offsets) {
+            ## Count overlaps
+            ptm <- startTimedMessage(paste0("Counting overlaps for offset ",ioff," ..."))
+            binned.data.shift <- suppressWarnings( shift(binned.data, shift=ioff) )
+            scounts <- suppressWarnings( GenomicRanges::countOverlaps(binned.data.shift, data.star) )
+            mcounts <- suppressWarnings( GenomicRanges::countOverlaps(binned.data.shift, data.minus) )
+            pcounts <- suppressWarnings( GenomicRanges::countOverlaps(binned.data.shift, data.plus) )
+            counts <- mcounts + pcounts + scounts
+            countmatrix <- matrix(c(counts,mcounts,pcounts), ncol=3)
+            colnames(countmatrix) <- c('counts','mcounts','pcounts')
+            countmatrices[[as.character(ioff)]] <- countmatrix
+            stopTimedMessage(ptm)
+        }
+#         mcols(binned.data) <- as(countmatrices[['0']],'DataFrame') # counts, mcounts, pcounts
+        mcols(binned.data)$counts <- countmatrices[['0']][,'counts']
+#         attr(binned.data,'offset.counts') <- countmatrices
 
-		if (length(binned.data) == 0) {
-			warning(paste0("The bin size of ",binsize," with reads per bin ",reads.per.bin," is larger than any of the chromosomes."))
-			return(NULL)
-		}
+        if (length(binned.data) == 0) {
+            warning(paste0("The bin size of ",binsize," with reads per bin ",reads.per.bin," is larger than any of the chromosomes."))
+            return(NULL)
+        }
 
-		### Quality measures ###
-		qualityInfo <- list(coverage=coverage)
-		attr(binned.data, 'qualityInfo') <- qualityInfo
-		attr(binned.data, 'min.mapq') <- min.mapq
+        ### Quality measures ###
+        qualityInfo <- list(coverage=coverage)
+        attr(binned.data, 'qualityInfo') <- qualityInfo
+        attr(binned.data, 'min.mapq') <- min.mapq
 
-		### ID ###
-		attr(binned.data, 'ID') <- ID
+        ### ID ###
+        attr(binned.data, 'ID') <- ID
 
-		### Save or return the binned data ###
-		if (save.as.RData==TRUE) {
-			# Save to file
-			filename <- paste0(ID,"_binsize",format(binsize, scientific=FALSE, trim=TRUE),".RData")
-			ptm <- startTimedMessage("Saving to file ...")
-# 			attr(binned.data, 'call') <- call # do not store along with GRanges because it inflates disk usage
-			save(binned.data, file=file.path(outputfolder.binned,filename) )
-			stopTimedMessage(ptm)
-		} else {
-# 			attr(binned.data, 'call') <- call
-			binned.data.list[[as.character(binsize)]] <- binned.data
-		}
+        ### Save or return the binned data ###
+        if (save.as.RData==TRUE) {
+            # Save to file
+            filename <- paste0(ID,"_binsize",format(binsize, scientific=FALSE, trim=TRUE),".RData")
+            ptm <- startTimedMessage("Saving to file ...")
+#             attr(binned.data, 'call') <- call # do not store along with GRanges because it inflates disk usage
+            save(binned.data, file=file.path(outputfolder.binned,filename) )
+            stopTimedMessage(ptm)
+        } else {
+#             attr(binned.data, 'call') <- call
+            binned.data.list[[as.character(binsize)]] <- binned.data
+        }
 
-	} ### end loop binsizes ###
+    } ### end loop binsizes ###
 
-	if (!save.as.RData) {
-		if (length(binned.data.list) == 1) {
-			return(binned.data.list[[1]])
-		} else {
-			return(binned.data.list)
-		}
-	}
+    if (!save.as.RData) {
+        if (length(binned.data.list) == 1) {
+            return(binned.data.list[[1]])
+        } else {
+            return(binned.data.list)
+        }
+    }
 
 
 }

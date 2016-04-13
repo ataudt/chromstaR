@@ -9,7 +9,7 @@
 #' @param eps Convergence threshold for the Baum-Welch algorithm.
 #' @param max.iter The maximum number of iterations for the Baum-Welch algorithm. The default \code{NULL} is no limit.
 #' @param max.time The maximum running time in seconds for the Baum-Welch algorithm. If this time is reached, the Baum-Welch will terminate after the current iteration finishes. The default \code{NULL} is no limit.
-#' @param keep.posteriors If set to \code{TRUE}, posteriors will be available in the output. This is useful to change the FDR later, but increases the necessary disk space to store the result immense.
+#' @param keep.posteriors If set to \code{TRUE}, posteriors will be available in the output. This is useful to change the post.cutoff later, but increases the necessary disk space to store the result immense.
 #' @param num.threads Number of threads to use. Setting this to >1 may give increased performance.
 #' @param max.distance This number is used as a cutoff to group replicates based on their distance matrix. The lower this number, the more similar replicates have to be to be grouped together.
 #' @return Output is a \code{\link{multiHMM}} object with additional entry \code{replicateInfo}. If only one \code{\link{uniHMM}} was given as input, a simple list() with the \code{replicateInfo} is returned.
@@ -40,76 +40,76 @@
 #'
 callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=0.01, max.iter=NULL, max.time=NULL, keep.posteriors=FALSE, num.threads=1, max.distance=0.2) {
 
-	## Enable reanalysis of multivariate HMM
-	if (class(hmm.list)==class.multivariate.hmm) {
+    ## Enable reanalysis of multivariate HMM
+    if (class(hmm.list)==class.multivariate.hmm) {
 
-		multimodel <- hmm.list
-		if (is.null(multimodel$replicateInfo)) {
-			warning("No check done because no replicateInfo was found")
-			return(multimodel)
-		}
-		info.df <- multimodel$replicateInfo$info
-		cor.matrix <- multimodel$replicateInfo$correlation
-		dist.matrix <- multimodel$replicateInfo$distance
-		hc <- stats::hclust(dist.matrix)
-		info.df$group <- stats::cutree(hc, h=max.distance)
+        multimodel <- hmm.list
+        if (is.null(multimodel$replicateInfo)) {
+            warning("No check done because no replicateInfo was found")
+            return(multimodel)
+        }
+        info.df <- multimodel$replicateInfo$info
+        cor.matrix <- multimodel$replicateInfo$correlation
+        dist.matrix <- multimodel$replicateInfo$distance
+        hc <- stats::hclust(dist.matrix)
+        info.df$group <- stats::cutree(hc, h=max.distance)
 
-	### Call peaks for several replicates ###
-	} else {
+    ### Call peaks for several replicates ###
+    } else {
 
-		hmms <- loadHmmsFromFiles(hmm.list, check.class=class.univariate.hmm)
+        hmms <- loadHmmsFromFiles(hmm.list, check.class=class.univariate.hmm)
 
-		## Univariate replicateInfo
-		ids <- sapply(hmms, '[[', 'ID')
-		weight.univariate <- unlist(lapply(hmms, function(x) { x$weights['modified'] }))
-		total.count <- unlist(lapply(hmms, function(x) { sum(x$bins$counts) }))
-		info.df <- data.frame(total.count=total.count, weight.univariate=weight.univariate)
-		rownames(info.df) <- ids
+        ## Univariate replicateInfo
+        ids <- sapply(hmms, '[[', 'ID')
+        weight.univariate <- unlist(lapply(hmms, function(x) { x$weights['modified'] }))
+        total.count <- unlist(lapply(hmms, function(x) { sum(x$bins$counts) }))
+        info.df <- data.frame(total.count=total.count, weight.univariate=weight.univariate)
+        rownames(info.df) <- ids
 
-		### Correlation analysis ###
-		if (length(hmms) == 1) {
-			info.df$weight.multivariate <- NA
-			info.df$group <- 1
-			cor.matrix <- NA
-			dist.matrix <- NA
-			multimodel <- list()
-		} else if (length(hmms) >= 2) {
-			num.states <- min(max.states, 2^length(hmms))
-			if (force.equal) {
-				states2use <- state.brewer(rep(paste0('r.',paste(ids, collapse='-')),length(hmms)))
-				multimodel <- callPeaksMultivariate(hmms, use.states=states2use, eps=eps, max.iter=max.iter, max.time=max.time, keep.posteriors=keep.posteriors, num.threads=num.threads)
-			} else {
-				states2use <- state.brewer(paste0('x.', ids))
-				multimodel <- callPeaksMultivariate(hmms, use.states=states2use, num.states=num.states, eps=eps, max.iter=max.iter, max.time=max.time, keep.posteriors=keep.posteriors, num.threads=num.threads)
-			}
-			binstates <- dec2bin(multimodel$bins$state, colnames=multimodel$IDs)
-			cor.matrix <- cor(binstates)
-			weight.multivariate <- apply(binstates, 2, sum) / nrow(binstates)
-			info.df$weight.multivariate <- weight.multivariate
-			dist.matrix <- stats::dist(cor.matrix)
-			hc <- stats::hclust(dist.matrix)
-			info.df$group <- stats::cutree(hc, h=max.distance)
-		}
+        ### Correlation analysis ###
+        if (length(hmms) == 1) {
+            info.df$weight.multivariate <- NA
+            info.df$group <- 1
+            cor.matrix <- NA
+            dist.matrix <- NA
+            multimodel <- list()
+        } else if (length(hmms) >= 2) {
+            num.states <- min(max.states, 2^length(hmms))
+            if (force.equal) {
+                states2use <- state.brewer(rep(paste0('r.',paste(ids, collapse='-')),length(hmms)))
+                multimodel <- callPeaksMultivariate(hmms, use.states=states2use, eps=eps, max.iter=max.iter, max.time=max.time, keep.posteriors=keep.posteriors, num.threads=num.threads)
+            } else {
+                states2use <- state.brewer(paste0('x.', ids))
+                multimodel <- callPeaksMultivariate(hmms, use.states=states2use, num.states=num.states, eps=eps, max.iter=max.iter, max.time=max.time, keep.posteriors=keep.posteriors, num.threads=num.threads)
+            }
+            binstates <- dec2bin(multimodel$bins$state, colnames=multimodel$IDs)
+            cor.matrix <- cor(binstates)
+            weight.multivariate <- apply(binstates, 2, sum) / nrow(binstates)
+            info.df$weight.multivariate <- weight.multivariate
+            dist.matrix <- stats::dist(cor.matrix)
+            hc <- stats::hclust(dist.matrix)
+            info.df$group <- stats::cutree(hc, h=max.distance)
+        }
 
-		## Make return object
-		multimodel$replicateInfo$info <- info.df
-		multimodel$replicateInfo$correlation <- cor.matrix
-		multimodel$replicateInfo$distance <- dist.matrix
+        ## Make return object
+        multimodel$replicateInfo$info <- info.df
+        multimodel$replicateInfo$correlation <- cor.matrix
+        multimodel$replicateInfo$distance <- dist.matrix
 
-	}
+    }
 
-	## Check groups and issue warnings
-	num.groups <- length(unique(info.df$group))
-	if (num.groups > 1) {
-		avg.total.count <- unlist(lapply(split(info.df, info.df$group), function(x) { mean(x$total.count) }))
-		IDs.keep <- rownames(info.df)[info.df$group==names(avg.total.count[which.max(avg.total.count)])]
-		IDs.keep.string <- paste(IDs.keep, collapse='\n')
-		IDs.throw <- rownames(info.df)[info.df$group!=names(avg.total.count[which.max(avg.total.count)])]
-		IDs.throw.string <- paste(IDs.throw, collapse='\n')
-		string <- paste0("Your replicates cluster in ", num.groups, " groups. Consider redoing your analysis with only the group with the highest average coverage:\n", IDs.keep.string, "\nReplicates from groups with lower coverage are:\n", IDs.throw.string)
-		warning(string)
-	}
+    ## Check groups and issue warnings
+    num.groups <- length(unique(info.df$group))
+    if (num.groups > 1) {
+        avg.total.count <- unlist(lapply(split(info.df, info.df$group), function(x) { mean(x$total.count) }))
+        IDs.keep <- rownames(info.df)[info.df$group==names(avg.total.count[which.max(avg.total.count)])]
+        IDs.keep.string <- paste(IDs.keep, collapse='\n')
+        IDs.throw <- rownames(info.df)[info.df$group!=names(avg.total.count[which.max(avg.total.count)])]
+        IDs.throw.string <- paste(IDs.throw, collapse='\n')
+        string <- paste0("Your replicates cluster in ", num.groups, " groups. Consider redoing your analysis with only the group with the highest average coverage:\n", IDs.keep.string, "\nReplicates from groups with lower coverage are:\n", IDs.throw.string)
+        warning(string)
+    }
 
-	return(multimodel)
+    return(multimodel)
 
 }

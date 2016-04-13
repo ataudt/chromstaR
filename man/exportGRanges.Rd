@@ -5,7 +5,7 @@
 \title{Export genome browser viewable files}
 \usage{
 exportGRanges(gr, trackname, filename = "chromstaR_GRanges_regions",
-  header = TRUE, orderByScore = TRUE, append = FALSE)
+  header = TRUE, orderByScore = FALSE, append = FALSE)
 }
 \arguments{
 \item{gr}{A \code{\link{GRanges}} object.}
@@ -15,6 +15,8 @@ exportGRanges(gr, trackname, filename = "chromstaR_GRanges_regions",
 \item{filename}{The name of the file that will be written. The ending ".bed.gz". Any existing file will be overwritten.}
 
 \item{header}{A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).}
+
+\item{orderByScore}{If set to \code{TRUE}, the lines in the output will be ordered by column 'score' in descending order.}
 
 \item{append}{Whether or not to append to an existing file.}
 }

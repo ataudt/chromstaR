@@ -4,15 +4,24 @@
 \alias{enrichment_analysis}
 \alias{plotEnrichment}
 \alias{plotHeatmap}
+\alias{plotMultipleEnrichment}
 \title{Enrichment analysis}
 \usage{
+plotMultipleEnrichment(hmm, annotations, combinations = NULL, plot = TRUE)
+
 plotHeatmap(hmm, annotation, bp.around.annotation = 10000, max.rows = 1000)
 
 plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
   region = c("start", "inside", "end"), num.intervals = 20)
 }
 \arguments{
-\item{hmm}{A \code{\link{multiHMM}} object.}
+\item{hmm}{A \code{\link{multiHMM}} or a file that contains such an object.}
+
+\item{annotations}{A \code{list()} with \code{\link{GRanges}} objects containing coordinates of multiple annotations The names of the list entries will be used to name the return values.}
+
+\item{combinations}{A vector with combinations for which the fold enrichment will be calculated. If \code{NULL} all combinations will be considered.}
+
+\item{plot}{A logical indicating whether the plot or an array with the fold enrichment values is returned.}
 
 \item{annotation}{A \code{\link{GRanges}} object with the annotation of interest.}
 
@@ -26,58 +35,73 @@ plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
 }
 \value{
 A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot.
+
+A \code{\link[ggplot2]{ggplot}} object (\code{plot=TRUE}) or a named array with fold enrichments (\code{plot=FALSE}).
 }
 \description{
-Plotting functions for enrichment analysis of \code{\link{multiHMM}} objects with any annotation of interest, specified as a \code{\link[GenomicRanges:Granges]{GRanges}} object.
+Plotting functions for enrichment analysis of \code{\link{multiHMM}} objects with any annotation of interest, specified as a \code{\link[GenomicRanges]{GRanges}} object.
 }
 \section{Functions}{
 \itemize{
+\item \code{plotMultipleEnrichment}: Compute the fold enrichment of combinatorial states for multiple annotations.
+
 \item \code{plotHeatmap}: Plot read counts around annotation as heatmap.
 
 \item \code{plotEnrichment}: Plot fold enrichment of combinatorial states around and inside of annotation.
 }}
 \examples{
-## Get an example multiHMM
+### Get an example multiHMM ###
 file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
                     package="chromstaR")
 model <- get(load(file))
 
-## Obtain gene coordinates for rat from biomaRt
+### Obtain gene coordinates for rat from biomaRt ###
 library(biomaRt)
 ensembl <- useMart('ENSEMBL_MART_ENSEMBL', host='may2012.archive.ensembl.org',
                   dataset='rnorvegicus_gene_ensembl')
 genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
-                           'end_position', 'strand', 'external_gene_id'),
+                           'end_position', 'strand', 'external_gene_id',
+                           'gene_biotype'),
               mart=ensembl)
 # Transform to GRanges for easier handling
-genes <- GRanges(seqnames=paste0('chr',genes$chrom),
+genes <- GRanges(seqnames=paste0('chr',genes$chromosome_name),
                 ranges=IRanges(start=genes$start, end=genes$end),
                 strand=genes$strand,
-                name=genes$external_gene_id)
+                name=genes$external_gene_id, biotype=genes$gene_biotype)
 print(genes)
 
-## Make the enrichment plots
+### Make the enrichment plots ###
 # We expect promoter [H3K4me3] and bivalent-promoter signatures [H3K4me3+H3K27me3]
 # to be enriched at transcription start sites.
-plotEnrichment(hmm = model, annotation = genes, bp.around.annotation = 15000) +
- ggtitle('Fold enrichment around genes') +
- xlab('distance from gene body')
+   plotEnrichment(hmm = model, annotation = genes, bp.around.annotation = 15000) +
+   ggtitle('Fold enrichment around genes') +
+   xlab('distance from gene body')
+ 
 # Plot enrichment only at TSS. We make use of the fact that TSS is the start of a gene.
-plotEnrichment(model, genes, region = 'start') +
- ggtitle('Fold enrichment around TSS') +
- xlab('distance from TSS in [bp]')
+   plotEnrichment(model, genes, region = 'start') +
+   ggtitle('Fold enrichment around TSS') +
+   xlab('distance from TSS in [bp]')
 # Note: If you want to facet the plot because you have many combinatorial states you
 # can do that with
-plotEnrichment(model, genes, region = 'start') +
- facet_wrap(~ combination)
+   plotEnrichment(model, genes, region = 'start') +
+   facet_wrap(~ combination)
+ 
 # Another form of visualization that shows every TSS in a heatmap
 # If transparency is not supported try to plot to pdf() instead.
-tss <- resize(genes, width = 3, fix = 'start')
-plotHeatmap(model, tss) +
- theme(strip.text.x = element_text(size=6))
+   tss <- resize(genes, width = 3, fix = 'start')
+   plotHeatmap(model, tss) +
+   theme(strip.text.x = element_text(size=6))
+ 
+# Fold enrichment with different biotypes, showing that protein coding genes are
+# enriched with (bivalent) promoter combinations [H3K4me3] and [H3K4me3+H3K27me3],
+# while rRNA is enriched with the empty [] and repressive combinations [H3K27me3].
+   biotypes <- split(tss, tss$biotype)
+   plotMultipleEnrichment(model, annotations=biotypes) + coord_flip()
 
 }
 \author{
+Aaron Taudt
+
 Aaron Taudt
 }
 

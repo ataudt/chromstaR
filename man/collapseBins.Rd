@@ -47,9 +47,13 @@ chr1     \tab   600 \tab 999 \tab                 1 \tab        4 13 \tab       
 }
 \examples{
 ## Load example data
-data(example.multi.HMM)
-df <- as.data.frame(example.multi.HMM$bins)
-shortdf <- collapseBins(df, column2collapseBy='state', columns2sumUp='width', columns2average=6:12)
+## Get an example multiHMM
+file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+                    package="chromstaR")
+model <- get(load(file))
+df <- as.data.frame(model$bins)
+shortdf <- collapseBins(df, column2collapseBy='state', columns2sumUp='width', columns2average=6:9)
+
 }
 \author{
 Aaron Taudt

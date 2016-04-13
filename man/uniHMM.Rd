@@ -7,12 +7,8 @@
 \value{
 A \code{list()} with the following entries:
 \item{ID}{An identifier that is used in various \pkg{\link{chromstaR}} functions.}
-\item{bins}{
-A \link{GRanges} object containing the genomic bin coordinates, their read count, (optional) posteriors and state classification.
-}
-\item{segments}{
-A \link{GRanges} object containing regions and their state classification.
-}
+\item{bins}{A \code{\link[GenomicRanges]{GRanges}} object containing the genomic bin coordinates, their read count, (optional) posteriors and state classification.}
+\item{segments}{Same as \code{bins}, but consecutive bins with the same state are collapsed into segments.}
 \item{weights}{Weight for each component. Same as \code{apply(hmm$posteriors,2,mean)}.}
 \item{transitionProbs}{Matrix of transition probabilities from each state (row) into each state (column).}
 \item{transitionProbs.initial}{Initial \code{transitionProbs} at the beginning of the Baum-Welch.}
@@ -20,18 +16,20 @@ A \link{GRanges} object containing regions and their state classification.
 \item{startProbs.initial}{Initial \code{startProbs} at the beginning of the Baum-Welch.}
 \item{distributions}{Estimated parameters of the emission distributions.}
 \item{distributions.initial}{Distribution parameters at the beginning of the Baum-Welch.}
-\item{FDR}{False discovery rate (default=0.5).}
+\item{post.cutoff}{Cutoff for posterior probabilities to call peaks (default=0.5).}
 \item{convergenceInfo}{Contains information about the convergence of the Baum-Welch algorithm.}
 \item{convergenceInfo$eps}{Convergence threshold for the Baum-Welch.}
 \item{convergenceInfo$loglik}{Final loglikelihood after the last iteration.}
 \item{convergenceInfo$loglik.delta}{Change in loglikelihood after the last iteration (should be smaller than \code{eps})}
 \item{convergenceInfo$num.iterations}{Number of iterations that the Baum-Welch needed to converge to the desired \code{eps}.}
 \item{convergenceInfo$time.sec}{Time in seconds that the Baum-Welch needed to converge to the desired \code{eps}.}
+\item{convergenceInfo$max.mean}{Value of parameter \code{max.mean}.}
+\item{convergenceInfo$read.cutoff}{Cutoff value for read counts.}
 }
 \description{
-The univariate HMM object is output of the function \code{\link{callPeaksUnivariate}} and is basically a list with various entries. The class() attribute of this list was set to "uniHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' and 'hmm$'.
+The univariate HMM object is output of the function \code{\link{callPeaksUnivariate}} and is a \code{list()} with various entries. The class() attribute of this list was set to "uniHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' or 'hmm$'.
 }
 \seealso{
-\code{\link{callPeaksUnivariate}}, \code{\link{multiHMM}}
+\code{\link{callPeaksUnivariate}}, \code{\link{multiHMM}}, \code{\link{combinedMultiHMM}}
 }
 

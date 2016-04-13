@@ -48,7 +48,7 @@ for (i1 in 1:length(binned.data)) {
                                      max.time=60, eps=1)
 }
 ## Get the decimal representation of the combinatorial state of this combination of models
-states <- combinatorialStates(models, binary=FALSE)
+states <- chromstaR:::combinatorialStates(models, binary=FALSE)
 ## Show number of each state
 table(states)
 

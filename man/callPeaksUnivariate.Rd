@@ -8,7 +8,7 @@ callPeaksUnivariate(binned.data, ID, prefit.on.chr = NULL, short = TRUE,
   eps = 0.01, init = "standard", max.time = NULL, max.iter = 5000,
   num.trials = 1, eps.try = NULL, num.threads = 1, read.cutoff = TRUE,
   read.cutoff.quantile = 1, read.cutoff.absolute = 500, max.mean = Inf,
-  FDR = 0.5, control = FALSE, keep.posteriors = FALSE,
+  post.cutoff = 0.5, control = FALSE, keep.posteriors = FALSE,
   keep.densities = FALSE, verbosity = 1)
 }
 \arguments{
@@ -17,6 +17,8 @@ callPeaksUnivariate(binned.data, ID, prefit.on.chr = NULL, short = TRUE,
 \item{ID}{An identifier that will be used to identify this sample in various downstream functions. Could be the file name of the \code{binned.data} for example.}
 
 \item{prefit.on.chr}{A chromosome that is used to pre-fit the Hidden Markov Model. Set to \code{NULL} if you don't want to prefit but use the whole genome instead.}
+
+\item{short}{If \code{TRUE}, the second fitting step is only done with one iteration.}
 
 \item{eps}{Convergence threshold for the Baum-Welch algorithm.}
 
@@ -45,17 +47,15 @@ callPeaksUnivariate(binned.data, ID, prefit.on.chr = NULL, short = TRUE,
 
 \item{max.mean}{If \code{mean(counts)>max.mean}, bins with low read counts will be set to 0. This is a workaround to obtain good fits in the case of large bin sizes.}
 
-\item{FDR}{False discovery rate. code{NULL} means that the state with maximum posterior probability will be chosen, irrespective of its absolute probability (default=code{NULL}).}
+\item{post.cutoff}{False discovery rate. code{NULL} means that the state with maximum posterior probability will be chosen, irrespective of its absolute probability (default=code{NULL}).}
 
 \item{control}{If set to \code{TRUE}, the binned data will be treated as control experiment. That means only state 'zero-inflation' and 'unmodified' will be used in the HMM.}
 
-\item{keep.posteriors}{If set to \code{TRUE} (default=\code{FALSE}), posteriors will be available in the output. This is useful to change the FDR later, but increases the necessary disk space to store the result.}
+\item{keep.posteriors}{If set to \code{TRUE} (default=\code{FALSE}), posteriors will be available in the output. This is useful to change the post.cutoff later, but increases the necessary disk space to store the result.}
 
 \item{keep.densities}{If set to \code{TRUE} (default=\code{FALSE}), densities will be available in the output. This should only be needed debugging.}
 
 \item{verbosity}{Verbosity level for the fitting procedure. 0 - No output, 1 - Iterations are printed.}
-
-\item{If}{\code{TRUE}, the second fitting step is only done with one iteration.}
 }
 \value{
 A \code{\link{uniHMM}} object.
@@ -82,7 +82,7 @@ plot(hmm, type='histogram')
 
 }
 \author{
-Aaron Taudt, Maria Coome Tatche
+Aaron Taudt, Maria Colome Tatche
 }
 \seealso{
 \code{\link{uniHMM}}, \code{\link{callPeaksMultivariate}}

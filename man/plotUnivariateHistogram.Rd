@@ -13,6 +13,8 @@ plotUnivariateHistogram(model, state = NULL, chromosomes = NULL,
 \item{state}{Plot the histogram only for the specified state. One of \code{c('unmodified','modified')}.}
 
 \item{chromosomes, start, end}{Plot the histogram only for the specified chromosomes, start and end position.}
+
+\item{linewidth}{Width of the distribution lines.}
 }
 \value{
 A \code{\link[ggplot2:ggplot]{ggplot}} object.
