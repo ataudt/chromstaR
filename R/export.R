@@ -126,7 +126,6 @@ exportUnivariatePeaks <- function(hmm.list, filename="chromstaR_univariatePeakCa
     if (!separate.files) {
         close(filename.gz)
     }
-    message('')
 
 }
 
@@ -197,7 +196,6 @@ exportUnivariateReadCounts <- function(hmm.list, filename="chromstaR_univariateR
     if (!separate.files) {
         close(filename.gz)
     }
-    message('')
 }
 
 
@@ -461,7 +459,6 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
     if (!separate.files) {
         close(filename.gz)
     }
-    message('')
 }
 
 
@@ -565,7 +562,6 @@ exportBinnedData <- function(binned.data.list, filename="chromstaR_ReadCounts", 
     if (!separate.files) {
         close(filename.gz)
     }
-    message('')
 }
 
 

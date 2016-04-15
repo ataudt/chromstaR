@@ -984,7 +984,7 @@ void ScaleHMM::calc_densities()
 	}
 
 	// Check if the density for all states is close to zero and correct to prevent NaNs
-	double zero_cutoff = 1e-100;
+	double zero_cutoff = 1e-30; // 32-bit precision is 1.18e-38
 	std::vector<double> temp(this->N);
 	// t=0
 	for (int iN=0; iN<this->N; iN++)

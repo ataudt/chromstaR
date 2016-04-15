@@ -126,19 +126,6 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     ## Make a copy of the conf file
     writeConfig(conf, configfile=file.path(outputfolder, 'chromstaR.config'))
     
-    ## Parallelization ##
-    if (numcpu > 1) {
-        ptm <- startTimedMessage("Setting up parallel execution with ", numcpu, " threads ...")
-        cl <- parallel::makeCluster(numcpu)
-        doParallel::registerDoParallel(cl)
-        on.exit(
-            if (conf[['numCPU']] > 1) {
-                parallel::stopCluster(cl)
-            }
-        )
-        stopTimedMessage(ptm)
-    }
-  
   
     #==============
     ### Binning ###
@@ -170,6 +157,19 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #==============================
     ### Univariate peak calling ###
     #==============================
+    ## Parallelization ##
+    if (numcpu > 1) {
+        ptm <- startTimedMessage("Setting up parallel execution with ", numcpu, " threads ...")
+        cl <- parallel::makeCluster(numcpu)
+        doParallel::registerDoParallel(cl)
+        on.exit(
+            if (conf[['numCPU']] > 1) {
+                parallel::stopCluster(cl)
+            }
+        )
+        stopTimedMessage(ptm)
+    }
+  
     if (!file.exists(unipath)) { dir.create(unipath) }
     if (!file.exists(uniplotpath)) { dir.create(uniplotpath) }
     files <- file.path(binpath, filenames)
@@ -182,7 +182,9 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 fields <- sapply(exp.table[sub('_binsize.*','',basename(file)),c('mark','condition','replicate')], as.character)
                 id <- paste0(fields[1], '-', fields[2], '-rep', fields[3])
                 model <- callPeaksUnivariate(file, ID=id, eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], read.cutoff.absolute=conf[['read.cutoff.absolute']], prefit.on.chr=conf[['prefit.on.chr']], keep.posteriors=conf[['keep.posteriors']])
+								ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(model, file=savename)
+								stopTimedMessage(ptm)
             }, error = function(err) {
                 stop(file,'\n',err)
             })
@@ -242,7 +244,9 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
             files <- file.path(unipath, filenames)
             states <- stateBrewer(exp.table, mode=mode)
             multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']])
+						ptm <- startTimedMessage("Saving to file ", savename, " ...")
             save(multimodel, file=savename)
+						stopTimedMessage(ptm)
         } else {
             multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
         }
@@ -269,7 +273,9 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 files <- file.path(unipath, filenames)[mask]
                 states <- stateBrewer(exp.table[mask,], mode=mode)
                 multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']])
+								ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(multimodel, file=savename)
+								stopTimedMessage(ptm)
             } else {
                 multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
             }
@@ -297,7 +303,9 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 files <- file.path(unipath, filenames)[mask]
                 states <- stateBrewer(exp.table[mask,], mode=mode)
                 multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']])
+								ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(multimodel, file=savename)
+								stopTimedMessage(ptm)
             } else {
                 multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
             }
@@ -322,6 +330,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #================================
     if ((mode=='mark' & length(conditions)>=2) | (mode=='condition' & length(marks)>=2) | (mode=='full')) {
       
+        messageU("Combining multivariate HMMs")
         multifiles <- list.files(multipath, full.names=TRUE, pattern=paste0('mode-',mode))
         if (mode=='condition') {
             names(multifiles) <- marks
@@ -334,7 +343,9 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         savename <- file.path(combipath, paste0('combined_mode-', mode, '.RData'))
         if (!file.exists(savename)) {
             combinedModel <- combineMultivariates(multifiles, mode=mode, conditions=conditions)
+            ptm <- startTimedMessage("Saving to file ", savename, " ...")
             save(combinedModel, file=savename)
+            stopTimedMessage(ptm)
         } else {
             combinedModel <- loadHmmsFromFiles(savename, check.class=class.combined.multivariate.hmm)[[1]]
         }

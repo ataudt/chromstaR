@@ -187,9 +187,11 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
     combs.df <- endoapply(combs.df, function(x) { x <- factor(x, levels=comblevels) })
 
     ## Assign transition groups
-    freqs <- transitionFrequencies(combstates=as.list(combs.df))
+    ptm <- startTimedMessage("Assigning transition groups ...")
+    freqs <- suppressMessages( transitionFrequencies(combstates=as.list(combs.df)) )
     bins$transition.group <- freqs$per.bin$group
     mcols(bins)[names(combs.df)] <- combs.df
+    stopTimedMessage(ptm)
     
     ### Redo the segmentation for all conditions combined
     ptm <- startTimedMessage("Redoing segmentation for all conditions combined ...")
@@ -199,6 +201,7 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
     segments <- as(segments.df, 'GRanges')
     seqlengths(segments) <- seqlengths(bins)
     mcols(bins)$state <- NULL
+    names(mcols(segments)) <- names(mcols(bins))
     stopTimedMessage(ptm)
     
     ### Redo the segmentation for each condition separately
@@ -208,6 +211,7 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
         bins.cond <- bins
         mcols(bins.cond) <- mcols(bins)[cond]
         df <- as.data.frame(bins.cond)
+        names(df)[6] <- cond
         segments.cond <- suppressMessages( collapseBins(df, column2collapseBy=cond, columns2drop=c('width')) )
         segments.cond <- as(segments.cond, 'GRanges')
         names(mcols(segments.cond)) <- 'combination'
@@ -222,6 +226,7 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
     hmm$bins <- bins
     hmm$segments <- segments
     hmm$segments.separate <- segments.separate
+    hmm$frequencies <- freqs$table
     return(hmm)
     
 }

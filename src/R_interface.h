@@ -7,11 +7,14 @@
 #include <string> // strcmp
 #include <Rmath.h> //runif
 
-#if defined TARGET_OS_MAC || defined __APPLE__
-#include <libiomp/omp.h> // parallelization options on mac
-#elif defined __linux__ || defined _WIN32 || defined _WIN64
-#include <omp.h> // parallelization options
+#ifdef _OPENMP
+#include <omp.h>
 #endif
+// #if defined TARGET_OS_MAC || defined __APPLE__
+// #include <libiomp/omp.h> // parallelization options on mac
+// #elif defined __linux__ || defined _WIN32 || defined _WIN64
+// #include <omp.h> // parallelization options
+// #endif
 
 extern "C"
 void univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* maxiter, int* maxtime, double* eps, double* posteriors, double* densities, bool* keep_densities, double* A, double* proba, double* loglik, double* weights, int* iniproc, double* initial_size, double* initial_prob, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* read_cutoff, int* verbosity);

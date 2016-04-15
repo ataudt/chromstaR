@@ -456,8 +456,7 @@ bivalent.BN <- segments[segments$BN == '[H3K27me3+H3K4me3]' &
 promoter.BN <- segments[segments$transition.group == 'constant [H3K4me3]']
 
 ## Get transition frequencies
-transFreqs <- transitionFrequencies(combined.hmm=model)
-print(transFreqs$table)
+print(model$frequencies)
 @
 \end{scriptsize}
 

@@ -8,11 +8,14 @@
 #include "densities.h"
 #include <string> // strcmp
 
-#if defined TARGET_OS_MAC || defined __APPLE__
-#include <libiomp/omp.h> // parallelization options on mac
-#elif defined __linux__ || defined _WIN32 || defined _WIN64
-#include <omp.h> // parallelization options
+#ifdef _OPENMP
+#include <omp.h>
 #endif
+// #if defined TARGET_OS_MAC || defined __APPLE__
+// #include <libiomp/omp.h> // parallelization options on mac
+// #elif defined __linux__ || defined _WIN32 || defined _WIN64
+// #include <omp.h> // parallelization options
+// #endif
 
 class ScaleHMM  {
 

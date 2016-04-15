@@ -94,12 +94,14 @@ transitionFrequencies <- function(multi.hmms=NULL, combined.hmm=NULL, zero.state
                 stop("'multi.hmms' must be a named list of multiHMM objects.")
             }
             ## Get combinatorial states in loop to save memory
+            ptm <- startTimedMessage("Loading HMMs ...")
             combstates <- list()
             for (imodel in 1:length(multi.hmms)) {
                 multi.hmm <- suppressMessages( loadHmmsFromFiles(multi.hmms[[imodel]], check.class=class.multivariate.hmm)[[1]] )
                 combstates[[imodel]] <- multi.hmm$bins$combination
             }
             names(combstates) <- names(multi.hmms)
+            stopTimedMessage(ptm)
         } else {
             combined.hmm <- suppressMessages( loadHmmsFromFiles(combined.hmm, check.class=class.combined.multivariate.hmm)[[1]] )
             combstates <- as.list(mcols(combined.hmm$bins)[names(mcols(combined.hmm$bins)) != 'transition.group'])
@@ -113,17 +115,23 @@ transitionFrequencies <- function(multi.hmms=NULL, combined.hmm=NULL, zero.state
     conditions <- names(combstates)
 
     ### Get transitions for whole genome ###
+    ptm <- startTimedMessage("Getting transitions ...")
     combstates$sep <- '<>'
     gentrans <- do.call(paste, combstates)
     tab <- table(gentrans) / length(gentrans)
     trans <- matrix(unlist(strsplit(names(tab), '<>')), ncol=length(conditions), dimnames=list(transition=NULL, condition=conditions))
-    freqtrans <- data.frame(trans, frequency=as.numeric(tab), transition=names(tab))
+    freqtrans <- data.frame(trans)
+    names(freqtrans) <- colnames(trans)
+    freqtrans$frequency <- as.numeric(tab)
+    freqtrans$transition <- names(tab)
     freqtrans <- freqtrans[order(freqtrans$frequency, decreasing=TRUE),]
     rownames(freqtrans) <- NULL
     # Cumulative frequencies
     freqtrans$cumulative.frequency <- cumsum(freqtrans$frequency)
+    stopTimedMessage(ptm)
 
     ### Assigning groups for frequency table ###
+    ptm <- startTimedMessage("Assigning groups ...")
     freqtrans$group <- 'other'
     # Stage-specific and constant states
     combstates$sep <- NULL
@@ -148,12 +156,15 @@ transitionFrequencies <- function(multi.hmms=NULL, combined.hmm=NULL, zero.state
         iszero <- Reduce('&', as.list(df))
     }
     freqtrans$group[iszero] <- 'zero transition'
+    stopTimedMessage(ptm)
 
     ### Assigning groups over whole genome ###
+    ptm <- startTimedMessage("Assigning groups for whole genome ...")
     mapping <- freqtrans$group
     names(mapping) <- freqtrans$transition
     gengroups <- mapping[gentrans]
     gentrans <- data.frame(transition=gentrans, group=gengroups)
+    stopTimedMessage(ptm)
 
     ## Remove unneeded column
     freqtrans$transition <- NULL
