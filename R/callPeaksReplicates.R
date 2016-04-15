@@ -74,13 +74,13 @@ callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=
             dist.matrix <- NA
             multimodel <- list()
         } else if (length(hmms) >= 2) {
-            num.states <- min(max.states, 2^length(hmms))
+            max.states <- min(max.states, 2^length(hmms))
             if (force.equal) {
                 states2use <- state.brewer(rep(paste0('r.',paste(ids, collapse='-')),length(hmms)))
                 multimodel <- callPeaksMultivariate(hmms, use.states=states2use, eps=eps, max.iter=max.iter, max.time=max.time, keep.posteriors=keep.posteriors, num.threads=num.threads)
             } else {
                 states2use <- state.brewer(paste0('x.', ids))
-                multimodel <- callPeaksMultivariate(hmms, use.states=states2use, num.states=num.states, eps=eps, max.iter=max.iter, max.time=max.time, keep.posteriors=keep.posteriors, num.threads=num.threads)
+                multimodel <- callPeaksMultivariate(hmms, use.states=states2use, max.states=max.states, eps=eps, max.iter=max.iter, max.time=max.time, keep.posteriors=keep.posteriors, num.threads=num.threads)
             }
             binstates <- dec2bin(multimodel$bins$state, colnames=multimodel$IDs)
             cor.matrix <- cor(binstates)

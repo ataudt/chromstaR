@@ -192,9 +192,9 @@ variableWidthBins <- function(reads, binsizes, chromosomes=NULL) {
         binsize <- binsizes[i1]
         ptm <- startTimedMessage("Making variable-width windows for bin size ", binsize, " ...")
         if (class(binned.list)=='GRanges') {
-          binned <- binned.list
+            binned <- binned.list
         } else {
-          binned <- binned.list[[i1]]
+            binned <- binned.list[[i1]]
         }
         ## Get mode of histogram
         tab <- table(binned$counts)

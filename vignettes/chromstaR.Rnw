@@ -305,8 +305,10 @@ model <- get(load(file.path(outputfolder,'multivariate',
 # Obtain genomic frequencies for combinatorial states
 genomicFrequencies(model)
 # Plot transition probabilities and read count correlation
-plot(model, type='transitionMatrix') # or plot(model, type=1)
-plot(model, type='correlation') # or plot(model, type=3)
+plot(model, type='transitionMatrix') + # or plot(model, type=1)
+  ggtitle('Transition probabilities')
+plot(model, type='correlation') + # or plot(model, type=3)
+  ggtitle('Read count correlation')
 @
 
 <<multivariate_combinatorial_enrichment, results='markup', message=FALSE, eval=TRUE>>=
@@ -443,13 +445,19 @@ model <- get(load(file.path(outputfolder,'multivariate-combined',
 <<combined_analysis, results='markup', message=FALSE, eval=TRUE>>=
 #=== Step 3: Analysis and export ===
 ## Obtain all genomic regions where the two tissues have different states
-segments <- model$combined.segments
+segments <- model$segments
 diff.segments <- segments[segments$SHR != segments$BN]
 exportGRanges(diff.segments, trackname='differential_chromatin_states',
               filename=tempfile())
-## Get genomic frequencies
+## Obtain all genomic regions where we find a bivalent promoter in BN but not in SHR
+bivalent.BN <- segments[segments$BN == '[H3K27me3+H3K4me3]' &
+                        segments$SHR != '[H3K27me3+H3K4me3]']
+## Obtain all genomic regions where BN and SHR have promoters
+promoter.BN <- segments[segments$transition.group == 'constant [H3K4me3]']
+
+## Get transition frequencies
 transFreqs <- transitionFrequencies(combined.hmm=model)
-print(transFreqs)
+print(transFreqs$table)
 @
 \end{scriptsize}
 

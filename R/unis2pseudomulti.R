@@ -73,7 +73,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
     binary.comb.states <- dec2bin(comb.states, colnames=names(uni.hmm.list))
     binary.comb.states.list <- list()
     for (icol in 1:ncol(binary.comb.states)) {
-      binary.comb.states.list[[colnames(binary.comb.states)[icol]]] <- c('',colnames(binary.comb.states)[icol])[binary.comb.states[,icol]+1]
+        binary.comb.states.list[[colnames(binary.comb.states)[icol]]] <- c('',colnames(binary.comb.states)[icol])[binary.comb.states[,icol]+1]
     }
     binary.comb.states.list$sep='+'
     mapping <- do.call(paste, binary.comb.states.list)
@@ -105,16 +105,16 @@ unis2pseudomulti <- function(uni.hmm.list) {
     result$IDs <- IDs
     result$bins <- bins
     ## Segmentation
-      df <- as.data.frame(result$bins)
-      ind.readcols <- grep('^counts', names(df))
-      ind.widthcol <- grep('width', names(df))
-      ind.scorecol <- grep('score', names(df))
-      red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2drop=c(ind.readcols, ind.widthcol)))
-      red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], combination=red.df[,'combination'])
-      result$segments <- red.gr
-      seqlengths(result$segments) <- seqlengths(result$bins)
+        df <- as.data.frame(result$bins)
+        ind.readcols <- grep('^counts', names(df))
+        ind.widthcol <- grep('width', names(df))
+        ind.scorecol <- grep('score', names(df))
+        red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2drop=c(ind.readcols, ind.widthcol)))
+        red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], combination=red.df[,'combination'])
+        result$segments <- red.gr
+        seqlengths(result$segments) <- seqlengths(result$bins)
     ## Parameters
-      result$mapping <- mapping
+        result$mapping <- mapping
         # Weights
         tstates <- table(combstates.per.bin)
         result$weights <- sort(tstates/sum(tstates), decreasing=TRUE)

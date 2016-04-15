@@ -7,8 +7,8 @@
 \value{
 A \code{list()} with the following entries:
 \item{bins}{A \code{\link[GenomicRanges]{GRanges}} object containing genomic bin coordinates and human readable combinations for the combined \code{\link{multiHMM}} objects.}
-\item{combined.segments}{Same as \code{bins}, but consecutive bins with the same state are collapsed into segments.}
-\item{segments}{A \code{list} with segments for each condition separately.}
+\item{segments}{Same as \code{bins}, but consecutive bins with the same state are collapsed into segments.}
+\item{segments.separate}{A \code{list} with segments for each condition separately.}
 }
 \description{
 The multivariate HMM object is output of the function \code{\link{combineMultivariates}} and is a \code{list()} with various entries. The class() attribute of this list was set to "combinedMultiHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' or 'hmm$'.

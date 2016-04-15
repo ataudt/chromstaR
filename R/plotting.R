@@ -12,9 +12,9 @@ NULL
 #'cols <- getStateColors()
 #'pie(1:length(cols), col=cols, labels=names(cols))
 getStateColors <- function(labels=NULL) {
-  if (is.null(labels)) {
-    labels <- c("zero-inflation","unmodified","modified", "total", "counts")
-  }
+    if (is.null(labels)) {
+        labels <- c("zero-inflation","unmodified","modified", "total", "counts")
+    }
     state.colors <- c("zero-inflation"="gray30","unmodified"="gray48","modified"="orangered3", "total"="black", "counts"="grey35")
     return(state.colors[labels])
 }
@@ -433,13 +433,13 @@ plotMultivariateTransition <- function(multi.hmm) {
 #'
 heatmapCombinations <- function(hmm=NULL, marks=NULL) {
 
-  if (is.null(marks)) {
-    hmm <- loadHmmsFromFiles(hmm, check.class=class.multivariate.hmm)[[1]]
-    levels.combinations <- levels(hmm$bins$combination)
-    levels.combinations <- gsub('\\[', '', levels.combinations)
-    levels.combinations <- gsub('\\]', '', levels.combinations)
-    marks <- unique(unlist(strsplit(levels.combinations, '\\+')))
-  }
+    if (is.null(marks)) {
+        hmm <- loadHmmsFromFiles(hmm, check.class=class.multivariate.hmm)[[1]]
+        levels.combinations <- levels(hmm$bins$combination)
+        levels.combinations <- gsub('\\[', '', levels.combinations)
+        levels.combinations <- gsub('\\]', '', levels.combinations)
+        marks <- unique(unlist(strsplit(levels.combinations, '\\+')))
+    }
     d <- dec2bin(0:(2^length(marks)-1), colnames=marks)
     d <- as.data.frame(d)
     d$combination <- apply(d, 1, function(x) { paste(colnames(d)[x],collapse='+') })

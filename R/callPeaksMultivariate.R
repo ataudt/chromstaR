@@ -81,40 +81,60 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
     ## Prepare the HMM
     p <- prepareMultivariate(hmms, use.states=use.states, max.states=max.states, chromosomes=chromosomes)
 
-		if (is.null(chromosomes)) {
-				chromosomes <- seqlevels(p$bins)
-		}
+    if (is.null(chromosomes)) {
+        chromosomes <- seqlevels(p$bins)
+    }
 
-		## Run multivariate per chromosome
-		if (per.chrom) {
+    ## Run multivariate per chromosome
+    if (per.chrom) {
 
-				if (num.threads > 1) {
-						ptm <- startTimedMessage("Setting up parallel multivariate with ", num.threads, " threads.")
-						cl <- parallel::makeCluster(numcpu)
-						doParallel::registerDoParallel(cl)
-						on.exit(
-								if (num.threads > 1) {
-										parallel::stopCluster(cl)
-								}
-						)
-						stopTimedMessage(ptm)
-				}
+        # Set up parallel execution
+        if (num.threads > 1) {
+            ptm <- startTimedMessage("Setting up parallel multivariate with ", num.threads, " threads ...")
+            cl <- parallel::makeCluster(num.threads)
+            doParallel::registerDoParallel(cl)
+            on.exit(
+                if (num.threads > 1) {
+                    parallel::stopCluster(cl)
+                }
+            )
+            stopTimedMessage(ptm)
+        }
 
-				models <- foreach (chrom = chromosomes, .packages='chromstaR') %dopar% {
-						bins <- p$bins[seqnames(p$bins)==chrom]
-						model <- runMultivariate(bins=bins, IDs=p$IDs, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, correlationMatrix=p$correlationMatrix, correlationMatrixInverse=p$correlationMatrixInverse, determinant=p$determinant, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, post.cutoff=post.cutoff, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
-						model
-				}
-				model <- mergeChroms(models)
+        # Run the multivariate
+        chrom <- NULL # please BiocCheck
+        if (num.threads > 1) {
+            ptm <- startTimedMessage("Running multivariate ...")
+            models <- foreach (chrom = chromosomes, .packages='chromstaR') %dopar% {
+                bins <- p$bins[seqnames(p$bins)==chrom]
+                model <- runMultivariate(bins=bins, IDs=p$IDs, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, correlationMatrix=p$correlationMatrix, correlationMatrixInverse=p$correlationMatrixInverse, determinant=p$determinant, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, post.cutoff=post.cutoff, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
+                model
+            }
+            stopTimedMessage(ptm)
+        } else {
+            models <- foreach (chrom = chromosomes, .packages='chromstaR') %do% {
+                ptm <- startTimedMessage("Chromosome = ", chrom, "\n")
+                bins <- p$bins[seqnames(p$bins)==chrom]
+                model <- suppressMessages( runMultivariate(bins=bins, IDs=p$IDs, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, correlationMatrix=p$correlationMatrix, correlationMatrixInverse=p$correlationMatrixInverse, determinant=p$determinant, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, post.cutoff=post.cutoff, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity) )
+                message("Time spent for chromosome = ", chrom, ":", appendLF=FALSE)
+                stopTimedMessage(ptm)
+                model
+            }
+        }
 
-		## Run multivariate for all chromosomes
-		} else {
+        # Merge chromosomes into one multiHMM
+        ptm <- startTimedMessage("Merging chromosomes ...")
+        model <- suppressMessages( mergeChroms(models) )
+        stopTimedMessage(ptm)
 
-				model <- runMultivariate(bins=p$bins, IDs=p$IDs, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, correlationMatrix=p$correlationMatrix, correlationMatrixInverse=p$correlationMatrixInverse, determinant=p$determinant, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=num.threads, post.cutoff=post.cutoff, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
+    ## Run multivariate for all chromosomes
+    } else {
 
-		}
+        model <- runMultivariate(bins=p$bins, IDs=p$IDs, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, correlationMatrix=p$correlationMatrix, correlationMatrixInverse=p$correlationMatrixInverse, determinant=p$determinant, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=num.threads, post.cutoff=post.cutoff, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
 
-		return(model)
+    }
+
+    return(model)
 
 }
 
@@ -122,7 +142,7 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
 runMultivariate <- function(bins, IDs, comb.states, use.states, distributions, weights, correlationMatrix, correlationMatrixInverse, determinant, max.iter, max.time, eps, num.threads, post.cutoff, keep.posteriors, keep.densities, transitionProbs.initial=NULL, startProbs.initial=NULL, verbosity=1) {
 
     ptm <- startTimedMessage("Starting multivariate HMM with ", length(comb.states), " combinatorial states")
-		message("")
+    message("")
 
     ### Define cleanup behaviour ###
     on.exit(.C("C_multivariate_cleanup", as.integer(ncol(bins$counts))))
@@ -134,149 +154,149 @@ runMultivariate <- function(bins, IDs, comb.states, use.states, distributions, w
     ws2 <- unlist(lapply(weights,"[",2))
     ws3 <- unlist(lapply(weights,"[",3))
     ws <- ws1 / (ws2+ws1)
-		get.posteriors <- TRUE
+    get.posteriors <- TRUE
     if (get.posteriors) { lenPosteriors <- length(bins) * length(comb.states) } else { lenPosteriors <- 1 }
     if (keep.densities) { lenDensities <- length(bins) * length(comb.states) } else { lenDensities <- 1 }
 
-		if (is.null(transitionProbs.initial)) {
-				transitionProbs.initial <- matrix((1-0.9)/(length(comb.states)-1), ncol=length(comb.states), nrow=length(comb.states))
-				diag(transitionProbs.initial) <- 0.9
-		}
-		if (is.null(startProbs.initial)) {
-				startProbs.initial <- rep(1/length(comb.states), length(comb.states))
-		}
+    if (is.null(transitionProbs.initial)) {
+        transitionProbs.initial <- matrix((1-0.9)/(length(comb.states)-1), ncol=length(comb.states), nrow=length(comb.states))
+        diag(transitionProbs.initial) <- 0.9
+    }
+    if (is.null(startProbs.initial)) {
+        startProbs.initial <- rep(1/length(comb.states), length(comb.states))
+    }
 
-		# Call the C function
-		hmm <- .C("C_multivariate_hmm",
-				counts = as.integer(as.vector(bins$counts)), # int* multiO
-				num.bins = as.integer(length(bins)), # int* T
-				max.states = as.integer(length(comb.states)), # int* N
-				num.modifications = as.integer(ncol(bins$counts)), # int* Nmod
-				comb.states = as.integer(comb.states), # int* comb_states
-				size = as.double(rs), # double* size
-				prob = as.double(ps), # double* prob
-				w = as.double(ws), # double* w
-				correlation.matrix.inverse = as.double(correlationMatrixInverse), # double* cor_matrix_inv
-				determinant = as.double(determinant), # double* det
-				num.iterations = as.integer(max.iter), # int* maxiter
-				time.sec = as.integer(max.time), # double* maxtime
-				loglik.delta = as.double(eps), # double* eps
-				posteriors = double(length=lenPosteriors), # double* posteriors
-				get.posteriors = as.logical(get.posteriors), # bool* keep_posteriors
-				densities = double(length=lenDensities), # double* densities
-				keep.densities = as.logical(keep.densities), # bool* keep_densities
-				states = integer(length=length(bins)), # int* states
-				A = double(length=length(comb.states)*length(comb.states)), # double* A
-				proba = double(length=length(comb.states)), # double* proba
-				loglik = double(length=1), # double* loglik
-				A.initial = as.double(transitionProbs.initial), # double* initial A
-				proba.initial = as.double(startProbs.initial), # double* initial proba
-				use.initial.params = as.logical(TRUE), # bool* use_initial_params
-				num.threads = as.integer(num.threads), # int* num_threads
-				error = as.integer(0), # error handling
-				verbosity = as.integer(verbosity) # int* verbosity
-				)
+    # Call the C function
+    hmm <- .C("C_multivariate_hmm",
+        counts = as.integer(as.vector(bins$counts)), # int* multiO
+        num.bins = as.integer(length(bins)), # int* T
+        max.states = as.integer(length(comb.states)), # int* N
+        num.modifications = as.integer(ncol(bins$counts)), # int* Nmod
+        comb.states = as.integer(comb.states), # int* comb_states
+        size = as.double(rs), # double* size
+        prob = as.double(ps), # double* prob
+        w = as.double(ws), # double* w
+        correlation.matrix.inverse = as.double(correlationMatrixInverse), # double* cor_matrix_inv
+        determinant = as.double(determinant), # double* det
+        num.iterations = as.integer(max.iter), # int* maxiter
+        time.sec = as.integer(max.time), # double* maxtime
+        loglik.delta = as.double(eps), # double* eps
+        posteriors = double(length=lenPosteriors), # double* posteriors
+        get.posteriors = as.logical(get.posteriors), # bool* keep_posteriors
+        densities = double(length=lenDensities), # double* densities
+        keep.densities = as.logical(keep.densities), # bool* keep_densities
+        states = integer(length=length(bins)), # int* states
+        A = double(length=length(comb.states)*length(comb.states)), # double* A
+        proba = double(length=length(comb.states)), # double* proba
+        loglik = double(length=1), # double* loglik
+        A.initial = as.double(transitionProbs.initial), # double* initial A
+        proba.initial = as.double(startProbs.initial), # double* initial proba
+        use.initial.params = as.logical(TRUE), # bool* use_initial_params
+        num.threads = as.integer(num.threads), # int* num_threads
+        error = as.integer(0), # error handling
+        verbosity = as.integer(verbosity) # int* verbosity
+        )
             
-		### Check convergence ###
-		if (hmm$error == 1) {
-				stop("A nan occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
-		} else if (hmm$error == 2) {
-				stop("An error occurred during the Baum-Welch! Parameter estimation terminated prematurely.")
-		}
+    ### Check convergence ###
+    if (hmm$error == 1) {
+        stop("A nan occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
+    } else if (hmm$error == 2) {
+        stop("An error occurred during the Baum-Welch! Parameter estimation terminated prematurely.")
+    }
 
-		message("Time spent in multivariate HMM: ", appendLF=FALSE)
-		stopTimedMessage(ptm)
+    message("Time spent in multivariate HMM: ", appendLF=FALSE)
+    stopTimedMessage(ptm)
 
-		### Make return object ###
-				result <- list()
-				result$IDs <- IDs
-		## Bin coordinates, posteriors and states
-				result$bins <- bins
-				if (get.posteriors) {
-						ptm <- startTimedMessage("Transforming posteriors to `per sample` representation ...")
-						hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$max.states)
-						colnames(hmm$posteriors) <- paste0("P(",hmm$comb.states,")")
-						result$bins$score <- do.call(pmax,as.list(as.data.frame(hmm$posteriors)))
-						binstates <- dec2bin(hmm$comb.states, ndigits=hmm$num.modifications)
-						post.per.track <- hmm$posteriors %*% binstates
-						colnames(post.per.track) <- result$IDs
-						result$bins$posteriors <- post.per.track
-						stopTimedMessage(ptm)
-				}
-				ptm <- startTimedMessage("Calculating states from posteriors ...")
-				if (!is.null(use.states$state)) {
-						state.levels <- levels(use.states$state)
-				} else {
-						state.levels <- hmm$comb.states
-				}
-				if (!is.null(post.cutoff)) {
-						result$bins$state <- factor(bin2dec(result$bins$posteriors >= post.cutoff), levels=state.levels)
-				} else {
-						result$bins$state <- factor(hmm$states, levels=state.levels)
-				}
-				stopTimedMessage(ptm)
-				if (keep.densities) {
-						result$bins$densities <- matrix(hmm$densities, ncol=hmm$max.states)
-						colnames(result$bins$densities) <- hmm$comb.states
-				}
-		## Add combinations
-				mapping <- NULL
-				result$bins$combination <- NA
-				if (!is.null(use.states)) {
-						mapping <- use.states$combination
-						names(mapping) <- use.states$state
-						result$bins$combination <- factor(mapping[as.character(result$bins$state)], levels=levels(use.states$combination))
-				}
-		## Segmentation
-				ptm <- startTimedMessage("Making segmentation ...")
-				df <- as.data.frame(result$bins)
-				ind.readcols <- grep('^counts', names(df))
-				ind.postcols <- grep('^posteriors', names(df))
-				ind.widthcol <- grep('width', names(df))
-				ind.scorecol <- grep('score', names(df))
-				red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c(ind.postcols, ind.scorecol), columns2drop=c(ind.readcols, ind.widthcol)))
-				mean.posteriors <- matrix(unlist(red.df[,grepl('^mean.posteriors',names(red.df))]), ncol=length(result$IDs))
-				colnames(mean.posteriors) <- result$IDs
-				mean.score <- red.df[,grepl('^mean.score', names(red.df))]
-				red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], combination=red.df[,'combination'], score=mean.score)
-				red.gr$mean.posteriors <- mean.posteriors
-				result$segments <- red.gr
-				seqlengths(result$segments) <- seqlengths(result$bins)
-				if (!keep.posteriors) {
-						result$bins$posteriors <- NULL
-				}
-				stopTimedMessage(ptm)
-		## Parameters
-				result$mapping <- mapping
-				combinations <- mapping[as.character(comb.states)]
-				# Weights
-				tstates <- table(hmm$states)
-				result$weights <- sort(tstates/sum(tstates), decreasing=TRUE)
-				result$weights.univariate <- weights
-				# Transition matrices
-				result$transitionProbs <- matrix(hmm$A, ncol=length(comb.states), byrow=TRUE)
-				colnames(result$transitionProbs) <- combinations
-				rownames(result$transitionProbs) <- combinations
-				result$transitionProbs.initial <- matrix(hmm$A.initial, ncol=length(comb.states), byrow=TRUE)
-				colnames(result$transitionProbs.initial) <- combinations
-				rownames(result$transitionProbs.initial) <- combinations
-				# Initial probs
-				result$startProbs <- hmm$proba
-				names(result$startProbs) <- combinations
-				result$startProbs.initial <- hmm$proba.initial
-				names(result$startProbs.initial) <- combinations
-				# Distributions
-				result$distributions <- distributions
-				names(result$distributions) <- IDs
-				# post.cutoff
-				result$post.cutoff <- post.cutoff
-		## Convergence info
-				convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec)
-				result$convergenceInfo <- convergenceInfo
-		## Correlation matrices
-				result$correlation.matrix <- correlationMatrix
-		## Add class
-				class(result) <- class.multivariate.hmm
+    ### Make return object ###
+        result <- list()
+        result$IDs <- IDs
+    ## Bin coordinates, posteriors and states
+        result$bins <- bins
+        if (get.posteriors) {
+            ptm <- startTimedMessage("Transforming posteriors to `per sample` representation ...")
+            hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$max.states)
+            colnames(hmm$posteriors) <- paste0("P(",hmm$comb.states,")")
+            result$bins$score <- do.call(pmax,as.list(as.data.frame(hmm$posteriors)))
+            binstates <- dec2bin(hmm$comb.states, ndigits=hmm$num.modifications)
+            post.per.track <- hmm$posteriors %*% binstates
+            colnames(post.per.track) <- result$IDs
+            result$bins$posteriors <- post.per.track
+            stopTimedMessage(ptm)
+        }
+        ptm <- startTimedMessage("Calculating states from posteriors ...")
+        if (!is.null(use.states$state)) {
+            state.levels <- levels(use.states$state)
+        } else {
+            state.levels <- hmm$comb.states
+        }
+        if (!is.null(post.cutoff)) {
+            result$bins$state <- factor(bin2dec(result$bins$posteriors >= post.cutoff), levels=state.levels)
+        } else {
+            result$bins$state <- factor(hmm$states, levels=state.levels)
+        }
+        stopTimedMessage(ptm)
+        if (keep.densities) {
+            result$bins$densities <- matrix(hmm$densities, ncol=hmm$max.states)
+            colnames(result$bins$densities) <- hmm$comb.states
+        }
+    ## Add combinations
+        mapping <- NULL
+        result$bins$combination <- NA
+        if (!is.null(use.states)) {
+            mapping <- use.states$combination
+            names(mapping) <- use.states$state
+            result$bins$combination <- factor(mapping[as.character(result$bins$state)], levels=levels(use.states$combination))
+        }
+    ## Segmentation
+        ptm <- startTimedMessage("Making segmentation ...")
+        df <- as.data.frame(result$bins)
+        ind.readcols <- grep('^counts', names(df))
+        ind.postcols <- grep('^posteriors', names(df))
+        ind.widthcol <- grep('width', names(df))
+        ind.scorecol <- grep('score', names(df))
+        red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c(ind.postcols, ind.scorecol), columns2drop=c(ind.readcols, ind.widthcol)))
+        mean.posteriors <- matrix(unlist(red.df[,grepl('^mean.posteriors',names(red.df))]), ncol=length(result$IDs))
+        colnames(mean.posteriors) <- result$IDs
+        mean.score <- red.df[,grepl('^mean.score', names(red.df))]
+        red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], combination=red.df[,'combination'], score=mean.score)
+        red.gr$mean.posteriors <- mean.posteriors
+        result$segments <- red.gr
+        seqlengths(result$segments) <- seqlengths(result$bins)
+        if (!keep.posteriors) {
+            result$bins$posteriors <- NULL
+        }
+        stopTimedMessage(ptm)
+    ## Parameters
+        result$mapping <- mapping
+        combinations <- mapping[as.character(comb.states)]
+        # Weights
+        tstates <- table(hmm$states)
+        result$weights <- sort(tstates/sum(tstates), decreasing=TRUE)
+        result$weights.univariate <- weights
+        # Transition matrices
+        result$transitionProbs <- matrix(hmm$A, ncol=length(comb.states), byrow=TRUE)
+        colnames(result$transitionProbs) <- combinations
+        rownames(result$transitionProbs) <- combinations
+        result$transitionProbs.initial <- matrix(hmm$A.initial, ncol=length(comb.states), byrow=TRUE)
+        colnames(result$transitionProbs.initial) <- combinations
+        rownames(result$transitionProbs.initial) <- combinations
+        # Initial probs
+        result$startProbs <- hmm$proba
+        names(result$startProbs) <- combinations
+        result$startProbs.initial <- hmm$proba.initial
+        names(result$startProbs.initial) <- combinations
+        # Distributions
+        result$distributions <- distributions
+        names(result$distributions) <- IDs
+        # post.cutoff
+        result$post.cutoff <- post.cutoff
+    ## Convergence info
+        convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec)
+        result$convergenceInfo <- convergenceInfo
+    ## Correlation matrices
+        result$correlation.matrix <- correlationMatrix
+    ## Add class
+        class(result) <- class.multivariate.hmm
     
     ## Check convergence
     if (result$convergenceInfo$loglik.delta > result$convergenceInfo$eps) {
@@ -299,15 +319,15 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
     mcols(bins) <- NULL
     stopTimedMessage(ptm)
 
-		if (!is.null(chromosomes)) {
-			chromsNotInData <- setdiff(chromosomes, unique(seqnames(bins)))
-			if (length(chromsNotInData) == length(chromosomes)) {
-					stop("None of the specified chromosomes '", paste0(chromsNotInData, collapse=', '), "' exists.")
-			}
-			if (length(chromsNotInData)>0) {
-					warning("Chromosomes '", paste0(chromsNotInData, collapse=', '), "' could not be found.")
-			}
-		}
+    if (!is.null(chromosomes)) {
+        chromsNotInData <- setdiff(chromosomes, unique(seqnames(bins)))
+        if (length(chromsNotInData) == length(chromosomes)) {
+            stop("None of the specified chromosomes '", paste0(chromsNotInData, collapse=', '), "' exists.")
+        }
+        if (length(chromsNotInData)>0) {
+            warning("Chromosomes '", paste0(chromsNotInData, collapse=', '), "' could not be found.")
+        }
+    }
 
     ## Go through HMMs and extract stuff
     ptm <- startTimedMessage("Extracting read counts ...")
@@ -326,14 +346,14 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
         counts[,i1] <- hmm$bins$counts
         binary_statesmatrix[,i1] <- c(FALSE,FALSE,TRUE)[hmm$bins$state] # F,F,T corresponds to levels 'zero-inflation','unmodified','modified'
     }
-		bins$counts <- counts
+    bins$counts <- counts
     colnames(bins$counts) <- IDs
     maxcounts <- max(bins$counts)
-		bins$binary_statesmatrix <- binary_statesmatrix
-		if (!is.null(chromosomes)) {
-				# Select only specified chromosomes
-				bins <- bins[seqnames(bins) %in% chromosomes]
-		}
+    bins$binary_statesmatrix <- binary_statesmatrix
+    if (!is.null(chromosomes)) {
+        # Select only specified chromosomes
+        bins <- bins[seqnames(bins) %in% chromosomes]
+    }
     stopTimedMessage(ptm)
 
     # Clean up to reduce memory usage
@@ -345,7 +365,7 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
     for (imod in 1:nummod) {
         decimal_states <- decimal_states + 2^(nummod-imod) * bins$binary_statesmatrix[,imod]
     }
-		bins$binary_statesmatrix <- NULL
+    bins$binary_statesmatrix <- NULL
     bins$state <- decimal_states
     if (is.null(use.states)) {
         comb.states.table <- sort(table(bins$state), decreasing=TRUE)
@@ -355,9 +375,9 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
         comb.states <- names(comb.states.table)
         comb.states <- c(comb.states, setdiff(use.states$state, comb.states))
     }
-		# Subselect states
-		numstates2use <- min(length(comb.states), max.states)
-		comb.states <- comb.states[1:numstates2use]
+    # Subselect states
+    numstates2use <- min(length(comb.states), max.states)
+    comb.states <- comb.states[1:numstates2use]
     stopTimedMessage(ptm)
 
     ## We pre-compute the z-values for each number of counts
@@ -478,14 +498,14 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
 
     # Return parameters
     out = list(IDs = IDs,
-								bins = bins,
-								comb.states = comb.states,
-								use.states = use.states,
-								distributions = distributions,
-								weights = weights,
-								correlationMatrix = correlationMatrix,
-								correlationMatrixInverse = correlationMatrixInverse,
-								determinant = determinant
+                bins = bins,
+                comb.states = comb.states,
+                use.states = use.states,
+                distributions = distributions,
+                weights = weights,
+                correlationMatrix = correlationMatrix,
+                correlationMatrixInverse = correlationMatrixInverse,
+                determinant = determinant
     )
     return(out)
 }

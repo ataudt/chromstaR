@@ -219,7 +219,7 @@ plotHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=10
 #' @export
 plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c("start","inside","end"), num.intervals=20) {
 
-  ### Get fold enrichment
+    ### Get fold enrichment
     enrich <- enrichmentAtAnnotation(hmm, annotation, bp.around.annotation=bp.around.annotation, region=region, what='combinations', num.intervals=num.intervals)
     ### Prepare for plotting
     df <- reshape2::melt(enrich[[1]])

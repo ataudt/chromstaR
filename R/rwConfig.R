@@ -11,28 +11,28 @@
 readConfig <- function(configfile) {
 
     connection <- file(configfile) 
-  Lines  <- readLines(connection) 
-  close(connection) 
+    Lines  <- readLines(connection) 
+    close(connection) 
 
-  Lines <- chartr("[]", "==", Lines) # change section headers 
+    Lines <- chartr("[]", "==", Lines) # change section headers 
     Lines <- gsub(" ", "", Lines) # no spaces
 
-  connection <- textConnection(Lines) 
-  data <- utils::read.table(connection, as.is = TRUE, sep = "=", fill = TRUE, quote="") 
-  close(connection) 
+    connection <- textConnection(Lines) 
+    data <- utils::read.table(connection, as.is = TRUE, sep = "=", fill = TRUE, quote="") 
+    close(connection) 
     names(data) <- c('argument','value','section')
 
-  L <- data$argument == "" # location of section breaks 
-  data$section <- data$value[which(L)[cumsum(L)]]
-  data <- data[data$argument!="",]
+    L <- data$argument == "" # location of section breaks 
+    data$section <- data$value[which(L)[cumsum(L)]]
+    data <- data[data$argument!="",]
 
-  configlist <- list() 
+    configlist <- list() 
     ToParse <- paste0("configlist$", data$argument, " <- ", data$value)
 #   ToParse  <- paste0("configlist$", data$section, "$",  data$argument, " <- ", data$value) # with sections
 
-  eval(parse(text=ToParse)) 
+    eval(parse(text=ToParse)) 
 
-  return(configlist) 
+    return(configlist) 
 } 
 
 #' Write chromstaR configuration file
@@ -59,7 +59,7 @@ writeConfig <- function(conf, configfile) {
         } else if (is.null(string)) {
             string <- "NULL"
         } else if (is.data.frame(string)) {
-          string <- paste0("'", file.path(dirname(configfile), 'chrominfo.tsv'), "'")
+            string <- paste0("'", file.path(dirname(configfile), 'chrominfo.tsv'), "'")
         }
         return(string)
     }
@@ -75,14 +75,14 @@ writeConfig <- function(conf, configfile) {
         cat(i1," = ",formatstring(conf[[i1]]),"\n", file=f)
     }
     if (is.data.frame(conf[['assembly']])) {
-      utils::write.table(conf[['assembly']], file=file.path(dirname(configfile),'chrominfo.tsv'), row.names=FALSE, quote=FALSE, sep='\t')
+        utils::write.table(conf[['assembly']], file=file.path(dirname(configfile),'chrominfo.tsv'), row.names=FALSE, quote=FALSE, sep='\t')
     }
     cat("\n[Univariate]\n", file=f)
     for (i1 in c('prefit.on.chr', 'eps', 'max.time', 'max.iter', 'read.cutoff.absolute')) {
         cat(i1," = ",formatstring(conf[[i1]]),"\n", file=f)
     }
     cat("\n[Multivariate]\n", file=f)
-    for (i1 in c('mode', 'max.states')) {
+    for (i1 in c('mode', 'max.states', 'per.chrom')) {
         cat(i1," = ",formatstring(conf[[i1]]),"\n", file=f)
     }
     close(f, type='w')

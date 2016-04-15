@@ -6,7 +6,7 @@
 #' @param experiment.table A \code{data.frame} or tab-separated text file with the structure of the experiment. See \code{\link{experiment.table}} for an example.
 #' @param outputfolder Folder where the results and intermediate files will be written to.
 #' @param configfile A file specifying the parameters of this function (without \code{inputfolder}, \code{outputfolder} and \code{configfile}). Having the parameters in a file can be handy if many samples with the same parameter settings are to be run. If a \code{configfile} is specified, it will take priority over the command line parameters.
-#' @param numCPU Number of threads to use for the analysis.
+#' @param numCPU Number of threads to use for the analysis. Beware that more CPUs also means more memory is needed. If you experience crashes of R with higher numbers of this parameter, leave it at \code{numCPU=1}.
 #' @param binsize An integer specifying the bin size that is used for the analysis.
 #' @inheritParams bed2GRanges
 #' @inheritParams callPeaksUnivariate
@@ -17,6 +17,7 @@
 #'   \item{\code{full}}{Full analysis of all marks and conditions combined. Best of both, but: Choose this mode only if (number of conditions * number of marks \eqn{\le} 8), otherwise it might be too slow or crash due to memory limitations.}
 #' }
 #' @param max.states The maximum number of states to use in the multivariate part. If set to \code{NULL}, the maximum number of theoretically possible states is used. CAUTION: This can be very slow or crash if you have too many states. \pkg{\link{chromstaR}} has a built in mechanism to select the best states in case that less states than theoretically possible are specified.
+#' @param per.chrom If set to \code{TRUE} chromosomes will be treated separately in the multivariate part. This tremendously speeds up the calculation but results might be noisier as compared to \code{per.chrom=FALSE}, where all chromosomes are concatenated for the HMM.
 #' @return \code{NULL}
 #' @import foreach
 #' @import doParallel
@@ -39,7 +40,7 @@
 #'          outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
 #'          prefit.on.chr='chr12', mode='mark', eps=1)
 #'
-Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps=0.01, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=FALSE, mode='mark', max.states=128) {
+Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps=0.01, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=FALSE, mode='mark', max.states=128, per.chrom=TRUE) {
   
     #========================
     ### General variables ###
@@ -54,13 +55,13 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
             errstring <- paste0("Could not read configuration file ",configfile)
         })
         if (errstring!='') {
-          stop(errstring)
+            stop(errstring)
         }
     }
     total.time <- proc.time()
   
     ## Put options into list and merge with conf
-    params <- list(numCPU=numCPU, binsize=binsize, assembly=assembly, chromosomes=chromosomes, remove.duplicate.reads=remove.duplicate.reads, min.mapq=min.mapq, prefit.on.chr=prefit.on.chr, eps=eps, max.time=max.time, max.iter=max.iter, read.cutoff.absolute=read.cutoff.absolute, keep.posteriors=keep.posteriors, mode=mode, max.states=max.states)
+    params <- list(numCPU=numCPU, binsize=binsize, assembly=assembly, chromosomes=chromosomes, remove.duplicate.reads=remove.duplicate.reads, min.mapq=min.mapq, prefit.on.chr=prefit.on.chr, eps=eps, max.time=max.time, max.iter=max.iter, read.cutoff.absolute=read.cutoff.absolute, keep.posteriors=keep.posteriors, mode=mode, max.states=max.states, per.chrom=per.chrom)
     conf <- c(conf, params[setdiff(names(params),names(conf))])
     
     ## Helpers
@@ -68,7 +69,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     numcpu <- conf[['numCPU']]
     mode <- conf[['mode']]
   
-     ## Read in experiment table if necessary ##
+    ## Read in experiment table if necessary ##
     if (is.character(experiment.table)) {
         exp.table <- utils::read.table(experiment.table, header=TRUE, comment.char='#')
         if (!all(colnames(exp.table) == c('file','mark','condition','replicate','pairedEndReads'))) {
@@ -83,6 +84,9 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     }
     
     ## Check usage of modes
+    if (!mode %in% c('mark','condition','full')) {
+        stop("Unknown mode '", mode, "'.")
+    }
     marks <- unique(as.character(exp.table[,'mark']))
     conditions <- unique(as.character(exp.table[,'condition']))
     if (length(conditions) < 2 & conf[['mode']] == 'condition') {
@@ -213,19 +217,21 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
 
     ## Plot helper ##
     plothelper <- function(savename, multimodel) {
+        ptm <- startTimedMessage("Making plots ...")
         char.per.cm <- 10
         legend.cm <- 3
         savename1 <- paste0(savename, '_correlation.pdf')
-        ggplt <- graphics::plot(multimodel, type='correlation')
+        ggplt <- suppressMessages( graphics::plot(multimodel, type='correlation') )
         width <- length(multimodel$IDs) + max(sapply(multimodel$IDs, nchar)) / char.per.cm + legend.cm
         height <- length(multimodel$IDs) + max(sapply(multimodel$IDs, nchar)) / char.per.cm
         ggsave(savename1, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
 
         savename2 <- paste0(savename, '_transitionMatrix.pdf')
-        ggplt <- graphics::plot(multimodel, type='transitionMatrix')
+        ggplt <- suppressMessages( graphics::plot(multimodel, type='transitionMatrix') )
         width <- length(levels(multimodel$bins$combination)) + max(sapply(levels(multimodel$bins$combination), nchar)) / char.per.cm + legend.cm
         height <- length(levels(multimodel$bins$combination)) + max(sapply(levels(multimodel$bins$combination), nchar)) / char.per.cm + 1
         ggsave(savename2, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
+        stopTimedMessage(ptm)
     }
   
     ## Run multivariate depending on mode
@@ -235,7 +241,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         if (!file.exists(savename)) {
             files <- file.path(unipath, filenames)
             states <- stateBrewer(exp.table, mode=mode)
-            multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']])
+            multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']])
             save(multimodel, file=savename)
         } else {
             multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
@@ -262,10 +268,10 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 mask <- exp.table[,'condition'] == condition
                 files <- file.path(unipath, filenames)[mask]
                 states <- stateBrewer(exp.table[mask,], mode=mode)
-                multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']])
+                multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']])
                 save(multimodel, file=savename)
             } else {
-                 multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
+                multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
             }
             ## Export browser files
             savename <- file.path(browserpath, paste0('multivariate_mode-', mode, '_condition-', condition))
@@ -290,10 +296,10 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 mask <- exp.table[,'mark'] == mark
                 files <- file.path(unipath, filenames)[mask]
                 states <- stateBrewer(exp.table[mask,], mode=mode)
-                multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']])
+                multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']])
                 save(multimodel, file=savename)
             } else {
-                 multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
+                multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
             }
             ## Export browser files
             savename <- file.path(browserpath, paste0('multivariate_mode-', mode, '_mark-', mark))
@@ -314,9 +320,15 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #================================
     ## Combine multiple conditions ##
     #================================
-    if ((mode=='mark' & length(conditions)>=2) | (mode=='condition' & length(marks)>=2)) {
+    if ((mode=='mark' & length(conditions)>=2) | (mode=='condition' & length(marks)>=2) | (mode=='full')) {
       
-				multifiles <- list.files(multipath, full.names=TRUE, pattern=paste0('mode-',mode))
+        multifiles <- list.files(multipath, full.names=TRUE, pattern=paste0('mode-',mode))
+        if (mode=='condition') {
+            names(multifiles) <- marks
+        }
+        if (mode=='mark') {
+            names(multifiles) <- conditions
+        }
 
         if (!file.exists(combipath)) { dir.create(combipath) }
         savename <- file.path(combipath, paste0('combined_mode-', mode, '.RData'))

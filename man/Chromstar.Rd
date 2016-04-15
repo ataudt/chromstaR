@@ -9,7 +9,7 @@ Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
   remove.duplicate.reads = TRUE, min.mapq = 10, prefit.on.chr = NULL,
   eps = 0.01, max.time = NULL, max.iter = 5000,
   read.cutoff.absolute = 500, keep.posteriors = FALSE, mode = "mark",
-  max.states = 128)
+  max.states = 128, per.chrom = TRUE)
 }
 \arguments{
 \item{inputfolder}{Folder with either BAM or BED files.}
@@ -20,7 +20,7 @@ Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
 
 \item{configfile}{A file specifying the parameters of this function (without \code{inputfolder}, \code{outputfolder} and \code{configfile}). Having the parameters in a file can be handy if many samples with the same parameter settings are to be run. If a \code{configfile} is specified, it will take priority over the command line parameters.}
 
-\item{numCPU}{Number of threads to use for the analysis.}
+\item{numCPU}{Number of threads to use for the analysis. Beware that more CPUs also means more memory is needed. If you experience crashes of R with higher numbers of this parameter, leave it at \code{numCPU=1}.}
 
 \item{binsize}{An integer specifying the bin size that is used for the analysis.}
 
@@ -52,6 +52,8 @@ Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
 }}
 
 \item{max.states}{The maximum number of states to use in the multivariate part. If set to \code{NULL}, the maximum number of theoretically possible states is used. CAUTION: This can be very slow or crash if you have too many states. \pkg{\link{chromstaR}} has a built in mechanism to select the best states in case that less states than theoretically possible are specified.}
+
+\item{per.chrom}{If set to \code{TRUE} chromosomes will be treated separately in the multivariate part. This tremendously speeds up the calculation but results might be noisier as compared to \code{per.chrom=FALSE}, where all chromosomes are concatenated for the HMM.}
 }
 \value{
 \code{NULL}

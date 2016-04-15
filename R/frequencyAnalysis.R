@@ -21,25 +21,25 @@ genomicFrequencies <- function(multi.hmm, combinations=NULL) {
       
     if (class(multi.hmm)==class.multivariate.hmm) {
 
-      if (is.null(combinations)) {
-          comb.levels <- levels(bins$combination)
-      } else {
-          comb.levels <- combinations
-      }
-      t <- table(bins$combination) / length(bins)
-      t <- t[names(t) %in% comb.levels]
-      return(t)
+        if (is.null(combinations)) {
+            comb.levels <- levels(bins$combination)
+        } else {
+            comb.levels <- combinations
+        }
+        t <- table(bins$combination) / length(bins)
+        t <- t[names(t) %in% comb.levels]
+        return(t)
       
     } else if (class(multi.hmm)==class.combined.multivariate.hmm) {
       
-      if (is.null(combinations)) {
-          comb.levels <- unique(as.vector(sapply(mcols(bins), levels)))
-      } else {
-          comb.levels <- combinations
-      }
-    t <- sapply(mcols(bins), function(x) { table(x) / length(bins) })
-    t <- t[rownames(t) %in% comb.levels,]
-    return(t)
+        if (is.null(combinations)) {
+            comb.levels <- unique(as.vector(sapply(mcols(bins), levels)))
+        } else {
+            comb.levels <- combinations
+        }
+        t <- sapply(mcols(bins), function(x) { table(x) / length(bins) })
+        t <- t[rownames(t) %in% comb.levels,]
+        return(t)
       
     }
 }
@@ -49,10 +49,10 @@ genomicFrequencies <- function(multi.hmm, combinations=NULL) {
 #'
 #' Get a table of transition frequencies between combinatorial states of different \code{\link{multiHMM}}s.
 #'
-#' @param multi.hmms A list with \code{\link{multiHMM}} objects or a vector with filenames that contain such objects.
+#' @param multi.hmms A named list with \code{\link{multiHMM}} objects or a vector with filenames that contain such objects.
 #' @param combined.hmm A \code{\link{combinedMultiHMM}} object. If specified, \code{multi.hmms} is ignored.
 #' @param zero.states The string(s) which identifies the zero.states.
-#' @param combstates Alternative input instead of \code{multi.hmms}: A list of combinatorial state vectors instead of HMMs. If this is specified, \code{multi.hmms} and \code{combined.hmm} will be ignored.
+#' @param combstates Alternative input instead of \code{multi.hmms}: A named list of combinatorial state vectors instead of HMMs. If this is specified, \code{multi.hmms} and \code{combined.hmm} will be ignored.
 #' @return A data.frame with transition frequencies.
 #' @author Aaron Taudt
 #' @export
@@ -83,32 +83,43 @@ genomicFrequencies <- function(multi.hmm, combinations=NULL) {
 
 #'#=== Step 3: Analysis ===
 #'# Get frequencies
-#'transitionFrequencies(combined.hmm=model)
+#'freqs <- transitionFrequencies(combined.hmm=model)
+#'freqs$table
 #'
 transitionFrequencies <- function(multi.hmms=NULL, combined.hmm=NULL, zero.states="[]", combstates=NULL) {
 
     if (is.null(combstates)) {
-      if (is.null(combined.hmm)) {
-          ## Get combinatorial states in loop to save memory
-          combstates <- list()
-          for (imodel in 1:length(multi.hmms)) {
-              multi.hmm <- suppressMessages( loadHmmsFromFiles(multi.hmms[[imodel]], check.class=class.multivariate.hmm)[[1]] )
-              combstates[[imodel]] <- multi.hmm$bins$combination
-          }
-          names(combstates) <- names(multi.hmms)
-      } else {
-        combined.hmm <- suppressMessages( loadHmmsFromFiles(combined.hmm, check.class=class.combined.multivariate.hmm)[[1]] )
-        combstates <- as.list(mcols(combined.hmm$bins))
-      }
+        if (is.null(combined.hmm)) {
+            if (is.null(names(multi.hmms))) {
+                stop("'multi.hmms' must be a named list of multiHMM objects.")
+            }
+            ## Get combinatorial states in loop to save memory
+            combstates <- list()
+            for (imodel in 1:length(multi.hmms)) {
+                multi.hmm <- suppressMessages( loadHmmsFromFiles(multi.hmms[[imodel]], check.class=class.multivariate.hmm)[[1]] )
+                combstates[[imodel]] <- multi.hmm$bins$combination
+            }
+            names(combstates) <- names(multi.hmms)
+        } else {
+            combined.hmm <- suppressMessages( loadHmmsFromFiles(combined.hmm, check.class=class.combined.multivariate.hmm)[[1]] )
+            combstates <- as.list(mcols(combined.hmm$bins)[names(mcols(combined.hmm$bins)) != 'transition.group'])
+        }
+    } else {
+        if (is.null(names(combstates))) {
+            stop("'combstates' must be a named list.")
+        }
     }
     num.models <- length(combstates)
+    conditions <- names(combstates)
 
     ### Get transitions for whole genome ###
     combstates$sep <- '<>'
     gentrans <- do.call(paste, combstates)
-    freqtrans <- as.data.frame(table(gentrans) / length(gentrans))
-    names(freqtrans) <- c('transition','frequency')
+    tab <- table(gentrans) / length(gentrans)
+    trans <- matrix(unlist(strsplit(names(tab), '<>')), ncol=length(conditions), dimnames=list(transition=NULL, condition=conditions))
+    freqtrans <- data.frame(trans, frequency=as.numeric(tab), transition=names(tab))
     freqtrans <- freqtrans[order(freqtrans$frequency, decreasing=TRUE),]
+    rownames(freqtrans) <- NULL
     # Cumulative frequencies
     freqtrans$cumulative.frequency <- cumsum(freqtrans$frequency)
 
@@ -138,17 +149,17 @@ transitionFrequencies <- function(multi.hmms=NULL, combined.hmm=NULL, zero.state
     }
     freqtrans$group[iszero] <- 'zero transition'
 
-    return(freqtrans)
+    ### Assigning groups over whole genome ###
+    mapping <- freqtrans$group
+    names(mapping) <- freqtrans$transition
+    gengroups <- mapping[gentrans]
+    gentrans <- data.frame(transition=gentrans, group=gengroups)
+
+    ## Remove unneeded column
+    freqtrans$transition <- NULL
     
-    # ### Assigning groups over whole genome ###
-    # mapping <- freqtrans$group
-    # names(mapping) <- freqtrans$transition
-    # gengroups <- mapping[gentrans]
-    # gentrans <- data.frame(transition=gentrans, group=gengroups)
-    # 
-    # 
-    # ## Return value ##
-    # return(list(frequencies=freqtrans, transitions=gentrans))
+    ## Return value ##
+    return(list(table=freqtrans, per.bin=gentrans))
 
 }
 

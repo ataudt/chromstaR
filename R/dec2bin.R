@@ -19,8 +19,8 @@ NULL
 #' @export
 dec2bin = function(dec, colnames=NULL, ndigits=NULL) {
 
-  # Check user input
-  dec <- as.numeric(as.character(dec))
+    # Check user input
+    dec <- as.numeric(as.character(dec))
     maxdec = max(dec)
     if (!is.null(colnames)) {
         ndigits <- length(colnames)
@@ -29,35 +29,35 @@ dec2bin = function(dec, colnames=NULL, ndigits=NULL) {
             if (check.positive.integer(ndigits)!=0) stop("argument 'ndigits' expects a positive integer")
         }
     }
-  
-  modulos <- list()
-  mod <- 1
-  dectemp <- dec
-  while (any(dectemp!=0)) {
-    mod <- dectemp %% 2
-    modulos[[length(modulos)+1]] <- mod
-    dectemp <- dectemp %/% 2
-  }
-  
-  if (is.null(ndigits)) {
-    ndigits <- max(length(modulos),1)
-  }
-  binary.states <- matrix(0, nrow=length(dec), ncol=ndigits)
-  if (length(modulos)>0) {
+    
+    modulos <- list()
+    mod <- 1
+    dectemp <- dec
+    while (any(dectemp!=0)) {
+        mod <- dectemp %% 2
+        modulos[[length(modulos)+1]] <- mod
+        dectemp <- dectemp %/% 2
+    }
+    
+    if (is.null(ndigits)) {
+        ndigits <- max(length(modulos),1)
+    }
+    binary.states <- matrix(0, nrow=length(dec), ncol=ndigits)
+    if (length(modulos)>0) {
         if (ndigits>length(modulos)) {
             binary.states[,1:length(modulos)] <- as.matrix(as.data.frame(modulos))
         } else {
             binary.states[,1:ndigits] <- as.matrix(as.data.frame(modulos))[,1:ndigits]
         }
-  }
-  binary.states <- binary.states[,ncol(binary.states):1]
-  if (class(binary.states)!='matrix') {
-    binary.states <- matrix(binary.states, nrow=length(dec))
-  }
+    }
+    binary.states <- binary.states[,ncol(binary.states):1]
+    if (class(binary.states)!='matrix') {
+        binary.states <- matrix(binary.states, nrow=length(dec))
+    }
 
     colnames(binary.states) <- colnames
     rownames(binary.states) <- dec
-  mode(binary.states) <- 'logical'
+    mode(binary.states) <- 'logical'
     return(binary.states)
 
 }

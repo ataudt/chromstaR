@@ -731,9 +731,9 @@ exportCombinedMultivariateCalls <- function(hmm, filename="chromstaR_combinedMul
     }
 
     ## Export the combinatorial states from individual segments
-    conditions <- names(hmm$segments)
+    conditions <- names(hmm$segments.separate)
     for (cond in conditions) {
-        segments <- hmm$segments[[cond]]
+        segments <- hmm$segments.separate[[cond]]
 
         # Exclude and include states
         combstates <- levels(segments$combination)

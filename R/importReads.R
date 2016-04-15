@@ -97,7 +97,7 @@ bam2GRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pairedEndRe
         data <- as(data.raw, 'GRanges') # treat as one fragment
         stopTimedMessage(ptm)
 
-        ptm <- startTimedMessage("Filtering reads ...")
+        ptm <- startTimedMessage("Filtering reads (mapq >= ", min.mapq, ") ...")
         if (!is.null(min.mapq)) {
             mapq.first <- mcols(GenomicAlignments::first(data.raw))$mapq
             mapq.last <- mcols(GenomicAlignments::last(data.raw))$mapq
@@ -115,7 +115,7 @@ bam2GRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pairedEndRe
         data <- as(data.raw, 'GRanges')
         stopTimedMessage(ptm)
 
-        ptm <- startTimedMessage("Filtering reads ...")
+        ptm <- startTimedMessage("Filtering reads (mapq >= ", min.mapq, ") ...")
         if (!is.null(min.mapq)) {
             if (any(is.na(mcols(data)$mapq))) {
                 warning(paste0(bamfile,": Reads with mapping quality NA (=255 in BAM file) found and removed. Set 'min.mapq=NULL' to keep all reads."))
@@ -250,7 +250,7 @@ bed2GRanges <- function(bedfile, assembly, chromosomes=NULL, remove.duplicate.re
     }
 
     ## Filter by mapping quality
-    ptm <- startTimedMessage("Filtering reads ...")
+    ptm <- startTimedMessage("Filtering reads (mapq >= ", min.mapq, ") ...")
     if (!is.null(min.mapq)) {
         if (any(is.na(mcols(data)$mapq))) {
             warning(paste0(bedfile,": Reads with mapping quality NA (=255 in BAM file) found and removed. Set 'min.mapq=NULL' to keep all reads."))

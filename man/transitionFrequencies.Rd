@@ -8,13 +8,13 @@ transitionFrequencies(multi.hmms = NULL, combined.hmm = NULL,
   zero.states = "[]", combstates = NULL)
 }
 \arguments{
-\item{multi.hmms}{A list with \code{\link{multiHMM}} objects or a vector with filenames that contain such objects.}
+\item{multi.hmms}{A named list with \code{\link{multiHMM}} objects or a vector with filenames that contain such objects.}
 
 \item{combined.hmm}{A \code{\link{combinedMultiHMM}} object. If specified, \code{multi.hmms} is ignored.}
 
 \item{zero.states}{The string(s) which identifies the zero.states.}
 
-\item{combstates}{Alternative input instead of \code{multi.hmms}: A list of combinatorial state vectors instead of HMMs. If this is specified, \code{multi.hmms} and \code{combined.hmm} will be ignored.}
+\item{combstates}{Alternative input instead of \code{multi.hmms}: A named list of combinatorial state vectors instead of HMMs. If this is specified, \code{multi.hmms} and \code{combined.hmm} will be ignored.}
 }
 \value{
 A data.frame with transition frequencies.
@@ -45,7 +45,8 @@ list.files(outputfolder)
 model <- get(load(file.path(outputfolder,'multivariate-combined', 'combined_mode-mark.RData')))
 #=== Step 3: Analysis ===
 # Get frequencies
-transitionFrequencies(combined.hmm=model)
+freqs <- transitionFrequencies(combined.hmm=model)
+freqs$table
 
 }
 \author{

@@ -231,11 +231,11 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
         if (class(bindiffmatrix)!='matrix') { # R-behaviour differs with only one column
             bindiffmatrix <- matrix(bindiffmatrix, nrow=1)
         }
-    colnames(bindiffmatrix) <- intersect.tracks
+        colnames(bindiffmatrix) <- intersect.tracks
         diffstatespec.list <- list()
         ## Go through conditions
         for (condition in unique(conditions)) {
-      tracks <- tracks2compare.split[[as.character(condition)]]
+            tracks <- tracks2compare.split[[as.character(condition)]]
             #TODO: tracksNOT2use
             tracks2use <- tracks[tracks %in% intersect.tracks]
             num.tracks.split <- length(tracks2use)
@@ -306,11 +306,11 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
         if (class(bincommonmatrix)!='matrix') { # R-behaviour differs with only one column
             bincommonmatrix <- matrix(bincommonmatrix, nrow=1)
         }
-    colnames(bincommonmatrix) <- intersect.tracks
+        colnames(bincommonmatrix) <- intersect.tracks
         commonstatespec.list <- list()
         ## Go through conditions
         for (condition in unique(conditions)) {
-      tracks <- tracks2compare.split[[as.character(condition)]]
+            tracks <- tracks2compare.split[[as.character(condition)]]
             #TODO: tracksNOT2use
             tracks2use <- tracks[tracks %in% intersect.tracks]
             num.tracks.split <- length(tracks2use)
@@ -393,10 +393,10 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
 
     ## Put in data.frame and assign levels
     if (length(decstates)>0) {
-      dec.df <- data.frame(combination=factor(paste0('[',names(decstates),']'), levels=paste0('[',names(decstates.all),']')), state=factor(decstates, levels=decstates.all))
-      rownames(dec.df) <- NULL
+        dec.df <- data.frame(combination=factor(paste0('[',names(decstates),']'), levels=paste0('[',names(decstates.all),']')), state=factor(decstates, levels=decstates.all))
+        rownames(dec.df) <- NULL
     } else {
-      dec.df <- data.frame(combination=factor(), state=integer())
+        dec.df <- data.frame(combination=factor(), state=integer())
     }
 
     return(dec.df)

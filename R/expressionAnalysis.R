@@ -75,11 +75,11 @@ plotExpression <- function(hmm, expression, combinations=NULL, return.marks=FALS
     
     df <- reshape2::melt(exprlist)
     if (return.marks) {
-      names(df) <- c('expression', 'mark')
-      ggplt <- ggplot(df) + geom_boxplot(aes_string(x='mark', y='expression'))
+        names(df) <- c('expression', 'mark')
+        ggplt <- ggplot(df) + geom_boxplot(aes_string(x='mark', y='expression'))
     } else {
-      names(df) <- c('expression', 'combination')
-      ggplt <- ggplot(df) + geom_boxplot(aes_string(x='combination', y='expression'))
+        names(df) <- c('expression', 'combination')
+        ggplt <- ggplot(df) + geom_boxplot(aes_string(x='combination', y='expression'))
     }
     ggplt <- ggplt + theme_bw() + theme(axis.text.x=element_text(angle=90, hjust=1))
     return(ggplt)

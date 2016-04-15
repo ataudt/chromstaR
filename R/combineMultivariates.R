@@ -62,18 +62,18 @@
 #'
 combineMultivariates <- function(multi.hmm.list, mode, conditions) {
     
-  ## Helper function
-  getCondition <- function(combinations, condition) {
+    ## Helper function
+    getCondition <- function(combinations, condition) {
         combinations <- sub('\\[','',combinations)
         combinations <- sub('\\]','',combinations)
-      combinations.split <- strsplit(as.character(combinations), '\\+')
-    condition.string <- paste0('\\<', condition, '\\>')
-    combinations.split.condition <- lapply(combinations.split, function(x) { grep(condition.string, x, value=TRUE) })
-    combinations.condition <- sapply(combinations.split.condition, paste, collapse='+')
-    combinations.condition <- gsub(paste0('-',condition.string), '', combinations.condition)
-    combinations.condition <- paste0('[', combinations.condition, ']')
-    return(combinations.condition)
-  }
+        combinations.split <- strsplit(as.character(combinations), '\\+')
+        condition.string <- paste0('\\<', condition, '\\>')
+        combinations.split.condition <- lapply(combinations.split, function(x) { grep(condition.string, x, value=TRUE) })
+        combinations.condition <- sapply(combinations.split.condition, paste, collapse='+')
+        combinations.condition <- gsub(paste0('-',condition.string), '', combinations.condition)
+        combinations.condition <- paste0('[', combinations.condition, ']')
+        return(combinations.condition)
+    }
       
     if (mode == 'mark') {
         if (length(multi.hmm.list)==1) {
@@ -157,50 +157,53 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
         combs.df <- as(combs.df, 'DataFrame')
 
     } else if (mode == 'full') {
-      if (length(multi.hmm.list) > 1) {
-        stop("'multi.hmm.list' must contain only one 'multiHMM' object when mode='full'.")
-      }
-      
+        if (length(multi.hmm.list) > 1) {
+            stop("'multi.hmm.list' must contain only one 'multiHMM' object when mode='full'.")
+        }
+        
         hmm <- suppressMessages( loadHmmsFromFiles(multi.hmm.list[[1]], check.class=class.multivariate.hmm)[[1]] )
         bins <- hmm$bins
         mcols(bins) <- NULL
-      combs <- list()
-      for (condition in conditions) {
-          ptm <- startTimedMessage("Processing condition ",condition," ...")
-      mapping.condition <- getCondition(hmm$mapping, condition)
-        names(mapping.condition) <- names(hmm$mapping)
-        
-        combs[[as.character(condition)]] <- mapping.condition[hmm$bins$state]
-        # # Assign levels
-        # comblevels.condition <- unique(getCondition(levels(hmm$bins$combination), condition))
-        # levels(combs[[as.character(condition)]]) <- comblevels.condition
-        stopTimedMessage(ptm)
-      }
-      combs.df <- as.data.frame(combs)
-      combs.df <- as(combs.df, 'DataFrame')
+        combs <- list()
+        for (condition in conditions) {
+            ptm <- startTimedMessage("Processing condition ",condition," ...")
+            mapping.condition <- getCondition(hmm$mapping, condition)
+            names(mapping.condition) <- names(hmm$mapping)
+          
+            combs[[as.character(condition)]] <- mapping.condition[hmm$bins$state]
+            # # Assign levels
+            # comblevels.condition <- unique(getCondition(levels(hmm$bins$combination), condition))
+            # levels(combs[[as.character(condition)]]) <- comblevels.condition
+            stopTimedMessage(ptm)
+        }
+        combs.df <- as.data.frame(combs)
+        combs.df <- as(combs.df, 'DataFrame')
         
     } else {
-        stop("Please specify either 'conditions' or 'marks'.")
+        stop("Unknown mode '", mode, "'.")
     }
-  # Reassign levels such that all conditions have the same levels
+    # Reassign levels such that all conditions have the same levels
     comblevels <- sort(unique(unlist(lapply(combs.df, levels))))
     combs.df <- endoapply(combs.df, function(x) { x <- factor(x, levels=comblevels) })
+
+    ## Assign transition groups
+    freqs <- transitionFrequencies(combstates=as.list(combs.df))
+    bins$transition.group <- freqs$per.bin$group
+    mcols(bins)[names(combs.df)] <- combs.df
     
     ### Redo the segmentation for all conditions combined
     ptm <- startTimedMessage("Redoing segmentation for all conditions combined ...")
-    values(bins) <- combs.df
-    l <- as.list(combs.df)
-    mcols(bins)$state <- as.numeric(do.call(paste0, lapply(l, as.integer)))
+    mcols(bins)$state <- as.numeric(do.call(paste0, lapply(as.list(combs.df), as.integer)))
     bins.df <- as.data.frame(bins)
     segments.df <- suppressMessages( collapseBins(bins.df, column2collapseBy='state', columns2drop=c('width','state')) )
-    combined.segments <- as(segments.df, 'GRanges')
-    seqlengths(combined.segments) <- seqlengths(bins)
+    segments <- as(segments.df, 'GRanges')
+    seqlengths(segments) <- seqlengths(bins)
     mcols(bins)$state <- NULL
     stopTimedMessage(ptm)
     
     ### Redo the segmentation for each condition separately
     ptm <- startTimedMessage("Redoing segmentation for each condition separately ...")
-    segments <- list()
+    segments.separate <- list()
     for (cond in names(combs)) {
         bins.cond <- bins
         mcols(bins.cond) <- mcols(bins)[cond]
@@ -209,7 +212,7 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
         segments.cond <- as(segments.cond, 'GRanges')
         names(mcols(segments.cond)) <- 'combination'
         seqlengths(segments.cond) <- seqlengths(bins)
-        segments[[cond]] <- segments.cond
+        segments.separate[[cond]] <- segments.cond
     }
     stopTimedMessage(ptm)
     
@@ -217,8 +220,8 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
     hmm <- list()
     class(hmm) <- class.combined.multivariate.hmm
     hmm$bins <- bins
-    hmm$combined.segments <- combined.segments
     hmm$segments <- segments
+    hmm$segments.separate <- segments.separate
     return(hmm)
     
 }
