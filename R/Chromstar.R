@@ -182,9 +182,9 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 fields <- sapply(exp.table[sub('_binsize.*','',basename(file)),c('mark','condition','replicate')], as.character)
                 id <- paste0(fields[1], '-', fields[2], '-rep', fields[3])
                 model <- callPeaksUnivariate(file, ID=id, eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], read.cutoff.absolute=conf[['read.cutoff.absolute']], prefit.on.chr=conf[['prefit.on.chr']], keep.posteriors=conf[['keep.posteriors']])
-								ptm <- startTimedMessage("Saving to file ", savename, " ...")
+                ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(model, file=savename)
-								stopTimedMessage(ptm)
+                stopTimedMessage(ptm)
             }, error = function(err) {
                 stop(file,'\n',err)
             })
@@ -244,9 +244,9 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
             files <- file.path(unipath, filenames)
             states <- stateBrewer(exp.table, mode=mode)
             multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']])
-						ptm <- startTimedMessage("Saving to file ", savename, " ...")
+            ptm <- startTimedMessage("Saving to file ", savename, " ...")
             save(multimodel, file=savename)
-						stopTimedMessage(ptm)
+            stopTimedMessage(ptm)
         } else {
             multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
         }
@@ -273,9 +273,9 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 files <- file.path(unipath, filenames)[mask]
                 states <- stateBrewer(exp.table[mask,], mode=mode)
                 multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']])
-								ptm <- startTimedMessage("Saving to file ", savename, " ...")
+                ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(multimodel, file=savename)
-								stopTimedMessage(ptm)
+                stopTimedMessage(ptm)
             } else {
                 multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
             }
@@ -303,9 +303,9 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 files <- file.path(unipath, filenames)[mask]
                 states <- stateBrewer(exp.table[mask,], mode=mode)
                 multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']])
-								ptm <- startTimedMessage("Saving to file ", savename, " ...")
+                ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(multimodel, file=savename)
-								stopTimedMessage(ptm)
+                stopTimedMessage(ptm)
             } else {
                 multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
             }
