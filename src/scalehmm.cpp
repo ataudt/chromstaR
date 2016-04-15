@@ -229,7 +229,7 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 		//FILE_LOG(logDEBUG1) << "Calling calc_loglikelihood() from baumWelch()";
 		this->calc_loglikelihood();
 		logPnew = this->logP;
-		if(isnan(logPnew))
+		if(std::isnan(logPnew))
 		{
 			//FILE_LOG(logERROR) << "logPnew = " << logPnew;
 			throw nan_detected;
@@ -344,7 +344,7 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 // 						this->index_nonzero_A_into_state[jN][nonzero_counter[jN]] = iN;
 // 						nonzero_counter[jN]++;
 // 					}
-					if (isnan(this->A[iN][jN]))
+					if (std::isnan(this->A[iN][jN]))
 					{
 						//FILE_LOG(logERROR) << "updating transition probabilities";
 						//FILE_LOG(logERROR) << "A["<<iN<<"]["<<jN<<"] = " << A[iN][jN];
@@ -668,7 +668,7 @@ void ScaleHMM::forward()
 			{
 				this->scalealpha[t][iN] = alpha[iN] / this->scalefactoralpha[t];
 				//FILE_LOG(logDEBUG4) << "scalealpha["<<t<<"]["<<iN<<"] = " << scalealpha[t][iN];
-				if(isnan(this->scalealpha[t][iN]))
+				if(std::isnan(this->scalealpha[t][iN]))
 				{
 					//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 					for (int jN=0; jN<this->N; jN++)
@@ -722,7 +722,7 @@ void ScaleHMM::forward()
 // 			{
 // 				this->scalealpha[t][iN] = alpha[iN] / this->scalefactoralpha[t];
 // 				//FILE_LOG(logDEBUG4) << "scalealpha["<<t<<"]["<<iN<<"] = " << scalealpha[t][iN];
-// 				if(isnan(this->scalealpha[t][iN]))
+// 				if(std::isnan(this->scalealpha[t][iN]))
 // 				{
 // 					//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 // 					for (int jN=0; jN<this->N; jN++)
@@ -781,7 +781,7 @@ void ScaleHMM::backward()
 			{
 				this->scalebeta[t][iN] = beta[iN] / this->scalefactoralpha[t];
 				//FILE_LOG(logDEBUG4) << "scalebeta["<<t<<"]["<<iN<<"] = " << scalebeta[t][iN];
-				if (isnan(this->scalebeta[t][iN]))
+				if (std::isnan(this->scalebeta[t][iN]))
 				{
 					//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 					for (int jN=0; jN<this->N; jN++)
@@ -831,7 +831,7 @@ void ScaleHMM::backward()
 // 			{
 // 				this->scalebeta[t][iN] = beta[iN] / this->scalefactoralpha[t];
 // 				//FILE_LOG(logDEBUG4) << "scalebeta["<<t<<"]["<<iN<<"] = " << scalebeta[t][iN];
-// 				if (isnan(this->scalebeta[t][iN]))
+// 				if (std::isnan(this->scalebeta[t][iN]))
 // 				{
 // 					//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 // 					for (int jN=0; jN<this->N; jN++)

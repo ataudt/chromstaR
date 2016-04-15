@@ -69,7 +69,7 @@ void ZiNB::calc_logdensities(double* logdens)
 			{
 				logdens[t] = log(1-this->w) + lGammaRplusX[(int) this->obs[t]] - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp;
 			}
-			if (isnan(logdens[t]))
+			if (std::isnan(logdens[t]))
 			{
 				//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 				//FILE_LOG(logERROR) << "logdens["<<t<<"] = "<< logdens[t];
@@ -92,7 +92,7 @@ void ZiNB::calc_logdensities(double* logdens)
 			{
 				logdens[t] = log(1-this->w) + lGammaRplusX - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp;
 			}
-			if (isnan(logdens[t]))
+			if (std::isnan(logdens[t]))
 			{
 				//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 				//FILE_LOG(logERROR) << "logdens["<<t<<"] = "<< logdens[t];
@@ -129,7 +129,7 @@ void ZiNB::calc_densities(double* dens)
 			{
 				dens[t] = (1-this->w) * exp( lGammaRplusX[(int) this->obs[t]] - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp );
 			}
-			if (isnan(dens[t]))
+			if (std::isnan(dens[t]))
 			{
 				//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 				//FILE_LOG(logERROR) << "dens["<<t<<"] = "<< dens[t];
@@ -152,7 +152,7 @@ void ZiNB::calc_densities(double* dens)
 			{
 				dens[t] = (1-this->w) * exp( lGammaRplusX - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp );
 			}
-			if (isnan(dens[t]))
+			if (std::isnan(dens[t]))
 			{
 				//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 				//FILE_LOG(logERROR) << "dens["<<t<<"] = "<< dens[t];
@@ -179,7 +179,7 @@ void ZiNB::calc_CDFs(double* CDF)
 	for (int j=1; j<=this->max_obs; j++)
 	{
 		dens = (1-this->w) * exp( lgamma(this->size + j) - lGammaR - this->lxfactorials[j] + this->size * logp + j * log1minusp );
-		if (isnan(dens))
+		if (std::isnan(dens))
 		{
 			//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 			//FILE_LOG(logERROR) << "dens = "<< dens;
@@ -195,7 +195,7 @@ void ZiNB::calc_CDFs(double* CDF)
 	for (int t=0; t<this->T; t++)
 	{
 		CDF[t] = precomputed_CDF[(int)obs[t]];
-		if (isnan(CDF[t]))
+		if (std::isnan(CDF[t]))
 		{
 			//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 			//FILE_LOG(logERROR) << "CDF["<<t<<"] = "<< CDF[t];
@@ -221,7 +221,7 @@ void ZiNB::calc_logCDFs(double* logCDF)
 	for (int j=1; j<=this->max_obs; j++)
 	{
 		logdens = log(1-this->w) + lgamma(this->size + j) - lGammaR - this->lxfactorials[j] + this->size * logp + j * log1minusp;
-		if (isnan(logdens))
+		if (std::isnan(logdens))
 		{
 			//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 			//FILE_LOG(logERROR) << "logdens = "<< logdens;
@@ -237,7 +237,7 @@ void ZiNB::calc_logCDFs(double* logCDF)
 	for (int t=0; t<this->T; t++)
 	{
 		logCDF[t] = precomputed_logCDF[(int)obs[t]];
-		if (isnan(logCDF[t]))
+		if (std::isnan(logCDF[t]))
 		{
 			//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 			//FILE_LOG(logERROR) << "logCDF["<<t<<"] = "<< logCDF[t];
@@ -287,7 +287,7 @@ double ZiNB::getLogDensityAt(int x)
 	{
 		logdens = log(1-this->w) + lGammaRplusX - lGammaR - lxfactorial + this->size * logp + x * log1minusp;
 	}
-	if (isnan(logdens))
+	if (std::isnan(logdens))
 	{
 		//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 		//FILE_LOG(logERROR) << "logdens = "<< logdens;
@@ -397,7 +397,7 @@ void NegativeBinomial::calc_logdensities(double* logdens)
 		{
 			logdens[t] = logdens_per_read[(int) this->obs[t]];
 			//FILE_LOG(logDEBUG4) << "logdens["<<t<<"] = " << logdens[t];
-			if (isnan(logdens[t]))
+			if (std::isnan(logdens[t]))
 			{
 				//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 				//FILE_LOG(logERROR) << "logdens["<<t<<"] = "<< logdens[t];
@@ -414,7 +414,7 @@ void NegativeBinomial::calc_logdensities(double* logdens)
 			lxfactorial = this->lxfactorials[(int) this->obs[t]];
 			logdens[t] = lGammaRplusX - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp;
 			//FILE_LOG(logDEBUG4) << "logdens["<<t<<"] = " << logdens[t];
-			if (isnan(logdens[t]))
+			if (std::isnan(logdens[t]))
 			{
 				//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 				//FILE_LOG(logERROR) << "logdens["<<t<<"] = "<< logdens[t];
@@ -444,7 +444,7 @@ void NegativeBinomial::calc_densities(double* dens)
 		{
 			dens[t] = dens_per_read[(int) this->obs[t]];
 			//FILE_LOG(logDEBUG4) << "dens["<<t<<"] = " << dens[t];
-			if (isnan(dens[t]))
+			if (std::isnan(dens[t]))
 			{
 				//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 				//FILE_LOG(logERROR) << "dens["<<t<<"] = "<< dens[t];
@@ -461,7 +461,7 @@ void NegativeBinomial::calc_densities(double* dens)
 			lxfactorial = this->lxfactorials[(int) this->obs[t]];
 			dens[t] = exp( lGammaRplusX - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp );
 			//FILE_LOG(logDEBUG4) << "dens["<<t<<"] = " << dens[t];
-			if (isnan(dens[t]))
+			if (std::isnan(dens[t]))
 			{
 				//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 				//FILE_LOG(logERROR) << "dens["<<t<<"] = "<< dens[t];
@@ -488,7 +488,7 @@ void NegativeBinomial::calc_CDFs(double* CDF)
 	for (int j=1; j<=this->max_obs; j++)
 	{
 		dens = exp( lgamma(this->size + j) - lGammaR - this->lxfactorials[j] + this->size * logp + j * log1minusp );
-		if (isnan(dens))
+		if (std::isnan(dens))
 		{
 			//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 			//FILE_LOG(logERROR) << "dens = "<< dens;
@@ -504,7 +504,7 @@ void NegativeBinomial::calc_CDFs(double* CDF)
 	for (int t=0; t<this->T; t++)
 	{
 		CDF[t] = precomputed_CDF[(int)obs[t]];
-		if (isnan(CDF[t]))
+		if (std::isnan(CDF[t]))
 		{
 			//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 			//FILE_LOG(logERROR) << "CDF["<<t<<"] = "<< CDF[t];
@@ -530,7 +530,7 @@ void NegativeBinomial::calc_logCDFs(double* logCDF)
 	for (int j=1; j<=this->max_obs; j++)
 	{
 		logdens = lgamma(this->size + j) - lGammaR - this->lxfactorials[j] + this->size * logp + j * log1minusp;
-		if (isnan(logdens))
+		if (std::isnan(logdens))
 		{
 			//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 			//FILE_LOG(logERROR) << "logdens = "<< logdens;
@@ -546,7 +546,7 @@ void NegativeBinomial::calc_logCDFs(double* logCDF)
 	for (int t=0; t<this->T; t++)
 	{
 		logCDF[t] = precomputed_logCDF[(int)obs[t]];
-		if (isnan(logCDF[t]))
+		if (std::isnan(logCDF[t]))
 		{
 			//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 			//FILE_LOG(logERROR) << "logCDF["<<t<<"] = "<< logCDF[t];
@@ -821,7 +821,7 @@ double NegativeBinomial::getLogDensityAt(int x)
 	lGammaRplusX = lgamma(this->size + x);
 	lxfactorial = this->lxfactorials[x];
 	logdens = lGammaRplusX - lGammaR - lxfactorial + this->size * logp + x * log1minusp;
-	if (isnan(logdens))
+	if (std::isnan(logdens))
 	{
 		//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 		//FILE_LOG(logERROR) << "logdens = "<< logdens;
@@ -1013,7 +1013,7 @@ void MVCopulaApproximation::calc_logdensities(double* logdens)
 			sum += marginals_logdensities[imod][t];
 			uniform = marginals_CDFs[imod][t];
 			z[imod] = qnorm(uniform, 0, 1, 1, 0);
-			if (isnan(z[imod]))
+			if (std::isnan(z[imod]))
 			{
 				//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 				//FILE_LOG(logERROR) << "uniform = "<< uniform;
@@ -1042,7 +1042,7 @@ void MVCopulaApproximation::calc_logdensities(double* logdens)
 				{
 					exponentTemp += z[jmod] * this->cor_matrix_inv[imod * Nmod + jmod];
 				}
-				if (isnan(exponentTemp))
+				if (std::isnan(exponentTemp))
 				{
 					//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 					//FILE_LOG(logERROR) << "exponentTemp = "<< exponentTemp;
@@ -1052,7 +1052,7 @@ void MVCopulaApproximation::calc_logdensities(double* logdens)
 				}
 			}
 			exponent += exponentTemp * z[imod];
-			if (isnan(exponent))
+			if (std::isnan(exponent))
 			{
 				//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 				//FILE_LOG(logERROR) << "exponentTemp = "<< exponentTemp;
@@ -1063,7 +1063,7 @@ void MVCopulaApproximation::calc_logdensities(double* logdens)
 		}
 // 		logdens[t] = log(1/sqrt(this->cor_matrix_determinant)) - 0.5 * exponent + sum;
 		logdens[t] = -0.5 * log(this->cor_matrix_determinant) - 0.5 * exponent + sum;
-		if (isnan(logdens[t]))
+		if (std::isnan(logdens[t]))
 		{
 			//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
 			//FILE_LOG(logERROR) << "cor_matrix_determinant = " << this->cor_matrix_determinant;

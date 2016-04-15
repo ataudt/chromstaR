@@ -20,8 +20,10 @@ A \code{\link{GRanges}} object with the contents of the bed-file.
 This is a simple convenience function to read a bed(.gz)-file into a \code{\link{GRanges}} object. The bed-file is expected to have the following fields: \code{chromosome, start, end, name, score, strand}.
 }
 \examples{
-## Get an example BED file with single-cell-sequencing reads
-bedfile <- system.file("extdata", "KK150311_VI_07.bam.bed.gz", package="AneuFinderData")
+## Get an example BED file
+bedfile <- system.file("extdata", "euratrans",
+                      "lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
+                       package="chromstaRData")
 ## Import the file and skip the first 10 lines
 data <- importBed(bedfile, skip=10)
 

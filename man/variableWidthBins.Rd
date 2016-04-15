@@ -17,7 +17,7 @@ variableWidthBins(reads, binsizes, chromosomes = NULL)
 A \code{list()} of \code{\link{GRanges}} objects with variable-width bins.
 }
 \description{
-Make variable-width bins based on a reference BAM file. This can be a simulated file (produced by \code{\link[AneuFinder]{simulateReads}} and aligned with your favourite aligner) or a real reference.
+Make variable-width bins based on a reference BAM file. This can be a simulated file (produced by TODO: insert link and aligned with your favourite aligner) or a real reference.
 }
 \details{
 Variable-width bins are produced by first binning the reference BAM file with fixed-width bins and selecting the desired number of reads per bin as the (non-zero) maximum of the histogram. A new set of bins is then generated such that every bin contains the desired number of reads.
