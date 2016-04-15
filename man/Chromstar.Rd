@@ -9,7 +9,7 @@ Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
   remove.duplicate.reads = TRUE, min.mapq = 10, prefit.on.chr = NULL,
   eps = 0.01, max.time = NULL, max.iter = 5000,
   read.cutoff.absolute = 500, keep.posteriors = FALSE, mode = "mark",
-  num.states = 128)
+  max.states = 128)
 }
 \arguments{
 \item{inputfolder}{Folder with either BAM or BED files.}
@@ -51,7 +51,7 @@ Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
   \item{\code{full}}{Full analysis of all marks and conditions combined. Best of both, but: Choose this mode only if (number of conditions * number of marks \eqn{\le} 8), otherwise it might be too slow or crash due to memory limitations.}
 }}
 
-\item{num.states}{The number of states to use in the multivariate part. If set to \code{NULL}, the maximum number of theoretically possible states is used. CAUTION: This can be very slow or crash if you have too many states. \pkg{\link{chromstaR}} has a built in mechanism to select the best states in case that less states than theoretically possible are specified.}
+\item{max.states}{The maximum number of states to use in the multivariate part. If set to \code{NULL}, the maximum number of theoretically possible states is used. CAUTION: This can be very slow or crash if you have too many states. \pkg{\link{chromstaR}} has a built in mechanism to select the best states in case that less states than theoretically possible are specified.}
 }
 \value{
 \code{NULL}

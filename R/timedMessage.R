@@ -1,3 +1,10 @@
+messageU <- function(..., underline='=') {
+
+	x <- paste0(..., collapse='')
+	message(x)
+	message(rep(underline, nchar(x)))
+
+}
 
 
 startTimedMessage <- function(...) {

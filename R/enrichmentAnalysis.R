@@ -101,11 +101,11 @@ plotMultipleEnrichment <- function(hmm, annotations, combinations=NULL, plot=TRU
     }
 
     if (plot) {
-      df <- reshape2::melt(fold, value.name='foldEnrichment')
-      ggplt <- ggplot(df) + geom_tile(aes_string(x='combination', y='annotation', fill='foldEnrichment')) + theme(axis.text.x = element_text(angle=90, hjust=1)) + scale_fill_gradient(low='white', high='blue')
-      return(ggplt)
+        df <- reshape2::melt(fold, value.name='foldEnrichment')
+        ggplt <- ggplot(df) + geom_tile(aes_string(x='combination', y='annotation', fill='foldEnrichment')) + theme(axis.text.x = element_text(angle=90, hjust=1)) + scale_fill_gradient(low='white', high='blue')
+        return(ggplt)
     } else {
-      return(fold)
+        return(fold)
     }
     
 }
@@ -118,19 +118,19 @@ plotMultipleEnrichment <- function(hmm, annotations, combinations=NULL, plot=TRU
 #' @export
 plotHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=1000) {
 
-  # Variables
+    # Variables
     hmm <- loadHmmsFromFiles(hmm, check.class=class.multivariate.hmm)[[1]]
-  binsize <- width(hmm$bins)[1]
-  around <- round(bp.around.annotation/binsize)
-  
-  # Subsampling for plotting of huge data.frames
+    binsize <- width(hmm$bins)[1]
+    around <- round(bp.around.annotation/binsize)
+
+    # Subsampling for plotting of huge data.frames
     annotation <- subsetByOverlaps(annotation, hmm$bins)
-  if (length(annotation)>max.rows) {
-    annotation <- sample(annotation, size=max.rows, replace=FALSE)
-  }
+    if (length(annotation)>max.rows) {
+        annotation <- sample(annotation, size=max.rows, replace=FALSE)
+    }
   
     # Get bins that overlap the start of annotation
-  ptm <- startTimedMessage("Overlaps with annotation ...")
+    ptm <- startTimedMessage("Overlaps with annotation ...")
     index.plus <- findOverlaps(annotation[strand(annotation)=='+' | strand(annotation)=='*'], hmm$bins, select="first")
     index.minus <- findOverlaps(annotation[strand(annotation)=='-'], hmm$bins, select="last")
     index.plus <- index.plus[!is.na(index.plus)]
@@ -142,18 +142,19 @@ plotHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=10
     ptm <- startTimedMessage("Getting surrounding indices ...")
     ext.index.plus <- array(NA, dim=c(length(index.plus), 2*around+1), dimnames=list(anno=1:length(index.plus), position=binsize*seq(-around, around, 1)))
     for (i1 in 1:length(index.plus)) {
-      ext.index.plus[i1,] <- seq(from=-around+index.plus[i1], to=index.plus[i1]+around)
+        ext.index.plus[i1,] <- seq(from=-around+index.plus[i1], to=index.plus[i1]+around)
     }
     if (length(index.minus)>0) {
-      ext.index.minus <- array(NA, dim=c(length(index.minus), 2*around+1), dimnames=list(anno=1:length(index.minus), position=binsize*seq(-around, around, 1)))
-      for (i1 in 1:length(index.minus)) {
-        ext.index.minus[i1,] <- rev( seq(from=-around+index.minus[i1], to=index.minus[i1]+around) )
-      }
-      ext.index <- rbind(ext.index.plus, ext.index.minus)
+        ext.index.minus <- array(NA, dim=c(length(index.minus), 2*around+1), dimnames=list(anno=1:length(index.minus), position=binsize*seq(-around, around, 1)))
+        for (i1 in 1:length(index.minus)) {
+            ext.index.minus[i1,] <- rev( seq(from=-around+index.minus[i1], to=index.minus[i1]+around) )
+        }
+        ext.index <- rbind(ext.index.plus, ext.index.minus)
     } else {
-      ext.index <- ext.index.plus
+        ext.index <- ext.index.plus
     }
     ext.index[ext.index <= 0] <- NA
+    ext.index[ext.index > length(hmm$bins)] <- NA
     rownames(ext.index) <- 1:nrow(ext.index)
     stopTimedMessage(ptm)
     
@@ -161,24 +162,24 @@ plotHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=10
     ptm <- startTimedMessage("Getting read counts")
     counts <- list()
     for (combination in levels(hmm$bins$combination)) {
-      counts[[combination]] <- list()
-      index.combination <- which(hmm$bins$combination[index]==combination)
-      ext.index.combination <- ext.index[index.combination,]
-      if (is.null(dim(ext.index.combination))) {
-        ext.index.combination <- array(ext.index.combination, dim=c(1,dim(ext.index)[[2]]), dimnames=list(anno=rownames(ext.index)[index.combination], position=dimnames(ext.index)[[2]]))
-      }
-      for (ntrack in colnames(hmm$bins$counts)) {
-      counts[[combination]][[ntrack]] <- array(hmm$bins$counts[ext.index.combination,ntrack], dim=dim(ext.index.combination), dimnames=dimnames(ext.index.combination))
-      }
+        counts[[combination]] <- list()
+        index.combination <- which(hmm$bins$combination[index]==combination)
+        ext.index.combination <- ext.index[index.combination,]
+        if (is.null(dim(ext.index.combination))) {
+            ext.index.combination <- array(ext.index.combination, dim=c(1,dim(ext.index)[[2]]), dimnames=list(anno=rownames(ext.index)[index.combination], position=dimnames(ext.index)[[2]]))
+        }
+        for (ntrack in colnames(hmm$bins$counts)) {
+            counts[[combination]][[ntrack]] <- array(hmm$bins$counts[ext.index.combination,ntrack], dim=dim(ext.index.combination), dimnames=dimnames(ext.index.combination))
+        }
     }
     stopTimedMessage(ptm)
     
     ## Theme
     custom_theme <- theme(
-      panel.grid = element_blank(),
-      panel.border = element_rect(fill='NA'),
-      panel.background = element_rect(fill='white'),
-      axis.text.y = element_blank()
+        panel.grid = element_blank(),
+        panel.border = element_rect(fill='NA'),
+        panel.background = element_rect(fill='white'),
+        axis.text.y = element_blank()
     )
     
     ## Prepare data.frame
@@ -194,12 +195,18 @@ plotHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=10
     df$track <- factor(df$track, levels=colnames(hmm$bins$counts))
     
     ## Plot as heatmap
-    ggplt <- ggplot(df) + geom_tile(aes_string(x='position', y='id', color='combination'), size=2)
+    ggplt <- ggplot(df) + geom_tile(aes_string(x='position', y='id', color='combination'))
     ggplt <- ggplt + geom_tile(aes_string(x='position', y='id', fill='counts'), alpha=0.6)
     ggplt <- ggplt + facet_wrap( ~ track, nrow=1) + custom_theme
     ggplt <- ggplt + xlab('distance from annotation in [bp]') + ylab('')
     breaks <- sort(c(0, 10^(0:5), max(df$counts, na.rm = TRUE)))
     ggplt <- ggplt + scale_fill_continuous(trans='log1p', breaks=breaks, labels=breaks, low='white', high='black')
+    # Insert horizontal lines
+    y.lines <- sapply(split(df$id, df$combination), function(x) { max(as.integer(x)) })
+    df.lines <- data.frame(y=sort(y.lines[-1]) + 0.5)
+    ggplt <- ggplt + geom_hline(data=df.lines, mapping=aes_string(yintercept='y'), linetype=2)
+    # Increase color size in legend
+    ggplt <- ggplt + guides(color=guide_legend(override.aes = list(size=2)))
     stopTimedMessage(ptm)
     
     return(ggplt)
@@ -219,17 +226,17 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
     df$L1 <- factor(df$L1, levels=c('start','inside','end'))
     df <- rbind(df[df$L1 == 'start',], df[df$L1 == 'inside',], df[df$L1 == 'end',])
     if (length(region)>=2) {
-      df <- df[!(df$L1 == 'start' & df$lag > 0),]
-      df <- df[!(df$L1 == 'end' & df$lag < 0),]
-    df$position <- apply(data.frame(df$interval, df$lag), 1, max, na.rm = TRUE)
+        df <- df[!(df$L1 == 'start' & df$lag > 0),]
+        df <- df[!(df$L1 == 'end' & df$lag < 0),]
+        df$position <- apply(data.frame(df$interval, df$lag), 1, max, na.rm = TRUE)
     } else if (length(region)==1) {
-      df <- df[df$L1 == region,]
-      df$position <- df$lag
+        df <- df[df$L1 == region,]
+        df$position <- df$lag
     }
-  df$position[df$L1 == 'end'] <- df$position[df$L1 == 'end'] + bp.around.annotation
-  df$position[df$L1 == 'inside'] <- df$position[df$L1 == 'inside'] * bp.around.annotation
+    df$position[df$L1 == 'end'] <- df$position[df$L1 == 'end'] + bp.around.annotation
+    df$position[df$L1 == 'inside'] <- df$position[df$L1 == 'inside'] * bp.around.annotation
 
-  ### Plot
+    ### Plot
     ggplt <- ggplot(df) + geom_line(aes_string(x='position', y='value', col='combination'), size=2)
     ggplt <- ggplt + theme_bw() + xlab('distance from annotation in [bp]') + ylab('fold enrichment')
     if (length(region)>=2) {
@@ -237,7 +244,7 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
         labels <- c(-bp.around.annotation, -bp.around.annotation/2, '0%', '50%', '100%', bp.around.annotation/2, bp.around.annotation)
         ggplt <- ggplt + scale_x_continuous(breaks=breaks, labels=labels)
     }
-  return(ggplt)
+    return(ggplt)
     
 }
 
@@ -292,7 +299,7 @@ enrichmentAtAnnotation <- function(hmm, annotation, bp.around.annotation=10000, 
         if ('counts' %in% what) counts.inside <- array(dim=c(num.intervals+1, length(hmm$IDs)), dimnames=list(interval=intervals, track=hmm$IDs))
 
         for (interval in intervals) {
-          shift <- widths.annotation * interval * c(1,-1,1)[as.integer(strand(annotation))]
+            shift <- widths.annotation * interval * c(1,-1,1)[as.integer(strand(annotation))]
             shifted.starts <- start(annotation.1bp) + shift
             annotation.shifted <- GRanges(seqnames = seqnames(annotation.1bp), ranges = IRanges(start = shifted.starts, end = shifted.starts), strand = strand(annotation.1bp))
             # Get bins that overlap the shifted annotation
@@ -373,7 +380,6 @@ enrichmentAtAnnotation <- function(hmm, annotation, bp.around.annotation=10000, 
         if ('combinations' %in% what) combinations.end <- array(dim=c(length(-lag:lag), length(levels(hmm$bins$combination))), dimnames=list(lag=-lag:lag, combination=levels(hmm$bins$combination)))
         if ('counts' %in% what) counts.end <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
         for (ilag in -lag:lag) {
-    #         message("lag = ",ilag)
             index <- c(index.end.plus+ilag, index.end.minus-ilag)
             index <- index[index>0 & index<=length(hmm$bins)]
             if ('binstates' %in% what) binstates.end[as.character(ilag),] <- colMeans(binstates[index,])
