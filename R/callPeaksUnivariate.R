@@ -103,17 +103,12 @@ callPeaksUnivariate <- function(binned.data, ID, prefit.on.chr=NULL, short=TRUE,
 #' @param control If set to \code{TRUE}, the binned data will be treated as control experiment. That means only state 'zero-inflation' and 'unmodified' will be used in the HMM.
 #' @param keep.posteriors If set to \code{TRUE} (default=\code{FALSE}), posteriors will be available in the output. This is useful to change the post.cutoff later, but increases the necessary disk space to store the result.
 #' @param keep.densities If set to \code{TRUE} (default=\code{FALSE}), densities will be available in the output. This should only be needed debugging.
-#' @param checkpoint.after.iter Write a checkpoint file every n iterations. The default \code{NULL} means no checkpointing for iterations.
-#' @param checkpoint.after.time Write a checkpoint file every t seconds. The default \code{NULL} means no checkpointing for time.
-#' @param checkpoint.file The name of the checkpoint file that will be written.
-#' @param checkpoint.overwrite If set to \code{TRUE}, only one checkpoint file will be written. If set to \code{FALSE}, a new checkpoint file will be written at each checkpoint with the total number of iterations appended.
-#' @param checkpoint.use.existing If set to \code{TRUE}, the Baum-Welch fitting procedure will be continued from the HMM in the \code{checkpoint.file}.
 #' @param verbosity Verbosity level for the fitting procedure. 0 - No output, 1 - Iterations are printed.
 #' @return A \code{\link{uniHMM}} object.
 #' @author Aaron Taudt, Maria Coome Tatche
 #' @seealso \code{\link{uniHMM}}, \code{\link{callPeaksMultivariate}}
 #' @importFrom stats runif
-callPeaksUnivariateAllChr <- function(binned.data, ID, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, post.cutoff=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, checkpoint.after.iter=NULL, checkpoint.after.time=NULL, checkpoint.file=paste0('chromstaR_checkpoint_',ID,'.cpt'), checkpoint.overwrite=TRUE, checkpoint.use.existing=FALSE, verbosity=1) {
+callPeaksUnivariateAllChr <- function(binned.data, ID, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, post.cutoff=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
 
     ### Define cleanup behaviour ###
     on.exit(.C("C_univariate_cleanup"))
@@ -128,9 +123,6 @@ callPeaksUnivariateAllChr <- function(binned.data, ID, eps=0.01, init="standard"
         if (check.positive(eps.try)!=0) stop("argument 'eps.try' expects a positive numeric")
     }
     if (check.positive.integer(num.threads)!=0) stop("argument 'num.threads' expects a positive integer")
-    if (is.null(checkpoint.after.time)) { checkpoint.after.time <- -1 } else if (check.positive.integer(checkpoint.after.time)!=0) { stop("argument 'checkpoint.after.time' expects a positive integer") }
-    if (is.null(checkpoint.after.iter)) { checkpoint.after.iter <- -1 } else if (check.positive.integer(checkpoint.after.iter)!=0) { stop("argument 'checkpoint.after.iter' expects a positive integer") }
-    if (check.logical(checkpoint.overwrite)!=0) stop("argument 'checkpoint.overwrite' expects a logical (TRUE or FALSE)")
     if (post.cutoff>1 | post.cutoff<0) stop("argument 'post.cutoff' has to be between 0 and 1 if specified")
     if (check.logical(keep.posteriors)!=0) stop("argument 'keep.posteriors' expects a logical (TRUE or FALSE)")
     if (check.logical(keep.densities)!=0) stop("argument 'keep.densities' expects a logical (TRUE or FALSE)")
@@ -243,187 +235,58 @@ callPeaksUnivariateAllChr <- function(binned.data, ID, eps=0.01, init="standard"
 #         stop("Unknown initialization procedure: ",init)
 #     }
 
-    if (num.trials == 1) {
-        ### Load checkpoint file if it exists and if desired ###
-        if (file.exists(checkpoint.file) & checkpoint.use.existing) {
-            message("Loading checkpoint file ",checkpoint.file)
-            hmm <- get(load(checkpoint.file))
-            message("Using parameters from checkpoint file ",checkpoint.file)
-            A.initial <- hmm$transitionProbs
-            proba.initial <- hmm$startProbs
-            size.initial <- hmm$distributions$size
-            prob.initial <- hmm$distributions$prob
-            use.initial <- TRUE
-        } else if (!continue.from.univariate.hmm) {
-            A.initial <- double(length=numstates*numstates)
-            proba.initial <- double(length=numstates)
-            size.initial <- double(length=numstates)
-            prob.initial <- double(length=numstates)
-            use.initial <- FALSE
+
+    ## Call univariate in a for loop to enable multiple trials
+    modellist <- list()
+    for (i_try in 1:num.trials) {
+        if (verbosity>=1) message("------------------------------------ Try ",i_try," of ",num.trials," -------------------------------------")
+        hmm <- .C("C_univariate_hmm",
+            counts = as.integer(counts), # double* O
+            num.bins = as.integer(numbins), # int* T
+            num.states = as.integer(numstates), # int* N
+            size = double(length=numstates), # double* size
+            prob = double(length=numstates), # double* prob
+            num.iterations = as.integer(max.iter), #  int* maxiter
+            time.sec = as.integer(max.time), # double* maxtime
+            loglik.delta = as.double(eps.try), # double* eps
+            posteriors = double(length=numbins * numstates), # double* posteriors
+            densities = double(length=lenDensities), # double* densities
+            keep.densities = as.logical(keep.densities), # bool* keep_densities
+            A = double(length=numstates*numstates), # double* A
+            proba = double(length=numstates), # double* proba
+            loglik = double(length=1), # double* loglik
+            weights = double(length=numstates), # double* weights
+            ini.proc = as.integer(iniproc), # int* iniproc
+            size.initial = double(length=numstates), # double* initial_size
+            prob.initial = double(length=numstates), # double* initial_prob
+            A.initial = double(length=numstates*numstates), # double* initial_A
+            proba.initial = double(length=numstates), # double* initial_proba
+            use.initial.params = as.logical(0), # bool* use_initial_params
+            num.threads = as.integer(num.threads), # int* num_threads
+            error = as.integer(0), # int* error (error handling)
+            read.cutoff = as.integer(max(counts)), # int* read_cutoff
+            verbosity = as.integer(verbosity) # int* verbosity
+        )
+
+        hmm$eps <- eps.try
+        if (hmm$loglik.delta > hmm$eps) {
+            warning("HMM did not converge in trial run ",i_try,"!\n")
         }
-        if (checkpoint.after.iter < 0) {
-            checkpoint.after.iter <- max.iter
-        }
-        if (checkpoint.after.time < 0) {
-            checkpoint.after.time <- max.time
-        }
-        ### Run univariate HMM ###
-        iteration.total <- 0
-        time.total <- 0
-        if (verbosity>=1) message("------------------------------------ Try ",1," of ",1," -------------------------------------")
-        repeat {
-            ## Determine runtime
-            if (max.iter > 0) {
-                max.iter.temp <- min(checkpoint.after.iter, max.iter-iteration.total)
-            } else {
-                max.iter.temp <- checkpoint.after.iter
-            }
-            if (max.time > 0) {
-                max.time.temp <- min(checkpoint.after.time, max.time-time.total)
-            } else {
-                max.time.temp <- checkpoint.after.time
-            }
-            ## Call the Baum-Welch
-            hmm <- .C("C_univariate_hmm",
-                counts = as.integer(counts), # double* O
-                num.bins = as.integer(numbins), # int* T
-                num.states = as.integer(numstates), # int* N
-                size = double(length=numstates), # double* size
-                prob = double(length=numstates), # double* prob
-                num.iterations = as.integer(max.iter.temp), #  int* maxiter
-                time.sec = as.integer(max.time.temp), # double* maxtime
-                loglik.delta = as.double(eps.try), # double* eps
-                posteriors = double(length=numbins * numstates), # double* posteriors
-                densities = double(length=lenDensities), # double* densities
-                keep.densities = as.logical(keep.densities), # bool* keep_densities
-                A = double(length=numstates*numstates), # double* A
-                proba = double(length=numstates), # double* proba
-                loglik = double(length=1), # double* loglik
-                weights = double(length=numstates), # double* weights
-                ini.proc = as.integer(iniproc), # int* iniproc
-                size.initial = as.double(size.initial), # double* initial_size
-                prob.initial = as.double(prob.initial), # double* initial_prob
-                A.initial = as.double(A.initial), # double* initial_A
-                proba.initial = as.double(proba.initial), # double* initial_proba
-                use.initial.params = as.logical(use.initial), # bool* use_initial_params
-                num.threads = as.integer(num.threads), # int* num_threads
-                error = as.integer(0), # int* error (error handling)
-                read.cutoff = as.integer(max(counts)), # int* read_cutoff
-                verbosity = as.integer(verbosity) # int* verbosity
-            )
-            ## Adjust parameters for the next round
-            A.initial <- hmm$A
-            proba.initial <- hmm$proba
-            size.initial <- hmm$size
-            prob.initial <- hmm$prob
-            use.initial <- TRUE
-            iteration.total <- iteration.total + hmm$num.iterations
-            hmm$num.iterations <- iteration.total
-            time.total <- time.total + hmm$time.sec
-            hmm$time.sec <- time.total
-            if (hmm$loglik.delta <= eps | (time.total >= max.time & max.time >= 0) | (iteration.total >= max.iter & max.iter >= 0)) break
+        # Store model in list
+        modellist[[i_try]] <- hmm
 
-            ### Save checkpoint ###
-                result <- list()
-                result$ID <- ID
-            ## Parameters
-                # Weights
-                result$weights <- hmm$weights
-                names(result$weights) <- state.labels
-                # Transition matrices
-                transitionProbs <- matrix(hmm$A, ncol=hmm$num.states)
-                rownames(transitionProbs) <- state.labels
-                colnames(transitionProbs) <- state.labels
-                result$transitionProbs <- transitionProbs
-                transitionProbs.initial <- matrix(hmm$A.initial, ncol=hmm$num.states)
-                rownames(transitionProbs.initial) <- state.labels
-                colnames(transitionProbs.initial) <- state.labels
-                result$transitionProbs.initial <- transitionProbs.initial
-                # Initial probs
-                result$startProbs <- hmm$proba
-                names(result$startProbs) <- paste0("P(",state.labels,")")
-                result$startProbs.initial <- hmm$proba.initial
-                names(result$startProbs.initial) <- paste0("P(",state.labels,")")
-                # Distributions
-                distributions <- data.frame(type=state.distributions, size=hmm$size, prob=hmm$prob, mu=dnbinom.mean(hmm$size,hmm$prob), variance=dnbinom.variance(hmm$size,hmm$prob))
-                rownames(distributions) <- state.labels
-                result$distributions <- distributions
-                distributions.initial <- data.frame(type=state.distributions, size=hmm$size.initial, prob=hmm$prob.initial, mu=dnbinom.mean(hmm$size.initial,hmm$prob.initial), variance=dnbinom.variance(hmm$size.initial,hmm$prob.initial))
-                rownames(distributions.initial) <- state.labels
-                distributions.initial['zero-inflation',2:5] <- c(0,1,0,0)
-                result$distributions.initial <- distributions.initial
-                # post.cutoff
-                result$post.cutoff <- post.cutoff
-            ## Convergence info
-                convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec, read.cutoff=max(hmm$counts))
-                result$convergenceInfo <- convergenceInfo
-            ## Add class
-                class(result) <- class.univariate.hmm
-            ## Save to file
-                hmm.checkpoint <- result
-                if (checkpoint.overwrite) {
-                    message("Saving checkpoint to file ",checkpoint.file)
-                    save(hmm.checkpoint, file=checkpoint.file)
-                } else {
-                    cfile <- paste(checkpoint.file,"_iteration_",iteration.total, sep="")
-                    message("Saving checkpoint to file ",cfile)
-                    save(hmm.checkpoint, file=cfile)
-                }
+        # Set init procedure to random
+        iniproc <- which('random'==c("standard","random","empiric")) # transform to int
+    }
 
-            message("Total time: ", time.total)
-            message("Total iterations: ", iteration.total)
-            message("Restarting HMM")
-        }
-
-    } else {
-
-        ## Call univariate in a for loop to enable multiple trials
-        modellist <- list()
-        for (i_try in 1:num.trials) {
-            if (verbosity>=1) message("------------------------------------ Try ",i_try," of ",num.trials," -------------------------------------")
-            hmm <- .C("C_univariate_hmm",
-                counts = as.integer(counts), # double* O
-                num.bins = as.integer(numbins), # int* T
-                num.states = as.integer(numstates), # int* N
-                size = double(length=numstates), # double* size
-                prob = double(length=numstates), # double* prob
-                num.iterations = as.integer(max.iter), #  int* maxiter
-                time.sec = as.integer(max.time), # double* maxtime
-                loglik.delta = as.double(eps.try), # double* eps
-                posteriors = double(length=numbins * numstates), # double* posteriors
-                densities = double(length=lenDensities), # double* densities
-                keep.densities = as.logical(keep.densities), # bool* keep_densities
-                A = double(length=numstates*numstates), # double* A
-                proba = double(length=numstates), # double* proba
-                loglik = double(length=1), # double* loglik
-                weights = double(length=numstates), # double* weights
-                ini.proc = as.integer(iniproc), # int* iniproc
-                size.initial = double(length=numstates), # double* initial_size
-                prob.initial = double(length=numstates), # double* initial_prob
-                A.initial = double(length=numstates*numstates), # double* initial_A
-                proba.initial = double(length=numstates), # double* initial_proba
-                use.initial.params = as.logical(0), # bool* use_initial_params
-                num.threads = as.integer(num.threads), # int* num_threads
-                error = as.integer(0), # int* error (error handling)
-                read.cutoff = as.integer(max(counts)), # int* read_cutoff
-                verbosity = as.integer(verbosity) # int* verbosity
-            )
-
-            hmm$eps <- eps.try
-            if (hmm$loglik.delta > hmm$eps) {
-                warning("HMM did not converge in trial run ",i_try,"!\n")
-            }
-            # Store model in list
-            modellist[[i_try]] <- hmm
-
-            # Set init procedure to random
-            iniproc <- which('random'==c("standard","random","empiric")) # transform to int
-        }
-
+    if (num.trials > 1) {
         # Select fit with best loglikelihood
         indexmax <- which.max(unlist(lapply(modellist,"[[","loglik")))
         hmm <- modellist[[indexmax]]
+        message("Selecting try ", indexmax, " of ", length(modellist), " with best loglikelihood.")
+    }
 
+    if (eps != eps.try) {
         # Rerun the HMM with different epsilon and initial parameters from trial run
         if (verbosity>=1) message("------------------------- Rerunning try ",indexmax," with eps = ",eps," -------------------------")
         hmm <- .C("C_univariate_hmm",

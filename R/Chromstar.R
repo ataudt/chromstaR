@@ -37,7 +37,7 @@
 #'data(rn4_chrominfo)
 #'## Run ChromstaR
 #'Chromstar(inputfolder, experiment.table=experiment_table_SHR,
-#'          outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
+#'          outputfolder=outputfolder, numCPU=1, binsize=1000, assembly=rn4_chrominfo,
 #'          prefit.on.chr='chr12', mode='mark', eps=1)
 #'
 Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps=0.01, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=FALSE, mode='mark', max.states=128, per.chrom=TRUE) {

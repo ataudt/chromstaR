@@ -9,9 +9,6 @@ callPeaksUnivariateAllChr(binned.data, ID, eps = 0.01, init = "standard",
   num.threads = 1, read.cutoff = TRUE, read.cutoff.quantile = 1,
   read.cutoff.absolute = 500, max.mean = Inf, post.cutoff = 0.5,
   control = FALSE, keep.posteriors = FALSE, keep.densities = FALSE,
-  checkpoint.after.iter = NULL, checkpoint.after.time = NULL,
-  checkpoint.file = paste0("chromstaR_checkpoint_", ID, ".cpt"),
-  checkpoint.overwrite = TRUE, checkpoint.use.existing = FALSE,
   verbosity = 1)
 }
 \arguments{
@@ -53,16 +50,6 @@ callPeaksUnivariateAllChr(binned.data, ID, eps = 0.01, init = "standard",
 \item{keep.posteriors}{If set to \code{TRUE} (default=\code{FALSE}), posteriors will be available in the output. This is useful to change the post.cutoff later, but increases the necessary disk space to store the result.}
 
 \item{keep.densities}{If set to \code{TRUE} (default=\code{FALSE}), densities will be available in the output. This should only be needed debugging.}
-
-\item{checkpoint.after.iter}{Write a checkpoint file every n iterations. The default \code{NULL} means no checkpointing for iterations.}
-
-\item{checkpoint.after.time}{Write a checkpoint file every t seconds. The default \code{NULL} means no checkpointing for time.}
-
-\item{checkpoint.file}{The name of the checkpoint file that will be written.}
-
-\item{checkpoint.overwrite}{If set to \code{TRUE}, only one checkpoint file will be written. If set to \code{FALSE}, a new checkpoint file will be written at each checkpoint with the total number of iterations appended.}
-
-\item{checkpoint.use.existing}{If set to \code{TRUE}, the Baum-Welch fitting procedure will be continued from the HMM in the \code{checkpoint.file}.}
 
 \item{verbosity}{Verbosity level for the fitting procedure. 0 - No output, 1 - Iterations are printed.}
 }

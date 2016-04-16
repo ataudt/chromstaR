@@ -73,7 +73,7 @@ data(experiment_table_SHR)
 data(rn4_chrominfo)
 ## Run ChromstaR
 Chromstar(inputfolder, experiment.table=experiment_table_SHR,
-         outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
+         outputfolder=outputfolder, numCPU=1, binsize=1000, assembly=rn4_chrominfo,
          prefit.on.chr='chr12', mode='mark', eps=1)
 
 }
