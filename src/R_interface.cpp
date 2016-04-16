@@ -17,7 +17,9 @@ void univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* max
 
 	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	// Parallelization settings
+	#ifdef _OPENMP
 	omp_set_num_threads(*num_threads);
+	#endif
 
 	// Print some information
 	//FILE_LOG(logINFO) << "number of states = " << *N;
@@ -267,7 +269,9 @@ void multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, doubl
 
 	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 	// Parallelization settings
+	#ifdef _OPENMP
 	omp_set_num_threads(*num_threads);
+	#endif
 
 	// Print some information
 	//FILE_LOG(logINFO) << "number of states = " << *N;
