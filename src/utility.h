@@ -3,6 +3,7 @@
 
 #include <exception> // error handling
 // #include "logging.h" // FILE_LOG() capability
+#include <cmath> // std::isnan compiler warnings
 #include <R.h> // Calloc() etc.
 #include <algorithm> // max_element
 
