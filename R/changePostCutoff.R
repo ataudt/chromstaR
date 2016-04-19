@@ -66,10 +66,10 @@ changePostCutoff <- function(model, post.cutoff=0.5, separate.zeroinflation=TRUE
         gr <- model$bins
         df <- as.data.frame(gr)
         if (averages==TRUE) {
-            red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c('counts','score','posteriors.P.modified.'), columns2drop=c('width','posteriors.P.zero.inflation.','posteriors.P.unmodified.')))
-            red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], mean.counts=red.df[,'mean.counts'], state=red.df[,'state'], score=red.df[,'mean.score'], mean.posterior.modified=red.df[,'mean.posteriors.P.modified.'])
+            red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c('score'), columns2drop=c('width',grep('posteriors', names(df), value=TRUE), 'counts')))
+            red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], score=red.df[,'mean.score'])
         } else {
-            red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2drop=c('width','posteriors.P.zero.inflation.','posteriors.P.unmodified.','posteriors.P.modified.','counts')))
+            red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2drop=c('width',grep('posteriors', names(df), value=TRUE),'counts','score')))
             red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'])
         }    
         model$segments <- red.gr
