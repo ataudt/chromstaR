@@ -282,6 +282,7 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
         combstates2use <- intersect(combstates, include.states)
     }
     numstates <- length(combstates2use)
+		nummod <- length(multi.hmm$IDs)
 
     ## Insert chromosome if missing
     segments.df <- as.data.frame(insertchr(multi.hmm$segments))
@@ -305,18 +306,21 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
         ## Export peak calls
         bin <- dec2bin(segments.df$state, ndigits=length(multi.hmm$IDs))
         colnames(bin) <- multi.hmm$IDs
-        for (icol in 1:ncol(bin)) {
+        for (imod in 1:nummod) {
+						ID <- multi.hmm$IDs[imod]
             if (separate.files) {
-                filename.sep <- paste0(sub('.bed.gz$', '', filename), '_', colnames(bin)[icol], '.bed.gz')
+                filename.sep <- paste0(sub('.bed.gz$', '', filename), '_', ID, '.bed.gz')
                 filename.gz <- gzfile(filename.sep, 'w')
-                message('Writing to file ',filename.sep)
+                ptm <- startTimedMessage('  Writing to file ',filename.sep, ' ...')
                 cat("", file=filename.gz)
-            }
-            numsegments <- length(which(bin[,icol]))
-            priority <- 52 + 4*icol
-            mask <- bin[,icol]
+            } else {
+								ptm <- startTimedMessage('  Writing track ',imod,' / ',nummod, ' ...')
+						}
+            numsegments <- length(which(bin[,imod]))
+            priority <- 52 + 4*imod
+            mask <- bin[,imod]
             if (length(grep('^mean.posteriors', names(segments.df)))==ncol(bin)) {
-                segments.df$score <- segments.df[,grep('^mean.posteriors', names(segments.df))[icol]]
+                segments.df$score <- segments.df[,grep('^mean.posteriors', names(segments.df))[imod]]
             } else {
                 segments.df$score <- 0
             }
@@ -339,12 +343,13 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
             RGB <- apply(RGB,1,paste,collapse=",")
             df$itemRgb <- rep(RGB, numsegments)
             if (header) {
-                cat(paste0("track name=\"multivariate calls for ",colnames(bin)[icol],"\" description=\"multivariate calls for ",colnames(bin)[icol],"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
+                cat(paste0("track name=\"multivariate peaks for ",colnames(bin)[imod],"\" description=\"multivariate peaks for ",colnames(bin)[imod],"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
             }
             utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
             if (separate.files) {
                 close(filename.gz)
             }
+						stopTimedMessage(ptm)
         }
     } else {
         ## Export combinatorial states
@@ -429,14 +434,15 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
     
     ### Write every model to file ###
     for (imod in 1:nummod) {
-        message('  Writing track ',imod,' / ',nummod)
         ID <- multi.hmm$IDs[imod]
         if (separate.files) {
             filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', ID, '.wig.gz')
             filename.gz <- gzfile(filename.sep, 'w')
-            message('Writing to file ',filename.sep)
+            ptm <- startTimedMessage('  Writing to file ',filename.sep, ' ...')
             cat("", file=filename.gz)
-        }
+        } else {
+						ptm <- startTimedMessage('  Writing track ',imod,' / ',nummod, ' ...')
+				}
         priority <- 50 + 4*imod
         binsize <- width(multi.hmm$bins[1])
         if (header) {
@@ -455,6 +461,7 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
         if (separate.files) {
             close(filename.gz)
         }
+				stopTimedMessage(ptm)
     }
     if (!separate.files) {
         close(filename.gz)

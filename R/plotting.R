@@ -212,13 +212,15 @@ plotMultivariateHistograms <- function(multi.hmm) {
 # =================================================================
 #' @importFrom stats dist hclust
 #' @importFrom reshape2 melt
-plotMultivariateCorrelation <- function(multi.hmm) {
+plotMultivariateCorrelation <- function(multi.hmm, cluster=TRUE) {
 
     cr <- cor(multi.hmm$bins$counts)
-    hc <- stats::hclust(stats::dist(cr))
-    df <- reshape2::melt(cr, value.name='correlation')
-    df$Var1 <- factor(df$Var1, levels=levels(df$Var1)[hc$order])
-    df$Var2 <- factor(df$Var2, levels=levels(df$Var2)[hc$order])
+		df <- reshape2::melt(cr, value.name='correlation')
+		if (cluster) {
+				hc <- stats::hclust(stats::dist(cr))
+				df$Var1 <- factor(df$Var1, levels=levels(df$Var1)[hc$order])
+				df$Var2 <- factor(df$Var2, levels=levels(df$Var2)[hc$order])
+		}
     ggplt <- ggplot(df) + geom_tile(aes_string(x='Var1', y='Var2', fill='correlation')) + xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1)) + scale_fill_gradient(low='red', high='yellow')
     return(ggplt)
 

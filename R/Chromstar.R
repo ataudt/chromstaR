@@ -21,7 +21,7 @@
 #' @return \code{NULL}
 #' @import foreach
 #' @import doParallel
-#' @importFrom utils read.table
+#' @importFrom utils read.table write.table
 #' @importFrom graphics plot
 #' @export
 #' 
@@ -125,6 +125,9 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     
     ## Make a copy of the conf file
     writeConfig(conf, configfile=file.path(outputfolder, 'chromstaR.config'))
+
+		## Write the experiment table to file
+		utils::write.table(exp.table, file=file.path(outputfolder, 'experiment_table.tsv'), col.names=TRUE, quote=FALSE, row.names=FALSE, sep='\t')
     
   
     #==============
@@ -223,10 +226,16 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         char.per.cm <- 10
         legend.cm <- 3
         savename1 <- paste0(savename, '_correlation.pdf')
-        ggplt <- suppressMessages( graphics::plot(multimodel, type='correlation') )
+        ggplt <- suppressMessages( graphics::plot(multimodel, type='correlation', cluster=FALSE) )
         width <- length(multimodel$IDs) + max(sapply(multimodel$IDs, nchar)) / char.per.cm + legend.cm
         height <- length(multimodel$IDs) + max(sapply(multimodel$IDs, nchar)) / char.per.cm
         ggsave(savename1, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
+
+        savename1.1 <- paste0(savename, '_correlation-clustered.pdf')
+        ggplt <- suppressMessages( graphics::plot(multimodel, type='correlation', cluster=TRUE) )
+        width <- length(multimodel$IDs) + max(sapply(multimodel$IDs, nchar)) / char.per.cm + legend.cm
+        height <- length(multimodel$IDs) + max(sapply(multimodel$IDs, nchar)) / char.per.cm
+        ggsave(savename1.1, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
 
         savename2 <- paste0(savename, '_transitionMatrix.pdf')
         ggplt <- suppressMessages( graphics::plot(multimodel, type='transitionMatrix') )
@@ -255,6 +264,9 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
             trackname <- paste0('combinations, mode-', mode)
             exportMultivariate(multimodel, filename=savename, what='combinations', trackname=trackname)
+        }
+        if (!file.exists(paste0(savename, '_peaks.bed.gz'))) {
+            exportMultivariate(multimodel, filename=savename, what='peaks')
         }
         if (!file.exists(paste0(savename, '_counts.wig.gz'))) {
             exportMultivariate(multimodel, filename=savename, what='counts')
@@ -285,6 +297,9 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 trackname <- paste0('combinations, mode-', mode)
                 exportMultivariate(multimodel, filename=savename, what='combinations', trackname=trackname)
             }
+            if (!file.exists(paste0(savename, '_peaks.bed.gz'))) {
+                exportMultivariate(multimodel, filename=savename, what='peaks')
+            }
             if (!file.exists(paste0(savename, '_counts.wig.gz'))) {
                 exportMultivariate(multimodel, filename=savename, what='counts')
             }
@@ -314,6 +329,9 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
             if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
                 trackname <- paste0('combinations, mode-', mode)
                 exportMultivariate(multimodel, filename=savename, what='combinations', trackname=trackname)
+            }
+            if (!file.exists(paste0(savename, '_peaks.bed.gz'))) {
+                exportMultivariate(multimodel, filename=savename, what='peaks')
             }
             if (!file.exists(paste0(savename, '_counts.wig.gz'))) {
                 exportMultivariate(multimodel, filename=savename, what='counts')

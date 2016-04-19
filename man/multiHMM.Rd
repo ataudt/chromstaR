@@ -29,6 +29,12 @@ A \code{list()} with the following entries:
 \description{
 The multivariate HMM object is output of the function \code{\link{callPeaksMultivariate}} and is a \code{list()} with various entries. The class() attribute of this list was set to "multiHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' or 'hmm$'.
 }
+\examples{
+## Get an example multiHMM
+file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+                    package="chromstaR")
+model <- get(load(file))
+}
 \seealso{
 \code{\link{callPeaksMultivariate}}, \code{\link{uniHMM}}, \code{\link{combinedMultiHMM}}
 }

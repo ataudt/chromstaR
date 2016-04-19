@@ -8,4 +8,10 @@
 \description{
 A \code{\link{multiHMM}} object for demonstration purposes in examples of package \pkg{\link{chromstaR}}.
 }
+\examples{
+## Get an example multiHMM
+file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+                    package="chromstaR")
+model <- get(load(file))
+}
 

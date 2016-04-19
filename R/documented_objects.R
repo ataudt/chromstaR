@@ -18,6 +18,11 @@ NULL
 #' @docType data
 #' @name multivariate_model
 #' @format A \code{\link{multiHMM}} object.
+#' @examples
+#'## Get an example multiHMM
+#'file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+#'                     package="chromstaR")
+#'model <- get(load(file))
 NULL
 
 
@@ -100,6 +105,11 @@ NULL
 #' @seealso \code{\link{callPeaksMultivariate}}, \code{\link{uniHMM}}, \code{\link{combinedMultiHMM}}
 #' @name multiHMM
 #' @aliases multi.hmm
+#' @examples
+#'## Get an example multiHMM
+#'file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+#'                     package="chromstaR")
+#'model <- get(load(file))
 NULL
 
 

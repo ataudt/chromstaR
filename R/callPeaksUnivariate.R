@@ -66,7 +66,7 @@ callPeaksUnivariate <- function(binned.data, ID, prefit.on.chr=NULL, short=TRUE,
         }
         model <- pre.model
         model$bins <- binned.data
-        model <- callPeaksUnivariateAllChr(model, ID=ID, eps=eps, max.time=max.time, max.iter=max.iter, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
+        model <- suppressWarnings( callPeaksUnivariateAllChr(model, ID=ID, eps=eps, max.time=max.time, max.iter=max.iter, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity) )
 
     }
 
