@@ -53,22 +53,15 @@ void ZiNB::calc_logdensities(double* logdens)
 	if (this->max_obs <= this->T)
 	{
 		//FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
-		std::vector<double> lGammaRplusX(this->max_obs+1);
-		for (int j=0; j<=this->max_obs; j++)
+		std::vector<double> logdens_per_read(this->max_obs+1);
+		logdens_per_read[0] = log( this->w + (1-this->w) * exp( lgamma(this->size + 0) - lGammaR - lxfactorials[0] + this->size * logp + 0 * log1minusp ) );
+		for (int j=1; j<=this->max_obs; j++)
 		{
-			lGammaRplusX[j] = lgamma(this->size + j);
+			logdens_per_read[j] = log(1-this->w) + lgamma(this->size + j) - lGammaR - lxfactorials[j] + this->size * logp + j * log1minusp;
 		}
 		for (int t=0; t<this->T; t++)
 		{
-			lxfactorial = this->lxfactorials[(int) this->obs[t]];
-			if (obs[t] == 0)
-			{
-				logdens[t] = log( this->w + (1-this->w) * exp( lGammaRplusX[(int) this->obs[t]] - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp ) );
-			}
-			else
-			{
-				logdens[t] = log(1-this->w) + lGammaRplusX[(int) this->obs[t]] - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp;
-			}
+			logdens[t] = logdens_per_read[(int) this->obs[t]];
 			if (std::isnan(logdens[t]))
 			{
 				//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
@@ -113,22 +106,16 @@ void ZiNB::calc_densities(double* dens)
 	if (this->max_obs <= this->T)
 	{
 		//FILE_LOG(logDEBUG3) << "Precomputing gammas in " << __func__ << " for every obs[t], because max(O)<=T";
-		std::vector<double> lGammaRplusX(this->max_obs+1);
-		for (int j=0; j<=this->max_obs; j++)
+		std::vector<double> dens_per_read(this->max_obs+1);
+		dens_per_read[0] = this->w + (1-this->w) * exp( lgamma(this->size + 0) - lGammaR - lxfactorials[0] + this->size * logp + 0 * log1minusp );
+		for (int j=1; j<=this->max_obs; j++)
 		{
-			lGammaRplusX[j] = lgamma(this->size + j);
+			dens_per_read[j] = (1-this->w) * exp( lgamma(this->size + j) - lGammaR - lxfactorials[j] + this->size * logp + j * log1minusp );
 		}
 		for (int t=0; t<this->T; t++)
 		{
-			lxfactorial = this->lxfactorials[(int) this->obs[t]];
-			if (obs[t] == 0)
-			{
-				dens[t] = this->w + (1-this->w) * exp( lGammaRplusX[(int) this->obs[t]] - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp );
-			}
-			else
-			{
-				dens[t] = (1-this->w) * exp( lGammaRplusX[(int) this->obs[t]] - lGammaR - lxfactorial + this->size * logp + this->obs[t] * log1minusp );
-			}
+			dens[t] = dens_per_read[(int) this->obs[t]];
+			//FILE_LOG(logDEBUG4) << "dens["<<t<<"] = " << dens[t];
 			if (std::isnan(dens[t]))
 			{
 				//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
@@ -921,7 +908,12 @@ void MVCopulaApproximation::calc_logdensities(double* logdens)
 			exponentTemp = 0.0;
 			for(int jmod=0; jmod<Nmod; jmod++)
 			{
-				if(imod==jmod)
+				if (std::isinf(z[jmod]))
+				{
+					exponentTemp = INFINITY;
+					break;
+				}
+				if (imod==jmod)
 				{
 					exponentTemp += z[jmod] * (this->cor_matrix_inv[imod * Nmod + jmod] - 1);
 				}
@@ -938,7 +930,15 @@ void MVCopulaApproximation::calc_logdensities(double* logdens)
 					throw nan_detected;
 				}
 			}
-			exponent += exponentTemp * z[imod];
+			if (std::isinf(exponentTemp))
+			{
+				exponent = INFINITY;
+				break;
+			}
+			else
+			{
+				exponent += exponentTemp * z[imod];
+			}
 			if (std::isnan(exponent))
 			{
 				//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
