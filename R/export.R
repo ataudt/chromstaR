@@ -282,7 +282,7 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
         combstates2use <- intersect(combstates, include.states)
     }
     numstates <- length(combstates2use)
-		nummod <- length(multi.hmm$IDs)
+    nummod <- length(multi.hmm$IDs)
 
     ## Insert chromosome if missing
     segments.df <- as.data.frame(insertchr(multi.hmm$segments))
@@ -307,15 +307,15 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
         bin <- dec2bin(segments.df$state, ndigits=length(multi.hmm$IDs))
         colnames(bin) <- multi.hmm$IDs
         for (imod in 1:nummod) {
-						ID <- multi.hmm$IDs[imod]
+            ID <- multi.hmm$IDs[imod]
             if (separate.files) {
                 filename.sep <- paste0(sub('.bed.gz$', '', filename), '_', ID, '.bed.gz')
                 filename.gz <- gzfile(filename.sep, 'w')
                 ptm <- startTimedMessage('  Writing to file ',filename.sep, ' ...')
                 cat("", file=filename.gz)
             } else {
-								ptm <- startTimedMessage('  Writing track ',imod,' / ',nummod, ' ...')
-						}
+                ptm <- startTimedMessage('  Writing track ',imod,' / ',nummod, ' ...')
+            }
             numsegments <- length(which(bin[,imod]))
             priority <- 52 + 4*imod
             mask <- bin[,imod]
@@ -349,7 +349,7 @@ exportMultivariateCalls <- function(multi.hmm, filename="chromstaR_multivariateC
             if (separate.files) {
                 close(filename.gz)
             }
-						stopTimedMessage(ptm)
+            stopTimedMessage(ptm)
         }
     } else {
         ## Export combinatorial states
@@ -441,8 +441,8 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
             ptm <- startTimedMessage('  Writing to file ',filename.sep, ' ...')
             cat("", file=filename.gz)
         } else {
-						ptm <- startTimedMessage('  Writing track ',imod,' / ',nummod, ' ...')
-				}
+            ptm <- startTimedMessage('  Writing track ',imod,' / ',nummod, ' ...')
+        }
         priority <- 50 + 4*imod
         binsize <- width(multi.hmm$bins[1])
         if (header) {
@@ -461,7 +461,7 @@ exportMultivariateReadCounts <- function(multi.hmm, filename="chromstaR_multivar
         if (separate.files) {
             close(filename.gz)
         }
-				stopTimedMessage(ptm)
+        stopTimedMessage(ptm)
     }
     if (!separate.files) {
         close(filename.gz)

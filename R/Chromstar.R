@@ -126,8 +126,8 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     ## Make a copy of the conf file
     writeConfig(conf, configfile=file.path(outputfolder, 'chromstaR.config'))
 
-		## Write the experiment table to file
-		utils::write.table(exp.table, file=file.path(outputfolder, 'experiment_table.tsv'), col.names=TRUE, quote=FALSE, row.names=FALSE, sep='\t')
+    ## Write the experiment table to file
+    utils::write.table(exp.table, file=file.path(outputfolder, 'experiment_table.tsv'), col.names=TRUE, quote=FALSE, row.names=FALSE, sep='\t')
     
   
     #==============
