@@ -25,7 +25,7 @@
 #' @param read.cutoff.absolute Read counts above this value will be set to the read count specified by this value. Filtering very high read counts increases the performance of the Baum-Welch fitting procedure. However, if your data contains very few peaks they might be filtered out. If option \code{read.cutoff.quantile} is also specified, the minimum of the resulting cutoff values will be used. Set \code{read.cutoff=FALSE} to disable this filtering.
 #' @param max.mean If \code{mean(counts)>max.mean}, bins with low read counts will be set to 0. This is a workaround to obtain good fits in the case of large bin sizes.
 #' @param post.cutoff False discovery rate. code{NULL} means that the state with maximum posterior probability will be chosen, irrespective of its absolute probability (default=code{NULL}).
-#' @param control If set to \code{TRUE}, the binned data will be treated as control experiment. That means only state 'zero-inflation' and 'unmodified' will be used in the HMM.
+#' @param control DEPRECATED. If set to \code{TRUE}, the binned data will be treated as control experiment. That means only state 'zero-inflation' and 'unmodified' will be used in the HMM.
 #' @param keep.posteriors If set to \code{TRUE} (default=\code{FALSE}), posteriors will be available in the output. This is useful to change the post.cutoff later, but increases the necessary disk space to store the result.
 #' @param keep.densities If set to \code{TRUE} (default=\code{FALSE}), densities will be available in the output. This should only be needed debugging.
 #' @param verbosity Verbosity level for the fitting procedure. 0 - No output, 1 - Iterations are printed.
@@ -130,11 +130,20 @@ callPeaksUnivariateAllChr <- function(binned.data, ID, eps=0.01, init="standard"
     war <- NULL
     if (is.null(eps.try)) eps.try <- eps
     ## Load binned.data and reuse values if present
-    continue.from.univariate.hmm <- FALSE
     if (class(binned.data) == 'character') { 
         message("Loading file ",binned.data)
-        binned.data <- get(load(binned.data))
+        temp.env <- new.env()
+        binned.data <- get(load(binned.data, envir=temp.env), envir=temp.env)
     }
+
+    ### Assign variables ###
+    if (control) {
+        state.labels <- state.labels[1:2] # assigned globally outside this function
+    }
+    numstates <- length(state.labels)
+    iniproc <- which(init==c("standard","random","empiric")) # transform to int
+
+    ### Assign initial parameters ###
     if (class(binned.data) == class.univariate.hmm) {
         message("Using parameters from univariate HMM")
         hmm <- binned.data
@@ -146,21 +155,20 @@ callPeaksUnivariateAllChr <- function(binned.data, ID, eps=0.01, init="standard"
         proba.initial <- hmm$startProbs
         size.initial <- hmm$distributions$size
         prob.initial <- hmm$distributions$prob
-        use.initial <- TRUE
         continue.from.univariate.hmm <- TRUE
     } else if (class(binned.data) == 'GRanges') {
+        A.initial <- double(length=numstates*numstates)
+        proba.initial <- double(length=numstates)
+        size.initial <- double(length=numstates)
+        prob.initial <- double(length=numstates)
+        continue.from.univariate.hmm <- FALSE
     } else {
         stop("argument 'binned.data' expects a GRanges with meta-column 'counts' or a file that contains such an object")
     }
 
-    ### Assign variables ###
-    if (control) {
-        state.labels <- state.labels[1:2] # assigned globally outside this function
-    }
-    numstates <- length(state.labels)
+    ## Assign more variables ##
     numbins <- length(binned.data)
     counts <- mcols(binned.data)$counts
-    iniproc <- which(init==c("standard","random","empiric")) # transform to int
     if (keep.densities) { lenDensities <- numbins * numstates } else { lenDensities <- 1 }
 
     ### Check if there are counts in the data, otherwise HMM will blow up ###
@@ -170,7 +178,11 @@ callPeaksUnivariateAllChr <- function(binned.data, ID, eps=0.01, init="standard"
 
     ### Filter high counts out, makes HMM faster ###
     numfiltered <- 0
-    if (!continue.from.univariate.hmm) {
+    if (continue.from.univariate.hmm) {
+        mask <- counts > read.cutoff.absolute
+        counts[mask] <- read.cutoff.absolute
+        numfiltered <- length(which(mask))
+    } else {
         if (read.cutoff) {
             read.cutoff.by.quantile <- quantile(counts, read.cutoff.quantile)
             read.cutoff.by.quantile <- as.integer(read.cutoff.by.quantile)
@@ -179,10 +191,6 @@ callPeaksUnivariateAllChr <- function(binned.data, ID, eps=0.01, init="standard"
             counts[mask] <- read.cutoff.absolute
             numfiltered <- length(which(mask))
         }
-    } else {
-        mask <- counts > read.cutoff.absolute
-        counts[mask] <- read.cutoff.absolute
-        numfiltered <- length(which(mask))
     }
     if (numfiltered > 0) {
         message("Replaced read counts > ",read.cutoff.absolute, " by ",read.cutoff.absolute," in ",numfiltered," bins. Set option 'read.cutoff=FALSE' to disable this filtering. This filtering was done to increase the speed of the HMM.")
@@ -257,11 +265,11 @@ callPeaksUnivariateAllChr <- function(binned.data, ID, eps=0.01, init="standard"
             loglik = double(length=1), # double* loglik
             weights = double(length=numstates), # double* weights
             ini.proc = as.integer(iniproc), # int* iniproc
-            size.initial = double(length=numstates), # double* initial_size
-            prob.initial = double(length=numstates), # double* initial_prob
-            A.initial = double(length=numstates*numstates), # double* initial_A
-            proba.initial = double(length=numstates), # double* initial_proba
-            use.initial.params = as.logical(0), # bool* use_initial_params
+            size.initial = as.double(size.initial), # double* initial_size
+            prob.initial = as.double(prob.initial), # double* initial_prob
+            A.initial = as.double(A.initial), # double* initial_A
+            proba.initial = as.double(proba.initial), # double* initial_proba
+            use.initial.params = as.logical(continue.from.univariate.hmm), # bool* use_initial_params
             num.threads = as.integer(num.threads), # int* num_threads
             error = as.integer(0), # int* error (error handling)
             read.cutoff = as.integer(max(counts)), # int* read_cutoff
@@ -335,7 +343,7 @@ callPeaksUnivariateAllChr <- function(binned.data, ID, eps=0.01, init="standard"
     ## Get states
         ptm <- startTimedMessage("Calculating states from posteriors ...")
         hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
-        colnames(hmm$posteriors) <- paste0("P(",state.labels,")")
+        colnames(hmm$posteriors) <- state.labels
         threshold <- 1-post.cutoff
         states <- rep(NA,hmm$num.bins)
         states[ hmm$posteriors[,3]<threshold & hmm$posteriors[,2]<=hmm$posteriors[,1] ] <- 1
@@ -356,9 +364,9 @@ callPeaksUnivariateAllChr <- function(binned.data, ID, eps=0.01, init="standard"
         stopTimedMessage(ptm)
     ## Segmentation
         ptm <- startTimedMessage("Making segmentation ...")
-        gr <- result$bins
-        red.df <- suppressMessages(collapseBins(as.data.frame(gr), column2collapseBy='state', columns2average=c('counts','score','posteriors.P.modified.'), columns2drop=c('width','posteriors.P.zero.inflation.','posteriors.P.unmodified.')))
-        red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], mean.counts=red.df[,'mean.counts'], state=red.df[,'state'], score=red.df[,'mean.score'], mean.posterior.modified=red.df[,'mean.posteriors.P.modified.'])
+        df <- as.data.frame(result$bins)
+        red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c('score'), columns2drop=c('width',grep('posteriors', names(df), value=TRUE), 'counts')))
+        red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], score=red.df[,'mean.score'])
         result$segments <- red.gr
         seqlengths(result$segments) <- seqlengths(binned.data)
         if (!keep.posteriors) {
@@ -380,9 +388,9 @@ callPeaksUnivariateAllChr <- function(binned.data, ID, eps=0.01, init="standard"
         result$transitionProbs.initial <- transitionProbs.initial
         # Initial probs
         result$startProbs <- hmm$proba
-        names(result$startProbs) <- paste0("P(",state.labels,")")
+        names(result$startProbs) <- state.labels
         result$startProbs.initial <- hmm$proba.initial
-        names(result$startProbs.initial) <- paste0("P(",state.labels,")")
+        names(result$startProbs.initial) <-state.labels
         # Distributions
         distributions <- data.frame(type=state.distributions, size=hmm$size, prob=hmm$prob, mu=dnbinom.mean(hmm$size,hmm$prob), variance=dnbinom.variance(hmm$size,hmm$prob))
         rownames(distributions) <- state.labels

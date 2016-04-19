@@ -101,7 +101,7 @@ void ZiNB::calc_densities(double* dens)
 	double logp = log(this->prob);
 	double log1minusp = log(1-this->prob);
 	double lGammaR,lGammaRplusX,lxfactorial;
-	lGammaR=lgamma(this->size);
+	lGammaR = lgamma(this->size);
 	// Select strategy for computing gammas
 	if (this->max_obs <= this->T)
 	{
@@ -370,7 +370,7 @@ void NegativeBinomial::calc_logdensities(double* logdens)
 	double logp = log(this->prob);
 	double log1minusp = log(1-this->prob);
 	double lGammaR,lGammaRplusX,lxfactorial;
-	lGammaR=lgamma(this->size);
+	lGammaR = lgamma(this->size);
 	// Select strategy for computing gammas
 	if (this->max_obs <= this->T)
 	{

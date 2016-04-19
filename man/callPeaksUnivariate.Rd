@@ -49,7 +49,7 @@ callPeaksUnivariate(binned.data, ID, prefit.on.chr = NULL, short = TRUE,
 
 \item{post.cutoff}{False discovery rate. code{NULL} means that the state with maximum posterior probability will be chosen, irrespective of its absolute probability (default=code{NULL}).}
 
-\item{control}{If set to \code{TRUE}, the binned data will be treated as control experiment. That means only state 'zero-inflation' and 'unmodified' will be used in the HMM.}
+\item{control}{DEPRECATED. If set to \code{TRUE}, the binned data will be treated as control experiment. That means only state 'zero-inflation' and 'unmodified' will be used in the HMM.}
 
 \item{keep.posteriors}{If set to \code{TRUE} (default=\code{FALSE}), posteriors will be available in the output. This is useful to change the post.cutoff later, but increases the necessary disk space to store the result.}
 
