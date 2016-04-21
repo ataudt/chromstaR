@@ -24,23 +24,22 @@ Combine combinatorial states from several \code{\link{multiHMM}} objects. Combin
 # Get example BED files for 2 different marks in hypertensive rat (SHR)
 file.path <- system.file("extdata","euratrans", package='chromstaRData')
 bedfiles <- list.files(file.path, full.names=TRUE, pattern='SHR')[c(1:2,6:7)]
+# Construct experiment structure
+exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
+                 condition=rep("SHR",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
+states <- stateBrewer(exp, mode='mark')
 # Bin the data
 data(rn4_chrominfo)
 binned.data <- list()
 for (bedfile in bedfiles) {
- binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
+ binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000, experiment.table=exp,
                                               assembly=rn4_chrominfo, chromosomes='chr12')
 }
 # Obtain the univariate fits
 models <- list()
 for (i1 in 1:length(binned.data)) {
- models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], ID=names(binned.data)[i1],
-                                     max.time=60, eps=1)
+ models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], max.time=60, eps=1)
 }
-# Construct experiment structure
-exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
-                 condition=rep("SHR",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
-states <- stateBrewer(exp, mode='mark')
 # Call multivariate peaks
 multimodel.SHR <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
 
@@ -48,23 +47,22 @@ multimodel.SHR <- callPeaksMultivariate(models, use.states=states, eps=1, max.ti
 # Get example BED files for 2 different marks in brown norway rat
 file.path <- system.file("extdata","euratrans", package='chromstaRData')
 bedfiles <- list.files(file.path, full.names=TRUE, pattern='BN')[c(1:2,7:8)]
+# Construct experiment structure
+exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
+                 condition=rep("BN",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
+states <- stateBrewer(exp, mode='mark')
 # Bin the data
 data(rn4_chrominfo)
 binned.data <- list()
 for (bedfile in bedfiles) {
- binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
+ binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000, experiment.table=exp,
                                               assembly=rn4_chrominfo, chromosomes='chr12')
 }
 # Obtain the univariate fits
 models <- list()
 for (i1 in 1:length(binned.data)) {
- models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], ID=names(binned.data)[i1],
-                                     max.time=60, eps=1)
+ models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], max.time=60, eps=1)
 }
-# Construct experiment structure
-exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
-                 condition=rep("BN",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
-states <- stateBrewer(exp, mode='mark')
 # Call multivariate peaks
 multimodel.BN <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
 

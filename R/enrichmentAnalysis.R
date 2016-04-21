@@ -283,7 +283,7 @@ enrichmentAtAnnotation <- function(hmm, annotation, bp.around.annotation=10000, 
     combinations <- hmm$bins$combination
     tcombinations <- table(combinations)
     if ('binstates' %in% what) {
-        binstates <- dec2bin(hmm$bins$state, colnames=hmm$IDs)
+        binstates <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
     }
 
     ### Calculationg enrichment inside of annotation ###
@@ -294,9 +294,9 @@ enrichmentAtAnnotation <- function(hmm, annotation, bp.around.annotation=10000, 
         widths.annotation <- width(annotation) - 1
         annotation.1bp <- resize(annotation, 1, fix='start')
         # Initialize arrays
-        if ('binstates' %in% what) binstates.inside <- array(dim=c(num.intervals+1, length(hmm$IDs)), dimnames=list(interval=intervals, track=hmm$IDs))
+        if ('binstates' %in% what) binstates.inside <- array(dim=c(num.intervals+1, length(hmm$info$ID)), dimnames=list(interval=intervals, track=hmm$info$ID))
         if ('combinations' %in% what) combinations.inside <- array(dim=c(num.intervals+1, length(levels(hmm$bins$combination))), dimnames=list(interval=intervals, combination=levels(hmm$bins$combination)))
-        if ('counts' %in% what) counts.inside <- array(dim=c(num.intervals+1, length(hmm$IDs)), dimnames=list(interval=intervals, track=hmm$IDs))
+        if ('counts' %in% what) counts.inside <- array(dim=c(num.intervals+1, length(hmm$info$ID)), dimnames=list(interval=intervals, track=hmm$info$ID))
 
         for (interval in intervals) {
             shift <- widths.annotation * interval * c(1,-1,1)[as.integer(strand(annotation))]
@@ -338,9 +338,9 @@ enrichmentAtAnnotation <- function(hmm, annotation, bp.around.annotation=10000, 
         index.start.plus <- index.start.plus[!is.na(index.start.plus)]
         index.start.minus <- index.start.minus[!is.na(index.start.minus)]
         # Occurrences at every bin position relative to feature
-        if ('binstates' %in% what) binstates.start <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
+        if ('binstates' %in% what) binstates.start <- array(dim=c(length(-lag:lag), length(hmm$info$ID)), dimnames=list(lag=-lag:lag, track=hmm$info$ID))
         if ('combinations' %in% what) combinations.start <- array(dim=c(length(-lag:lag), length(levels(hmm$bins$combination))), dimnames=list(lag=-lag:lag, combination=levels(hmm$bins$combination)))
-        if ('counts' %in% what) counts.start <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
+        if ('counts' %in% what) counts.start <- array(dim=c(length(-lag:lag), length(hmm$info$ID)), dimnames=list(lag=-lag:lag, track=hmm$info$ID))
         for (ilag in -lag:lag) {
             index <- c(index.start.plus+ilag, index.start.minus-ilag)
             index <- index[index>0 & index<=length(hmm$bins)]
@@ -376,9 +376,9 @@ enrichmentAtAnnotation <- function(hmm, annotation, bp.around.annotation=10000, 
         index.end.plus <- index.end.plus[!is.na(index.end.plus)]
         index.end.minus <- index.end.minus[!is.na(index.end.minus)]
         # Occurrences at every bin position relative to feature
-        if ('binstates' %in% what) binstates.end <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
+        if ('binstates' %in% what) binstates.end <- array(dim=c(length(-lag:lag), length(hmm$info$ID)), dimnames=list(lag=-lag:lag, track=hmm$info$ID))
         if ('combinations' %in% what) combinations.end <- array(dim=c(length(-lag:lag), length(levels(hmm$bins$combination))), dimnames=list(lag=-lag:lag, combination=levels(hmm$bins$combination)))
-        if ('counts' %in% what) counts.end <- array(dim=c(length(-lag:lag), length(hmm$IDs)), dimnames=list(lag=-lag:lag, track=hmm$IDs))
+        if ('counts' %in% what) counts.end <- array(dim=c(length(-lag:lag), length(hmm$info$ID)), dimnames=list(lag=-lag:lag, track=hmm$info$ID))
         for (ilag in -lag:lag) {
             index <- c(index.end.plus+ilag, index.end.minus-ilag)
             index <- index[index>0 & index<=length(hmm$bins)]

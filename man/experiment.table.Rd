@@ -3,7 +3,7 @@
 \name{experiment.table}
 \alias{experiment.table}
 \title{Experiment data table}
-\format{A \code{data.frame} with columns 'file', 'mark', 'condition', 'replicate' and 'pairedEndReads'.}
+\format{A \code{data.frame} with columns 'file', 'mark', 'condition', 'replicate' and 'pairedEndReads'. Avoid the use of special characters like '-' or '+' as this will confuse the internal file management. Replicate numbers in column 'replicate' must start from 1.}
 \description{
 A \code{data.frame} specifying the structure of the experiment.
 }

@@ -37,10 +37,10 @@
 #'data(rn4_chrominfo)
 #'## Run ChromstaR
 #'Chromstar(inputfolder, experiment.table=experiment_table_SHR,
-#'          outputfolder=outputfolder, numCPU=1, binsize=1000, assembly=rn4_chrominfo,
+#'          outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
 #'          prefit.on.chr='chr12', mode='mark', eps=1)
 #'
-Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps=0.01, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=FALSE, mode='mark', max.states=128, per.chrom=TRUE) {
+Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps=0.01, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=TRUE, mode='mark', max.states=128, per.chrom=TRUE) {
   
     #========================
     ### General variables ###
@@ -66,6 +66,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     
     ## Helpers
     binsize <- conf[['binsize']]
+    binsize.string <- format(binsize, scientific=FALSE, trim=TRUE)
     numcpu <- conf[['numCPU']]
     mode <- conf[['mode']]
   
@@ -97,9 +98,9 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     }
     
     ## Check if assembly must be present
-    files <- file.path(inputfolder, exp.table$file)
-    files.clean <- sub('\\.gz$','', files)
-    format <- sapply(strsplit(files.clean, '\\.'), function(x) { rev(x)[1] })
+    datafiles <- file.path(inputfolder, basename(as.character(exp.table$file)))
+    datafiles.clean <- sub('\\.gz$','', datafiles)
+    format <- sapply(strsplit(datafiles.clean, '\\.'), function(x) { rev(x)[1] })
     if (any(format=='bed') & is.null(conf[['assembly']])) {
         stop("Please specify an 'assembly' for the BED files.")
     }
@@ -121,13 +122,19 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     browserpath <- file.path(outputfolder, 'browserfiles')
     if (!file.exists(outputfolder)) { dir.create(outputfolder) }
     if (!file.exists(plotpath)) { dir.create(plotpath) }
-    filenames <- paste0(exp.table$file, "_binsize",format(binsize, scientific=FALSE, trim=TRUE),".RData")
     
     ## Make a copy of the conf file
     writeConfig(conf, configfile=file.path(outputfolder, 'chromstaR.config'))
 
     ## Write the experiment table to file
     utils::write.table(exp.table, file=file.path(outputfolder, 'experiment_table.tsv'), col.names=TRUE, quote=FALSE, row.names=FALSE, sep='\t')
+
+    ## Prepare IDs and filenames
+    IDs <- paste0(exp.table$mark, '-', exp.table$condition, '-rep', exp.table$replicate)
+    names(IDs) <- basename(datafiles)
+    filenames <- paste0(IDs, '_binsize', binsize.string, '.RData')
+    names(filenames) <- basename(datafiles)
+
     
   
     #==============
@@ -135,10 +142,10 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #==============
     if (!file.exists(binpath)) { dir.create(binpath) }
     parallel.helper <- function(file) {
-        savename <- file.path(binpath, paste0(basename(file),"_binsize",format(binsize, scientific=FALSE, trim=TRUE),".RData"))
+        savename <- file.path(binpath, filenames[basename(file)])
         if (!file.exists(savename)) {
             tC <- tryCatch({
-                binReads(file=file, assembly=conf[['assembly']], pairedEndReads=exp.table[basename(file),'pairedEndReads'], binsizes=binsize, chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']], outputfolder.binned=binpath, save.as.RData=TRUE)
+                binReads(file=file, experiment.table=exp.table, assembly=conf[['assembly']], pairedEndReads=exp.table[basename(file),'pairedEndReads'], binsizes=binsize, chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']], outputfolder.binned=binpath, save.as.RData=TRUE)
             }, error = function(err) {
                 stop(file,'\n',err)
             })
@@ -146,12 +153,12 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     }
 #     if (numcpu > 1) {
 #         ptm <- startTimedMessage("Binning the data ...")
-#         temp <- foreach (file = files, .packages=c("chromstaR")) %dopar% {
+#         temp <- foreach (file = datafiles, .packages=c("chromstaR")) %dopar% {
 #             parallel.helper(file)
 #         }
 #         stopTimedMessage(ptm)
 #     } else {
-        temp <- foreach (file = files, .packages=c("chromstaR")) %do% {
+        temp <- foreach (file = datafiles, .packages=c("chromstaR")) %do% {
             parallel.helper(file)
         }
 #     }
@@ -182,9 +189,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         savename <- file.path(unipath, basename(file))
         if (!file.exists(savename)) {
             tC <- tryCatch({
-                fields <- sapply(exp.table[sub('_binsize.*','',basename(file)),c('mark','condition','replicate')], as.character)
-                id <- paste0(fields[1], '-', fields[2], '-rep', fields[3])
-                model <- callPeaksUnivariate(file, ID=id, eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], read.cutoff.absolute=conf[['read.cutoff.absolute']], prefit.on.chr=conf[['prefit.on.chr']], keep.posteriors=conf[['keep.posteriors']])
+                model <- callPeaksUnivariate(file, eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], read.cutoff.absolute=conf[['read.cutoff.absolute']], prefit.on.chr=conf[['prefit.on.chr']], keep.posteriors=FALSE)
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(model, file=savename)
                 stopTimedMessage(ptm)
@@ -227,14 +232,14 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         legend.cm <- 3
         savename1 <- paste0(savename, '_correlation.pdf')
         ggplt <- suppressMessages( graphics::plot(multimodel, type='correlation', cluster=FALSE) )
-        width <- length(multimodel$IDs) + max(sapply(multimodel$IDs, nchar)) / char.per.cm + legend.cm
-        height <- length(multimodel$IDs) + max(sapply(multimodel$IDs, nchar)) / char.per.cm
+        width <- length(multimodel$info$ID) + max(sapply(multimodel$info$ID, nchar)) / char.per.cm + legend.cm
+        height <- length(multimodel$info$ID) + max(sapply(multimodel$info$ID, nchar)) / char.per.cm
         ggsave(savename1, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
 
         savename1.1 <- paste0(savename, '_correlation-clustered.pdf')
         ggplt <- suppressMessages( graphics::plot(multimodel, type='correlation', cluster=TRUE) )
-        width <- length(multimodel$IDs) + max(sapply(multimodel$IDs, nchar)) / char.per.cm + legend.cm
-        height <- length(multimodel$IDs) + max(sapply(multimodel$IDs, nchar)) / char.per.cm
+        width <- length(multimodel$info$ID) + max(sapply(multimodel$info$ID, nchar)) / char.per.cm + legend.cm
+        height <- length(multimodel$info$ID) + max(sapply(multimodel$info$ID, nchar)) / char.per.cm
         ggsave(savename1.1, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
 
         savename2 <- paste0(savename, '_transitionMatrix.pdf')
@@ -252,7 +257,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         if (!file.exists(savename)) {
             files <- file.path(unipath, filenames)
             states <- stateBrewer(exp.table, mode=mode)
-            multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']])
+            multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
             ptm <- startTimedMessage("Saving to file ", savename, " ...")
             save(multimodel, file=savename)
             stopTimedMessage(ptm)
@@ -284,7 +289,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 mask <- exp.table[,'condition'] == condition
                 files <- file.path(unipath, filenames)[mask]
                 states <- stateBrewer(exp.table[mask,], mode=mode)
-                multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']])
+                multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(multimodel, file=savename)
                 stopTimedMessage(ptm)
@@ -317,7 +322,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 mask <- exp.table[,'mark'] == mark
                 files <- file.path(unipath, filenames)[mask]
                 states <- stateBrewer(exp.table[mask,], mode=mode)
-                multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']])
+                multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(multimodel, file=savename)
                 stopTimedMessage(ptm)

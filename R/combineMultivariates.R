@@ -13,23 +13,22 @@
 #'# Get example BED files for 2 different marks in hypertensive rat (SHR)
 #'file.path <- system.file("extdata","euratrans", package='chromstaRData')
 #'bedfiles <- list.files(file.path, full.names=TRUE, pattern='SHR')[c(1:2,6:7)]
+#'# Construct experiment structure
+#'exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
+#'                  condition=rep("SHR",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
+#'states <- stateBrewer(exp, mode='mark')
 #'# Bin the data
 #'data(rn4_chrominfo)
 #'binned.data <- list()
 #'for (bedfile in bedfiles) {
-#'  binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
+#'  binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000, experiment.table=exp,
 #'                                               assembly=rn4_chrominfo, chromosomes='chr12')
 #'}
 #'# Obtain the univariate fits
 #'models <- list()
 #'for (i1 in 1:length(binned.data)) {
-#'  models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], ID=names(binned.data)[i1],
-#'                                      max.time=60, eps=1)
+#'  models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], max.time=60, eps=1)
 #'}
-#'# Construct experiment structure
-#'exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
-#'                  condition=rep("SHR",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
-#'states <- stateBrewer(exp, mode='mark')
 #'# Call multivariate peaks
 #'multimodel.SHR <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
 #'
@@ -37,23 +36,22 @@
 #'# Get example BED files for 2 different marks in brown norway rat
 #'file.path <- system.file("extdata","euratrans", package='chromstaRData')
 #'bedfiles <- list.files(file.path, full.names=TRUE, pattern='BN')[c(1:2,7:8)]
+#'# Construct experiment structure
+#'exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
+#'                  condition=rep("BN",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
+#'states <- stateBrewer(exp, mode='mark')
 #'# Bin the data
 #'data(rn4_chrominfo)
 #'binned.data <- list()
 #'for (bedfile in bedfiles) {
-#'  binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
+#'  binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000, experiment.table=exp,
 #'                                               assembly=rn4_chrominfo, chromosomes='chr12')
 #'}
 #'# Obtain the univariate fits
 #'models <- list()
 #'for (i1 in 1:length(binned.data)) {
-#'  models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], ID=names(binned.data)[i1],
-#'                                      max.time=60, eps=1)
+#'  models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], max.time=60, eps=1)
 #'}
-#'# Construct experiment structure
-#'exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
-#'                  condition=rep("BN",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
-#'states <- stateBrewer(exp, mode='mark')
 #'# Call multivariate peaks
 #'multimodel.BN <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
 #'
@@ -88,18 +86,26 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
         hmm <- suppressMessages( loadHmmsFromFiles(multi.hmm.list[[1]], check.class=class.multivariate.hmm)[[1]] )
         bins <- hmm$bins
         mcols(bins) <- NULL
-        ## Add combinatorial states
+        ## Add combinatorial states and posteriors
+        infos <- list()
+        infos[[names(multi.hmm.list)[1]]] <- hmm$info
         combs <- list()
         combs[[names(multi.hmm.list)[1]]] <- hmm$bins$combination
+        posteriors <- list()
+        posteriors[[names(multi.hmm.list)[1]]] <- hmm$bins$posteriors
         stopTimedMessage(ptm)
         
         for (i1 in 2:length(multi.hmm.list)) {
             ptm <- startTimedMessage("Processing condition ",names(multi.hmm.list)[i1]," ...")
             hmm <- suppressMessages( loadHmmsFromFiles(multi.hmm.list[[i1]], check.class=class.multivariate.hmm)[[1]] )
+            infos[[names(multi.hmm.list)[i1]]] <- hmm$info
             combs[[names(multi.hmm.list)[i1]]] <- hmm$bins$combination
+            posteriors[[names(multi.hmm.list)[i1]]] <- hmm$bins$posteriors
             stopTimedMessage(ptm)
         }
         combs.df <- as(combs,'DataFrame')
+        posteriors <- do.call(cbind, posteriors)
+        infos <- do.call(rbind, infos)
         
     } else if (mode == 'condition') {
         if (length(multi.hmm.list)==1) {
@@ -110,12 +116,16 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
             stop("'multi.hmm.list' must be named.")
         }
         ### Get vectors with presence/absence of each mark and condition
+        infos <- list()
+        posteriors <- list()
         states <- list()
         for (mark in names(multi.hmm.list)) {
             ptm <- startTimedMessage("Processing mark ",mark," ...")
             i1 <- which(mark==names(multi.hmm.list))
             ## Load HMM
             hmm <- suppressMessages( loadHmmsFromFiles(multi.hmm.list[[mark]], check.class=class.multivariate.hmm)[[1]] )
+            infos[[mark]] <- hmm$info
+            posteriors[[mark]] <- hmm$bins$posteriors
             ## Extract conditions
             comblevels <- levels(hmm$bins$combination)
             comblevels <- sub('\\[','', comblevels)
@@ -155,6 +165,8 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
         }
         combs.df <- as.data.frame(combs)
         combs.df <- as(combs.df, 'DataFrame')
+        posteriors <- do.call(cbind, posteriors)
+        infos <- do.call(rbind, infos)
 
     } else if (mode == 'full') {
         if (length(multi.hmm.list) > 1) {
@@ -164,6 +176,8 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
         hmm <- suppressMessages( loadHmmsFromFiles(multi.hmm.list[[1]], check.class=class.multivariate.hmm)[[1]] )
         bins <- hmm$bins
         mcols(bins) <- NULL
+        infos <- hmm$info
+        posteriors <- hmm$bins$posteriors
         combs <- list()
         for (condition in conditions) {
             ptm <- startTimedMessage("Processing condition ",condition," ...")
@@ -190,18 +204,24 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
     ptm <- startTimedMessage("Assigning transition groups ...")
     freqs <- suppressMessages( transitionFrequencies(combstates=as.list(combs.df)) )
     bins$transition.group <- freqs$per.bin$group
-    mcols(bins)[names(combs.df)] <- combs.df
     stopTimedMessage(ptm)
+
+    ## Assign combinatorial states
+    mcols(bins)[paste0('combination.',names(combs.df))] <- combs.df
     
+    ## Transferring posteriors
+    bins$posteriors <- posteriors
+
+    ## Add differential score ##
+    bins$differential.score <- differentialScore(bins$posteriors, infos)
+
     ### Redo the segmentation for all conditions combined
     ptm <- startTimedMessage("Redoing segmentation for all conditions combined ...")
     mcols(bins)$state <- as.numeric(do.call(paste0, lapply(as.list(combs.df), as.integer)))
-    bins.df <- as.data.frame(bins)
-    segments.df <- suppressMessages( collapseBins(bins.df, column2collapseBy='state', columns2drop=c('width','state')) )
-    segments <- as(segments.df, 'GRanges')
-    seqlengths(segments) <- seqlengths(bins)
+    segments <- suppressMessages( multivariateSegmentation(bins, column2collapseBy='state') )
+    mcols(segments)$state <- NULL
     mcols(bins)$state <- NULL
-    names(mcols(segments)) <- names(mcols(bins))
+    names(mcols(segments)) <- setdiff(names(mcols(bins)), 'posteriors')
     stopTimedMessage(ptm)
     
     ### Redo the segmentation for each condition separately
@@ -209,10 +229,10 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
     segments.separate <- list()
     for (cond in names(combs)) {
         bins.cond <- bins
-        mcols(bins.cond) <- mcols(bins)[cond]
+        mcols(bins.cond) <- mcols(bins)[paste0('combination.',cond)]
         df <- as.data.frame(bins.cond)
         names(df)[6] <- cond
-        segments.cond <- suppressMessages( collapseBins(df, column2collapseBy=cond, columns2drop=c('width')) )
+        segments.cond <- suppressMessages( collapseBins(df, column2collapseBy=cond, columns2drop=c('width', grep('posteriors', names(df), value=TRUE))) )
         segments.cond <- as(segments.cond, 'GRanges')
         names(mcols(segments.cond)) <- 'combination'
         seqlengths(segments.cond) <- seqlengths(bins)
@@ -223,6 +243,8 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
     ### Make return object
     hmm <- list()
     class(hmm) <- class.combined.multivariate.hmm
+    hmm$info <- infos
+    rownames(hmm$info) <- NULL
     hmm$bins <- bins
     hmm$segments <- segments
     hmm$segments.separate <- segments.separate

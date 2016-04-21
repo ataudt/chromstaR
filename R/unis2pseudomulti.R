@@ -47,7 +47,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
     bins$counts <- NULL
     bins$state <- NULL
     numbins = length(uni.hmm.list[[1]]$bins)
-    IDs <- unlist(lapply(uni.hmm.list, "[[", "ID"))
+    IDs <- sapply(uni.hmm.list, function(x) { x$info$ID })
     names(IDs) <- NULL
     distributions = lapply(uni.hmm.list,"[[","distributions")
     weights = lapply(uni.hmm.list,"[[","weights")

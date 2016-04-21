@@ -4,8 +4,7 @@
 \alias{changePostCutoff}
 \title{Change the false discovery rate of a Hidden Markov Model}
 \usage{
-changePostCutoff(model, post.cutoff = 0.5, separate.zeroinflation = TRUE,
-  averages = TRUE)
+changePostCutoff(model, post.cutoff = 0.5, separate.zeroinflation = TRUE)
 }
 \arguments{
 \item{model}{A \code{\link{uniHMM}} or \code{\link{multiHMM}} object with posteriors.}
@@ -13,8 +12,6 @@ changePostCutoff(model, post.cutoff = 0.5, separate.zeroinflation = TRUE,
 \item{post.cutoff}{Posterior cutoff. Values close to 1 will yield more stringent peak calls with lower false positive but higher false negative rate.}
 
 \item{separate.zeroinflation}{Only for \code{\link{uniHMM}} objects: If set to TRUE, state 'zero-inflation' will be treated separately, otherwise it will be merged with state 'unmodified'.}
-
-\item{averages}{Whether or not averaged posteriors should appear in the segmentation.}
 }
 \value{
 The input object is returned with adjusted peak calls.
@@ -36,7 +33,7 @@ binned <- binReads(bedfile, assembly=rn4_chrominfo, binsize=1000,
                   chromosomes='chr12')
 ## Fit the univariate Hidden Markov Model
 # !Keep posteriors to change the post.cutoff later!
-hmm <- callPeaksUnivariate(binned, ID='example_H3K27me3', max.time=60, eps=1,
+hmm <- callPeaksUnivariate(binned, max.time=60, eps=1,
                           keep.posteriors=TRUE)
 ## Compare fits with different post.cutoffs
 plot(changePostCutoff(hmm, post.cutoff=0.01), type='histogram') + ylim(0,0.25)

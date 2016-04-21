@@ -4,8 +4,7 @@
 #'
 #' This function is similar to \code{\link{callPeaksUnivariateAllChr}} but allows to pre-fit on a single chromosome instead of the whole genome. This gives a significant performance increase and can help to converge into a better fit in case of unsteady quality for some chromosomes.
 #'
-#' @param binned.data A \link{GRanges} object with binned read counts.
-#' @param ID An identifier that will be used to identify this sample in various downstream functions. Could be the file name of the \code{binned.data} for example.
+#' @param binned.data A \link{GRanges} object with binned read counts or a file that contains such an object.
 #' @param prefit.on.chr A chromosome that is used to pre-fit the Hidden Markov Model. Set to \code{NULL} if you don't want to prefit but use the whole genome instead.
 #' @param short If \code{TRUE}, the second fitting step is only done with one iteration.
 #' @param eps Convergence threshold for the Baum-Welch algorithm.
@@ -34,39 +33,42 @@
 #' @seealso \code{\link{uniHMM}}, \code{\link{callPeaksMultivariate}}
 #' @export
 #' @examples
-#'## Get an example BED file
+#'## Get an example BED file with ChIP-seq reads
 #'bedfile <- system.file("extdata", "euratrans",
 #'                       "lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
 #'                        package="chromstaRData")
 #'## Bin the BED file into bin size 1000bp
 #'data(rn4_chrominfo)
-#'binned <- binReads(bedfile, assembly=rn4_chrominfo, binsize=1000,
+#'data(experiment_table)
+#'binned <- binReads(bedfile, experiment.table=experiment_table,
+#'                   assembly=rn4_chrominfo, binsize=1000,
 #'                   chromosomes='chr12')
 #'## Fit the univariate Hidden Markov Model
-#'hmm <- callPeaksUnivariate(binned, ID='example_H3K27me3', max.time=60, eps=1)
+#'hmm <- callPeaksUnivariate(binned, max.time=60, eps=1)
 #'## Check if the fit is ok
 #'plot(hmm, type='histogram')
 #'
-callPeaksUnivariate <- function(binned.data, ID, prefit.on.chr=NULL, short=TRUE, eps=0.01, init="standard", max.time=NULL, max.iter=5000, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, post.cutoff=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
+callPeaksUnivariate <- function(binned.data, prefit.on.chr=NULL, short=TRUE, eps=0.01, init="standard", max.time=NULL, max.iter=5000, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, post.cutoff=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
 
     if (class(binned.data) == 'character') { 
         message("Loading file ",binned.data)
-        binned.data <- get(load(binned.data))
+        temp.env <- new.env()
+        binned.data <- get(load(binned.data, envir=temp.env), envir=temp.env)
     }
 
     if (is.null(prefit.on.chr)) {
-        model <- callPeaksUnivariateAllChr(binned.data, ID=ID, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=keep.posteriors, keep.densities=FALSE, verbosity=verbosity)
+        model <- callPeaksUnivariateAllChr(binned.data, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=keep.posteriors, keep.densities=FALSE, verbosity=verbosity)
     } else {
 
         pre.binned.data <- binned.data[seqnames(binned.data)==prefit.on.chr]
-        pre.model <- callPeaksUnivariateAllChr(pre.binned.data, ID=ID, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=verbosity)
+        pre.model <- callPeaksUnivariateAllChr(pre.binned.data, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=verbosity)
 
         if (short) {
             max.iter=1
         }
         model <- pre.model
         model$bins <- binned.data
-        model <- suppressWarnings( callPeaksUnivariateAllChr(model, ID=ID, eps=eps, max.time=max.time, max.iter=max.iter, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity) )
+        model <- suppressWarnings( callPeaksUnivariateAllChr(model, eps=eps, max.time=max.time, max.iter=max.iter, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity) )
 
     }
 
@@ -82,7 +84,6 @@ callPeaksUnivariate <- function(binned.data, ID, prefit.on.chr=NULL, short=TRUE,
 #' The Hidden Markov Model which is used to classify the bins uses 3 states: state 'zero-inflation' with a delta function as emission densitiy (only zero read counts), 'unmodified' and 'modified' with Negative Binomials as emission densities. A Baum-Welch algorithm is employed to estimate the parameters of the distributions. See our paper TODO:insert paper for a detailed description of the method.
 #'
 #' @param binned.data A \link{GRanges} object with binned read counts.
-#' @param ID An identifier that will be used to identify this sample in various downstream functions. Could be the file name of the \code{binned.data} for example.
 #' @param eps Convergence threshold for the Baum-Welch algorithm.
 #' @param init One of the following initialization procedures:
 #' \describe{
@@ -108,13 +109,12 @@ callPeaksUnivariate <- function(binned.data, ID, prefit.on.chr=NULL, short=TRUE,
 #' @author Aaron Taudt, Maria Coome Tatche
 #' @seealso \code{\link{uniHMM}}, \code{\link{callPeaksMultivariate}}
 #' @importFrom stats runif
-callPeaksUnivariateAllChr <- function(binned.data, ID, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, post.cutoff=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
+callPeaksUnivariateAllChr <- function(binned.data, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, post.cutoff=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
 
     ### Define cleanup behaviour ###
     on.exit(.C("C_univariate_cleanup"))
 
     ### Intercept user input ###
-    IDcheck <- ID  #trigger error if not defined
     if (check.positive(eps)!=0) stop("argument 'eps' expects a positive numeric")
     if (is.null(max.time)) { max.time <- -1 } else if (check.nonnegative.integer(max.time)!=0) { stop("argument 'max.time' expects a non-negative integer") }
     if (is.null(max.iter)) { max.iter <- -1 } else if (check.nonnegative.integer(max.iter)!=0) { stop("argument 'max.iter' expects a non-negative integer") }
@@ -339,7 +339,7 @@ callPeaksUnivariateAllChr <- function(binned.data, ID, eps=0.01, init="standard"
 
     ### Make return object ###
         result <- list()
-        result$ID <- ID
+        result$info <- attr(binned.data, 'info')
     ## Get states
         ptm <- startTimedMessage("Calculating states from posteriors ...")
         hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)

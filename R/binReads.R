@@ -8,8 +8,7 @@
 #'
 #' @aliases binning
 #' @param file A file with aligned reads. Alternatively a \code{\link{GRanges}} with aligned reads if format is set to 'GRanges'.
-#' @param format One of \code{c('bam', 'bed', 'GRanges')}. If set to \code{NULL}, the function will try to determine the format automatically from the file ending.
-#' @param ID An identifier that will be used to identify the file throughout the workflow and in plotting.
+#' @param experiment.table An \code{\link{experiment.table}} containing the supplied \code{file}. This is necessary to uniquely identify the file in later steps of the workflow. Set to \code{NULL} if you don't have it (not recommended).
 #' @inheritParams bam2GRanges
 #' @inheritParams bed2GRanges
 #' @param outputfolder.binned Folder to which the binned data will be saved. If the specified folder does not exist, it will be created.
@@ -36,18 +35,13 @@
 #'                        package="chromstaRData")
 #'## Bin the BED file into bin size 1000bp
 #'data(rn4_chrominfo)
-#'binned <- binReads(bedfile, assembly=rn4_chrominfo, binsize=1000,
+#'data(experiment_table)
+#'binned <- binReads(bedfile, experiment.table=experiment_table,
+#'                   assembly=rn4_chrominfo, binsize=1000,
 #'                   chromosomes='chr12')
 #'print(binned)
 #'
-binReads <- function(file, format=NULL, assembly, ID=basename(file), bamindex=file, chromosomes=NULL, pairedEndReads=FALSE, min.mapq=10, remove.duplicate.reads=TRUE, max.fragment.width=1000, blacklist=NULL, outputfolder.binned="binned_data", binsizes=1000, reads.per.bin=NULL, bins=NULL, variable.width.reference=NULL, stepsize=NULL, save.as.RData=FALSE, call=match.call(), reads.store=FALSE, outputfolder.reads="data", reads.return=FALSE, reads.overwrite=FALSE, reads.only=FALSE) {
-
-    ## Check user input
-    if (reads.return==FALSE & reads.only==FALSE) {
-        if (is.null(binsizes) & is.null(reads.per.bin) & is.null(bins)) {
-            stop("Please specify either argument 'binsizes' or 'reads.per.bin'")
-        }
-    }
+binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chromosomes=NULL, pairedEndReads=FALSE, min.mapq=10, remove.duplicate.reads=TRUE, max.fragment.width=1000, blacklist=NULL, outputfolder.binned="binned_data", binsizes=1000, reads.per.bin=NULL, bins=NULL, variable.width.reference=NULL, stepsize=NULL, save.as.RData=FALSE, call=match.call(), reads.store=FALSE, outputfolder.reads="data", reads.return=FALSE, reads.overwrite=FALSE, reads.only=FALSE) {
 
     ## Determine format
     if (is.character(file)) {
@@ -55,6 +49,32 @@ binReads <- function(file, format=NULL, assembly, ID=basename(file), bamindex=fi
         format <- rev(strsplit(file.clean, '\\.')[[1]])[1]
     } else if (class(file)=='GRanges') {
         format <- 'GRanges'
+    }
+
+    ## Check user input
+    if (reads.return==FALSE & reads.only==FALSE) {
+        if (is.null(binsizes) & is.null(reads.per.bin) & is.null(bins)) {
+            stop("Please specify either argument 'binsizes' or 'reads.per.bin'")
+        }
+    }
+    if (format=='bed') {
+        temp <- assembly # trigger error if not defined
+    }
+
+    ## Create INFO object as row from the experiment.table
+    if (!is.null(experiment.table)) {
+        if (check.experiment.table(experiment.table)!=0) {
+            stop("Please specify a valid 'experiment.table'.")
+        }
+        info <- experiment.table[basename(as.character(experiment.table$file))==basename(file),]
+        ID <- paste0(info$mark, '-', info$condition, '-rep', info$rep)
+        info$ID <- ID
+        if (pairedEndReads != info$pairedEndReads) {
+            warning("Option 'pairedEndReads' overwritten by entry in 'experiment.table'.")
+        }
+    } else {
+        info <- NULL
+        ID <- basename(file)
     }
 
     ## Create outputfolder.binned if not exists
@@ -80,14 +100,6 @@ binReads <- function(file, format=NULL, assembly, ID=basename(file), bamindex=fi
     } else if (format == "GRanges") {
         ## GRanges (1-based)
         data <- file
-        err <- tryCatch({
-            !is.character(ID)
-        }, error = function(err) {
-            TRUE
-        })
-        if (err) {
-            ID <- 'GRanges'
-        }
     }
 
     ## Select chromosomes to bin
@@ -212,8 +224,8 @@ binReads <- function(file, format=NULL, assembly, ID=basename(file), bamindex=fi
         attr(binned.data, 'qualityInfo') <- qualityInfo
         attr(binned.data, 'min.mapq') <- min.mapq
 
-        ### ID ###
-        attr(binned.data, 'ID') <- ID
+        ### Info ###
+        attr(binned.data, 'info') <- info
 
         ### Save or return the binned data ###
         if (save.as.RData==TRUE) {

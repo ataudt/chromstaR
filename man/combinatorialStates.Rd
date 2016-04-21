@@ -44,8 +44,7 @@ for (bedfile in bedfiles) {
 # Obtain the univariate fits
 models <- list()
 for (i1 in 1:length(binned.data)) {
- models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], ID=names(binned.data)[i1],
-                                     max.time=60, eps=1)
+ models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], max.time=60, eps=1)
 }
 ## Get the decimal representation of the combinatorial state of this combination of models
 states <- chromstaR:::combinatorialStates(models, binary=FALSE)

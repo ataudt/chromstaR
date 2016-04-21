@@ -67,7 +67,7 @@ writeConfig <- function(conf, configfile) {
     f <- file(configfile, open='w')
     cat("#============== chromstaR configuration file ===============#\n", file=f)
     cat("\n[General]\n", file=f)
-    for (i1 in c('numCPU','keep.posteriors')) {
+    for (i1 in c('numCPU')) {
         cat(i1," = ",formatstring(conf[[i1]]),"\n", file=f)
     }
     cat("\n[Binning]\n", file=f)
@@ -82,7 +82,7 @@ writeConfig <- function(conf, configfile) {
         cat(i1," = ",formatstring(conf[[i1]]),"\n", file=f)
     }
     cat("\n[Multivariate]\n", file=f)
-    for (i1 in c('mode', 'max.states', 'per.chrom')) {
+    for (i1 in c('mode', 'max.states', 'per.chrom', 'keep.posteriors')) {
         cat(i1," = ",formatstring(conf[[i1]]),"\n", file=f)
     }
     close(f, type='w')

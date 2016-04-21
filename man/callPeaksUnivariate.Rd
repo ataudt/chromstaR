@@ -4,7 +4,7 @@
 \alias{callPeaksUnivariate}
 \title{Fit a Hidden Markov Model to a ChIP-seq sample.}
 \usage{
-callPeaksUnivariate(binned.data, ID, prefit.on.chr = NULL, short = TRUE,
+callPeaksUnivariate(binned.data, prefit.on.chr = NULL, short = TRUE,
   eps = 0.01, init = "standard", max.time = NULL, max.iter = 5000,
   num.trials = 1, eps.try = NULL, num.threads = 1, read.cutoff = TRUE,
   read.cutoff.quantile = 1, read.cutoff.absolute = 500, max.mean = Inf,
@@ -12,9 +12,7 @@ callPeaksUnivariate(binned.data, ID, prefit.on.chr = NULL, short = TRUE,
   keep.densities = FALSE, verbosity = 1)
 }
 \arguments{
-\item{binned.data}{A \link{GRanges} object with binned read counts.}
-
-\item{ID}{An identifier that will be used to identify this sample in various downstream functions. Could be the file name of the \code{binned.data} for example.}
+\item{binned.data}{A \link{GRanges} object with binned read counts or a file that contains such an object.}
 
 \item{prefit.on.chr}{A chromosome that is used to pre-fit the Hidden Markov Model. Set to \code{NULL} if you don't want to prefit but use the whole genome instead.}
 
@@ -67,16 +65,18 @@ Fit a HMM to a ChIP-seq sample to determine the modification state of genomic re
 This function is similar to \code{\link{callPeaksUnivariateAllChr}} but allows to pre-fit on a single chromosome instead of the whole genome. This gives a significant performance increase and can help to converge into a better fit in case of unsteady quality for some chromosomes.
 }
 \examples{
-## Get an example BED file
+## Get an example BED file with ChIP-seq reads
 bedfile <- system.file("extdata", "euratrans",
                       "lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
                        package="chromstaRData")
 ## Bin the BED file into bin size 1000bp
 data(rn4_chrominfo)
-binned <- binReads(bedfile, assembly=rn4_chrominfo, binsize=1000,
+data(experiment_table)
+binned <- binReads(bedfile, experiment.table=experiment_table,
+                  assembly=rn4_chrominfo, binsize=1000,
                   chromosomes='chr12')
 ## Fit the univariate Hidden Markov Model
-hmm <- callPeaksUnivariate(binned, ID='example_H3K27me3', max.time=60, eps=1)
+hmm <- callPeaksUnivariate(binned, max.time=60, eps=1)
 ## Check if the fit is ok
 plot(hmm, type='histogram')
 

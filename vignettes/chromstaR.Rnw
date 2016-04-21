@@ -44,7 +44,7 @@ library(chromstaR)
 <<univariate_narrow_binning, results='markup', message=FALSE, eval=TRUE>>=
 ## === Step 1: Binning ===
 # Get an example BED file
-bedfile <- system.file("extdata","euratrans","lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
+bedfile <- system.file("extdata","euratrans","lv-H3K4me3-BN-male-bio2-tech1.bed.gz",
                         package="chromstaRData")
 # Get the chromosome lengths (see ?GenomeInfoDb::fetchExtendedChromInfoFromUCSC)
 # This is only necessary for BED files. BAM files are handled automatically.
@@ -59,21 +59,20 @@ print(binned.data)
 <<univariate_narrow_peak_calling, results='markup', eval=TRUE>>=
 ## === Step 2: Peak calling ===
 # We restrict the peak calling to 60 seconds to keep this example quick.
-model <- callPeaksUnivariate(binned.data, ID='H3K4me3', max.time=60, verbosity=0)
+model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
 @
 
 <<univariate_narrow_plotting, fig.width=6, fig.height=4>>=
 ## === Step 3: Checking the fit ===
 # For a narrow modification, the fit should look something like this,
 # with the 'modified'-component near the bottom of the figure
-plot(model)
+plot(model) + ggtitle('H3K4me3')
 @
 
-<<univariate_narrow_export, results='hide', message=FALSE, eval=FALSE>>=
+<<univariate_narrow_export, results='hide', message=FALSE, eval=TRUE>>=
 ## === Step 4: Export to genome browser ===
 # We can export peak calls and binned read counts with
-exportUnivariates(list(model), filename='your-peak-file', what='peaks')
-exportUnivariates(list(model), filename='your-read-file', what='counts')
+exportUnivariates(list(model), filename=tempfile(), what=c('peaks','counts'))
 @
 \end{scriptsize}
 
@@ -103,21 +102,20 @@ binned.data <- binReads(bedfile, assembly=rn4_chrominfo, binsizes=1000,
 <<univariate_broad_peak_calling, results='markup', eval=TRUE>>=
 ## === Step 2: Peak calling ===
 # We restrict the peak calling to 60 seconds to keep this example quick.
-model <- callPeaksUnivariate(binned.data, ID='H3K27me3', max.time=60, verbosity=0)
+model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
 @
 
 <<univariate_broad_plotting, fig.width=6, fig.height=4>>=
 ## === Step 3: Checking the fit ===
 # For a broad modification, the fit should look something like this,
 # with a 'modified'-component that fits the thick tail of the distribution.
-plot(model)
+plot(model) + ggtitle('H3K27me3')
 @
 
-<<univariate_broad_export, results='hide', message=FALSE, eval=FALSE>>=
+<<univariate_broad_export, results='hide', message=FALSE, eval=TRUE>>=
 ## === Step 4: Export to genome browser ===
 # We can export peak calls and binned read counts with
-exportUnivariates(list(model), filename='your-peak-file', what='peaks')
-exportUnivariates(list(model), filename='your-read-file', what='counts')
+exportUnivariates(list(model), filename=tempfile(), what=c('peaks','counts'))
 @
 
 <<univariate_broad_H4K20me1, echo=TRUE, results='hide', message=FALSE, fig.width=6, fig.height=4>>=
@@ -127,8 +125,8 @@ bedfile <- system.file("extdata","euratrans","lv-H4K20me1-BN-male-bio1-tech1.bed
 data(rn4_chrominfo)
 binned.data <- binReads(bedfile, assembly=rn4_chrominfo, binsizes=1000,
                         chromosomes='chr12')
-model <- callPeaksUnivariate(binned.data, ID='H4K20me1', max.time=60, verbosity=0)
-plot(model)
+model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
+plot(model) + ggtitle('H4K20me1')
 @
 
 \end{scriptsize}
@@ -159,11 +157,15 @@ bedfiles <- c(bedfiles.good, bedfiles.poor)
 # handled automatically.
 data(rn4_chrominfo)
 head(rn4_chrominfo)
+# Define experiment structure
+exp <- data.frame(file=bedfiles, mark='H3K27me3', condition='SHR', replicate=1:4,
+                  pairedEndReads=FALSE)
 # We use bin size 1000bp and chromosome 12 to keep the example quick
 binned.data <- list()
 for (bedfile in bedfiles) {
   binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
-                                         assembly=rn4_chrominfo, chromosomes='chr12')
+                                         assembly=rn4_chrominfo, chromosomes='chr12',
+                                         experiment.table=exp)
 }
 @
 
@@ -172,8 +174,7 @@ for (bedfile in bedfiles) {
 # The univariate fit is obtained for each replicate
 models <- list()
 for (i1 in 1:length(binned.data)) {
-  models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], ID=paste0('Rep',i1),
-                                      max.time=60)
+  models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], max.time=60)
 }
 @
 
@@ -193,11 +194,10 @@ print(multi.model$replicateInfo$correlation)
 multi.model <- callPeaksReplicates(models[1:3], force.equal=TRUE, max.time=60)
 @
 
-<<multivariate_replicate_export, results='hide', message=FALSE, eval=FALSE>>=
+<<multivariate_replicate_export, results='hide', message=FALSE, eval=TRUE>>=
 ## === Step 5: Export to genome browser ===
 # Finally, we can export the results as BED file
-exportMultivariate(multi.model, filename='your-peak-file', what='peaks')
-exportMultivariate(multi.model, filename='your-read-file', what='counts')
+exportMultivariate(multi.model, filename=tempfile(), what=c('peaks','counts'))
 @
 \end{scriptsize}
 
@@ -251,14 +251,11 @@ common.states <- stateBrewer(experiment_table_H4K20me1, mode='condition',
 print(common.states)
 @
 
-<<multivariate_differential_export, results='hide', message=FALSE, eval=FALSE>>=
+<<multivariate_differential_export, results='hide', message=FALSE, eval=TRUE>>=
 ## === Step 5: Export to genome browser ===
 # Export only differential states
-exportMultivariate(multi.model, filename='your-peak-file', what='peaks',
-                   include.states=diff.states)
-exportMultivariate(multi.model, filename='your-read-file', what='counts',
-                   include.states=diff.states)
-exportMultivariate(multi.model, filename='your-combstates-file', what='combinations',
+exportMultivariate(model, filename=tempfile(),
+                   what=c('peaks','counts','combinations'),
                    include.states=diff.states)
 @
 \end{scriptsize}
@@ -355,7 +352,7 @@ plotHeatmap(model, tss) +
 <<multivariate_combinatorial_enrichment_plot3, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4>>=
 # Fold enrichment with different biotypes, showing that protein coding genes are
 # enriched with (bivalent) promoter combinations [H3K4me3] and [H3K4me3+H3K27me3],
-# while rRNA is enriched with the empty [] and repressive combinations [H3K27me3].
+# while rRNA is enriched with the empty [] combination.
 biotypes <- split(tss, tss$biotype)
 plotMultipleEnrichment(model, annotations=biotypes) + coord_flip() +
   ggtitle('Fold enrichment with different biotypes')
@@ -446,9 +443,11 @@ model <- get(load(file.path(outputfolder,'multivariate-combined',
 #=== Step 3: Analysis and export ===
 ## Obtain all genomic regions where the two tissues have different states
 segments <- model$segments
-diff.segments <- segments[segments$SHR != segments$BN]
+diff.segments <- segments[segments$combination.SHR != segments$combination.BN]
+# Let's be stringent with the differences and get only clear ones
+diff.segments <- diff.segments[diff.segments$differential.score > 0.99]
 exportGRanges(diff.segments, trackname='differential_chromatin_states',
-              filename=tempfile())
+              filename=tempfile(), scorecol='differential.score')
 ## Obtain all genomic regions where we find a bivalent promoter in BN but not in SHR
 bivalent.BN <- segments[segments$BN == '[H3K27me3+H3K4me3]' &
                         segments$SHR != '[H3K27me3+H3K4me3]']

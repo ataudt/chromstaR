@@ -23,17 +23,19 @@
 #'# Obtain chromosome lengths. This is only necessary for BED files. BAM files are
 #'# handled automatically.
 #'data(rn4_chrominfo)
+#'# Define experiment structure
+#'exp <- data.frame(file=bedfiles, mark='H3K27me3', condition='SHR', replicate=1:3,
+#'                  pairedEndReads=FALSE)
 #'# We use bin size 1000bp and chromosome 12 to keep the example quick
 #'binned.data <- list()
 #'for (bedfile in bedfiles) {
-#'  binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
+#'  binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000, experiment.table=exp,
 #'                                               assembly=rn4_chrominfo, chromosomes='chr12')
 #'}
 #'# The univariate fit is obtained for each replicate
 #'models <- list()
 #'for (i1 in 1:length(binned.data)) {
-#'  models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], ID=paste0('Rep',i1),
-#'                                      max.time=60, eps=1)
+#'  models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], max.time=60, eps=1)
 #'}
 #'# Obtain peak calls considering information from all replicates
 #'multi.model <- callPeaksReplicates(models, force.equal=TRUE, max.time=60, eps=1)
@@ -60,7 +62,7 @@ callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=
         hmms <- loadHmmsFromFiles(hmm.list, check.class=class.univariate.hmm)
 
         ## Univariate replicateInfo
-        ids <- sapply(hmms, '[[', 'ID')
+        ids <- sapply(hmms, function(x) { x$info$ID })
         weight.univariate <- unlist(lapply(hmms, function(x) { x$weights['modified'] }))
         total.count <- unlist(lapply(hmms, function(x) { sum(x$bins$counts) }))
         info.df <- data.frame(total.count=total.count, weight.univariate=weight.univariate)
@@ -82,7 +84,7 @@ callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=
                 states2use <- state.brewer(paste0('x.', ids))
                 multimodel <- callPeaksMultivariate(hmms, use.states=states2use, max.states=max.states, eps=eps, max.iter=max.iter, max.time=max.time, keep.posteriors=keep.posteriors, num.threads=num.threads)
             }
-            binstates <- dec2bin(multimodel$bins$state, colnames=multimodel$IDs)
+            binstates <- dec2bin(multimodel$bins$state, colnames=multimodel$info$ID)
             cor.matrix <- cor(binstates)
             weight.multivariate <- apply(binstates, 2, sum) / nrow(binstates)
             info.df$weight.multivariate <- weight.multivariate

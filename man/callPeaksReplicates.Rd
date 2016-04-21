@@ -40,17 +40,19 @@ bedfiles <- list.files(file.path, pattern="H3K27me3.*SHR", full.names=TRUE)[1:3]
 # Obtain chromosome lengths. This is only necessary for BED files. BAM files are
 # handled automatically.
 data(rn4_chrominfo)
+# Define experiment structure
+exp <- data.frame(file=bedfiles, mark='H3K27me3', condition='SHR', replicate=1:3,
+                 pairedEndReads=FALSE)
 # We use bin size 1000bp and chromosome 12 to keep the example quick
 binned.data <- list()
 for (bedfile in bedfiles) {
- binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
+ binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000, experiment.table=exp,
                                               assembly=rn4_chrominfo, chromosomes='chr12')
 }
 # The univariate fit is obtained for each replicate
 models <- list()
 for (i1 in 1:length(binned.data)) {
- models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], ID=paste0('Rep',i1),
-                                     max.time=60, eps=1)
+ models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], max.time=60, eps=1)
 }
 # Obtain peak calls considering information from all replicates
 multi.model <- callPeaksReplicates(models, force.equal=TRUE, max.time=60, eps=1)

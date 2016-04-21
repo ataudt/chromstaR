@@ -32,7 +32,7 @@ scanBinsizes = function(files.binned, outputfolder, chromosomes="chr10", eps=0.0
             if (!is.null(chromosomes)) {
                 binned.data <- binned.data[seqnames(binned.data) %in% chromosomes]
             }
-            unimodel = callPeaksUnivariate(binned.data, ID=basename(binfile), eps=eps, max.iter=max.iter, max.time=max.time)
+            unimodel = callPeaksUnivariate(binned.data, eps=eps, max.iter=max.iter, max.time=max.time)
             save(unimodel, file=unifile)
         }
     }
@@ -96,7 +96,7 @@ scanBinsizes = function(files.binned, outputfolder, chromosomes="chr10", eps=0.0
                 if (!is.null(chromosomes)) {
                     binned.data <- binned.data[seqnames(binned.data) %in% chromosomes]
                 }
-                unimodel = callPeaksUnivariate(binned.data, ID=basename(sim.binfile), eps=eps, max.iter=max.iter, max.time=max.time)
+                unimodel = callPeaksUnivariate(binned.data, eps=eps, max.iter=max.iter, max.time=max.time)
                 save(unimodel, file=sim.unifile)
             } else {
                 unimodel <- get(load(sim.unifile))

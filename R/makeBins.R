@@ -179,7 +179,7 @@ variableWidthBins <- function(reads, binsizes, chromosomes=NULL) {
 
     ## Make fixed width bins
     ptm <- startTimedMessage("Binning reads in fixed-width windows ...")
-    binned.list <- suppressMessages( binReads(reads, format='GRanges', assembly=NULL, binsizes=binsizes, chromosomes=chromosomes) )
+    binned.list <- suppressMessages( binReads(reads, assembly=NULL, binsizes=binsizes, chromosomes=chromosomes) )
     stopTimedMessage(ptm)
     
     ## Sort the reads

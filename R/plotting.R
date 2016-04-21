@@ -189,9 +189,9 @@ plotMultivariateHistograms <- function(multi.hmm) {
     ## Make fake uni.hmm and plot
     binmapping <- dec2bin(names(multi.hmm$mapping))
     ggplts <- list()
-    for (i1 in 1:length(multi.hmm$IDs)) {
+    for (i1 in 1:length(multi.hmm$info$ID)) {
         uni.hmm <- list()
-        uni.hmm$ID <- multi.hmm$IDs[i1]
+        uni.hmm$info <- multi.hmm$info[i1,]
         uni.hmm$bins <- multi.hmm$bins
         mapping <- c('unmodified','modified')[binmapping[,i1]+1]
         names(mapping) <- rownames(binmapping)
@@ -308,7 +308,7 @@ plotUnivariateHistogram <- function(model, state=NULL, chromosomes=NULL, start=N
     lweights <- round(c(1-weights[3], weights[3]), 2)
     legend <- paste0(c('unmodified','modified'), ", mean=", lmeans, ", var=", lvars, ", weight=", lweights)
     legend <- c(legend, paste0('total, mean(data)=', round(mean(counts),2), ', var(data)=', round(var(counts),2)))
-    ggplt <- ggplt + ggtitle(model$ID)
+    ggplt <- ggplt + ggtitle(model$info$ID)
 
     ### Plot the distributions
     if (is.null(state)) {
