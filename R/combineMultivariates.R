@@ -159,6 +159,7 @@ combineMultivariates <- function(hmms, mode) {
         infos <- hmm$info
         conditions <- unique(infos$condition)
         posteriors <- hmm$bins$posteriors
+        states <- hmm$bins$state
         combs <- list()
         for (condition in conditions) {
             ptm <- startTimedMessage("Processing condition ",condition," ...")
@@ -168,7 +169,7 @@ combineMultivariates <- function(hmms, mode) {
             combs[[as.character(condition)]] <- mapping.condition[hmm$bins$state]
             stopTimedMessage(ptm)
         }
-        combs.df <- as.data.frame(combs)
+        combs.df <- as.data.frame(combs) # get factors instead of characters
         combs.df <- as(combs.df, 'DataFrame')
         
     } else {
