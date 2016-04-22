@@ -105,7 +105,7 @@ changePostCutoff <- function(model, post.cutoff=0.5, separate.zeroinflation=TRUE
         multiHMM$bins$state <- factor(states)
         multiHMM$bins$posteriors <- post
         multiHMM$mapping <- mapping
-        model <- combineMultivariates(list(multiHMM), mode='full', conditions=unique(model$info$condition))
+        model <- combineMultivariates(list(multiHMM), mode='full')
         model$post.cutoff <- threshold
     } else {
         stop("Supply either a uniHMM, multiHMM or combinedMultiHMM object.")

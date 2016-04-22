@@ -241,11 +241,12 @@ runMultivariate <- function(bins, info, comb.states, use.states, distributions, 
         }
     ## Add combinations
         mapping <- NULL
-        result$bins$combination <- NA
         if (!is.null(use.states)) {
             mapping <- use.states$combination
             names(mapping) <- use.states$state
             result$bins$combination <- factor(mapping[as.character(result$bins$state)], levels=levels(use.states$combination))
+        } else {
+            result$bins$combination <- result$bins$state
         }
     ## Segmentation
         result$segments <- multivariateSegmentation(result$bins, column2collapseBy='state')

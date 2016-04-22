@@ -55,6 +55,11 @@ callPeaksUnivariate <- function(binned.data, prefit.on.chr=NULL, short=TRUE, eps
         temp.env <- new.env()
         binned.data <- get(load(binned.data, envir=temp.env), envir=temp.env)
     }
+    if (!is.null(prefit.on.chr)) {
+        if (!prefit.on.chr %in% seqlevels(binned.data)) {
+            stop("Could not find chromosome ", prefit.on.chr, " for option 'prefit.on.chr'.")
+        }
+    }
 
     if (is.null(prefit.on.chr)) {
         model <- callPeaksUnivariateAllChr(binned.data, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=keep.posteriors, keep.densities=FALSE, verbosity=verbosity)

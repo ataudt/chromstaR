@@ -357,7 +357,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         if (!file.exists(combipath)) { dir.create(combipath) }
         savename <- file.path(combipath, paste0('combined_mode-', mode, '.RData'))
         if (!file.exists(savename)) {
-            combinedModel <- combineMultivariates(multifiles, mode=mode, conditions=conditions)
+            combinedModel <- combineMultivariates(multifiles, mode=mode)
             ptm <- startTimedMessage("Saving to file ", savename, " ...")
             save(combinedModel, file=savename)
             stopTimedMessage(ptm)
@@ -370,9 +370,12 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         #-------------------------
         if (!file.exists(browserpath)) { dir.create(browserpath) }
         savename <- file.path(browserpath, paste0('combined_mode-', mode))
-        if (!file.exists(paste0(savename,'.bed.gz'))) {
+        if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
             trackname <- paste0('combinations, mode-', mode)
             exportCombinedMultivariate(combinedModel, filename=savename, trackname=trackname)
+        }
+        if (!file.exists(paste0(savename, '_peaks.bed.gz'))) {
+            exportCombinedMultivariate(multimodel, filename=savename, what='peaks')
         }
     }
   

@@ -2,9 +2,8 @@
 #' 
 #' Combine combinatorial states from several \code{\link{multiHMM}} objects. Combinatorial states can be combined for objects containing multiple marks (\code{mode='mark'}) or multiple conditions (\code{mode='condition'}).
 #' 
-#' @param multi.hmm.list A named \code{list()} with \code{\link{multiHMM}} objects. The names of the list are used to name the conditions or marks. Alternatively a named character vector with filenames that contain \code{\link{multiHMM}} objects.
+#' @param hmms A named \code{list()} with \code{\link{multiHMM}} objects. The names of the list are used to name the conditions or marks. Alternatively a named character vector with filenames that contain \code{\link{multiHMM}} objects.
 #' @param mode Mode of combination. See \code{\link{Chromstar}} for a description of the \code{mode} parameter.
-#' @param conditions A character vector with conditions in case of \code{mode='full'} or \code{mode='condition'}.
 #' @return A \code{link{combinedMultiHMM}} objects with combinatorial states for each condition.
 #' @author Aaron Taudt
 #' @export
@@ -56,9 +55,10 @@
 #'multimodel.BN <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
 #'
 #'### Combine multivariates ###
-#'comb.model <- combineMultivariates(list(SHR=multimodel.SHR, BN=multimodel.BN), mode='mark')
+#'hmms <- list(multimodel.SHR, multimodel.BN)
+#'comb.model <- combineMultivariates(hmms, mode='mark')
 #'
-combineMultivariates <- function(multi.hmm.list, mode, conditions) {
+combineMultivariates <- function(hmms, mode) {
     
     ## Helper function
     getCondition <- function(combinations, condition) {
@@ -74,109 +74,90 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
     }
       
     if (mode == 'mark') {
-        if (length(multi.hmm.list)==1) {
+        if (length(hmms)==1) {
             warning("Only one object given. Need at least two to combine.")
-            return(multi.hmm.list[[1]])
-        }
-        if (is.null(names(multi.hmm.list))) {
-            stop("'multi.hmm.list' must be named.")
+            return(hmms[[1]])
         }
         ## Load first HMM for coordinates
-        ptm <- startTimedMessage("Processing condition ",names(multi.hmm.list)[1]," ...")
-        hmm <- suppressMessages( loadHmmsFromFiles(multi.hmm.list[[1]], check.class=class.multivariate.hmm)[[1]] )
+        ptm <- startTimedMessage("Processing condition ",1," ...")
+        hmm <- suppressMessages( loadHmmsFromFiles(hmms[[1]], check.class=class.multivariate.hmm)[[1]] )
         bins <- hmm$bins
         mcols(bins) <- NULL
         ## Add combinatorial states and posteriors
         infos <- list()
-        infos[[names(multi.hmm.list)[1]]] <- hmm$info
+        infos[[1]] <- hmm$info
         combs <- list()
-        combs[[names(multi.hmm.list)[1]]] <- hmm$bins$combination
+        combs[[1]] <- hmm$bins$combination
         posteriors <- list()
-        posteriors[[names(multi.hmm.list)[1]]] <- hmm$bins$posteriors
+        posteriors[[1]] <- hmm$bins$posteriors
+        binstates <- list()
+        binstates[[1]] <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
         stopTimedMessage(ptm)
         
-        for (i1 in 2:length(multi.hmm.list)) {
-            ptm <- startTimedMessage("Processing condition ",names(multi.hmm.list)[i1]," ...")
-            hmm <- suppressMessages( loadHmmsFromFiles(multi.hmm.list[[i1]], check.class=class.multivariate.hmm)[[1]] )
-            infos[[names(multi.hmm.list)[i1]]] <- hmm$info
-            combs[[names(multi.hmm.list)[i1]]] <- hmm$bins$combination
-            posteriors[[names(multi.hmm.list)[i1]]] <- hmm$bins$posteriors
+        for (i1 in 2:length(hmms)) {
+            ptm <- startTimedMessage("Processing condition ",i1," ...")
+            hmm <- suppressMessages( loadHmmsFromFiles(hmms[[i1]], check.class=class.multivariate.hmm)[[1]] )
+            infos[[i1]] <- hmm$info
+            combs[[i1]] <- hmm$bins$combination
+            posteriors[[i1]] <- hmm$bins$posteriors
+            binstates[[i1]] <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
             stopTimedMessage(ptm)
         }
-        combs.df <- as(combs,'DataFrame')
         posteriors <- do.call(cbind, posteriors)
         infos <- do.call(rbind, infos)
+        conditions <- unique(infos$condition)
+        states <- factor(bin2dec(do.call(cbind, binstates)))
+        names(states) <- NULL
+        names(combs) <- conditions
+        combs.df <- as(combs,'DataFrame')
         
     } else if (mode == 'condition') {
-        if (length(multi.hmm.list)==1) {
+        if (length(hmms)==1) {
             warning("Only one object given. Need at least two to combine.")
-            return(multi.hmm.list[[1]])
+            return(hmms[[1]])
         }
-        if (is.null(names(multi.hmm.list))) {
-            stop("'multi.hmm.list' must be named.")
-        }
-        ### Get vectors with presence/absence of each mark and condition
+        ### Get posteriors and binary states
         infos <- list()
         posteriors <- list()
-        states <- list()
-        for (mark in names(multi.hmm.list)) {
-            ptm <- startTimedMessage("Processing mark ",mark," ...")
-            i1 <- which(mark==names(multi.hmm.list))
-            ## Load HMM
-            hmm <- suppressMessages( loadHmmsFromFiles(multi.hmm.list[[mark]], check.class=class.multivariate.hmm)[[1]] )
-            infos[[mark]] <- hmm$info
-            posteriors[[mark]] <- hmm$bins$posteriors
-            ## Extract conditions
-            comblevels <- levels(hmm$bins$combination)
-            comblevels <- sub('\\[','', comblevels)
-            comblevels <- sub('\\]','', comblevels)
-            conds.split <- strsplit(as.character(comblevels),'\\+')
-            conds <- conds.split[[which.max(sapply(conds.split, length))]]
-            if (i1==1) {
-                bins <- hmm$bins
-                mcols(bins) <- NULL
-            }
-            if (any(!conds %in% conditions)) {
-                stop(paste0("Not all levels(multi.hmm.list[[",i1,"]]$bins$combination) in 'conditions'."))
-            }
-            ## Make comblevel -> mark mappings and map differential states to mark
-            states[[mark]] <- list()
-            for (cond in conditions) {
-                mapping <- grepl(paste0('\\<',cond,'\\>'), conds.split)
-                names(mapping) <- comblevels
-                states[[mark]][[cond]] <- c('',mark)[mapping[hmm$bins$combination]+1] # no need to coerce to character here because the order is the same
-            }
+        binstates <- list()
+        for (i1 in 1:length(hmms)) {
+            ptm <- startTimedMessage("Processing HMM ",i1," ...")
+            hmm <- suppressMessages( loadHmmsFromFiles(hmms[[i1]], check.class=class.multivariate.hmm)[[1]] )
+            infos[[i1]] <- hmm$info
+            posteriors[[i1]] <- hmm$bins$posteriors
+            binstates[[i1]] <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
             stopTimedMessage(ptm)
         }
-        ### Paste the marks over each condition
-        message("Pasting into combinatorial states")
-        combs <- list()
-        for (cond in conditions) {
-            ptm <- startTimedMessage("  condition ",cond," ...")
-            l <- lapply(states, '[[', cond)
-            l$sep <- '+'
-            comb <- do.call(paste, l)
-            comb <- gsub('\\+{2,}','+', comb)
-            comb <- sub('^\\+','', comb)
-            comb <- sub('\\+$','', comb)
-            comb <- paste0('[', comb, ']')
-            combs[[cond]] <- comb
-            stopTimedMessage(ptm)
-        }
-        combs.df <- as.data.frame(combs)
-        combs.df <- as(combs.df, 'DataFrame')
         posteriors <- do.call(cbind, posteriors)
         infos <- do.call(rbind, infos)
+        conditions <- unique(infos$condition)
+        binstates <- do.call(cbind, binstates)
+        states <- factor(bin2dec(binstates))
+        names(states) <- NULL
 
+        combs <- list()
+        for (condition in conditions) {
+            # Make mapping
+            mapping.df <- stateBrewer(infos[infos$condition==condition,1:5], mode='mark')
+            mapping <- mapping.df$combination
+            names(mapping) <- mapping.df$state
+            # Make combinations
+            binstates.cond <- binstates[,infos$ID[infos$condition==condition]]
+            states.cond <- factor(bin2dec(binstates.cond))
+            combs[[condition]] <- mapping[states.cond]
+        }
+        combs.df <- as(combs.df, 'DataFrame')
+        
     } else if (mode == 'full') {
-        if (length(multi.hmm.list) > 1) {
-            stop("'multi.hmm.list' must contain only one 'multiHMM' object when mode='full'.")
+        if (length(hmms) > 1) {
+            stop("'hmms' must contain only one 'multiHMM' object when mode='full'.")
         }
         
-        hmm <- suppressMessages( loadHmmsFromFiles(multi.hmm.list[[1]], check.class=class.multivariate.hmm)[[1]] )
+        hmm <- suppressMessages( loadHmmsFromFiles(hmms[[1]], check.class=class.multivariate.hmm)[[1]] )
         bins <- hmm$bins
         mcols(bins) <- NULL
         infos <- hmm$info
+        conditions <- unique(infos$condition)
         posteriors <- hmm$bins$posteriors
         combs <- list()
         for (condition in conditions) {
@@ -185,9 +166,6 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
             names(mapping.condition) <- names(hmm$mapping)
           
             combs[[as.character(condition)]] <- mapping.condition[hmm$bins$state]
-            # # Assign levels
-            # comblevels.condition <- unique(getCondition(levels(hmm$bins$combination), condition))
-            # levels(combs[[as.character(condition)]]) <- comblevels.condition
             stopTimedMessage(ptm)
         }
         combs.df <- as.data.frame(combs)
@@ -207,6 +185,7 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
     stopTimedMessage(ptm)
 
     ## Assign combinatorial states
+    bins$state <- states
     mcols(bins)[paste0('combination.',names(combs.df))] <- combs.df
     
     ## Transferring posteriors
@@ -217,10 +196,7 @@ combineMultivariates <- function(multi.hmm.list, mode, conditions) {
 
     ### Redo the segmentation for all conditions combined
     ptm <- startTimedMessage("Redoing segmentation for all conditions combined ...")
-    mcols(bins)$state <- as.numeric(do.call(paste0, lapply(as.list(combs.df), as.integer)))
     segments <- suppressMessages( multivariateSegmentation(bins, column2collapseBy='state') )
-    mcols(segments)$state <- NULL
-    mcols(bins)$state <- NULL
     names(mcols(segments)) <- setdiff(names(mcols(bins)), 'posteriors')
     stopTimedMessage(ptm)
     

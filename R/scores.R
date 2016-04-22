@@ -11,8 +11,8 @@ differentialScore <- function(posteriors, info) {
     if (is.null(posteriors) | is.null(info)) {
         return(NULL)
     }
-    info.rep <- split(info, info$replicate)[[1]]
-    info.mark <- split(info.rep, info.rep$mark)
+    info.rep <- split(info, as.character(info$replicate))[[1]]
+    info.mark <- split(info.rep, as.character(info.rep$mark))
     differential.scores <- list()
     for (mark in names(info.mark)) {
         if (nrow(info.mark[[mark]]) > 0) {

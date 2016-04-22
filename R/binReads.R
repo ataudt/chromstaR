@@ -113,6 +113,7 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
     chroms2use <- intersect(chromosomes, seqlevels(data))
 
     ## Select only desired chromosomes
+    ptm <- startTimedMessage("Subsetting specified chromosomes ...")
     data <- data[seqnames(data) %in% chroms2use]
     data <- keepSeqlevels(data, as.character(unique(seqnames(data))))
     ## Drop seqlevels where seqlength is NA
@@ -122,6 +123,7 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
     if (length(na.seqlevels) > 0) {
         warning("Dropped seqlevels because no length information was available: ", paste0(na.seqlevels, collapse=', '))
     }
+    stopTimedMessage(ptm)
  
     ### Return fragments if desired ###
     if (reads.store) {
@@ -184,9 +186,11 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
     bins.list <- c(bins.list, bins)
 
     ### Loop over all binsizes ###
+    ptm <- startTimedMessage("Splitting into strands ...")
     data.plus <- data[strand(data)=='+']
     data.minus <- data[strand(data)=='-']
     data.star <- data[strand(data)=='*']
+    ptm <- stopTimedMessage(ptm)
     binned.data.list <- list()
     for (ibinsize in 1:length(bins.list)) {
         binsize <- as.numeric(names(bins.list)[ibinsize])

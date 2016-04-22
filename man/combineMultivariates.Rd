@@ -4,14 +4,12 @@
 \alias{combineMultivariates}
 \title{Combine combinatorial states from several Multivariates}
 \usage{
-combineMultivariates(multi.hmm.list, mode, conditions)
+combineMultivariates(hmms, mode)
 }
 \arguments{
-\item{multi.hmm.list}{A named \code{list()} with \code{\link{multiHMM}} objects. The names of the list are used to name the conditions or marks. Alternatively a named character vector with filenames that contain \code{\link{multiHMM}} objects.}
+\item{hmms}{A named \code{list()} with \code{\link{multiHMM}} objects. The names of the list are used to name the conditions or marks. Alternatively a named character vector with filenames that contain \code{\link{multiHMM}} objects.}
 
 \item{mode}{Mode of combination. See \code{\link{Chromstar}} for a description of the \code{mode} parameter.}
-
-\item{conditions}{A character vector with conditions in case of \code{mode='full'} or \code{mode='condition'}.}
 }
 \value{
 A \code{link{combinedMultiHMM}} objects with combinatorial states for each condition.
@@ -67,7 +65,8 @@ for (i1 in 1:length(binned.data)) {
 multimodel.BN <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
 
 ### Combine multivariates ###
-comb.model <- combineMultivariates(list(SHR=multimodel.SHR, BN=multimodel.BN), mode='mark')
+hmms <- list(multimodel.SHR, multimodel.BN)
+comb.model <- combineMultivariates(hmms, mode='mark')
 
 }
 \author{
