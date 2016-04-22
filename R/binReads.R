@@ -74,7 +74,11 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
         }
     } else {
         info <- NULL
-        ID <- basename(file)
+        if (format=='GRanges') {
+            ID <- 'GRanges'
+        } else {
+            ID <- basename(file)
+        }
     }
 
     ## Create outputfolder.binned if not exists

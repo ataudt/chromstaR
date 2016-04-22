@@ -12,8 +12,10 @@ mergeChroms <- function(multi.hmm.list, filename=NULL) {
     multi.hmm.list <- loadHmmsFromFiles(multi.hmm.list, check.class=class.multivariate.hmm)
     ## Check if all models have the same ID
     same.IDs <- Reduce('|', unlist(lapply(multi.hmm.list, function(x) { x$info$ID == multi.hmm.list[[1]]$info$ID })))
-    if (!same.IDs) {
-        stop("Will not merge the multivariate HMMs because their IDs differ.")
+    if (!is.null(same.IDs)) {
+        if (!same.IDs) {
+            stop("Will not merge the multivariate HMMs because their IDs differ.")
+        }
     }
         
     ## Check if posteriors are present everywhere

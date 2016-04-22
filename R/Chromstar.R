@@ -151,17 +151,9 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
             })
         }
     }
-#     if (numcpu > 1) {
-#         ptm <- startTimedMessage("Binning the data ...")
-#         temp <- foreach (file = datafiles, .packages=c("chromstaR")) %dopar% {
-#             parallel.helper(file)
-#         }
-#         stopTimedMessage(ptm)
-#     } else {
-        temp <- foreach (file = datafiles, .packages=c("chromstaR")) %do% {
-            parallel.helper(file)
-        }
-#     }
+    for (file in datafiles) {
+        parallel.helper(file)
+    }
   
   
     #==============================
@@ -211,7 +203,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         }
         stopTimedMessage(ptm)
     } else {
-        temp <- foreach (file = files, .packages=c("chromstaR")) %do% {
+        for (file in files) {
             parallel.helper(file)
         }
     }

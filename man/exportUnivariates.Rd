@@ -37,7 +37,7 @@ data(rn4_chrominfo)
 binned <- binReads(bedfile, assembly=rn4_chrominfo, binsize=1000,
                   chromosomes='chr12')
 ## Fit the univariate Hidden Markov Model
-hmm <- callPeaksUnivariate(binned, ID='example_H3K27me3', max.time=60, eps=1)
+hmm <- callPeaksUnivariate(binned, max.time=60, eps=1)
 ## Export
 exportUnivariates(list(hmm), filename=tempfile(), what=c('peaks','counts'))
 

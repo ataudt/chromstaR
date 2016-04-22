@@ -8,7 +8,7 @@
 #'
 differentialScore <- function(posteriors, info) {
 
-    if (is.null(posteriors)) {
+    if (is.null(posteriors) | is.null(info)) {
         return(NULL)
     }
     info.rep <- split(info, info$replicate)[[1]]

@@ -26,18 +26,17 @@ Export read counts as genome browser viewable file
 Export read counts from \code{\link{binned.data}} as a file which can be uploaded into a genome browser. Read counts are exported in WIGGLE format (.wig.gz).
 }
 \examples{
-## Get example BED-files with ChIP-seq reads for H3K36me3
-# in 7 different brain tissues (chr22)
-bedfiles <- list.files(system.file(file.path("extdata","brain"),
-                      package="chromstaR"), full=TRUE)
-## Bin the data into bin size 1000bp
-binned.data.list <- list()
-for (bedfile in bedfiles) {
- binned.data.list[[bedfile]] <- bed2binned(bedfile, assembly='hg19', binsize=1000,
-                                           save.as.RData=FALSE)
-}
+## Get an example BED file
+bedfile <- system.file("extdata", "euratrans",
+                      "lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
+                       package="chromstaRData")
+## Bin the BED file into bin size 1000bp
+data(rn4_chrominfo)
+binned <- binReads(bedfile, assembly=rn4_chrominfo, binsize=1000,
+                  chromosomes='chr12')
 ## Export the binned read counts
-\donttest{exportBinnedData(binned.data.list, filename='chromstaR-example_binned.data')}
+exportBinnedData(list(binned), filename=tempfile())
+
 }
 \author{
 Aaron Taudt

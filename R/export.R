@@ -26,7 +26,7 @@
 #'binned <- binReads(bedfile, assembly=rn4_chrominfo, binsize=1000,
 #'                   chromosomes='chr12')
 #'## Fit the univariate Hidden Markov Model
-#'hmm <- callPeaksUnivariate(binned, ID='example_H3K27me3', max.time=60, eps=1)
+#'hmm <- callPeaksUnivariate(binned, max.time=60, eps=1)
 #'## Export
 #'exportUnivariates(list(hmm), filename=tempfile(), what=c('peaks','counts'))
 #'
@@ -488,20 +488,19 @@ exportMultivariateReadCounts <- function(multi.hmm, filename, header=TRUE, separ
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
-#' @examples
-#'## Get example BED-files with ChIP-seq reads for H3K36me3
-#' # in 7 different brain tissues (chr22)
-#'bedfiles <- list.files(system.file(file.path("extdata","brain"),
-#'                       package="chromstaR"), full=TRUE)
-#'## Bin the data into bin size 1000bp
-#'binned.data.list <- list()
-#'for (bedfile in bedfiles) {
-#'  binned.data.list[[bedfile]] <- bed2binned(bedfile, assembly='hg19', binsize=1000,
-#'                                            save.as.RData=FALSE)
-#'}
-#'## Export the binned read counts
-#'\donttest{exportBinnedData(binned.data.list, filename='chromstaR-example_binned.data')}
 #' @export
+#' @examples
+#'## Get an example BED file
+#'bedfile <- system.file("extdata", "euratrans",
+#'                       "lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
+#'                        package="chromstaRData")
+#'## Bin the BED file into bin size 1000bp
+#'data(rn4_chrominfo)
+#'binned <- binReads(bedfile, assembly=rn4_chrominfo, binsize=1000,
+#'                   chromosomes='chr12')
+#'## Export the binned read counts
+#'exportBinnedData(list(binned), filename=tempfile())
+#'
 exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.files=FALSE) {
 
     ## Load data

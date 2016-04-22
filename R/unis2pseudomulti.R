@@ -22,8 +22,7 @@
 #'# Obtain the univariate fits
 #'models <- list()
 #'for (i1 in 1:length(binned.data)) {
-#'  models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], ID=names(binned.data)[i1],
-#'                                      max.time=60, eps=1)
+#'  models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], max.time=60, eps=1)
 #'}
 #'## Combine the univariate HMMs without fitting a multivariate HMM
 #'names(models) <- c('H3K27me3','H3K4me3')
@@ -47,15 +46,14 @@ unis2pseudomulti <- function(uni.hmm.list) {
     bins$counts <- NULL
     bins$state <- NULL
     numbins = length(uni.hmm.list[[1]]$bins)
-    IDs <- sapply(uni.hmm.list, function(x) { x$info$ID })
-    names(IDs) <- NULL
+    info <- do.call(rbind, lapply(uni.hmm.list, function(x) { x$info }))
     distributions = lapply(uni.hmm.list,"[[","distributions")
     weights = lapply(uni.hmm.list,"[[","weights")
 
     # Extract the reads
     ptm <- startTimedMessage("Extracting read counts from uni.hmm.list...")
     reads = matrix(NA, ncol=nummod, nrow=numbins)
-    colnames(reads) <- IDs
+    colnames(reads) <- info$ID
     for (imod in 1:nummod) {
         reads[,imod] = uni.hmm.list[[imod]]$bins$counts
     }
@@ -102,7 +100,8 @@ unis2pseudomulti <- function(uni.hmm.list) {
 
     ## Return multi.hmm
     result <- list()
-    result$IDs <- IDs
+    result$info <- info
+    rownames(result$info) <- NULL
     result$bins <- bins
     ## Segmentation
         df <- as.data.frame(result$bins)
@@ -122,7 +121,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
         result$transitionProbs <- A.estimated
         # Distributions
         result$distributions <- distributions
-        names(result$distributions) <- IDs
+        names(result$distributions) <- info$ID
     ## Convergence info
         convergenceInfo <- list(eps=Inf, loglik=Inf, loglik.delta=Inf, num.iterations=Inf, time.sec=Inf)
         result$convergenceInfo <- convergenceInfo

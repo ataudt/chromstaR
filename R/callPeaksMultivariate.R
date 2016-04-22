@@ -111,13 +111,14 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
             }
             stopTimedMessage(ptm)
         } else {
-            models <- foreach (chrom = chromosomes, .packages='chromstaR') %do% {
+            models <- list()
+            for (chrom in chromosomes) {
                 ptm <- startTimedMessage("Chromosome = ", chrom, "\n")
                 bins <- p$bins[seqnames(p$bins)==chrom]
                 model <- suppressMessages( runMultivariate(bins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, correlationMatrix=p$correlationMatrix, correlationMatrixInverse=p$correlationMatrixInverse, determinant=p$determinant, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, post.cutoff=post.cutoff, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity) )
                 message("Time spent for chromosome = ", chrom, ":", appendLF=FALSE)
                 stopTimedMessage(ptm)
-                model
+                models[[chrom]] <- model
             }
         }
 
@@ -332,6 +333,7 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
         binary_statesmatrix[,i1] <- c(FALSE,FALSE,TRUE)[hmm$bins$state] # F,F,T corresponds to levels 'zero-inflation','unmodified','modified'
     }
     info <- do.call(rbind, info)
+    rownames(info) <- NULL
     bins$counts <- counts
     colnames(bins$counts) <- info$ID
     maxcounts <- max(bins$counts)
