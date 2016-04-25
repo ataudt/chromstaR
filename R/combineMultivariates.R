@@ -135,6 +135,9 @@ combineMultivariates <- function(hmms, mode) {
         states <- factor(bin2dec(binstates))
         names(states) <- NULL
 
+        bins <- hmm$bins
+        mcols(bins) <- NULL
+
         combs <- list()
         for (condition in conditions) {
             # Make mapping
@@ -146,6 +149,7 @@ combineMultivariates <- function(hmms, mode) {
             states.cond <- factor(bin2dec(binstates.cond))
             combs[[condition]] <- mapping[states.cond]
         }
+        combs.df <- as.data.frame(combs) # get factors instead of characters
         combs.df <- as(combs.df, 'DataFrame')
         
     } else if (mode == 'full') {
