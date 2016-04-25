@@ -18,7 +18,7 @@ exportGRanges(gr, trackname, filename, header = TRUE, append = FALSE,
 
 \item{append}{Whether or not to append to an existing file.}
 
-\item{scorecol}{A character specifying the column that is used as score-column.}
+\item{scorecol}{A character specifying the column that is used as score-column. The score will be re-adjusted from interval [0,1] to [0,1000] for compatibility with the UCSC genome browser convention.}
 }
 \value{
 \code{NULL}

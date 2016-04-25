@@ -762,7 +762,7 @@ exportCombinedMultivariateCalls <- function(hmm, filename, separate.tracks=TRUE,
 #' @param filename The name of the file that will be written. The ending ".bed.gz". Any existing file will be overwritten.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @param append Whether or not to append to an existing file.
-#' @param scorecol A character specifying the column that is used as score-column.
+#' @param scorecol A character specifying the column that is used as score-column. The score will be re-adjusted from interval [0,1] to [0,1000] for compatibility with the UCSC genome browser convention.
 #' @return \code{NULL}
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
 #' @importFrom utils write.table
