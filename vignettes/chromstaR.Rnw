@@ -392,7 +392,7 @@ plotExpression(model, expression.SHR, return.marks=TRUE) +
 @
 \end{scriptsize}
 
-\subsection{Task 4: Finding differences between combinatorial chromatin states}
+\subsection{\label{sec:Task4}Task 4: Finding differences between combinatorial chromatin states}
 
 Consider bivalent promoters defined by [H3K4me3+H3K27me3] at two different developmental stages, or in two different strains or tissues. This is an example where one is interested in \emph{differences} between \emph{combinatorial states}. The following example demonstrates how such an analysis can be done with \Rpackage{chromstaR}. We use a data set from the Euratrans project (downsampled to chr12) to find differences in bivalent promoters between brown norway (BN) and spontaneous hypertensive rat (SHR) in left-ventricle (lv) heart tissue.
 
@@ -444,8 +444,8 @@ model <- get(load(file.path(outputfolder,'multivariate-combined',
 ## Obtain all genomic regions where the two tissues have different states
 segments <- model$segments
 diff.segments <- segments[segments$combination.SHR != segments$combination.BN]
-# Let's be stringent with the differences and get only clear ones
-diff.segments <- diff.segments[diff.segments$differential.score > 0.99]
+# Let's be strict with the differences and get only clear ones
+diff.segments <- diff.segments[diff.segments$differential.score > 0.999]
 exportGRanges(diff.segments, trackname='differential_chromatin_states',
               filename=tempfile(), scorecol='differential.score')
 ## Obtain all genomic regions where we find a bivalent promoter in BN but not in SHR
@@ -460,6 +460,32 @@ print(model$frequencies)
 \end{scriptsize}
 
 \section{\label{sec:faq}FAQ}
+
+\subsection{The peak calls are too lenient. Can I adjust the strictness of the peak calling?}
+
+The strictness of the peak calling can be controlled with a posterior cutoff. The Hidden Markov Model gives posterior probabilities for each peak, and based on these probabilites the model decides if a peak is present or not by picking the state with the highest probability. This way of peak calling leads to very lenient peak calls, and for some applications it may be desirable to obtain only very clear peaks. This can be achieved by setting a posterior cutoff. To follow the below example, please first run step 1 and 2 from section~\ref{sec:Task4}. !!Note that in general more peaks are obtained with a stricter cutoff, as this will lead to the split-up of previously broader peaks into several smaller, more well defined peaks.
+
+\begin{scriptsize}
+<<faq_postcutoff, results='markup', message=FALSE, eval=TRUE>>=
+model <- get(load(file.path(outputfolder,'multivariate-combined',
+                            'combined_mode-mark.RData')))
+# Set a strict cutoff close to 1
+model2 <- changePostCutoff(model, post.cutoff=0.999)
+## Compare the number and width of peaks before and after cutoff adjustment
+length(model$segments); mean(width(model$segments))
+length(model2$segments); mean(width(model2$segments))
+@
+\end{scriptsize}
+
+\subsection{The combinatorial differences that chromstaR gives me are not convincing. Is there a way to restrict the results to a more convincing set?}
+
+You were interested in combinatorial state differences as in section~\ref{sec:Task4} and checked the results in a genome browser. You found that some differences are convincing by eye and some are not. There are several possibilities to explore:
+\begin{enumerate}
+\item You can play with the ``differential.score'' (see section~\ref{sec:Task4}, step 3) and export only differences with a score close to 1.
+\item Run \Rfunction{Chromstar} with mode='mark' or mode='condition' and see if the results improve.
+\item Check for bad replicates that are very different from the rest and exclude them prior to the analysis.
+\end{enumerate}
+
 
 \section{Session Info}
 \begin{scriptsize}
