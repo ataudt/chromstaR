@@ -184,7 +184,7 @@ plotBinnedDataHistogram <- function(binned.data, chromosomes=NULL, start=NULL, e
 # =================================================================
 # Plot a read histogram with univariate fits for a multivariate HMM
 # =================================================================
-plotMultivariateHistograms <- function(multi.hmm) {
+plotMultivariateHistograms <- function(multi.hmm, ...) {
 
     ## Make fake uni.hmm and plot
     binmapping <- dec2bin(names(multi.hmm$mapping))
@@ -200,7 +200,7 @@ plotMultivariateHistograms <- function(multi.hmm) {
         uni.hmm$weights <- multi.hmm$weights.univariate[[i1]]
         uni.hmm$distributions <- multi.hmm$distributions[[i1]]
         class(uni.hmm) <- class.univariate.hmm
-        ggplts[[i1]] <- plotUnivariateHistogram(uni.hmm)
+        ggplts[[i1]] <- plotUnivariateHistogram(uni.hmm, ...)
     }
     
     return(ggplts)

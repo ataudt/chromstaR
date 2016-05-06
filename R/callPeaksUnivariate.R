@@ -86,7 +86,7 @@ callPeaksUnivariate <- function(binned.data, prefit.on.chr=NULL, short=TRUE, eps
 #'
 #' Fit a HMM to a ChIP-seq sample to determine the modification state of genomic regions, e.g. call peaks in the sample.
 #'
-#' The Hidden Markov Model which is used to classify the bins uses 3 states: state 'zero-inflation' with a delta function as emission densitiy (only zero read counts), 'unmodified' and 'modified' with Negative Binomials as emission densities. A Baum-Welch algorithm is employed to estimate the parameters of the distributions. See our paper TODO:insert paper for a detailed description of the method.
+#' The Hidden Markov Model which is used to classify the bins uses 3 states: state 'zero-inflation' with a delta function as emission densitiy (only zero read counts), 'unmodified' and 'modified' with Negative Binomials as emission densities. A Baum-Welch algorithm is employed to estimate the parameters of the distributions. Please refer to our manuscript at \url{http://dx.doi.org/10.1101/038612} for a detailed description of the method.
 #'
 #' @param binned.data A \link{GRanges} object with binned read counts.
 #' @param eps Convergence threshold for the Baum-Welch algorithm.

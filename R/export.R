@@ -760,9 +760,10 @@ exportCombinedMultivariateCalls <- function(hmm, filename, separate.tracks=TRUE,
 #' @param gr A \code{\link{GRanges}} object.
 #' @param trackname The name that will be used as track name and description in the header.
 #' @param filename The name of the file that will be written. The ending ".bed.gz". Any existing file will be overwritten.
+#' @param namecol A character specifying the column that is used as name-column.
+#' @param scorecol A character specifying the column that is used as score-column. The score will be re-adjusted from interval [0,1] to [0,1000] for compatibility with the UCSC genome browser convention.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @param append Whether or not to append to an existing file.
-#' @param scorecol A character specifying the column that is used as score-column. The score will be re-adjusted from interval [0,1] to [0,1000] for compatibility with the UCSC genome browser convention.
 #' @return \code{NULL}
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
 #' @importFrom utils write.table
@@ -782,7 +783,7 @@ exportCombinedMultivariateCalls <- function(hmm, filename, separate.tracks=TRUE,
 #'exportGRanges(binned[binned$counts > 20], filename=tempfile(),
 #'              trackname='read counts above 20')
 #'
-exportGRanges <- function(gr, trackname, filename, header=TRUE, append=FALSE, scorecol='score') {
+exportGRanges <- function(gr, trackname, filename, namecol='combination', scorecol='score', header=TRUE, append=FALSE) {
 
     if (length(gr)==0) {
         warning("Supplied GRanges object contains no ranges.")
@@ -828,7 +829,11 @@ exportGRanges <- function(gr, trackname, filename, header=TRUE, append=FALSE, sc
         gr$score <- mcols(gr)[,scorecol]
     }
     regions <- as.data.frame(gr)[c('chromosome','start','end','score')]
-    regions$name <- paste0('region_', 1:nrow(regions))
+    if (! namecol %in% names(mcols(gr))) {
+        regions$name <- paste0('region_', 1:nrow(regions))
+    } else {
+        regions$name <- mcols(gr)[,namecol]
+    }
     regions <- regions[c('chromosome','start','end','name','score')]
     # Make score integer
     regions$score <- round(regions$score*1000)
