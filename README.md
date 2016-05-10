@@ -26,3 +26,7 @@ To install the *development* version from Github, follow the steps given below. 
 	 install_git("git://github.com/ataudt/chromstaRData.git", branch = "master")  
 	 install_git("git://github.com/ataudt/chromstaR.git", branch = "master")
 
+How to use chromstaR
+--------------------
+
+Please refer to the vignette at https://github.com/ataudt/chromstaR/blob/master/vignettes/chromstaR.pdf for tutorials on all chromstaR features.
