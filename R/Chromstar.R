@@ -18,6 +18,8 @@
 #' }
 #' @param max.states The maximum number of states to use in the multivariate part. If set to \code{NULL}, the maximum number of theoretically possible states is used. CAUTION: This can be very slow or crash if you have too many states. \pkg{\link{chromstaR}} has a built in mechanism to select the best states in case that less states than theoretically possible are specified.
 #' @param per.chrom If set to \code{TRUE} chromosomes will be treated separately in the multivariate part. This tremendously speeds up the calculation but results might be noisier as compared to \code{per.chrom=FALSE}, where all chromosomes are concatenated for the HMM.
+#' @param eps.univariate Convergence threshold for the univariate Baum-Welch algorithm.
+#' @param eps.multivariate Convergence threshold for the multivariate Baum-Welch algorithm.
 #' @return \code{NULL}
 #' @import foreach
 #' @import doParallel
@@ -38,9 +40,9 @@
 #'## Run ChromstaR
 #'Chromstar(inputfolder, experiment.table=experiment_table_SHR,
 #'          outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
-#'          prefit.on.chr='chr12', mode='mark', eps=1)
+#'          prefit.on.chr='chr12', mode='mark', eps.univariate=1, eps.multivariate=1)
 #'
-Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps=0.01, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=TRUE, mode='mark', max.states=128, per.chrom=TRUE) {
+Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps.univariate=0.1, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=TRUE, mode='mark', max.states=128, per.chrom=TRUE, eps.multivariate=0.01) {
   
     #========================
     ### General variables ###
@@ -61,7 +63,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     total.time <- proc.time()
   
     ## Put options into list and merge with conf
-    params <- list(numCPU=numCPU, binsize=binsize, assembly=assembly, chromosomes=chromosomes, remove.duplicate.reads=remove.duplicate.reads, min.mapq=min.mapq, prefit.on.chr=prefit.on.chr, eps=eps, max.time=max.time, max.iter=max.iter, read.cutoff.absolute=read.cutoff.absolute, keep.posteriors=keep.posteriors, mode=mode, max.states=max.states, per.chrom=per.chrom)
+    params <- list(numCPU=numCPU, binsize=binsize, assembly=assembly, chromosomes=chromosomes, remove.duplicate.reads=remove.duplicate.reads, min.mapq=min.mapq, prefit.on.chr=prefit.on.chr, eps.univariate=eps.univariate, max.time=max.time, max.iter=max.iter, read.cutoff.absolute=read.cutoff.absolute, keep.posteriors=keep.posteriors, mode=mode, max.states=max.states, per.chrom=per.chrom, eps.multivariate=eps.multivariate)
     conf <- c(conf, params[setdiff(names(params),names(conf))])
     
     ## Helpers
@@ -181,7 +183,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         savename <- file.path(unipath, basename(file))
         if (!file.exists(savename)) {
             tC <- tryCatch({
-                model <- callPeaksUnivariate(file, eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], read.cutoff.absolute=conf[['read.cutoff.absolute']], prefit.on.chr=conf[['prefit.on.chr']], keep.posteriors=FALSE)
+                model <- callPeaksUnivariate(file, eps=conf[['eps.univariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], read.cutoff.absolute=conf[['read.cutoff.absolute']], prefit.on.chr=conf[['prefit.on.chr']], keep.posteriors=FALSE)
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(model, file=savename)
                 stopTimedMessage(ptm)
@@ -192,8 +194,10 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         ## Plot distributions
         savename.pdf <- file.path(uniplotpath, paste0(basename(file),'.pdf'))
         if (!file.exists(savename.pdf)) {
+            ptm <- startTimedMessage("Plotting to file ", savename.pdf, " ...")
             ggplt <- graphics::plot(savename)
             ggsave(filename=savename.pdf, plot=ggplt, width=7, height=5)
+            stopTimedMessage(ptm)
         }
     }
     if (numcpu > 1) {
@@ -249,7 +253,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         if (!file.exists(savename)) {
             files <- file.path(unipath, filenames)
             states <- stateBrewer(exp.table, mode=mode)
-            multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
+            multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
             ptm <- startTimedMessage("Saving to file ", savename, " ...")
             save(multimodel, file=savename)
             stopTimedMessage(ptm)
@@ -281,7 +285,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 mask <- exp.table[,'condition'] == condition
                 files <- file.path(unipath, filenames)[mask]
                 states <- stateBrewer(exp.table[mask,], mode=mode)
-                multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
+                multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(multimodel, file=savename)
                 stopTimedMessage(ptm)
@@ -314,7 +318,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 mask <- exp.table[,'mark'] == mark
                 files <- file.path(unipath, filenames)[mask]
                 states <- stateBrewer(exp.table[mask,], mode=mode)
-                multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
+                multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(multimodel, file=savename)
                 stopTimedMessage(ptm)

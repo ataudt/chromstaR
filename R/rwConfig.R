@@ -78,11 +78,11 @@ writeConfig <- function(conf, configfile) {
         utils::write.table(conf[['assembly']], file=file.path(dirname(configfile),'chrominfo.tsv'), row.names=FALSE, quote=FALSE, sep='\t')
     }
     cat("\n[Univariate]\n", file=f)
-    for (i1 in c('prefit.on.chr', 'eps', 'max.time', 'max.iter', 'read.cutoff.absolute')) {
+    for (i1 in c('prefit.on.chr', 'eps.univariate', 'max.time', 'max.iter', 'read.cutoff.absolute')) {
         cat(i1," = ",formatstring(conf[[i1]]),"\n", file=f)
     }
     cat("\n[Multivariate]\n", file=f)
-    for (i1 in c('mode', 'max.states', 'per.chrom', 'keep.posteriors')) {
+    for (i1 in c('mode', 'eps.multivariate', 'max.states', 'per.chrom', 'keep.posteriors')) {
         cat(i1," = ",formatstring(conf[[i1]]),"\n", file=f)
     }
     close(f, type='w')

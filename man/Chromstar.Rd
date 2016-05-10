@@ -7,9 +7,9 @@
 Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
   numCPU = 1, binsize = 1000, assembly = NULL, chromosomes = NULL,
   remove.duplicate.reads = TRUE, min.mapq = 10, prefit.on.chr = NULL,
-  eps = 0.01, max.time = NULL, max.iter = 5000,
+  eps.univariate = 0.1, max.time = NULL, max.iter = 5000,
   read.cutoff.absolute = 500, keep.posteriors = TRUE, mode = "mark",
-  max.states = 128, per.chrom = TRUE)
+  max.states = 128, per.chrom = TRUE, eps.multivariate = 0.01)
 }
 \arguments{
 \item{inputfolder}{Folder with either BAM or BED files.}
@@ -34,7 +34,7 @@ Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
 
 \item{prefit.on.chr}{A chromosome that is used to pre-fit the Hidden Markov Model. Set to \code{NULL} if you don't want to prefit but use the whole genome instead.}
 
-\item{eps}{Convergence threshold for the Baum-Welch algorithm.}
+\item{eps.univariate}{Convergence threshold for the univariate Baum-Welch algorithm.}
 
 \item{max.time}{The maximum running time in seconds for the Baum-Welch algorithm. If this time is reached, the Baum-Welch will terminate after the current iteration finishes. The default \code{NULL} is no limit.}
 
@@ -54,6 +54,8 @@ Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
 \item{max.states}{The maximum number of states to use in the multivariate part. If set to \code{NULL}, the maximum number of theoretically possible states is used. CAUTION: This can be very slow or crash if you have too many states. \pkg{\link{chromstaR}} has a built in mechanism to select the best states in case that less states than theoretically possible are specified.}
 
 \item{per.chrom}{If set to \code{TRUE} chromosomes will be treated separately in the multivariate part. This tremendously speeds up the calculation but results might be noisier as compared to \code{per.chrom=FALSE}, where all chromosomes are concatenated for the HMM.}
+
+\item{eps.multivariate}{Convergence threshold for the multivariate Baum-Welch algorithm.}
 }
 \value{
 \code{NULL}
@@ -74,7 +76,7 @@ data(rn4_chrominfo)
 ## Run ChromstaR
 Chromstar(inputfolder, experiment.table=experiment_table_SHR,
          outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
-         prefit.on.chr='chr12', mode='mark', eps=1)
+         prefit.on.chr='chr12', mode='mark', eps.univariate=1, eps.multivariate=1)
 
 }
 
