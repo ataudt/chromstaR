@@ -27,8 +27,7 @@ readConfig <- function(configfile) {
     data <- data[data$argument!="",]
 
     configlist <- list() 
-    ToParse <- paste0("configlist$", data$argument, " <- ", data$value)
-#   ToParse  <- paste0("configlist$", data$section, "$",  data$argument, " <- ", data$value) # with sections
+    ToParse <- paste0("configlist <- list(", paste(paste(data$argument, data$value, sep="="), collapse=', '), ")")
 
     eval(parse(text=ToParse)) 
 
