@@ -117,7 +117,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     ## Set up the directory structure ##
     binpath <- file.path(outputfolder, 'binned')
     unipath <- file.path(outputfolder, 'univariate')
-    pseudounipath <- file.path(outputfolder, 'univariate-combined')
+    reppath <- file.path(outputfolder, 'replicates')
     plotpath <- file.path(outputfolder, 'plots')
     uniplotpath <- file.path(plotpath, 'univariate-distributions')
     multipath <- file.path(outputfolder, 'multivariate')
@@ -125,6 +125,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     browserpath <- file.path(outputfolder, 'browserfiles')
     if (!file.exists(outputfolder)) { dir.create(outputfolder) }
     if (!file.exists(plotpath)) { dir.create(plotpath) }
+    if (!file.exists(browserpath)) { dir.create(browserpath) }
     
     ## Make a copy of the conf file
     writeConfig(conf, configfile=file.path(outputfolder, 'chromstaR.config'))
@@ -215,23 +216,32 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
   
   
     #================================
-    ### Pseudo multivariate       ###
+    ### Replicates                ###
     #================================
-    messageU("Combining univariate peaks")
-    files <- file.path(unipath, filenames)
-    pseudomulti <- unis2pseudomulti(files)
+    messageU("Analyzing replicates")
+    if (!file.exists(reppath)) { dir.create(reppath) }
     
-    #-------------------------
-    ## Export browser files ##
-    #-------------------------
-    if (!file.exists(browserpath)) { dir.create(browserpath) }
-    savename <- file.path(browserpath, paste0('univariate'))
-    if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
-        trackname <- paste0('combinations')
-        exportMultivariate(pseudomulti, filename=savename, trackname=trackname, what='combinations')
-    }
-    if (!file.exists(paste0(savename, '_peaks.bed.gz'))) {
-        exportMultivariate(pseudomulti, filename=savename, what='peaks')
+    files <- file.path(unipath, filenames)
+    names(files) <- paste0(exp.table$mark, '-', exp.table$condition)
+    markconditions <- unique(names(files))
+    for (markcond in markconditions) {
+        savename <- file.path(reppath, paste0(markcond, '_binsize', binsize, '.RData'))
+        if (!file.exists(savename)) {
+            mask <- names(files) == markcond
+            repfiles <- files[mask]
+            states <- stateBrewer(exp.table[mask,], mode='mark')
+            repmodel <- callPeaksMultivariate(repfiles, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
+            ptm <- startTimedMessage("Saving to file ", savename, " ...")
+            save(repmodel, file=savename)
+            stopTimedMessage(ptm)
+        } else {
+            repmodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
+        }
+        ## Export browser files
+        savename <- file.path(browserpath, paste0('replicates-combined_', markcond))
+        if (!file.exists(paste0(savename, '_peaks.bed.gz'))) {
+            exportMultivariate(repmodel, filename=savename, what='peaks')
+        }
     }
     
 

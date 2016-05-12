@@ -12,6 +12,7 @@
 #' @param keep.posteriors If set to \code{TRUE}, posteriors will be available in the output. This is useful to change the post.cutoff later, but increases the necessary disk space to store the result immense.
 #' @param num.threads Number of threads to use. Setting this to >1 may give increased performance.
 #' @param max.distance This number is used as a cutoff to group replicates based on their distance matrix. The lower this number, the more similar replicates have to be to be grouped together.
+#' @param per.chrom If \code{per.chrom=TRUE} chromosomes will be treated separately. This tremendously speeds up the calculation but results might be noisier as compared to \code{per.chrom=FALSE}, where all chromosomes are concatenated for the HMM.
 #' @return Output is a \code{\link{multiHMM}} object with additional entry \code{replicateInfo}. If only one \code{\link{uniHMM}} was given as input, a simple list() with the \code{replicateInfo} is returned.
 #' @seealso \code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksMultivariate}}
 #' @importFrom stats hclust cutree dist
@@ -40,7 +41,7 @@
 #'# Obtain peak calls considering information from all replicates
 #'multi.model <- callPeaksReplicates(models, force.equal=TRUE, max.time=60, eps=1)
 #'
-callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=0.01, max.iter=NULL, max.time=NULL, keep.posteriors=FALSE, num.threads=1, max.distance=0.2) {
+callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=0.01, max.iter=NULL, max.time=NULL, keep.posteriors=FALSE, num.threads=1, max.distance=0.2, per.chrom=TRUE) {
 
     ## Enable reanalysis of multivariate HMM
     if (class(hmm.list)==class.multivariate.hmm) {
@@ -79,10 +80,10 @@ callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=
             max.states <- min(max.states, 2^length(hmms))
             if (force.equal) {
                 states2use <- state.brewer(rep(paste0('r.',paste(ids, collapse='-')),length(hmms)))
-                multimodel <- callPeaksMultivariate(hmms, use.states=states2use, eps=eps, max.iter=max.iter, max.time=max.time, keep.posteriors=keep.posteriors, num.threads=num.threads)
+                multimodel <- callPeaksMultivariate(hmms, use.states=states2use, eps=eps, max.iter=max.iter, max.time=max.time, keep.posteriors=keep.posteriors, num.threads=num.threads, per.chrom=per.chrom)
             } else {
                 states2use <- state.brewer(paste0('x.', ids))
-                multimodel <- callPeaksMultivariate(hmms, use.states=states2use, max.states=max.states, eps=eps, max.iter=max.iter, max.time=max.time, keep.posteriors=keep.posteriors, num.threads=num.threads)
+                multimodel <- callPeaksMultivariate(hmms, use.states=states2use, max.states=max.states, eps=eps, max.iter=max.iter, max.time=max.time, keep.posteriors=keep.posteriors, num.threads=num.threads, per.chrom=per.chrom)
             }
             binstates <- dec2bin(multimodel$bins$state, colnames=multimodel$info$ID)
             cor.matrix <- cor(binstates)
