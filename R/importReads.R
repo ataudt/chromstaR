@@ -128,6 +128,10 @@ bam2GRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pairedEndRe
         stopTimedMessage(ptm)
     }
 
+    if (length(data)==0) {
+        stop("No reads present after filtering. Please lower your 'min.mapq'.")
+    }
+
     ## Exclude reads falling into blacklisted regions
     if (!is.null(blacklist)) {
         ptm <- startTimedMessage("Filtering blacklisted regions ...")
@@ -261,6 +265,10 @@ bed2GRanges <- function(bedfile, assembly, chromosomes=NULL, remove.duplicate.re
     # Filter out too long fragments
     data <- data[width(data)<=max.fragment.width]
     stopTimedMessage(ptm)
+    
+    if (length(data)==0) {
+        stop("No reads present after filtering. Please lower your 'min.mapq'.")
+    }
 
     ## Exclude reads falling into blacklisted regions
     if (!is.null(blacklist)) {
