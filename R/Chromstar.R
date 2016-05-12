@@ -117,6 +117,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     ## Set up the directory structure ##
     binpath <- file.path(outputfolder, 'binned')
     unipath <- file.path(outputfolder, 'univariate')
+    pseudounipath <- file.path(outputfolder, 'univariate-combined')
     plotpath <- file.path(outputfolder, 'plots')
     uniplotpath <- file.path(plotpath, 'univariate-distributions')
     multipath <- file.path(outputfolder, 'multivariate')
@@ -213,6 +214,27 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     }
   
   
+    #================================
+    ### Pseudo multivariate       ###
+    #================================
+    messageU("Combining univariate peaks")
+    files <- file.path(unipath, filenames)
+    pseudomulti <- unis2pseudomulti(files)
+    
+    #-------------------------
+    ## Export browser files ##
+    #-------------------------
+    if (!file.exists(browserpath)) { dir.create(browserpath) }
+    savename <- file.path(browserpath, paste0('univariate'))
+    if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
+        trackname <- paste0('combinations')
+        exportMultivariate(pseudomulti, filename=savename, trackname=trackname, what='combinations')
+    }
+    if (!file.exists(paste0(savename, '_peaks.bed.gz'))) {
+        exportMultivariate(pseudomulti, filename=savename, what='peaks')
+    }
+    
+
     #================================
     ### Multivariate peak calling ###
     #================================
@@ -376,10 +398,10 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         savename <- file.path(browserpath, paste0('combined_mode-', mode))
         if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
             trackname <- paste0('combinations, mode-', mode)
-            exportCombinedMultivariate(combinedModel, filename=savename, trackname=trackname)
+            exportCombinedMultivariate(combinedModel, filename=savename, trackname=trackname, what='combinations')
         }
         if (!file.exists(paste0(savename, '_peaks.bed.gz'))) {
-            exportCombinedMultivariate(multimodel, filename=savename, what='peaks')
+            exportCombinedMultivariate(combinedModel, filename=savename, what='peaks')
         }
     }
   
