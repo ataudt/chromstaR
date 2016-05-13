@@ -362,6 +362,7 @@ callPeaksUnivariateAllChr <- function(binned.data, eps=0.01, init="standard", ma
                                                         state=states) 
         result$bins$score <- apply(hmm$posteriors, 1, max)
         result$bins$posteriors <- hmm$posteriors
+        result$bins$posterior.modified <- hmm$posteriors[,'modified']
         if (keep.densities) {
             result$bins$densities <- matrix(hmm$densities, ncol=hmm$num.states)
         }
@@ -370,7 +371,7 @@ callPeaksUnivariateAllChr <- function(binned.data, eps=0.01, init="standard", ma
     ## Segmentation
         ptm <- startTimedMessage("Making segmentation ...")
         df <- as.data.frame(result$bins)
-        red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c('score'), columns2drop=c('width',grep('posteriors', names(df), value=TRUE), 'counts')))
+        red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c('score'), columns2drop=c('width',grep('posterior', names(df), value=TRUE), 'counts')))
         red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], score=red.df[,'mean.score'])
         result$segments <- red.gr
         seqlengths(result$segments) <- seqlengths(binned.data)

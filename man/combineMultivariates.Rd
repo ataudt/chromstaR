@@ -7,7 +7,7 @@
 combineMultivariates(hmms, mode)
 }
 \arguments{
-\item{hmms}{A named \code{list()} with \code{\link{multiHMM}} objects. The names of the list are used to name the conditions or marks. Alternatively a named character vector with filenames that contain \code{\link{multiHMM}} objects.}
+\item{hmms}{A \code{list()} with \code{\link{multiHMM}} objects. Alternatively a character vector with filenames that contain \code{\link{multiHMM}} objects.}
 
 \item{mode}{Mode of combination. See \code{\link{Chromstar}} for a description of the \code{mode} parameter.}
 }

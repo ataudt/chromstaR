@@ -20,10 +20,12 @@ differentialScore <- function(posteriors, info) {
     info.mark <- split(info.rep, as.character(info.rep$mark))
     differential.scores <- list()
     for (mark in names(info.mark)) {
-        if (nrow(info.mark[[mark]]) > 0) {
+        if (nrow(info.mark[[mark]]) > 1) {
             min.post <- do.call(pmin, as.list(as.data.frame(posteriors[,info.mark[[mark]]$ID])))
             max.post <- do.call(pmax, as.list(as.data.frame(posteriors[,info.mark[[mark]]$ID])))
             differential.scores[[mark]] <- max.post - min.post
+        } else if (nrow(info.mark[[mark]]) == 1) {
+            differential.scores[[mark]] <- rep(0, nrow(posteriors))
         }
     }
     differential.score <- do.call(pmax, differential.scores)

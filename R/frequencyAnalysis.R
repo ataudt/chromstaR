@@ -104,7 +104,7 @@ transitionFrequencies <- function(multi.hmms=NULL, combined.hmm=NULL, zero.state
             stopTimedMessage(ptm)
         } else {
             combined.hmm <- suppressMessages( loadHmmsFromFiles(combined.hmm, check.class=class.combined.multivariate.hmm)[[1]] )
-            combstates <- as.list(mcols(combined.hmm$bins)[names(mcols(combined.hmm$bins)) != 'transition.group'])
+            combstates <- as.list(mcols(combined.hmm$bins)[grepl('combination', names(mcols(combined.hmm$bins)))])
         }
     } else {
         if (is.null(names(combstates))) {
@@ -119,9 +119,8 @@ transitionFrequencies <- function(multi.hmms=NULL, combined.hmm=NULL, zero.state
     combstates$sep <- '<>'
     gentrans <- do.call(paste, combstates)
     tab <- table(gentrans) / length(gentrans)
-    trans <- matrix(unlist(strsplit(names(tab), '<>')), ncol=length(conditions), dimnames=list(transition=NULL, condition=conditions))
+    trans <- matrix(unlist(strsplit(names(tab), '<>')), ncol=length(conditions), dimnames=list(transition=NULL, condition=conditions), byrow = TRUE)
     freqtrans <- data.frame(trans)
-    names(freqtrans) <- colnames(trans)
     freqtrans$frequency <- as.numeric(tab)
     freqtrans$transition <- names(tab)
     freqtrans <- freqtrans[order(freqtrans$frequency, decreasing=TRUE),]
@@ -132,30 +131,7 @@ transitionFrequencies <- function(multi.hmms=NULL, combined.hmm=NULL, zero.state
 
     ### Assigning groups for frequency table ###
     ptm <- startTimedMessage("Assigning groups ...")
-    freqtrans$group <- 'other'
-    # Stage-specific and constant states
-    combstates$sep <- NULL
-    levels.combstates <- unique(unlist(lapply(combstates, levels)))
-    levels.combstates <- setdiff(levels.combstates, zero.states)
-    levels.combstates <- gsub('\\+','\\\\+',levels.combstates)
-    levels.combstates <- gsub('\\[','\\\\[', levels.combstates)
-    levels.combstates <- gsub('\\]','\\\\]', levels.combstates)
-    for (combination in levels.combstates) {
-        mask <- intersect(grep(combination, freqtrans$transition), grep(paste(setdiff(levels.combstates,combination), collapse='|'), freqtrans$transition, invert=TRUE))
-        freqtrans$group[mask] <- paste0('stage-specific ',gsub('\\\\','',combination))
-        mask <- sapply(gregexpr(combination,freqtrans$transition), length) == num.models
-        freqtrans$group[mask] <- paste0('constant ', gsub('\\\\','',combination))
-    }
-    # Zero transitions
-    freqtrans.split <- strsplit(sub('<>$','<><>',as.character(freqtrans$transition)),'<>')
-    freqtrans.split <- do.call(rbind, freqtrans.split)
-    df <- as.data.frame(apply(freqtrans.split, 2, function(x) { x %in% zero.states } ))
-    if (ncol(df)==1) {
-        iszero <- Reduce('&', df[,1])
-    } else {
-        iszero <- Reduce('&', as.list(df))
-    }
-    freqtrans$group[iszero] <- 'zero transition'
+    freqtrans <- assignGroups(freqtrans, zero.states, num.models)
     stopTimedMessage(ptm)
 
     ### Assigning groups over whole genome ###
@@ -174,3 +150,35 @@ transitionFrequencies <- function(multi.hmms=NULL, combined.hmm=NULL, zero.state
 
 }
 
+
+assignGroups <- function(freqtrans, zero.states, num.models) {
+    
+    freqtrans$group <- 'other'
+    # Stage-specific and constant states
+    levels.combstates <- unique(unlist(lapply(freqtrans[,grep('combination', names(freqtrans))], levels)))
+    levels.combstates <- setdiff(levels.combstates, zero.states)
+    levels.combstates <- gsub('\\+','\\\\+',levels.combstates)
+    levels.combstates <- gsub('\\[','\\\\[', levels.combstates)
+    levels.combstates <- gsub('\\]','\\\\]', levels.combstates)
+    for (combination in levels.combstates) {
+        string.other.levels <- paste(setdiff(levels.combstates,combination), collapse='|')
+        if (string.other.levels=="") {
+            string.other.levels <- 'AAAAAA' # workaround
+        }
+        mask <- intersect(grep(combination, freqtrans$transition), grep(string.other.levels, freqtrans$transition, invert=TRUE))
+        freqtrans$group[mask] <- paste0('stage-specific ',gsub('\\\\','',combination))
+        mask <- sapply(gregexpr(combination,freqtrans$transition), function(x) { length(which(x!=-1)) }) == num.models
+        freqtrans$group[mask] <- paste0('constant ', gsub('\\\\','',combination))
+    }
+    # Zero transitions
+    freqtrans.split <- strsplit(sub('<>$','<><>',as.character(freqtrans$transition)),'<>')
+    freqtrans.split <- do.call(rbind, freqtrans.split)
+    df <- as.data.frame(apply(freqtrans.split, 2, function(x) { x %in% zero.states } ))
+    # if (ncol(df)==1) {
+    #     iszero <- Reduce('&', df[,1])
+    # } else {
+        iszero <- Reduce('&', as.list(df))
+    # }
+    freqtrans$group[iszero] <- 'zero transition'
+    return(freqtrans)
+}

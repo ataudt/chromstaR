@@ -654,11 +654,7 @@ exportCombinedMultivariateCalls <- function(hmm, filename, separate.tracks=TRUE,
             } else {
                 segments.df$score <- segments.df$differential.score
             }
-            if (is.null(segments.df$combination)) {
-                df <- cbind(segments.df[mask,c('chromosome','start','end','state','score')], strand=rep(".",numsegments))
-            } else {
-                df <- cbind(segments.df[mask,c('chromosome','start','end','combination','score')], strand=rep(".",numsegments))
-            }
+            df <- cbind(segments.df[mask,c('chromosome','start','end','state','score')], strand=rep(".",numsegments))
             # Make score integer
             df$score <- round(df$score*1000)
             # Convert from 1-based closed to 0-based half open
