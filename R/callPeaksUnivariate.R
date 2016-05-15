@@ -144,6 +144,7 @@ callPeaksUnivariateAllChr <- function(binned.data, eps=0.01, init="standard", ma
     ### Assign variables ###
     if (control) {
         state.labels <- state.labels[1:2] # assigned globally outside this function
+        state.distributions <- state.distributions[1:2]
     }
     numstates <- length(state.labels)
     iniproc <- which(init==c("standard","random","empiric")) # transform to int
@@ -283,7 +284,7 @@ callPeaksUnivariateAllChr <- function(binned.data, eps=0.01, init="standard", ma
 
         hmm$eps <- eps.try
         if (hmm$loglik.delta > hmm$eps) {
-            warning("HMM did not converge in trial run ",i_try,"!\n")
+            warning("HMM did not converge in trial run ",i_try,"!")
         }
         # Store model in list
         modellist[[i_try]] <- hmm
@@ -334,7 +335,7 @@ callPeaksUnivariateAllChr <- function(binned.data, eps=0.01, init="standard", ma
     ### Issue warnings ###
     hmm$eps <- eps
     if (hmm$loglik.delta > hmm$eps) {
-        war <- warning("HMM did not converge!\n")
+        war <- warning("HMM did not converge!")
     }
     if (hmm$error == 1) {
         stop("A nan occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
@@ -350,10 +351,15 @@ callPeaksUnivariateAllChr <- function(binned.data, eps=0.01, init="standard", ma
         hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
         colnames(hmm$posteriors) <- state.labels
         threshold <- 1-post.cutoff
-        states <- rep(NA,hmm$num.bins)
-        states[ hmm$posteriors[,3]<threshold & hmm$posteriors[,2]<=hmm$posteriors[,1] ] <- 1
-        states[ hmm$posteriors[,3]<threshold & hmm$posteriors[,2]>hmm$posteriors[,1] ] <- 2
-        states[ hmm$posteriors[,3]>=threshold ] <- 3
+        if (control) {
+            states <- rep(1, hmm$num.bins)
+            states[ hmm$posteriors[,2] >= hmm$posteriors[,1] ] <- 2
+        } else {
+            states <- rep(NA, hmm$num.bins)
+            states[ hmm$posteriors[,3]<threshold & hmm$posteriors[,2]<=hmm$posteriors[,1] ] <- 1
+            states[ hmm$posteriors[,3]<threshold & hmm$posteriors[,2]>hmm$posteriors[,1] ] <- 2
+            states[ hmm$posteriors[,3]>=threshold ] <- 3
+        }
         states <- state.labels[states]
     ## Bin coordinates, posteriors and states
         result$bins <- GRanges(seqnames=seqnames(binned.data),
@@ -362,7 +368,9 @@ callPeaksUnivariateAllChr <- function(binned.data, eps=0.01, init="standard", ma
                                                         state=states) 
         result$bins$score <- apply(hmm$posteriors, 1, max)
         result$bins$posteriors <- hmm$posteriors
-        result$bins$posterior.modified <- hmm$posteriors[,'modified']
+        if (!control) {
+            result$bins$posterior.modified <- hmm$posteriors[,'modified']
+        }
         if (keep.densities) {
             result$bins$densities <- matrix(hmm$densities, ncol=hmm$num.states)
         }
