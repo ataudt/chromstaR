@@ -1,12 +1,42 @@
-#' Calculate differential score
+#' Calculate maximum differential score
 #'
-#' Calculate differential score from posteriors.
+#' Calculate maximum differential score from posteriors.
 #'
 #' @param posteriors A matrix with posterior probabilities.
 #' @param info An \code{\link{experiment.table}} with additional column 'ID'.
 #' @return A vector with differential score.
 #'
-differentialScore <- function(posteriors, info) {
+differentialScoreMax <- function(posteriors, info) {
+
+    if (is.null(posteriors) | is.null(info)) {
+        return(NULL)
+    }
+    differential.scores <- differentialScores(posteriors, info)
+    differential.score <- do.call(pmax, differential.scores)
+    return(differential.score)
+}
+
+
+#' Calculate added differential score
+#'
+#' Calculate added differential score from posteriors.
+#'
+#' @param posteriors A matrix with posterior probabilities.
+#' @param info An \code{\link{experiment.table}} with additional column 'ID'.
+#' @return A vector with differential score.
+#'
+differentialScoreSum <- function(posteriors, info) {
+
+    if (is.null(posteriors) | is.null(info)) {
+        return(NULL)
+    }
+    differential.scores <- differentialScores(posteriors, info)
+    differential.score <- rowSums(as.data.frame(differential.scores))
+    return(differential.score)
+}
+
+
+differentialScores <- function(posteriors, info) {
 
     if (is.null(posteriors) | is.null(info)) {
         return(NULL)
@@ -28,7 +58,6 @@ differentialScore <- function(posteriors, info) {
             differential.scores[[mark]] <- rep(0, nrow(posteriors))
         }
     }
-    differential.score <- do.call(pmax, differential.scores)
-    return(differential.score)
+    return(differential.scores)
 }
 

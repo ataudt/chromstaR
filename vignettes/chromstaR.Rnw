@@ -435,7 +435,7 @@ Chromstar(inputfolder, experiment.table=experiment_table,
 <<combined_listfiles, results='markup', message=FALSE, eval=TRUE>>=
 ## Results are stored in 'outputfolder' and can be loaded for further processing
 list.files(outputfolder)
-model <- get(load(file.path(outputfolder,'multivariate-combined',
+model <- get(load(file.path(outputfolder,'combined',
                             'combined_mode-mark.RData')))
 @
 
@@ -444,8 +444,8 @@ model <- get(load(file.path(outputfolder,'multivariate-combined',
 ## Obtain all genomic regions where the two tissues have different states
 segments <- model$segments
 diff.segments <- segments[segments$combination.SHR != segments$combination.BN]
-# Let's be strict with the differences and get only clear ones
-diff.segments <- diff.segments[diff.segments$differential.score > 0.999]
+# Let's be strict with the differences and get only those where both marks are different
+diff.segments <- diff.segments[diff.segments$differential.score >= 1.9]
 exportGRanges(diff.segments, trackname='differential_chromatin_states',
               filename=tempfile(), scorecol='differential.score')
 ## Obtain all genomic regions where we find a bivalent promoter in BN but not in SHR
@@ -467,7 +467,7 @@ The strictness of the peak calling can be controlled with a posterior cutoff. Th
 
 \begin{scriptsize}
 <<faq_postcutoff, results='markup', message=FALSE, eval=TRUE>>=
-model <- get(load(file.path(outputfolder,'multivariate-combined',
+model <- get(load(file.path(outputfolder,'combined',
                             'combined_mode-mark.RData')))
 # Set a strict cutoff close to 1
 model2 <- changePostCutoff(model, post.cutoff=0.999)
@@ -481,7 +481,7 @@ length(model2$segments); mean(width(model2$segments))
 
 You were interested in combinatorial state differences as in section~\ref{sec:Task4} and checked the results in a genome browser. You found that some differences are convincing by eye and some are not. There are several possibilities to explore:
 \begin{enumerate}
-\item You can play with the ``differential.score'' (see section~\ref{sec:Task4}, step 3) and export only differences with a score close to 1.
+\item You can play with the ``differential.score'' (see section~\ref{sec:Task4}, step 3) and export only differences with a high score. A differential score around 1 means that one modification is different, a score close to 2 means that two modifications are different etc. The score is calculated as the sum of differences in posterior probabilities between marks.
 \item Run \Rfunction{Chromstar} with mode='mark' or mode='condition' and see if the results improve.
 \item Check for bad replicates that are very different from the rest and exclude them prior to the analysis.
 \end{enumerate}

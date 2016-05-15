@@ -280,7 +280,7 @@ runMultivariate <- function(bins, info, comb.states, use.states, distributions, 
             post.per.track <- hmm$posteriors %*% binstates
             colnames(post.per.track) <- result$info$ID
             result$bins$posteriors <- post.per.track
-            result$bins$differential.score <- differentialScore(result$bins$posteriors, result$info)
+            result$bins$differential.score <- differentialScoreSum(result$bins$posteriors, result$info)
             stopTimedMessage(ptm)
         }
         ptm <- startTimedMessage("Calculating states from posteriors ...")

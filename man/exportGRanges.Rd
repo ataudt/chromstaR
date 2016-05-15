@@ -16,7 +16,7 @@ exportGRanges(gr, trackname, filename, namecol = "combination",
 
 \item{namecol}{A character specifying the column that is used as name-column.}
 
-\item{scorecol}{A character specifying the column that is used as score-column. The score will be re-adjusted from interval [0,1] to [0,1000] for compatibility with the UCSC genome browser convention.}
+\item{scorecol}{A character specifying the column that is used as score-column. The score should contain integers in the interval [0,1000] for compatibility with the UCSC genome browser convention.}
 
 \item{header}{A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).}
 

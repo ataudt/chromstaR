@@ -762,7 +762,7 @@ exportCombinedMultivariateCalls <- function(hmm, filename, separate.tracks=TRUE,
 #' @param trackname The name that will be used as track name and description in the header.
 #' @param filename The name of the file that will be written. The ending ".bed.gz". Any existing file will be overwritten.
 #' @param namecol A character specifying the column that is used as name-column.
-#' @param scorecol A character specifying the column that is used as score-column. The score will be re-adjusted from interval [0,1] to [0,1000] for compatibility with the UCSC genome browser convention.
+#' @param scorecol A character specifying the column that is used as score-column. The score should contain integers in the interval [0,1000] for compatibility with the UCSC genome browser convention.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @param append Whether or not to append to an existing file.
 #' @return \code{NULL}
@@ -837,7 +837,9 @@ exportGRanges <- function(gr, trackname, filename, namecol='combination', scorec
     }
     regions <- regions[c('chromosome','start','end','name','score')]
     # Make score integer
-    regions$score <- round(regions$score*1000)
+    if (min(regions$score) < 0 | max(regions$score) > 1000 | all(regions$score<=1.2) | !is.integer(regions$score)) {
+        warning("Column '", scorecol, "' should contain integer values between 0 and 1000 for compatibility with the UCSC convention.")
+    }
     numsegments <- nrow(regions)
     df <- cbind(regions, strand=rep(".",numsegments), thickStart=regions$start, thickEnd=regions$end)
     # Convert from 1-based closed to 0-based half open

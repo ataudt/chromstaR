@@ -234,7 +234,7 @@ combineMultivariates <- function(hmms, mode) {
     bins$posteriors <- posteriors
 
     ## Add differential score ##
-    bins$differential.score <- differentialScore(bins$posteriors, infos)
+    bins$differential.score <- differentialScoreSum(bins$posteriors, infos)
 
     ### Redo the segmentation for all conditions combined
     ptm <- startTimedMessage("Redoing segmentation for all conditions combined ...")
