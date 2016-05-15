@@ -142,7 +142,7 @@ combineMultivariates <- function(hmms, mode) {
             index <- which(infos$condition==condition)
             binstates.cond <- matrix(binstates[,index], ncol=length(index))
             states.cond <- factor(bin2dec(binstates.cond))
-            combs[[condition]] <- mapping[states.cond]
+            combs[[condition]] <- mapping[as.character(states.cond)]
         }
         combs.df <- as.data.frame(combs) # get factors instead of characters
         combs.df <- as(combs.df, 'DataFrame')
@@ -165,7 +165,7 @@ combineMultivariates <- function(hmms, mode) {
             mapping.condition <- getCondition(hmm$mapping, condition)
             names(mapping.condition) <- names(hmm$mapping)
           
-            combs[[as.character(condition)]] <- mapping.condition[hmm$bins$state]
+            combs[[as.character(condition)]] <- mapping.condition[as.character(hmm$bins$state)]
             stopTimedMessage(ptm)
         }
         combs.df <- as.data.frame(combs) # get factors instead of characters
@@ -173,7 +173,7 @@ combineMultivariates <- function(hmms, mode) {
         
     } else if (mode == 'replicate') {
         ## Load first HMM for coordinates
-        ptm <- startTimedMessage("Processing replicate ",1," ...")
+        ptm <- startTimedMessage("Processing mark-condition ",1," ...")
         hmm <- suppressMessages( loadHmmsFromFiles(hmms[[1]], check.class=class.multivariate.hmm)[[1]] )
         bins <- hmm$bins
         mcols(bins) <- NULL
@@ -188,7 +188,7 @@ combineMultivariates <- function(hmms, mode) {
         
         if (length(hmms) >= 2) {
             for (i1 in 2:length(hmms)) {
-                ptm <- startTimedMessage("Processing replicate ",i1," ...")
+                ptm <- startTimedMessage("Processing mark-condition ",i1," ...")
                 hmm <- suppressMessages( loadHmmsFromFiles(hmms[[i1]], check.class=class.multivariate.hmm)[[1]] )
                 infos[[i1]] <- hmm$info
                 posteriors[[i1]] <- hmm$bins$posteriors
@@ -205,10 +205,10 @@ combineMultivariates <- function(hmms, mode) {
             index <- which(infos$condition==condition)
             states <- factor(bin2dec(matrix(binstates[,index], ncol=length(index))))
             names(states) <- NULL
-            use.states <- stateBrewer(infos[,1:5], mode='mark')
-            mapping <- use.states$combination
-            names(mapping) <- use.states$state
-            combs[[condition]] <- mapping[states]
+            mapping.df <- stateBrewer(infos[,1:5], mode='mark')
+            mapping <- mapping.df$combination
+            names(mapping) <- mapping.df$state
+            combs[[condition]] <- mapping[as.character(states)]
         }
         names(combs) <- conditions
         combs.df <- as(combs,'DataFrame')
