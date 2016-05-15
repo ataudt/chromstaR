@@ -6,7 +6,7 @@ This package implements functions for combinatorial and differential analysis of
 Installation
 ------------
 
-### Stable release version from Bioconductor
+### Stable release version from Bioconductor (not available yet)
 To install the *current stable* version from Bioconductor, please visit http://bioconductor.org/packages/chromstaR/ and follow the provided instructions.
 
 ### Development version from Github
