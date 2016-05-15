@@ -258,12 +258,12 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #-------------------------
     if (!file.exists(browserpath)) { dir.create(browserpath) }
     savename <- file.path(browserpath, paste0('combined_mode-', modename))
+    trackname <- paste0('mode-', modename)
     if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
-        trackname <- paste0('combinations, mode-', modename)
         exportCombinedMultivariate(combinedModel, filename=savename, trackname=trackname, what='combinations')
     }
     if (!file.exists(paste0(savename, '_peaks.bed.gz'))) {
-        exportCombinedMultivariate(combinedModel, filename=savename, what='peaks')
+        exportCombinedMultivariate(combinedModel, filename=savename, trackname=trackname, what='peaks')
     }
     
 
@@ -426,12 +426,12 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #-------------------------
     if (!file.exists(browserpath)) { dir.create(browserpath) }
     savename <- file.path(browserpath, paste0('combined_mode-', mode))
+    trackname <- paste0('mode-', mode)
     if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
-        trackname <- paste0('combinations, mode-', mode)
         exportCombinedMultivariate(combinedModel, filename=savename, trackname=trackname, what='combinations')
     }
     if (!file.exists(paste0(savename, '_peaks.bed.gz'))) {
-        exportCombinedMultivariate(combinedModel, filename=savename, what='peaks')
+        exportCombinedMultivariate(combinedModel, filename=savename, trackname=trackname, what='peaks')
     }
   
     total.time <- proc.time() - total.time

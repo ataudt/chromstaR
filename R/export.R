@@ -597,7 +597,7 @@ exportCombinedMultivariate <- function(hmm, filename, what=c('combinations','pea
         exportCombinedMultivariateCalls(hmm, filename=paste0(filename, '_combinations'), separate.tracks=FALSE, exclude.states=exclude.states, include.states=include.states, trackname=trackname, header=header, separate.files=separate.files)
     }
     if ('peaks' %in% what) {
-        exportCombinedMultivariateCalls(hmm, filename=paste0(filename, '_peaks'), separate.tracks=TRUE, exclude.states=exclude.states, include.states=include.states, header=header, separate.files=separate.files)
+        exportCombinedMultivariateCalls(hmm, filename=paste0(filename, '_peaks'), separate.tracks=TRUE, exclude.states=exclude.states, include.states=include.states, trackname=trackname, header=header, separate.files=separate.files)
     }
 }
 
@@ -665,7 +665,12 @@ exportCombinedMultivariateCalls <- function(hmm, filename, separate.tracks=TRUE,
             RGB <- apply(RGB,1,paste,collapse=",")
             df$itemRgb <- rep(RGB, numsegments)
             if (header) {
-                cat(paste0("track name=\"multivariate peaks for ",colnames(bin)[imod],"\" description=\"multivariate peaks for ",colnames(bin)[imod],"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
+                if (is.null(trackname)) {
+                    trackname.string <- paste0("peaks for ", colnames(bin)[imod])
+                } else {
+                    trackname.string <- paste0("peaks for ", colnames(bin)[imod], ", ", trackname)
+                }
+                cat(paste0('track name="', trackname.string, '" description="', trackname.string, '" visibility=1 itemRgb=On priority=',priority,'\n'), file=filename.gz, append=TRUE)
             }
             utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
             if (separate.files) {
@@ -693,9 +698,9 @@ exportCombinedMultivariateCalls <- function(hmm, filename, separate.tracks=TRUE,
 
             # Make header
             if (is.null(trackname)) {
-                trackname.cond <- paste0('condition: ', cond, ', combinatorial states')
+                trackname.cond <- paste0('condition: ', cond, ', combinations')
             } else {
-                trackname.cond <- paste0('condition: ', cond, ', ', trackname)
+                trackname.cond <- paste0('condition: ', cond, ', combinations, ', trackname)
             }
             # Make filenames
             if (separate.files) {
