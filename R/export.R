@@ -40,6 +40,8 @@ exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.f
             binned.data.list[[binfile]] <- get(load(binfile))
         }
         stopTimedMessage(ptm)
+    } else if (class(binned.data.list) == 'GRanges') {
+        binned.data.list <- list(binned.data.list)
     }
 
     ## Function definitions
