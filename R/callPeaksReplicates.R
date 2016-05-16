@@ -67,7 +67,9 @@ callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=
         weight.univariate <- unlist(lapply(hmms, function(x) { x$weights['modified'] }))
         total.count <- unlist(lapply(hmms, function(x) { sum(x$bins$counts) }))
         info.df <- data.frame(total.count=total.count, weight.univariate=weight.univariate)
-        rownames(info.df) <- ids
+        if (!is.null(unlist(ids))) {
+            rownames(info.df) <- ids
+        }
 
         ### Correlation analysis ###
         if (length(hmms) == 1) {
