@@ -4,7 +4,8 @@
 #'
 #' This function is similar to \code{\link{callPeaksUnivariateAllChr}} but allows to pre-fit on a single chromosome instead of the whole genome. This gives a significant performance increase and can help to converge into a better fit in case of unsteady quality for some chromosomes.
 #'
-#' @param binned.data A \link{GRanges} object with binned read counts or a file that contains such an object.
+#' @param binned.data A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.
+#' @param input.data Input control for the experiment. A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.
 #' @param prefit.on.chr A chromosome that is used to pre-fit the Hidden Markov Model. Set to \code{NULL} if you don't want to prefit but use the whole genome instead.
 #' @param short If \code{TRUE}, the second fitting step is only done with one iteration.
 #' @param eps Convergence threshold for the Baum-Welch algorithm.
@@ -24,7 +25,7 @@
 #' @param read.cutoff.absolute Read counts above this value will be set to the read count specified by this value. Filtering very high read counts increases the performance of the Baum-Welch fitting procedure. However, if your data contains very few peaks they might be filtered out. If option \code{read.cutoff.quantile} is also specified, the minimum of the resulting cutoff values will be used. Set \code{read.cutoff=FALSE} to disable this filtering.
 #' @param max.mean If \code{mean(counts)>max.mean}, bins with low read counts will be set to 0. This is a workaround to obtain good fits in the case of large bin sizes.
 #' @param post.cutoff False discovery rate. code{NULL} means that the state with maximum posterior probability will be chosen, irrespective of its absolute probability (default=code{NULL}).
-#' @param control DEPRECATED. If set to \code{TRUE}, the binned data will be treated as control experiment. That means only state 'zero-inflation' and 'unmodified' will be used in the HMM.
+#' @param control If set to \code{TRUE}, the binned data will be treated as control experiment. That means only state 'zero-inflation' and 'unmodified' will be used in the HMM.
 #' @param keep.posteriors If set to \code{TRUE} (default=\code{FALSE}), posteriors will be available in the output. This is useful to change the post.cutoff later, but increases the necessary disk space to store the result.
 #' @param keep.densities If set to \code{TRUE} (default=\code{FALSE}), densities will be available in the output. This should only be needed debugging.
 #' @param verbosity Verbosity level for the fitting procedure. 0 - No output, 1 - Iterations are printed.
@@ -48,12 +49,19 @@
 #'## Check if the fit is ok
 #'plot(hmm, type='histogram')
 #'
-callPeaksUnivariate <- function(binned.data, prefit.on.chr=NULL, short=TRUE, eps=0.01, init="standard", max.time=NULL, max.iter=5000, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, post.cutoff=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
+callPeaksUnivariate <- function(binned.data, input.data=NULL, prefit.on.chr=NULL, short=TRUE, eps=0.01, init="standard", max.time=NULL, max.iter=5000, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, post.cutoff=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
 
     if (class(binned.data) == 'character') { 
         message("Loading file ",binned.data)
         temp.env <- new.env()
         binned.data <- get(load(binned.data, envir=temp.env), envir=temp.env)
+    }
+    if (!is.null(input.data)) {
+        if (class(input.data) == 'character') { 
+            message("Loading input file ",input.data)
+            temp.env <- new.env()
+            input.data <- get(load(input.data, envir=temp.env), envir=temp.env)
+        }
     }
     if (!is.null(prefit.on.chr)) {
         if (!prefit.on.chr %in% seqlevels(binned.data)) {
@@ -62,18 +70,23 @@ callPeaksUnivariate <- function(binned.data, prefit.on.chr=NULL, short=TRUE, eps
     }
 
     if (is.null(prefit.on.chr)) {
-        model <- callPeaksUnivariateAllChr(binned.data, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=keep.posteriors, keep.densities=FALSE, verbosity=verbosity)
+        model <- callPeaksUnivariateAllChr(binned.data, input.data=input.data, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=keep.posteriors, keep.densities=FALSE, verbosity=verbosity)
     } else {
 
         pre.binned.data <- binned.data[seqnames(binned.data)==prefit.on.chr]
-        pre.model <- callPeaksUnivariateAllChr(pre.binned.data, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=verbosity)
+        if (!is.null(input.data)) {
+            pre.input.data <- input.data[seqnames(input.data)==prefit.on.chr]
+        } else {
+            pre.input.data <- NULL
+        }
+        pre.model <- callPeaksUnivariateAllChr(pre.binned.data, input.data=pre.input.data, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=verbosity)
 
         if (short) {
             max.iter=1
         }
         model <- pre.model
         model$bins <- binned.data
-        model <- suppressWarnings( callPeaksUnivariateAllChr(model, eps=eps, max.time=max.time, max.iter=max.iter, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity) )
+        model <- suppressWarnings( callPeaksUnivariateAllChr(model, input.data=input.data, eps=eps, max.time=max.time, max.iter=max.iter, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity) )
 
     }
 
@@ -88,7 +101,8 @@ callPeaksUnivariate <- function(binned.data, prefit.on.chr=NULL, short=TRUE, eps
 #'
 #' The Hidden Markov Model which is used to classify the bins uses 3 states: state 'zero-inflation' with a delta function as emission densitiy (only zero read counts), 'unmodified' and 'modified' with Negative Binomials as emission densities. A Baum-Welch algorithm is employed to estimate the parameters of the distributions. Please refer to our manuscript at \url{http://dx.doi.org/10.1101/038612} for a detailed description of the method.
 #'
-#' @param binned.data A \link{GRanges} object with binned read counts.
+#' @param binned.data A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.
+#' @param input.data Input control for the experiment. A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.
 #' @param eps Convergence threshold for the Baum-Welch algorithm.
 #' @param init One of the following initialization procedures:
 #' \describe{
@@ -114,7 +128,7 @@ callPeaksUnivariate <- function(binned.data, prefit.on.chr=NULL, short=TRUE, eps
 #' @author Aaron Taudt, Maria Coome Tatche
 #' @seealso \code{\link{uniHMM}}, \code{\link{callPeaksMultivariate}}
 #' @importFrom stats runif
-callPeaksUnivariateAllChr <- function(binned.data, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, post.cutoff=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
+callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, post.cutoff=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
 
     ### Define cleanup behaviour ###
     on.exit(.C("C_univariate_cleanup"))
@@ -176,6 +190,31 @@ callPeaksUnivariateAllChr <- function(binned.data, eps=0.01, init="standard", ma
     numbins <- length(binned.data)
     counts <- mcols(binned.data)$counts
     if (keep.densities) { lenDensities <- numbins * numstates } else { lenDensities <- 1 }
+
+    ### Input correction ###
+    if (!is.null(input.data)) {
+        ptm <- startTimedMessage("Correcting read counts for input ...")
+        if (is.character(input.data)) {
+            temp.env <- new.env()
+            input.data <- get(load(input.data, envir=temp.env), envir=temp.env)
+        }
+        # Artifacts with super high read count
+        index <- which(input.data$counts >= quantile(input.data$counts[input.data$counts>0], 0.999))
+        index <- c(index, index-1, index+1) # one neighboring bin to each side
+        index <- index[index>0 & index<=length(input.data)] # if we hit chromosome boundaries, bad luck
+        counts[index] <- 0
+        input.data$counts[index] <- 0
+        # Correction factor
+        inputf <- Rle(1, length=length(input.data))
+        mean.input.counts <- mean(input.data$counts[input.data$counts>0])
+        mask.mean <- input.data$counts >= mean.input.counts
+        mask.0 <- input.data$counts > 0
+        # inputf[mask.mean] <- mean.input.counts / input.data$counts[mask.mean]
+        # inputf <- runmean(inputf, k=11, endrule='constant')
+        inputf[mask.0] <- mean.input.counts / as.numeric(runmean(Rle(input.data$counts), k=15, endrule='constant'))[mask.0]
+        counts <- counts * as.numeric(inputf)
+        stopTimedMessage(ptm)
+    }
 
     ### Check if there are counts in the data, otherwise HMM will blow up ###
     if (!any(counts!=0)) {
@@ -420,7 +459,7 @@ callPeaksUnivariateAllChr <- function(binned.data, eps=0.01, init="standard", ma
         result$convergenceInfo <- convergenceInfo
     ## Add class
         class(result) <- class.univariate.hmm
-    
+        
     # Return results
     return(result)
 }
