@@ -158,6 +158,11 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     for (file in datafiles) {
         parallel.helper(file)
     }
+    
+    ## Delete input rows from exp.table
+    exp.table <- exp.table[exp.table$mark != 'input',]
+    IDs <- IDs[!grepl('input', IDs)]
+    filenames <- filenames[!grepl('input', basename(filenames))]
   
   
     #==============================
@@ -179,13 +184,21 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     if (!file.exists(unipath)) { dir.create(unipath) }
     if (!file.exists(uniplotpath)) { dir.create(uniplotpath) }
     files <- file.path(binpath, filenames)
+    inputfiles <- files[grep('input', basename(files))]
+    files <- files[grep('input', basename(files), invert=TRUE)]
     
-    parallel.helper <- function(file) {
+    parallel.helper <- function(file, inputfiles) {
         ## Peak calling
         savename <- file.path(unipath, basename(file))
         if (!file.exists(savename)) {
             tC <- tryCatch({
-                model <- callPeaksUnivariate(file, eps=conf[['eps.univariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], read.cutoff.absolute=conf[['read.cutoff.absolute']], prefit.on.chr=conf[['prefit.on.chr']], keep.posteriors=FALSE)
+                mark <- strsplit(basename(file), '-')[[1]][1]
+                condition <- strsplit(basename(file), '-')[[1]][2]
+                input.files <- grep(paste0('input-',condition,'-'), inputfiles, value=TRUE)
+                if (length(input.files) == 0) {
+                    input.files <- NULL
+                }
+                model <- callPeaksUnivariate(file, input.data=input.files, eps=conf[['eps.univariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], read.cutoff.absolute=conf[['read.cutoff.absolute']], prefit.on.chr=conf[['prefit.on.chr']], keep.posteriors=FALSE)
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(model, file=savename)
                 stopTimedMessage(ptm)
@@ -205,12 +218,12 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     if (numcpu > 1) {
         ptm <- startTimedMessage("Univariate peak calling ...")
         temp <- foreach (file = files, .packages=c("chromstaR")) %dopar% {
-            parallel.helper(file)
+            parallel.helper(file, inputfiles)
         }
         stopTimedMessage(ptm)
     } else {
         for (file in files) {
-            parallel.helper(file)
+            parallel.helper(file, inputfiles)
         }
     }
   

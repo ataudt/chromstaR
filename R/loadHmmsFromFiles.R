@@ -4,7 +4,7 @@
 #'
 #' @param files A list of \code{\link{chromstaR-objects}} or a vector of files that contain such objects.
 #' @param check.class Any combination of \code{c('uniHMM', 'multiHMM', 'combinedMultiHMM')}. If any of the loaded objects does not belong to the specified class, an error is thrown.
-#' @return A \code{\link[chromstaR:chromstaR-objects]{chromstaR-object}}.
+#' @return A list of \code{\link[chromstaR:chromstaR-objects]{chromstaR-object}}.
 #' @export
 #' @examples
 #'## Get an example BED file
@@ -22,11 +22,11 @@
 #'loaded.hmm <- loadHmmsFromFiles(temp.file)[[1]]
 #'class(loaded.hmm)
 #'
-loadHmmsFromFiles <- function(files, check.class=c('uniHMM', 'multiHMM', 'combinedMultiHMM')) {
+loadHmmsFromFiles <- function(files, check.class=c('GRanges', 'uniHMM', 'multiHMM', 'combinedMultiHMM')) {
 
     ptm <- startTimedMessage("Loading HMMs from files ...")
-    if (any(! check.class %in% c(class.univariate.hmm, class.multivariate.hmm, class.combined.multivariate.hmm))) {
-        stop("Argument 'check.class' must contain any combination of c('", paste0(c(class.univariate.hmm, class.multivariate.hmm, class.combined.multivariate.hmm), collapse="', '"), "').")
+    if (any(! check.class %in% c('GRanges', class.univariate.hmm, class.multivariate.hmm, class.combined.multivariate.hmm))) {
+        stop("Argument 'check.class' must contain any combination of c('", paste0(c('GRanges', class.univariate.hmm, class.multivariate.hmm, class.combined.multivariate.hmm), collapse="', '"), "').")
     }
     modellist <- list()
     if (is.character(files)) {
@@ -54,5 +54,3 @@ loadHmmsFromFiles <- function(files, check.class=c('uniHMM', 'multiHMM', 'combin
     return(modellist)
 
 }
-
-

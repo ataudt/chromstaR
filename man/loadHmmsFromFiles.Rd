@@ -4,7 +4,7 @@
 \alias{loadHmmsFromFiles}
 \title{Load \pkg{chromstaR} objects from file}
 \usage{
-loadHmmsFromFiles(files, check.class = c("uniHMM", "multiHMM",
+loadHmmsFromFiles(files, check.class = c("GRanges", "uniHMM", "multiHMM",
   "combinedMultiHMM"))
 }
 \arguments{
@@ -13,7 +13,7 @@ loadHmmsFromFiles(files, check.class = c("uniHMM", "multiHMM",
 \item{check.class}{Any combination of \code{c('uniHMM', 'multiHMM', 'combinedMultiHMM')}. If any of the loaded objects does not belong to the specified class, an error is thrown.}
 }
 \value{
-A \code{\link[chromstaR:chromstaR-objects]{chromstaR-object}}.
+A list of \code{\link[chromstaR:chromstaR-objects]{chromstaR-object}}.
 }
 \description{
 Wrapper to load \pkg{\link{chromstaR}} objects from file and check the class of the loaded objects.

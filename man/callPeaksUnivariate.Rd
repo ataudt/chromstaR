@@ -4,15 +4,18 @@
 \alias{callPeaksUnivariate}
 \title{Fit a Hidden Markov Model to a ChIP-seq sample.}
 \usage{
-callPeaksUnivariate(binned.data, prefit.on.chr = NULL, short = TRUE,
-  eps = 0.01, init = "standard", max.time = NULL, max.iter = 5000,
-  num.trials = 1, eps.try = NULL, num.threads = 1, read.cutoff = TRUE,
-  read.cutoff.quantile = 1, read.cutoff.absolute = 500, max.mean = Inf,
-  post.cutoff = 0.5, control = FALSE, keep.posteriors = FALSE,
-  keep.densities = FALSE, verbosity = 1)
+callPeaksUnivariate(binned.data, input.data = NULL, prefit.on.chr = NULL,
+  short = TRUE, eps = 0.01, init = "standard", max.time = NULL,
+  max.iter = 5000, num.trials = 1, eps.try = NULL, num.threads = 1,
+  read.cutoff = TRUE, read.cutoff.quantile = 1,
+  read.cutoff.absolute = 500, max.mean = Inf, post.cutoff = 0.5,
+  control = FALSE, keep.posteriors = FALSE, keep.densities = FALSE,
+  verbosity = 1)
 }
 \arguments{
-\item{binned.data}{A \link{GRanges} object with binned read counts or a file that contains such an object.}
+\item{binned.data}{A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.}
+
+\item{input.data}{Input control for the experiment. A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.}
 
 \item{prefit.on.chr}{A chromosome that is used to pre-fit the Hidden Markov Model. Set to \code{NULL} if you don't want to prefit but use the whole genome instead.}
 
@@ -47,7 +50,7 @@ callPeaksUnivariate(binned.data, prefit.on.chr = NULL, short = TRUE,
 
 \item{post.cutoff}{False discovery rate. code{NULL} means that the state with maximum posterior probability will be chosen, irrespective of its absolute probability (default=code{NULL}).}
 
-\item{control}{DEPRECATED. If set to \code{TRUE}, the binned data will be treated as control experiment. That means only state 'zero-inflation' and 'unmodified' will be used in the HMM.}
+\item{control}{If set to \code{TRUE}, the binned data will be treated as control experiment. That means only state 'zero-inflation' and 'unmodified' will be used in the HMM.}
 
 \item{keep.posteriors}{If set to \code{TRUE} (default=\code{FALSE}), posteriors will be available in the output. This is useful to change the post.cutoff later, but increases the necessary disk space to store the result.}
 

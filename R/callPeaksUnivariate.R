@@ -53,14 +53,18 @@ callPeaksUnivariate <- function(binned.data, input.data=NULL, prefit.on.chr=NULL
 
     if (class(binned.data) == 'character') { 
         message("Loading file ",binned.data)
-        temp.env <- new.env()
-        binned.data <- get(load(binned.data, envir=temp.env), envir=temp.env)
+        binned.data <- loadHmmsFromFiles(binned.data)[[1]]
     }
     if (!is.null(input.data)) {
         if (class(input.data) == 'character') { 
             message("Loading input file ",input.data)
-            temp.env <- new.env()
-            input.data <- get(load(input.data, envir=temp.env), envir=temp.env)
+            input.datas <- loadHmmsFromFiles(input.data)
+            input.data <- input.datas[[1]]
+            if (length(input.datas) > 1) {
+                for (i1 in 2:length(input.datas)) {
+                    input.data$counts <- input.data$counts + input.datas[[i1]]$counts
+                }
+            }
         }
     }
     if (!is.null(prefit.on.chr)) {
