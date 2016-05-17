@@ -90,7 +90,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     if (!mode %in% c('mark','condition','full')) {
         stop("Unknown mode '", mode, "'.")
     }
-    marks <- unique(as.character(exp.table[,'mark']))
+    marks <- setdiff(unique(as.character(exp.table[,'mark'])), 'input')
     conditions <- unique(as.character(exp.table[,'condition']))
     if (length(conditions) < 2 & conf[['mode']] == 'condition') {
         stop("Mode 'condition' can only be used if two or more conditions are present.")

@@ -33,6 +33,7 @@ stateBrewer <- function(experiment.table, mode, differential.states=FALSE, commo
         stop("Argument 'experiment.table' expects a data.frame with columns 'file', 'mark', 'condition', 'replicate', 'pairedEndReads'.")
     }
     exp <- experiment.table
+    exp <- exp[exp$mark != 'input', ]
     if (mode == 'full') {
         combstates <- state.brewer(replicates=paste0(exp$mark, '-', exp$condition), conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states)
     } else if (mode == 'mark') {

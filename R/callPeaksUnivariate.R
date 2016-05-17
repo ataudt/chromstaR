@@ -132,6 +132,7 @@ callPeaksUnivariate <- function(binned.data, input.data=NULL, prefit.on.chr=NULL
 #' @author Aaron Taudt, Maria Coome Tatche
 #' @seealso \code{\link{uniHMM}}, \code{\link{callPeaksMultivariate}}
 #' @importFrom stats runif
+#' @importFrom S4Vectors Rle runmean
 callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, post.cutoff=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
 
     ### Define cleanup behaviour ###
@@ -209,13 +210,13 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
         counts[index] <- 0
         input.data$counts[index] <- 0
         # Correction factor
-        inputf <- Rle(1, length=length(input.data))
+        inputf <- S4Vectors::Rle(1, length=length(input.data))
         mean.input.counts <- mean(input.data$counts[input.data$counts>0])
         mask.mean <- input.data$counts >= mean.input.counts
         mask.0 <- input.data$counts > 0
         # inputf[mask.mean] <- mean.input.counts / input.data$counts[mask.mean]
         # inputf <- runmean(inputf, k=11, endrule='constant')
-        inputf[mask.0] <- mean.input.counts / as.numeric(runmean(Rle(input.data$counts), k=15, endrule='constant'))[mask.0]
+        inputf[mask.0] <- mean.input.counts / as.numeric(S4Vectors::runmean(S4Vectors::Rle(input.data$counts), k=15, endrule='constant'))[mask.0]
         counts <- counts * as.numeric(inputf)
         stopTimedMessage(ptm)
     }
