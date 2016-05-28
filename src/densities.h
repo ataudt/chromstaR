@@ -58,7 +58,7 @@ class ZiNB : public Density {
 		double w; ///< parameter of the distribution
 		int* obs; ///< vector [T] of observations
 		int T; ///< length of observation vector
-		double* weight; ///< temporary storage for weights in update()
+// 		double* weight; ///< temporary storage for weights in update()
 		int max_obs; ///< maximum value in *obs
 		double* lxfactorials; ///< vector [max_obs] of precomputed factorials (x!)
 };

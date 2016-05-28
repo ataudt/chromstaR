@@ -15,7 +15,7 @@ plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
   region = c("start", "inside", "end"), num.intervals = 20)
 }
 \arguments{
-\item{hmm}{A \code{\link{multiHMM}} or a file that contains such an object.}
+\item{hmm}{A \code{\link{combinedMultiHMM}} or \code{\link{multiHMM}} object or a file that contains such an object.}
 
 \item{annotations}{A \code{list()} with \code{\link{GRanges}} objects containing coordinates of multiple annotations The names of the list entries will be used to name the return values.}
 

@@ -4,12 +4,14 @@
 \alias{enrichmentAtAnnotation}
 \title{Enrichment of (combinatorial) states for genomic annotations}
 \usage{
-enrichmentAtAnnotation(hmm, annotation, bp.around.annotation = 10000,
+enrichmentAtAnnotation(bins, info, annotation, bp.around.annotation = 10000,
   region = c("start", "inside", "end"), what = c("combinations",
   "binstates", "counts"), num.intervals = 21)
 }
 \arguments{
-\item{hmm}{A \code{\link{multiHMM}} object.}
+\item{bins}{The \code{$bins} entry from a \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object.}
+
+\item{info}{The \code{$info} entry from a \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object.}
 
 \item{annotation}{A \code{\link{GRanges}} object with the annotation of interest.}
 

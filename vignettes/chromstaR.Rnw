@@ -457,6 +457,45 @@ promoter.BN <- segments[segments$transition.group == 'constant [H3K4me3]']
 ## Get transition frequencies
 print(model$frequencies)
 @
+<<combined_enrichment, results='markup', message=FALSE, eval=TRUE>>=
+## === Step 4: Enrichment analysis ===
+# Annotations can easily be obtained with the biomaRt package. Of course, you can
+# also load them from file if you already have annotation files available.
+library(biomaRt)
+ensembl <- useMart('ENSEMBL_MART_ENSEMBL', host='may2012.archive.ensembl.org',
+                   dataset='rnorvegicus_gene_ensembl')
+genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
+                            'end_position', 'strand', 'external_gene_id',
+                            'gene_biotype'),
+               mart=ensembl)
+# Transform to GRanges for easier handling
+genes <- GRanges(seqnames=paste0('chr',genes$chromosome_name),
+                 ranges=IRanges(start=genes$start, end=genes$end),
+                 strand=genes$strand,
+                 name=genes$external_gene_id, biotype=genes$gene_biotype)
+print(genes)
+@
+
+<<combined_enrichment_plot1, results='markup', message=FALSE, eval=TRUE, fig.width=6, fig.height=4>>=
+# We expect promoter [H3K4me3] and bivalent-promoter signatures [H3K4me3+H3K27me3]
+# to be enriched at transcription start sites.
+plots <- plotEnrichment(hmm = model, annotation = genes, bp.around.annotation = 15000)
+plots[['BN']] + facet_wrap(~ combination) +
+  ggtitle('Fold enrichment around genes') +
+  xlab('distance from gene body')
+@
+
+<<combined_enrichment_plot3, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4>>=
+# Fold enrichment with different biotypes, showing that protein coding genes are
+# enriched with (bivalent) promoter combinations [H3K4me3] and [H3K4me3+H3K27me3],
+# while rRNA is enriched with the empty [] combination.
+tss <- resize(genes, width = 3, fix = 'start')
+biotypes <- split(tss, tss$biotype)
+plots <- plotMultipleEnrichment(model, annotations=biotypes)
+plots[['BN']] + coord_flip() + 
+  scale_fill_gradient(low='white', high='blue', limits=c(0,100)) + 
+  ggtitle('Fold enrichment with different biotypes')
+@
 \end{scriptsize}
 
 \section{\label{sec:faq}FAQ}
