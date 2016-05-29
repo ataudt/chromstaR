@@ -430,13 +430,13 @@ head(rn4_chrominfo)
 ## Run ChromstaR
 Chromstar(inputfolder, experiment.table=experiment_table,
           outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
-          prefit.on.chr='chr12', mode='mark')
+          prefit.on.chr='chr12', mode='condition')
 @
 <<combined_listfiles, results='markup', message=FALSE, eval=TRUE>>=
 ## Results are stored in 'outputfolder' and can be loaded for further processing
 list.files(outputfolder)
 model <- get(load(file.path(outputfolder,'combined',
-                            'combined_mode-mark.RData')))
+                            'combined_mode-condition.RData')))
 @
 
 <<combined_analysis, results='markup', message=FALSE, eval=TRUE>>=
@@ -449,9 +449,9 @@ diff.segments <- diff.segments[diff.segments$differential.score >= 1.9]
 exportGRanges(diff.segments, trackname='differential_chromatin_states',
               filename=tempfile(), scorecol='differential.score')
 ## Obtain all genomic regions where we find a bivalent promoter in BN but not in SHR
-bivalent.BN <- segments[segments$BN == '[H3K27me3+H3K4me3]' &
-                        segments$SHR != '[H3K27me3+H3K4me3]']
-## Obtain all genomic regions where BN and SHR have promoters
+bivalent.BN <- segments[segments$combination.BN == '[H3K27me3+H3K4me3]' &
+                        segments$combination.SHR != '[H3K27me3+H3K4me3]']
+## Obtain all genomic regions where BN and SHR have promoter signatures
 promoter.BN <- segments[segments$transition.group == 'constant [H3K4me3]']
 
 ## Get transition frequencies
@@ -479,10 +479,10 @@ print(genes)
 <<combined_enrichment_plot1, results='markup', message=FALSE, eval=TRUE, fig.width=6, fig.height=4>>=
 # We expect promoter [H3K4me3] and bivalent-promoter signatures [H3K4me3+H3K27me3]
 # to be enriched at transcription start sites.
-plots <- plotEnrichment(hmm = model, annotation = genes, bp.around.annotation = 15000)
+plots <- plotEnrichment(hmm=model, annotation=genes, region='start')
 plots[['BN']] + facet_wrap(~ combination) +
-  ggtitle('Fold enrichment around genes') +
-  xlab('distance from gene body')
+  ggtitle('Fold enrichment around TSS') +
+  xlab('distance from TSS')
 @
 
 <<combined_enrichment_plot3, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4>>=
@@ -507,7 +507,7 @@ The strictness of the peak calling can be controlled with a posterior cutoff. Th
 \begin{scriptsize}
 <<faq_postcutoff, results='markup', message=FALSE, eval=TRUE>>=
 model <- get(load(file.path(outputfolder,'combined',
-                            'combined_mode-mark.RData')))
+                            'combined_mode-condition.RData')))
 # Set a strict cutoff close to 1
 model2 <- changePostCutoff(model, post.cutoff=0.999)
 ## Compare the number and width of peaks before and after cutoff adjustment
