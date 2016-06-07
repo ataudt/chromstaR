@@ -12,7 +12,7 @@ combineMultivariates(hmms, mode)
 \item{mode}{Mode of combination. See \code{\link{Chromstar}} for a description of the \code{mode} parameter.}
 }
 \value{
-A \code{link{combinedMultiHMM}} objects with combinatorial states for each condition.
+A \code{\link{combinedMultiHMM}} objects with combinatorial states for each condition.
 }
 \description{
 Combine combinatorial states from several \code{\link{multiHMM}} objects. Combinatorial states can be combined for objects containing multiple marks (\code{mode='mark'}) or multiple conditions (\code{mode='condition'}).

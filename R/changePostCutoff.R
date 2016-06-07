@@ -67,7 +67,7 @@ changePostCutoff <- function(model, post.cutoff=0.5, separate.zeroinflation=TRUE
         red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c('score'), columns2drop=c('width',grep('posteriors', names(df), value=TRUE), 'counts')))
         red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], score=red.df[,'mean.score'])
         model$segments <- red.gr
-        seqlengths(model$segments) <- seqlengths(model$bins)
+        seqlengths(model$segments) <- seqlengths(model$bins)[seqlevels(model$segments)]
         stopTimedMessage(ptm)
 #         ## Redo weights
 #         model$weights <- table(model$bins$state) / length(model$bins)

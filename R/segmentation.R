@@ -18,7 +18,7 @@ multivariateSegmentation <- function(bins, column2collapseBy='state') {
     names(red.df) <- sub('^mean.','', names(red.df))
     segments <- as(red.df, 'GRanges')
     segments <- keepSeqlevels(segments, seqlevels(bins))
-    seqlengths(segments) <- seqlengths(bins)
+    seqlengths(segments) <- seqlengths(bins)[seqlevels(segments)]
     stopTimedMessage(ptm)
 
     return(segments)

@@ -5,7 +5,7 @@
 \title{Fit a Hidden Markov Model to a ChIP-seq sample.}
 \usage{
 callPeaksUnivariate(binned.data, input.data = NULL, prefit.on.chr = NULL,
-  short = TRUE, eps = 0.01, init = "standard", max.time = NULL,
+  short = TRUE, eps = 0.1, init = "standard", max.time = NULL,
   max.iter = 5000, num.trials = 1, eps.try = NULL, num.threads = 1,
   read.cutoff = TRUE, read.cutoff.quantile = 1,
   read.cutoff.absolute = 500, max.mean = Inf, post.cutoff = 0.5,

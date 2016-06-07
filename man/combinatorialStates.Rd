@@ -56,6 +56,6 @@ table(states)
 Aaron Taudt
 }
 \seealso{
-\code{link{dec2bin}}, \code{\link{bin2dec}}
+\code{\link{dec2bin}}, \code{\link{bin2dec}}
 }
 

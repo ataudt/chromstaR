@@ -239,6 +239,7 @@ bed2GRanges <- function(bedfile, assembly, chromosomes=NULL, remove.duplicate.re
     }
 
     ## Select only desired chromosomes
+    ptm <- startTimedMessage("Subsetting chromosomes ...")
     data <- data[seqnames(data) %in% chroms2use]
     data <- keepSeqlevels(data, as.character(unique(seqnames(data))))
     ## Drop seqlevels where seqlength is NA
@@ -248,6 +249,7 @@ bed2GRanges <- function(bedfile, assembly, chromosomes=NULL, remove.duplicate.re
     if (length(na.seqlevels) > 0) {
         warning("Dropped seqlevels because no length information was available: ", paste0(na.seqlevels, collapse=', '))
     }
+    stopTimedMessage(ptm)
 
     if (length(data) == 0) {
         stop(paste0('No reads imported!'))

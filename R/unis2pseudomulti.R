@@ -111,7 +111,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
         red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2drop=c(ind.readcols, ind.widthcol)))
         red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], combination=red.df[,'combination'])
         result$segments <- red.gr
-        seqlengths(result$segments) <- seqlengths(result$bins)
+        seqlengths(result$segments) <- seqlengths(result$bins)[seqlevels(result$segments)]
     ## Parameters
         result$mapping <- mapping
         # Weights

@@ -4,7 +4,7 @@
 #' 
 #' @param hmms A \code{list()} with \code{\link{multiHMM}} objects. Alternatively a character vector with filenames that contain \code{\link{multiHMM}} objects.
 #' @param mode Mode of combination. See \code{\link{Chromstar}} for a description of the \code{mode} parameter.
-#' @return A \code{link{combinedMultiHMM}} objects with combinatorial states for each condition.
+#' @return A \code{\link{combinedMultiHMM}} objects with combinatorial states for each condition.
 #' @author Aaron Taudt
 #' @export
 #' @examples
@@ -253,7 +253,7 @@ combineMultivariates <- function(hmms, mode) {
         segments.cond <- suppressMessages( collapseBins(df, column2collapseBy=cond, columns2drop=c('width', grep('posteriors', names(df), value=TRUE))) )
         segments.cond <- as(segments.cond, 'GRanges')
         names(mcols(segments.cond)) <- 'combination'
-        seqlengths(segments.cond) <- seqlengths(bins)
+        seqlengths(segments.cond) <- seqlengths(bins)[seqlevels(segments.cond)]
         segments.separate[[cond]] <- segments.cond
     }
     stopTimedMessage(ptm)

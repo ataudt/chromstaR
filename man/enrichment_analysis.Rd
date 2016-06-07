@@ -34,7 +34,7 @@ plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
 \item{num.intervals}{Number of intervals for enrichment 'inside' of annotation.}
 }
 \value{
-A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot.
+A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot or a list() with \code{\link[ggplot2:ggplot]{ggplot}} objects if several plots are returned.
 
 A \code{\link[ggplot2]{ggplot}} object (\code{plot=TRUE}) or a named array with fold enrichments (\code{plot=FALSE}).
 }

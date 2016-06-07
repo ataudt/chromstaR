@@ -3,7 +3,7 @@
 #' Plotting functions for enrichment analysis of \code{\link{multiHMM}} objects with any annotation of interest, specified as a \code{\link[GenomicRanges]{GRanges}} object.
 #' 
 #' @name enrichment_analysis
-#' @return A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot.
+#' @return A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot or a list() with \code{\link[ggplot2:ggplot]{ggplot}} objects if several plots are returned.
 #' @author Aaron Taudt
 #' @examples 
 #'### Get an example multiHMM ###
