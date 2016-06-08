@@ -516,12 +516,27 @@ length(model2$segments); mean(width(model2$segments))
 @
 \end{scriptsize}
 
+It is even possible to adjust the posterior cutoff for only one particular mark or condition. This might be useful in case the quality of a particular mark is not as expected and peak calls need to be tweaked.
+
+\begin{scriptsize}
+<<faq_postcutoff_single, results='markup', message=FALSE, eval=TRUE>>=
+# Set a stricter cutoff for H3K4me3 than for H3K27me3
+cutoffs <- c(0.8, 0.8, 0.8, 0.8, 0.999, 0.999, 0.999, 0.999)
+names(cutoffs) <- model$info$ID
+print(cutoffs)
+model2 <- changePostCutoff(model, post.cutoff=cutoffs)
+## Compare the number and width of peaks before and after cutoff adjustment
+length(model$segments); mean(width(model$segments))
+length(model2$segments); mean(width(model2$segments))
+@
+\end{scriptsize}
+
 \subsection{The combinatorial differences that chromstaR gives me are not convincing. Is there a way to restrict the results to a more convincing set?}
 
 You were interested in combinatorial state differences as in section~\ref{sec:Task4} and checked the results in a genome browser. You found that some differences are convincing by eye and some are not. There are several possibilities to explore:
 \begin{enumerate}
+\item Run \Rfunction{Chromstar} in mode='condition' (instead of mode='mark') and see if the results improve.
 \item You can play with the ``differential.score'' (see section~\ref{sec:Task4}, step 3) and export only differences with a high score. A differential score around 1 means that one modification is different, a score close to 2 means that two modifications are different etc. The score is calculated as the sum of differences in posterior probabilities between marks.
-\item Run \Rfunction{Chromstar} with mode='mark' or mode='condition' and see if the results improve.
 \item Check for bad replicates that are very different from the rest and exclude them prior to the analysis.
 \end{enumerate}
 

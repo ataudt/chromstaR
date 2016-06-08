@@ -4,14 +4,12 @@
 \alias{changePostCutoff}
 \title{Change the false discovery rate of a Hidden Markov Model}
 \usage{
-changePostCutoff(model, post.cutoff = 0.5, separate.zeroinflation = TRUE)
+changePostCutoff(model, post.cutoff = 0.5)
 }
 \arguments{
 \item{model}{A \code{\link{uniHMM}} or \code{\link{multiHMM}} object with posteriors.}
 
-\item{post.cutoff}{Posterior cutoff. Values close to 1 will yield more stringent peak calls with lower false positive but higher false negative rate.}
-
-\item{separate.zeroinflation}{Only for \code{\link{uniHMM}} objects: If set to TRUE, state 'zero-inflation' will be treated separately, otherwise it will be merged with state 'unmodified'.}
+\item{post.cutoff}{A vector of posterior cutoff values between 0 and 1 the same length as \code{ncol(model$bins$posteriors)}. If only one value is given, it will be reused for all columns. Values close to 1 will yield more stringent peak calls with lower false positive but higher false negative rate.}
 }
 \value{
 The input object is returned with adjusted peak calls.
