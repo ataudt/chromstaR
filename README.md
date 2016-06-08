@@ -30,3 +30,8 @@ How to use chromstaR
 --------------------
 
 Please refer to the vignette at https://github.com/ataudt/chromstaR/blob/master/vignettes/chromstaR.pdf for tutorials on all chromstaR features.
+
+Report Errors
+-------------
+
+If you encounter errors of any kind, please file an [issue here](https://github.com/ataudt/chromstaR/issues/new). I will try to react within one day.
