@@ -498,6 +498,13 @@ plots[['BN']] + coord_flip() +
 @
 \end{scriptsize}
 
+\section{\label{sec:output}Output of function \Rfunction{Chromstar()}}
+
+\Rfunction{Chromstar()} is the workhorse of the \Rpackage{chromstaR} package and produces all the files that are necessary for downstream analyses. Here is an explanation of the files and folders you will find in your ``outputfolder'':
+\begin{enumerate}
+\item 
+\end{enumerate}
+
 \section{\label{sec:faq}FAQ}
 
 \subsection{The peak calls are too lenient. Can I adjust the strictness of the peak calling?}
@@ -516,7 +523,7 @@ length(model2$segments); mean(width(model2$segments))
 @
 \end{scriptsize}
 
-It is even possible to adjust the posterior cutoff for only one particular mark or condition. This might be useful in case the quality of a particular mark is not as expected and peak calls need to be tweaked.
+It is even possible to adjust the posterior cutoff differently for the different marks or conditions.
 
 \begin{scriptsize}
 <<faq_postcutoff_single, results='markup', message=FALSE, eval=TRUE>>=
