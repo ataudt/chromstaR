@@ -51,7 +51,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
     weights = lapply(uni.hmm.list,"[[","weights")
 
     # Extract the reads
-    ptm <- startTimedMessage("Extracting read counts from uni.hmm.list...")
+    ptm <- startTimedMessage("Extracting read counts from uni.hmm.list ...")
     reads = matrix(NA, ncol=nummod, nrow=numbins)
     colnames(reads) <- info$ID
     for (imod in 1:nummod) {
@@ -62,7 +62,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
     stopTimedMessage(ptm)
 
     ## Get combinatorial states
-    ptm <- startTimedMessage("Getting combinatorial states")
+    ptm <- startTimedMessage("Getting combinatorial states ...")
     combstates.per.bin = combinatorialStates(uni.hmm.list)
     comb.states.table = table(combstates.per.bin)
     comb.states = as.numeric(names(sort(comb.states.table, decreasing=TRUE)))
@@ -84,7 +84,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
     stopTimedMessage(ptm)
     
     ## Calculate transition matrix
-    ptm <- startTimedMessage("Estimating transition matrix...")
+    ptm <- startTimedMessage("Estimating transition matrix ...")
     A.estimated = matrix(0, ncol=2^nummod, nrow=2^nummod)
     colnames(A.estimated) = 1:2^nummod-1
     rownames(A.estimated) = 1:2^nummod-1

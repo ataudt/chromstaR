@@ -79,11 +79,13 @@ combineMultivariates <- function(hmms, mode) {
         hmm <- suppressMessages( loadHmmsFromFiles(hmms[[1]], check.class=class.multivariate.hmm)[[1]] )
         bins <- hmm$bins
         mcols(bins) <- NULL
-        ## Add combinatorial states and posteriors
+        ## Add combinatorial states, counts and posteriors
         infos <- list()
         infos[[1]] <- hmm$info
         combs <- list()
         combs[[1]] <- hmm$bins$combination
+        counts <- list()
+        counts[[1]] <- hmm$bins$counts
         posteriors <- list()
         posteriors[[1]] <- hmm$bins$posteriors
         binstates <- list()
@@ -96,11 +98,13 @@ combineMultivariates <- function(hmms, mode) {
                 hmm <- suppressMessages( loadHmmsFromFiles(hmms[[i1]], check.class=class.multivariate.hmm)[[1]] )
                 infos[[i1]] <- hmm$info
                 combs[[i1]] <- hmm$bins$combination
+                counts[[i1]] <- hmm$bins$counts
                 posteriors[[i1]] <- hmm$bins$posteriors
                 binstates[[i1]] <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
                 stopTimedMessage(ptm)
             }
         }
+        counts <- do.call(cbind, counts)
         posteriors <- do.call(cbind, posteriors)
         infos <- do.call(rbind, infos)
         conditions <- unique(infos$condition)
@@ -112,16 +116,19 @@ combineMultivariates <- function(hmms, mode) {
     } else if (mode == 'condition') {
         ### Get posteriors and binary states
         infos <- list()
+        counts <- list()
         posteriors <- list()
         binstates <- list()
         for (i1 in 1:length(hmms)) {
             ptm <- startTimedMessage("Processing HMM ",i1," ...")
             hmm <- suppressMessages( loadHmmsFromFiles(hmms[[i1]], check.class=class.multivariate.hmm)[[1]] )
             infos[[i1]] <- hmm$info
+            counts[[i1]] <- hmm$bins$counts
             posteriors[[i1]] <- hmm$bins$posteriors
             binstates[[i1]] <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
             stopTimedMessage(ptm)
         }
+        counts <- do.call(cbind, counts)
         posteriors <- do.call(cbind, posteriors)
         infos <- do.call(rbind, infos)
         conditions <- unique(infos$condition)
@@ -157,6 +164,7 @@ combineMultivariates <- function(hmms, mode) {
         mcols(bins) <- NULL
         infos <- hmm$info
         conditions <- unique(infos$condition)
+        counts <- hmm$bins$counts
         posteriors <- hmm$bins$posteriors
         states <- hmm$bins$state
         combs <- list()
@@ -177,9 +185,11 @@ combineMultivariates <- function(hmms, mode) {
         hmm <- suppressMessages( loadHmmsFromFiles(hmms[[1]], check.class=class.multivariate.hmm)[[1]] )
         bins <- hmm$bins
         mcols(bins) <- NULL
-        ## Add combinatorial states and posteriors
+        ## Add combinatorial states, counts and posteriors
         infos <- list()
         infos[[1]] <- hmm$info
+        counts <- list()
+        counts[[1]] <- hmm$bins$counts
         posteriors <- list()
         posteriors[[1]] <- hmm$bins$posteriors
         binstates <- list()
@@ -191,11 +201,13 @@ combineMultivariates <- function(hmms, mode) {
                 ptm <- startTimedMessage("Processing mark-condition ",i1," ...")
                 hmm <- suppressMessages( loadHmmsFromFiles(hmms[[i1]], check.class=class.multivariate.hmm)[[1]] )
                 infos[[i1]] <- hmm$info
+                counts[[i1]] <- hmm$bins$counts
                 posteriors[[i1]] <- hmm$bins$posteriors
                 binstates[[i1]] <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
                 stopTimedMessage(ptm)
             }
         }
+        counts <- do.call(cbind, counts)
         posteriors <- do.call(cbind, posteriors)
         binstates <- do.call(cbind, binstates)
         infos <- do.call(rbind, infos)
@@ -230,7 +242,8 @@ combineMultivariates <- function(hmms, mode) {
     bins$state <- states
     mcols(bins)[names(combs.df)] <- combs.df
     
-    ## Transferring posteriors
+    ## Transferring counts and posteriors
+    bins$counts <- counts
     bins$posteriors <- posteriors
 
     ## Add differential score ##
@@ -239,7 +252,7 @@ combineMultivariates <- function(hmms, mode) {
     ### Redo the segmentation for all conditions combined
     ptm <- startTimedMessage("Redoing segmentation for all conditions combined ...")
     segments <- suppressMessages( multivariateSegmentation(bins, column2collapseBy='state') )
-    names(mcols(segments)) <- setdiff(names(mcols(bins)), 'posteriors')
+    names(mcols(segments)) <- setdiff(names(mcols(bins)), c('posteriors','counts'))
     stopTimedMessage(ptm)
     
     ### Redo the segmentation for each condition separately

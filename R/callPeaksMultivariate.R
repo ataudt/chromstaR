@@ -232,7 +232,7 @@ runMultivariate <- function(bins, info, comb.states, use.states, distributions, 
         num.bins = as.integer(length(bins)), # int* T
         max.states = as.integer(length(comb.states)), # int* N
         num.modifications = as.integer(ncol(bins$counts)), # int* Nmod
-        comb.states = as.integer(comb.states), # int* comb_states
+        comb.states = as.numeric(comb.states), # double* comb_states
         size = as.double(rs), # double* size
         prob = as.double(ps), # double* prob
         w = as.double(ws), # double* w
@@ -359,6 +359,9 @@ runMultivariate <- function(bins, info, comb.states, use.states, distributions, 
 prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosomes=NULL) {
 
     nummod <- length(hmms)
+    if (nummod > 53) {
+        stop("We can't handle more than 53 'hmms' Please decrease the number of input 'hmms'.")
+    }
 
     ## Load first HMM for coordinates
     ptm <- startTimedMessage("Getting coordinates ...")
@@ -410,7 +413,7 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
     remove(hmm)
 
     ## Transform binary to decimal
-    ptm <- startTimedMessage("Getting combinatorial states")
+    ptm <- startTimedMessage("Getting combinatorial states ...")
     decimal_states <- rep(0,length(bins))
     for (imod in 1:nummod) {
         decimal_states <- decimal_states + 2^(nummod-imod) * bins$binary_statesmatrix[,imod]
@@ -431,7 +434,7 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
     stopTimedMessage(ptm)
 
     ## We pre-compute the z-values for each number of counts
-    ptm <- startTimedMessage("Computing pre z-matrix...")
+    ptm <- startTimedMessage("Computing pre z-matrix ...")
     z.per.read <- array(NA, dim=c(maxcounts+1, nummod, 2))
     xcounts = 0:maxcounts
     for (imod in 1:nummod) {
@@ -463,7 +466,7 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
     stopTimedMessage(ptm)
 
     ## Compute the z matrix
-    ptm <- startTimedMessage("Transfering values into z-matrix...")
+    ptm <- startTimedMessage("Transfering values into z-matrix ...")
     z.per.bin = array(NA, dim=c(length(bins), nummod, 2), dimnames=list(bin=1:length(bins), track=info$ID, state.labels[2:3]))
     for (imod in 1:nummod) {
         for (i1 in 1:2) {
@@ -476,18 +479,30 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
     stopTimedMessage(ptm)
 
     ### Calculate correlation matrix
-    ptm <- startTimedMessage("Computing inverse of correlation matrix...")
+    ptm <- startTimedMessage("Computing inverse of correlation matrix ...")
     correlationMatrix = array(NA, dim=c(nummod,nummod,length(comb.states)), dimnames=list(track=info$ID, track=info$ID, comb.state=comb.states))
     correlationMatrixInverse = array(NA, dim=c(nummod,nummod,length(comb.states)), dimnames=list(track=info$ID, track=info$ID, comb.state=comb.states))
     determinant = rep(NA, length(comb.states))
     names(determinant) <- comb.states
 
+    numericToBin <- function(x, num.digits) {
+        bin <- logical(length=num.digits)
+        xi <- x
+        i1 <- num.digits
+        while (xi > 0) {
+            bin[i1] <- xi %% 2
+            xi <- xi %/% 2
+            i1 <- i1 - 1
+        }
+        return(bin)
+    }
+    
     ## Calculate correlation matrix serial
     for (state in comb.states) {
         istate = which(comb.states==state)
-        mask = which(bins$state==as.integer(state))
+        mask = which(bins$state==as.numeric(state))
         # Convert state to binary representation
-        binary_state = rev(as.integer(intToBits(as.integer(state)))[1:nummod])
+        binary_state <- numericToBin(as.numeric(state), nummod)
         # Subselect z
         z.temp <- matrix(NA, ncol=nummod, nrow=length(mask))
         for (i1 in 1:length(binary_state)) {

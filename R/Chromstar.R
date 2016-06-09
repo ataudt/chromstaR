@@ -269,6 +269,20 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     } else {
         combined.model <- loadHmmsFromFiles(savename, check.class=class.combined.multivariate.hmm)[[1]]
     }
+    ## Plot correlations
+    ptm <- startTimedMessage("Plotting read count correlation ...")
+    char.per.cm <- 10
+    legend.cm <- 3
+    savename <- file.path(plotpath, 'read-count-correlation.pdf')
+    ggplt <- plotMultivariateCorrelation(combined.model, cluster=FALSE)
+    width <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
+    height <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
+    ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
+    savename <- file.path(plotpath, 'read-count-correlation-clustered.pdf')
+    ggplt <- plotMultivariateCorrelation(combined.model, cluster=TRUE)
+    width <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
+    height <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
+    ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
   
     #-------------------------
     ## Export browser files ##
@@ -297,17 +311,6 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         ptm <- startTimedMessage("Making plots ...")
         char.per.cm <- 10
         legend.cm <- 3
-        savename1 <- paste0(savename, '_correlation.pdf')
-        ggplt <- suppressMessages( graphics::plot(multimodel, type='correlation', cluster=FALSE) )
-        width <- length(multimodel$info$ID) + max(sapply(multimodel$info$ID, nchar)) / char.per.cm + legend.cm
-        height <- length(multimodel$info$ID) + max(sapply(multimodel$info$ID, nchar)) / char.per.cm
-        ggsave(savename1, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
-
-        savename1.1 <- paste0(savename, '_correlation-clustered.pdf')
-        ggplt <- suppressMessages( graphics::plot(multimodel, type='correlation', cluster=TRUE) )
-        width <- length(multimodel$info$ID) + max(sapply(multimodel$info$ID, nchar)) / char.per.cm + legend.cm
-        height <- length(multimodel$info$ID) + max(sapply(multimodel$info$ID, nchar)) / char.per.cm
-        ggsave(savename1.1, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
 
         savename2 <- paste0(savename, '_transitionMatrix.pdf')
         ggplt <- suppressMessages( graphics::plot(multimodel, type='transitionMatrix') )

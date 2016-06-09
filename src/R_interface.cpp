@@ -258,7 +258,7 @@ void univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* max
 // =====================================================================================================================================================
 // This function takes parameters from R, creates a multivariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // =====================================================================================================================================================
-void multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, double* size, double* prob, double* w, double* cor_matrix_inv, double* det, int* maxiter, int* maxtime, double* eps, double* posteriors, bool* keep_posteriors, double* densities, bool* keep_densities, int* states, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* verbosity)
+void multivariate_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, double* size, double* prob, double* w, double* cor_matrix_inv, double* det, int* maxiter, int* maxtime, double* eps, double* posteriors, bool* keep_posteriors, double* densities, bool* keep_densities, int* states, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* verbosity)
 {
 
 	// Define logging level {"ERROR", "WARNING", "INFO", "ITERATION", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4"}
@@ -334,14 +334,15 @@ void multivariate_hmm(int* O, int* T, int* N, int *Nmod, int* comb_states, doubl
 
 	// Prepare the binary_states (univariate) vector: binary_states[N][Nmod], e.g., binary_states[iN][imod] tells me at state comb_states[iN], modification imod is non-enriched (0) or enriched (1)
 	//FILE_LOG(logDEBUG1) << "Preparing the binary_states vector";
+	double res;
 	bool **binary_states = CallocBoolMatrix(*N, *Nmod);
-	for(int iN=0; iN < *N; iN++) //for each comb state considered
+	for (int iN=0; iN < *N; iN++) //for each comb state considered
 	{
-		for(int imod=0; imod < *Nmod; imod++) //for each modification of this comb state
+		res = comb_states[iN];
+		for (int imod=(*Nmod-1); imod >= 0; imod--) //for each modification of this comb state
 		{
-			binary_states[iN][imod] = comb_states[iN]&(int)pow(2,*Nmod-imod-1);//if =0->hidden state comb_states[iN] has modification imod non enriched; if !=0->enriched
-			if (binary_states[iN][imod] != 0 )
-				binary_states[iN][imod] = 1;
+			binary_states[iN][imod] = (bool)fmod(res,2);
+			res = (res - (double)binary_states[iN][imod]) / 2.0;
 		}
 	}
 
