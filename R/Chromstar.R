@@ -127,6 +127,26 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     if (!file.exists(plotpath)) { dir.create(plotpath) }
     if (!file.exists(browserpath)) { dir.create(browserpath) }
     
+    ## Write README ##
+    savename <- file.path(outputfolder, 'README.txt')
+    cat("", file=savename)
+    cat("This folder contains the following files:\n", file=savename, append=TRUE)
+    cat("-----------------------------------------\n", file=savename, append=TRUE)
+    cat("- chrominfo.tsv: A tab-separated file with chromosome lengths.\n", file=savename, append=TRUE)
+    cat("- chromstaR.config: A text file with all the parameters that were used to run Chromstar().\n", append=TRUE, file=savename)
+    cat("- experiment_table.tsv: A tab-separated file of your experiment setup.\n", file=savename, append=TRUE)
+    
+    cat("\n", file=savename, append=TRUE)
+    cat("This folder contains the following folders:\n", file=savename, append=TRUE)
+    cat("-------------------------------------------\n", file=savename, append=TRUE)
+    cat("- binned: RData files with the results of the binnig step. Contains GRanges objects with binned genomic coordinates and read counts.\n", file=savename, append=TRUE)
+    cat("- BROWSERFILES: Bed files for upload to the UCSC genome browser. It contains files with combinatorial states (*_combinations.bed.gz), underlying peak calls (*_peaks.bed.gz), and read counts (*_counts.wig.gz). !!Always check the *_peaks.bed.gz files if you are satisfied with the peak calls. If not, there are ways to make the calls stricter (see section FAQ of the vignette).\n", file=savename, append=TRUE)
+    cat("- -->combined<--: RData files with the combined results of all previous steps. This is what you want to use for downstream analyses. Contains combinedMultiHMM objects.\n", file=savename, append=TRUE)
+    cat("- multivariate: RData files with the results of the multivariate peak calling step. Contains multiHMM objects.\n", file=savename, append=TRUE)
+    cat("- PLOTS: Several plots that are produced by default. Please check the plots in subfolder \"univariate-distributions\" for irregularities (see section \"Univariate Analysis\" of the vignette).\n", file=savename, append=TRUE)
+    cat("- replicates: RData files with the result of the replicate peak calling step. Contains multiHMM objects.\n", file=savename, append=TRUE)
+    cat("- univariate: RData files with the result of the univariate peak calling step. Contains uniHMM objects.\n", file=savename, append=TRUE)
+    
     ## Make a copy of the conf file
     writeConfig(conf, configfile=file.path(outputfolder, 'chromstaR.config'))
 
