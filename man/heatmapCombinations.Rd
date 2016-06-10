@@ -4,15 +4,15 @@
 \alias{heatmapCombinations}
 \title{Plot a heatmap of combinatorial states}
 \usage{
-heatmapCombinations(hmm = NULL, marks = NULL)
+heatmapCombinations(model = NULL, marks = NULL)
 }
 \arguments{
-\item{hmm}{A \code{\link{multiHMM}} object.}
+\item{model}{A \code{\link{multiHMM}} object or file that contains such an object.}
 
-\item{marks}{A character vector with histone marks. If specified, \code{hmm} will be ignored.}
+\item{marks}{A character vector with histone marks. If specified, \code{model} will be ignored.}
 }
 \value{
-A \code{\link[ggplot2]{ggplot}} object containing the plot.
+A \code{\link[ggplot2]{ggplot}} object.
 }
 \description{
 Plot a heatmap that shows the binary presence/absence of marks for the different combinations.

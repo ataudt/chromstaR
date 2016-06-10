@@ -8,7 +8,7 @@
 #' @param configfile A file specifying the parameters of this function (without \code{inputfolder}, \code{outputfolder} and \code{configfile}). Having the parameters in a file can be handy if many samples with the same parameter settings are to be run. If a \code{configfile} is specified, it will take priority over the command line parameters.
 #' @param numCPU Number of threads to use for the analysis. Beware that more CPUs also means more memory is needed. If you experience crashes of R with higher numbers of this parameter, leave it at \code{numCPU=1}.
 #' @param binsize An integer specifying the bin size that is used for the analysis.
-#' @inheritParams bed2GRanges
+#' @inheritParams readBedFile
 #' @inheritParams callPeaksUnivariate
 #' @param mode One of \code{c('condition','mark','full')}. The modes determine how the multivariate part is run. Here is some advice which mode to use:
 #' \describe{
@@ -24,7 +24,6 @@
 #' @import foreach
 #' @import doParallel
 #' @importFrom utils read.table write.table
-#' @importFrom graphics plot
 #' @export
 #' 
 #' @examples 
@@ -141,7 +140,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     cat("-------------------------------------------\n", file=savename, append=TRUE)
     cat("- binned: RData files with the results of the binnig step. Contains GRanges objects with binned genomic coordinates and read counts.\n", file=savename, append=TRUE)
     cat("- BROWSERFILES: Bed files for upload to the UCSC genome browser. It contains files with combinatorial states (*_combinations.bed.gz), underlying peak calls (*_peaks.bed.gz), and read counts (*_counts.wig.gz). !!Always check the *_peaks.bed.gz files if you are satisfied with the peak calls. If not, there are ways to make the calls stricter (see section FAQ of the vignette).\n", file=savename, append=TRUE)
-    cat("- -->combined<--: RData files with the combined results of all previous steps. This is what you want to use for downstream analyses. Contains combinedMultiHMM objects.\n", file=savename, append=TRUE)
+    cat("- -->combined<--: RData files with the combined results of the uni- and multivariate peak calling steps. This is what you want to use for downstream analyses. Contains combinedMultiHMM objects.\n", file=savename, append=TRUE)
     cat("    - combined_mode-separate.RData: Simple combination of univariate peak calls (replicates considered) without multivariate analysis.\n", file=savename, append=TRUE)
     cat("    - combined_mode-mark.RData: Combination of multivariate results for mode='mark'.\n", file=savename, append=TRUE)
     cat("    - combined_mode-condition.RData: Combination of multivariate results for mode='condition'.\n", file=savename, append=TRUE)
@@ -234,7 +233,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         savename.pdf <- file.path(uniplotpath, paste0(basename(file),'.pdf'))
         if (!file.exists(savename.pdf)) {
             ptm <- startTimedMessage("Plotting to file ", savename.pdf, " ...")
-            ggplt <- graphics::plot(savename)
+            ggplt <- plotHistogram(savename)
             ggsave(filename=savename.pdf, plot=ggplt, width=7, height=5)
             stopTimedMessage(ptm)
         }
@@ -298,12 +297,12 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     char.per.cm <- 10
     legend.cm <- 3
     savename <- file.path(plotpath, 'read-count-correlation.pdf')
-    ggplt <- plotMultivariateCorrelation(combined.model, cluster=FALSE)
+    ggplt <- heatmapCountCorrelation(combined.model, cluster=FALSE)
     width <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
     height <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
     ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
     savename <- file.path(plotpath, 'read-count-correlation-clustered.pdf')
-    ggplt <- plotMultivariateCorrelation(combined.model, cluster=TRUE)
+    ggplt <- heatmapCountCorrelation(combined.model, cluster=TRUE)
     width <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
     height <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
     ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
@@ -337,7 +336,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         legend.cm <- 3
 
         savename2 <- paste0(savename, '_transitionMatrix.pdf')
-        ggplt <- suppressMessages( graphics::plot(multimodel, type='transitionMatrix') )
+        ggplt <- suppressMessages( plotTransitionProbs(multimodel) )
         width <- length(levels(multimodel$bins$combination)) + max(sapply(levels(multimodel$bins$combination), nchar)) / char.per.cm + legend.cm
         height <- length(levels(multimodel$bins$combination)) + max(sapply(levels(multimodel$bins$combination), nchar)) / char.per.cm + 1
         ggsave(savename2, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')

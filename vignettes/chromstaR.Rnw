@@ -62,7 +62,7 @@ model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
 ## === Step 3: Checking the fit ===
 # For a narrow modification, the fit should look something like this,
 # with the 'modified'-component near the bottom of the figure
-plot(model) + ggtitle('H3K4me3')
+plotHistogram(model) + ggtitle('H3K4me3')
 @
 
 <<univariate_narrow_export, results='hide', message=FALSE, eval=TRUE>>=
@@ -105,7 +105,7 @@ model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
 ## === Step 3: Checking the fit ===
 # For a broad modification, the fit should look something like this,
 # with a 'modified'-component that fits the thick tail of the distribution.
-plot(model) + ggtitle('H3K27me3')
+plotHistogram(model) + ggtitle('H3K27me3')
 @
 
 <<univariate_broad_export, results='hide', message=FALSE, eval=TRUE>>=
@@ -122,7 +122,7 @@ data(rn4_chrominfo)
 binned.data <- binReads(bedfile, assembly=rn4_chrominfo, binsizes=1000,
                         chromosomes='chr12')
 model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
-plot(model) + ggtitle('H4K20me1')
+plotHistogram(model) + ggtitle('H4K20me1')
 @
 \end{scriptsize}
 
@@ -297,10 +297,8 @@ model <- get(load(file.path(outputfolder,'multivariate',
 # Obtain genomic frequencies for combinatorial states
 genomicFrequencies(model)
 # Plot transition probabilities and read count correlation
-plot(model, type='transitionMatrix') + # or plot(model, type=1)
-  ggtitle('Transition probabilities')
-plot(model, type='correlation') + # or plot(model, type=3)
-  ggtitle('Read count correlation')
+plotTransitionProbs(model) + ggtitle('Transition probabilities')
+heatmapCountCorrelation(model) + ggtitle('Read count correlation')
 @
 
 <<multivariate_combinatorial_enrichment, results='markup', message=FALSE, eval=TRUE>>=
@@ -325,22 +323,22 @@ print(genes)
 <<multivariate_combinatorial_enrichment_plot1, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.8\\textwidth', fig.align='center'>>=
 # We expect promoter [H3K4me3] and bivalent-promoter signatures [H3K4me3+H3K27me3]
 # to be enriched at transcription start sites.
-plotEnrichment(hmm = model, annotation = genes, bp.around.annotation = 15000) +
+plotFoldEnrichment(hmm = model, annotation = genes, bp.around.annotation = 15000) +
   ggtitle('Fold enrichment around genes') +
   xlab('distance from gene body')
 # Plot enrichment only at TSS. We make use of the fact that TSS is the start of a gene.
-plotEnrichment(model, genes, region = 'start') +
+plotFoldEnrichment(model, genes, region = 'start') +
   ggtitle('Fold enrichment around TSS') +
   xlab('distance from TSS in [bp]')
 # Note: If you want to facet the plot because you have many combinatorial states you
 # can do that with
-plotEnrichment(model, genes, region = 'start') +
+plotFoldEnrichment(model, genes, region = 'start') +
   facet_wrap(~ combination) + ggtitle('Fold enrichment around TSS')
 @
 <<multivariate_combinatorial_enrichment_plot2, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.8\\textwidth', fig.align='center'>>=
 # Another form of visualization that shows every TSS in a heatmap
 tss <- resize(genes, width = 3, fix = 'start')
-plotHeatmap(model, tss) +
+plotEnrichCountHeatmap(model, tss) +
   theme(strip.text.x = element_text(size=6)) +
   ggtitle('Read count around TSS')
 @
@@ -349,7 +347,7 @@ plotHeatmap(model, tss) +
 # enriched with (bivalent) promoter combinations [H3K4me3] and [H3K4me3+H3K27me3],
 # while rRNA is enriched with the empty [] combination.
 biotypes <- split(tss, tss$biotype)
-plotMultipleEnrichment(model, annotations=biotypes) + coord_flip() +
+plotFoldEnrichHeatmap(model, annotations=biotypes) + coord_flip() +
   ggtitle('Fold enrichment with different biotypes')
 @
 
@@ -396,6 +394,7 @@ Consider bivalent promoters defined by [H3K4me3+H3K27me3] at two different devel
 \item \emph{full}: Recommended mode if your (number of marks) * (number of conditions) is less or equal to 8. With 8 ChIP-seq experiments there are already $2^8 = 256$ combinatorial states which is the maximum that most computers can handle computationally for a human-sized genome at bin size 1000bp.
 \item \emph{condition}: Choose this mode if you are interested in highly significant differences between conditions. The computational limit for the number of conditions is $\sim 8$ for a human-sized genome. Combinatorial states are not as accurate as in mode \emph{mark} or \emph{full}.
 \item \textbf{DEFAULT} \emph{mark}: This mode will yield good combinatorial chromatin state calls for any number of marks and conditions. However, differences between conditions have more false positives than in mode \emph{condition} or \emph{full}.
+\item \textbf{separate}: (This mode can't be selected and is automatically produced. It is a simple concatenation of the univariate peak calls.)
 \end{itemize}
 
 \begin{scriptsize}
@@ -441,7 +440,7 @@ segments <- model$segments
 diff.segments <- segments[segments$combination.SHR != segments$combination.BN]
 # Let's be strict with the differences and get only those where both marks are different
 diff.segments <- diff.segments[diff.segments$differential.score >= 1.9]
-exportGRanges(diff.segments, trackname='differential_chromatin_states',
+exportGRangesAsBedFile(diff.segments, trackname='differential_chromatin_states',
               filename=tempfile(), scorecol='differential.score')
 ## Obtain all genomic regions where we find a bivalent promoter in BN but not in SHR
 bivalent.BN <- segments[segments$combination.BN == '[H3K27me3+H3K4me3]' &
@@ -474,7 +473,7 @@ print(genes)
 <<combined_enrichment_plot1, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.8\\textwidth', fig.align='center'>>=
 # We expect promoter [H3K4me3] and bivalent-promoter signatures [H3K4me3+H3K27me3]
 # to be enriched at transcription start sites.
-plots <- plotEnrichment(hmm=model, annotation=genes, region='start')
+plots <- plotFoldEnrichment(hmm=model, annotation=genes, region='start')
 plots[['BN']] + facet_wrap(~ combination) +
   ggtitle('Fold enrichment around TSS') +
   xlab('distance from TSS')
@@ -486,7 +485,7 @@ plots[['BN']] + facet_wrap(~ combination) +
 # while rRNA is enriched with the empty [] combination.
 tss <- resize(genes, width = 3, fix = 'start')
 biotypes <- split(tss, tss$biotype)
-plots <- plotMultipleEnrichment(model, annotations=biotypes)
+plots <- plotFoldEnrichHeatmap(model, annotations=biotypes)
 plots[['BN']] + coord_flip() + 
   scale_fill_gradient(low='white', high='blue', limits=c(0,100)) + 
   ggtitle('Fold enrichment with different biotypes')
@@ -556,6 +555,15 @@ You were interested in combinatorial state differences as in section~\ref{sec:Ta
 \item You can play with the ``differential.score'' (see section~\ref{sec:Task4}, step 3) and export only differences with a high score. A differential score around 1 means that one modification is different, a score close to 2 means that two modifications are different etc. The score is calculated as the sum of differences in posterior probabilities between marks.
 \item Check for bad replicates that are very different from the rest and exclude them prior to the analysis.
 \end{enumerate}
+
+\subsection{How do I plot a simple heatmap with the combinations?}
+
+\begin{scriptsize}
+<<faq_heatmapCombinations, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, fig.align='center', out.width='\\textwidth'>>=
+heatmapCombinations(marks=c('H3K4me3', 'H3K27me3', 'H3K36me3', 'H3K27Ac'))
+@
+\end{scriptsize}
+
 
 
 \section{Session Info}

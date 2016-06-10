@@ -28,7 +28,7 @@
 # }
 # 
 # 
-# plotHeatmapFoldEnrichment <- function(enrichment.table) {
+# plotEnrichCountHeatmapFoldEnrichment <- function(enrichment.table) {
 # 
 #     et <- enrichment.table
 # 

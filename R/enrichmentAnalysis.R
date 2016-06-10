@@ -1,10 +1,11 @@
 #' Enrichment analysis
 #' 
-#' Plotting functions for enrichment analysis of \code{\link{multiHMM}} objects with any annotation of interest, specified as a \code{\link[GenomicRanges]{GRanges}} object.
+#' Plotting functions for enrichment analysis of \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} objects with any annotation of interest, specified as a \code{\link[GenomicRanges]{GRanges}} object.
 #' 
 #' @name enrichment_analysis
-#' @return A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot or a list() with \code{\link[ggplot2:ggplot]{ggplot}} objects if several plots are returned.
+#' @return A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot or a list() with \code{\link[ggplot2:ggplot]{ggplot}} objects if several plots are returned. For \code{plotFoldEnrichHeatmap} a named array with fold enrichments if \code{plot=FALSE}.
 #' @author Aaron Taudt
+#' @seealso \code{\link{plotting}}
 #' @examples 
 #'### Get an example multiHMM ###
 #'file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
@@ -29,30 +30,30 @@
 #'### Make the enrichment plots ###
 #'# We expect promoter [H3K4me3] and bivalent-promoter signatures [H3K4me3+H3K27me3]
 #'# to be enriched at transcription start sites.
-#'    plotEnrichment(hmm = model, annotation = genes, bp.around.annotation = 15000) +
+#'    plotFoldEnrichment(hmm = model, annotation = genes, bp.around.annotation = 15000) +
 #'    ggtitle('Fold enrichment around genes') +
 #'    xlab('distance from gene body')
 #'  
 #'# Plot enrichment only at TSS. We make use of the fact that TSS is the start of a gene.
-#'    plotEnrichment(model, genes, region = 'start') +
+#'    plotFoldEnrichment(model, genes, region = 'start') +
 #'    ggtitle('Fold enrichment around TSS') +
 #'    xlab('distance from TSS in [bp]')
 #'# Note: If you want to facet the plot because you have many combinatorial states you
 #'# can do that with
-#'    plotEnrichment(model, genes, region = 'start') +
+#'    plotFoldEnrichment(model, genes, region = 'start') +
 #'    facet_wrap(~ combination)
 #'  
 #'# Another form of visualization that shows every TSS in a heatmap
 #'# If transparency is not supported try to plot to pdf() instead.
 #'    tss <- resize(genes, width = 3, fix = 'start')
-#'    plotHeatmap(model, tss) +
+#'    plotEnrichCountHeatmap(model, tss) +
 #'    theme(strip.text.x = element_text(size=6))
 #'  
 #'# Fold enrichment with different biotypes, showing that protein coding genes are
 #'# enriched with (bivalent) promoter combinations [H3K4me3] and [H3K4me3+H3K27me3],
 #'# while rRNA is enriched with the empty [] and repressive combinations [H3K27me3].
 #'    biotypes <- split(tss, tss$biotype)
-#'    plotMultipleEnrichment(model, annotations=biotypes) + coord_flip()
+#'    plotFoldEnrichHeatmap(model, annotations=biotypes) + coord_flip()
 #'
 NULL
 
@@ -62,12 +63,10 @@ NULL
 #' @param annotations A \code{list()} with \code{\link{GRanges}} objects containing coordinates of multiple annotations The names of the list entries will be used to name the return values.
 #' @param combinations A vector with combinations for which the fold enrichment will be calculated. If \code{NULL} all combinations will be considered.
 #' @param plot A logical indicating whether the plot or an array with the fold enrichment values is returned.
-#' @return A \code{\link[ggplot2]{ggplot}} object (\code{plot=TRUE}) or a named array with fold enrichments (\code{plot=FALSE}).
-#' @author Aaron Taudt
 #' @importFrom S4Vectors subjectHits queryHits
 #' @importFrom reshape2 melt
 #' @export
-plotMultipleEnrichment <- function(hmm, annotations, combinations=NULL, plot=TRUE) {
+plotFoldEnrichHeatmap <- function(hmm, annotations, combinations=NULL, plot=TRUE) {
     
     hmm <- loadHmmsFromFiles(hmm, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     ## Variables
@@ -141,23 +140,38 @@ plotMultipleEnrichment <- function(hmm, annotations, combinations=NULL, plot=TRU
 #' @param max.rows An integer specifying the number of randomly subsampled rows that are plotted from the \code{annotation} object. This is necessary to avoid crashing for heatmaps with too many rows.
 #' @importFrom reshape2 melt
 #' @export
-plotHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=1000) {
+plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=1000) {
 
-    # Variables
-    hmm <- loadHmmsFromFiles(hmm, check.class=class.multivariate.hmm)[[1]]
-    binsize <- width(hmm$bins)[1]
+    hmm <- loadHmmsFromFiles(hmm, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
+    ## Variables
+    bins <- hmm$bins
+    if (class(hmm) == class.combined.multivariate.hmm) {
+    } else if (class(hmm) == class.multivariate.hmm) {
+        # Rename 'combination' to 'combination.' for coherence with combinedMultiHMM
+        names(mcols(bins))[grep('combination', names(mcols(bins)))] <- 'combination.'
+    }
+    conditions <- sub('combination.', '', grep('combination', names(mcols(bins)), value=TRUE))
+    comb.levels <- levels(mcols(bins)[,paste0('combination.', conditions[1])])
+    binsize <- width(bins)[1]
     around <- round(bp.around.annotation/binsize)
+    ## Create new column combination with all conditions combined
+    combinations <- list()
+    for (condition in conditions) {
+        combinations[[condition]] <- paste0(condition, ":", mcols(bins)[,paste0('combination.', condition)])
+    }
+    combinations$sep <- ', '
+    bins$combination <- factor(do.call(paste, combinations))
 
     # Subsampling for plotting of huge data.frames
-    annotation <- subsetByOverlaps(annotation, hmm$bins)
+    annotation <- subsetByOverlaps(annotation, bins)
     if (length(annotation)>max.rows) {
         annotation <- sample(annotation, size=max.rows, replace=FALSE)
     }
   
     # Get bins that overlap the start of annotation
     ptm <- startTimedMessage("Overlaps with annotation ...")
-    index.plus <- findOverlaps(annotation[strand(annotation)=='+' | strand(annotation)=='*'], hmm$bins, select="first")
-    index.minus <- findOverlaps(annotation[strand(annotation)=='-'], hmm$bins, select="last")
+    index.plus <- findOverlaps(annotation[strand(annotation)=='+' | strand(annotation)=='*'], bins, select="first")
+    index.minus <- findOverlaps(annotation[strand(annotation)=='-'], bins, select="last")
     index.plus <- index.plus[!is.na(index.plus)]
     index.minus <- index.minus[!is.na(index.minus)]
     index <- c(index.plus, index.minus)
@@ -179,22 +193,22 @@ plotHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=10
         ext.index <- ext.index.plus
     }
     ext.index[ext.index <= 0] <- NA
-    ext.index[ext.index > length(hmm$bins)] <- NA
+    ext.index[ext.index > length(bins)] <- NA
     rownames(ext.index) <- 1:nrow(ext.index)
     stopTimedMessage(ptm)
     
     ## Go through combinations and then tracks to get the read counts
     ptm <- startTimedMessage("Getting read counts")
     counts <- list()
-    for (combination in levels(hmm$bins$combination)) {
+    for (combination in levels(bins$combination)) {
         counts[[combination]] <- list()
-        index.combination <- which(hmm$bins$combination[index]==combination)
+        index.combination <- which(bins$combination[index]==combination)
         ext.index.combination <- ext.index[index.combination,]
         if (is.null(dim(ext.index.combination))) {
             ext.index.combination <- array(ext.index.combination, dim=c(1,dim(ext.index)[[2]]), dimnames=list(anno=rownames(ext.index)[index.combination], position=dimnames(ext.index)[[2]]))
         }
-        for (ntrack in colnames(hmm$bins$counts)) {
-            counts[[combination]][[ntrack]] <- array(hmm$bins$counts[ext.index.combination,ntrack], dim=dim(ext.index.combination), dimnames=dimnames(ext.index.combination))
+        for (ntrack in colnames(bins$counts)) {
+            counts[[combination]][[ntrack]] <- array(bins$counts[ext.index.combination,ntrack], dim=dim(ext.index.combination), dimnames=dimnames(ext.index.combination))
         }
     }
     stopTimedMessage(ptm)
@@ -217,7 +231,7 @@ plotHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=10
     names(df) <- c('id','position','counts','track','combination')
     df$id <- factor(df$id, levels=rev(unique(df$id)))
     df$combination <- factor(df$combination, levels=unique(df$combination))
-    df$track <- factor(df$track, levels=colnames(hmm$bins$counts))
+    df$track <- factor(df$track, levels=colnames(bins$counts))
     
     ## Plot as heatmap
     ggplt <- ggplot(df) + geom_tile(aes_string(x='position', y='id', color='combination'))
@@ -242,7 +256,7 @@ plotHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=10
 #' @inheritParams enrichmentAtAnnotation
 #' @importFrom reshape2 melt
 #' @export
-plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c("start","inside","end"), num.intervals=20) {
+plotFoldEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c("start","inside","end"), num.intervals=20) {
 
     hmm <- loadHmmsFromFiles(hmm, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     ## Variables

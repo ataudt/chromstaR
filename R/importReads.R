@@ -14,21 +14,20 @@
 #' @param blacklist A \code{\link{GRanges}} or a bed(.gz) file with blacklisted regions. Reads falling into those regions will be discarded.
 #' @param what A character vector of fields that are returned. Type \code{\link[Rsamtools]{scanBamWhat}} to see what is available.
 #' @return A \code{\link{GRanges}} object containing the reads.
-#' @importFrom Rsamtools indexBam scanBamHeader ScanBamParam scanBamFlag
+#' @importFrom Rsamtools indexBam BamFile ScanBamParam scanBamFlag
 #' @importFrom GenomicAlignments readGAlignmentPairs readGAlignments first
 #' @importFrom S4Vectors queryHits
-#' @export
 #'
 #'@examples
 #'## Get an example BAM file with ChIP-seq reads
 #'bamfile <- system.file("extdata", "liver-H3K4me3-BN-male-bio2-tech1.bam",
 #'                       package="chromstaRData")
 #'## Read the file into a GRanges object
-#'reads <- bam2GRanges(bamfile, chromosomes='chr12', pairedEndReads=FALSE,
+#'reads <- readBamFile(bamfile, chromosomes='chr12', pairedEndReads=FALSE,
 #'                     min.mapq=10, remove.duplicate.reads=TRUE)
 #'print(reads)
 #'
-bam2GRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pairedEndReads=FALSE, remove.duplicate.reads=FALSE, min.mapq=10, max.fragment.width=1000, blacklist=NULL, what='mapq') {
+readBamFile <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pairedEndReads=FALSE, remove.duplicate.reads=FALSE, min.mapq=10, max.fragment.width=1000, blacklist=NULL, what='mapq') {
 
     ## Input checks
     if (!is.null(blacklist)) {
@@ -47,14 +46,13 @@ bam2GRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pairedEndRe
         bamindex <- bamindex.own
         stopTimedMessage(ptm)
     }
-    file.header <- Rsamtools::scanBamHeader(bamfile)[[1]]
-    chrom.lengths <- file.header$targets
+    chrom.lengths <- GenomeInfoDb::seqlengths(Rsamtools::BamFile(bamfile))
     chroms.in.data <- names(chrom.lengths)
     if (is.null(chromosomes)) {
         chromosomes <- chroms.in.data
     }
     chroms2use <- intersect(chromosomes, chroms.in.data)
-    ## Stop if non of the specified chromosomes exist
+    ## Stop if none of the specified chromosomes exist
     if (length(chroms2use)==0) {
         chrstring <- paste0(chromosomes, collapse=', ')
         stop('The specified chromosomes ', chrstring, ' do not exist in the data.')
@@ -141,7 +139,7 @@ bam2GRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pairedEndRe
             } else {
                 chromosome.format <- 'NCBI'
             }
-            black <- importBed(blacklist, skip=0, chromosome.format=chromosome.format)
+            black <- readCustomBedFile(blacklist, skip=0, chromosome.format=chromosome.format)
         } else if (class(blacklist)=='GRanges') {
             black <- blacklist
         } else {
@@ -172,7 +170,6 @@ bam2GRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pairedEndRe
 #' @return A \code{\link{GRanges}} object containing the reads.
 #' @importFrom utils read.table
 #' @importFrom S4Vectors queryHits
-#' @export
 #'
 #'@examples
 #'## Get an example BED file with single-cell-sequencing reads
@@ -181,11 +178,11 @@ bam2GRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pairedEndRe
 #'                        package="chromstaRData")
 #'## Read the file into a GRanges object
 #'data(rn4_chrominfo)
-#'reads <- bed2GRanges(bedfile, assembly=rn4_chrominfo, chromosomes='chr12',
+#'reads <- readBedFile(bedfile, assembly=rn4_chrominfo, chromosomes='chr12',
 #'                     min.mapq=10, remove.duplicate.reads=TRUE)
 #'print(reads)
 #'
-bed2GRanges <- function(bedfile, assembly, chromosomes=NULL, remove.duplicate.reads=FALSE, min.mapq=10, max.fragment.width=1000, blacklist=NULL) {
+readBedFile <- function(bedfile, assembly, chromosomes=NULL, remove.duplicate.reads=FALSE, min.mapq=10, max.fragment.width=1000, blacklist=NULL) {
 
     ## Input checks
     if (!is.null(blacklist)) {
@@ -281,7 +278,7 @@ bed2GRanges <- function(bedfile, assembly, chromosomes=NULL, remove.duplicate.re
             } else {
                 chromosome.format <- 'NCBI'
             }
-            black <- importBed(blacklist, skip=0, chromosome.format=chromosome.format)
+            black <- readCustomBedFile(blacklist, skip=0, chromosome.format=chromosome.format)
         } else if (class(blacklist)=='GRanges') {
             black <- blacklist
         } else {

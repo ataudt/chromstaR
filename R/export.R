@@ -783,10 +783,10 @@ exportCombinedMultivariateCalls <- function(hmm, filename, separate.tracks=TRUE,
 #'                   chromosomes='chr12')
 #'plot(binned)
 #'# Export regions with read count above 20
-#'exportGRanges(binned[binned$counts > 20], filename=tempfile(),
+#'exportGRangesAsBedFile(binned[binned$counts > 20], filename=tempfile(),
 #'              trackname='read counts above 20')
 #'
-exportGRanges <- function(gr, trackname, filename, namecol='combination', scorecol='score', header=TRUE, append=FALSE) {
+exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination', scorecol='score', header=TRUE, append=FALSE) {
 
     if (length(gr)==0) {
         warning("Supplied GRanges object contains no ranges.")

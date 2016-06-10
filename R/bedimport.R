@@ -18,9 +18,9 @@
 #'                       "lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
 #'                        package="chromstaRData")
 #'## Import the file and skip the first 10 lines
-#'data <- importBed(bedfile, skip=10)
+#'data <- readCustomBedFile(bedfile, skip=10)
 #'
-importBed <- function(bedfile, skip=0, chromosome.format='NCBI') {
+readCustomBedFile <- function(bedfile, skip=0, chromosome.format='NCBI') {
 
     # File with reads, determine classes first for faster import (0-based)
     classes <- c('character','numeric','numeric','character','integer','character')

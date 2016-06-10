@@ -4,7 +4,7 @@
 #'
 #' This package implements functions for the combinatorial and differential analysis of ChIP-seq data. It was developed for histone modifications with a broad profile but is also suitable for the analysis of transcription factor binding data. A Hidden Markov Model with a mixture of Negative Binomials as emission densities is used to call peaks. Please refer to our manuscript at \url{http://dx.doi.org/10.1101/038612} for a detailed description of the method.
 #'
-#' The main function of this package is \code{\link{Chromstar}}. For a detailed introduction type \code{browseVignettes("chromstaR")} and read the vignette.
+#' The main function of this package is \code{\link{Chromstar}}. For a detailed introduction type \code{browseVignettes("chromstaR")} and read the vignette. Here is an overview of all \code{\link{plotting}} functions.
 #'
 #' @author Aaron Taudt, Maria Colome-Tatche, Matthias Heinig, Minh Anh Nguyen
 #' @docType package

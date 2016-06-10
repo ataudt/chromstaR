@@ -44,11 +44,13 @@ loadHmmsFromFiles <- function(files, check.class=c('GRanges', 'uniHMM', 'multiHM
         for (file in files) {
             model <- file
             if (! class(model) %in% check.class) {
-                stop("File '", file, "' does not contain an object of class ", paste0(check.class, collapse=' or '), ".")
+                stop("List entry '", length(modellist)+1, "' does not contain an object of class ", paste0(check.class, collapse=' or '), ".")
             }
             modellist[[length(modellist)+1]] <- model
         }
         names(modellist) <- names(files)
+    } else if (! class(files) %in% check.class) {
+        stop("Input does not contain an object of class ", paste0(check.class, collapse=' or '), ".")
     }
     stopTimedMessage(ptm)
     return(modellist)

@@ -1,11 +1,15 @@
-#' Calculate maximum differential score
+#' chromstaR scores
 #'
-#' Calculate maximum differential score from posteriors.
+#' Various scores used in \code{\link{chromstaR}}.
 #'
 #' @param posteriors A matrix with posterior probabilities.
 #' @param info An \code{\link{experiment.table}} with additional column 'ID'.
-#' @return A vector with differential score.
-#'
+#' @name scores
+#' @return A numeric vector.
+#' @author Aaron Taudt
+NULL
+
+#' @describeIn scores Maximum differential score. Values are between 0 and 1. A value of 1 means that at least one mark is maximally different between conditions.
 differentialScoreMax <- function(posteriors, info) {
 
     if (is.null(posteriors) | is.null(info)) {
@@ -17,14 +21,7 @@ differentialScoreMax <- function(posteriors, info) {
 }
 
 
-#' Calculate added differential score
-#'
-#' Calculate added differential score from posteriors.
-#'
-#' @param posteriors A matrix with posterior probabilities.
-#' @param info An \code{\link{experiment.table}} with additional column 'ID'.
-#' @return A vector with differential score.
-#'
+#' @describeIn scores Additive differential score. Values are between 0 and N, where N is the number of marks. A value around 1 means that approximately 1 mark is different, a value of 2 means that 2 marks are different etc.
 differentialScoreSum <- function(posteriors, info) {
 
     if (is.null(posteriors) | is.null(info)) {
