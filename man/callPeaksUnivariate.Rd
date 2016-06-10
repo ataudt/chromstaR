@@ -81,7 +81,7 @@ binned <- binReads(bedfile, experiment.table=experiment_table,
 ## Fit the univariate Hidden Markov Model
 hmm <- callPeaksUnivariate(binned, max.time=60, eps=1)
 ## Check if the fit is ok
-plot(hmm, type='histogram')
+plotHistogram(hmm)
 
 }
 \author{

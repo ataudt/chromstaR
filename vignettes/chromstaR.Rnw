@@ -297,7 +297,7 @@ model <- get(load(file.path(outputfolder,'multivariate',
 # Obtain genomic frequencies for combinatorial states
 genomicFrequencies(model)
 # Plot transition probabilities and read count correlation
-plotTransitionProbs(model) + ggtitle('Transition probabilities')
+heatmapTransitionProbs(model) + ggtitle('Transition probabilities')
 heatmapCountCorrelation(model) + ggtitle('Read count correlation')
 @
 
@@ -559,7 +559,7 @@ You were interested in combinatorial state differences as in section~\ref{sec:Ta
 \subsection{How do I plot a simple heatmap with the combinations?}
 
 \begin{scriptsize}
-<<faq_heatmapCombinations, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, fig.align='center', out.width='\\textwidth'>>=
+<<faq_heatmapCombinations, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, fig.align='center', out.width='0.8\\textwidth'>>=
 heatmapCombinations(marks=c('H3K4me3', 'H3K27me3', 'H3K36me3', 'H3K27Ac'))
 @
 \end{scriptsize}

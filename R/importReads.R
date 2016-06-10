@@ -17,17 +17,18 @@
 #' @importFrom Rsamtools indexBam BamFile ScanBamParam scanBamFlag
 #' @importFrom GenomicAlignments readGAlignmentPairs readGAlignments first
 #' @importFrom S4Vectors queryHits
+#' @export
 #'
 #'@examples
 #'## Get an example BAM file with ChIP-seq reads
 #'bamfile <- system.file("extdata", "liver-H3K4me3-BN-male-bio2-tech1.bam",
 #'                       package="chromstaRData")
 #'## Read the file into a GRanges object
-#'reads <- readBamFile(bamfile, chromosomes='chr12', pairedEndReads=FALSE,
+#'reads <- readBamFileAsGRanges(bamfile, chromosomes='chr12', pairedEndReads=FALSE,
 #'                     min.mapq=10, remove.duplicate.reads=TRUE)
 #'print(reads)
 #'
-readBamFile <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pairedEndReads=FALSE, remove.duplicate.reads=FALSE, min.mapq=10, max.fragment.width=1000, blacklist=NULL, what='mapq') {
+readBamFileAsGRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pairedEndReads=FALSE, remove.duplicate.reads=FALSE, min.mapq=10, max.fragment.width=1000, blacklist=NULL, what='mapq') {
 
     ## Input checks
     if (!is.null(blacklist)) {
@@ -170,6 +171,7 @@ readBamFile <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pairedEndRe
 #' @return A \code{\link{GRanges}} object containing the reads.
 #' @importFrom utils read.table
 #' @importFrom S4Vectors queryHits
+#' @export
 #'
 #'@examples
 #'## Get an example BED file with single-cell-sequencing reads
@@ -178,11 +180,11 @@ readBamFile <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pairedEndRe
 #'                        package="chromstaRData")
 #'## Read the file into a GRanges object
 #'data(rn4_chrominfo)
-#'reads <- readBedFile(bedfile, assembly=rn4_chrominfo, chromosomes='chr12',
+#'reads <- readBedFileAsGRanges(bedfile, assembly=rn4_chrominfo, chromosomes='chr12',
 #'                     min.mapq=10, remove.duplicate.reads=TRUE)
 #'print(reads)
 #'
-readBedFile <- function(bedfile, assembly, chromosomes=NULL, remove.duplicate.reads=FALSE, min.mapq=10, max.fragment.width=1000, blacklist=NULL) {
+readBedFileAsGRanges <- function(bedfile, assembly, chromosomes=NULL, remove.duplicate.reads=FALSE, min.mapq=10, max.fragment.width=1000, blacklist=NULL) {
 
     ## Input checks
     if (!is.null(blacklist)) {

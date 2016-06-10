@@ -47,7 +47,7 @@
 #'## Fit the univariate Hidden Markov Model
 #'hmm <- callPeaksUnivariate(binned, max.time=60, eps=1)
 #'## Check if the fit is ok
-#'plot(hmm, type='histogram')
+#'plotHistogram(hmm)
 #'
 callPeaksUnivariate <- function(binned.data, input.data=NULL, prefit.on.chr=NULL, short=TRUE, eps=0.1, init="standard", max.time=NULL, max.iter=5000, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, post.cutoff=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
 

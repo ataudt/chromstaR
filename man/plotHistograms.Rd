@@ -4,16 +4,12 @@
 \alias{plotHistograms}
 \title{Histograms of binned read counts with fitted mixture distribution}
 \usage{
-plotHistograms(multi.hmm, ...)
+plotHistograms(model, ...)
 }
 \arguments{
 \item{model}{A \code{\link{multiHMM}} object or file that contains such an object.}
 
-\item{state}{Plot the histogram only for the specified state. One of \code{c('unmodified','modified')}.}
-
-\item{chromosomes, start, end}{Plot the histogram only for the specified chromosomes, start and end position.}
-
-\item{linewidth}{Width of the distribution lines.}
+\item{...}{Additional arguments (see \code{\link{plotHistogram}}).}
 }
 \value{
 A \code{\link[ggplot2:ggplot]{ggplot}} object.

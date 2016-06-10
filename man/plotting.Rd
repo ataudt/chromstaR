@@ -16,7 +16,7 @@ Plotting functions that work on \code{\link{multiHMM}} objects:
 \describe{
   \item{\code{\link{plotHistograms}}}{}
   \item{\code{\link{heatmapCountCorrelation}}}{}
-  \item{\code{\link{plotTransitionProbs}}}{}
+  \item{\code{\link{heatmapTransitionProbs}}}{}
   \item{\code{\link{heatmapCombinations}}}{}
 }
 Plotting functions that work on \code{\link{multiHMM}} and \code{\link{combinedMultiHMM}} objects:

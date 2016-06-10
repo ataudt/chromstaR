@@ -7,7 +7,7 @@
 variableWidthBins(reads, binsizes, chromosomes = NULL)
 }
 \arguments{
-\item{reads}{A \code{\link{GRanges}} with reads. See \code{\link{readBamFile}} and \code{\link{readBedFile}}.}
+\item{reads}{A \code{\link{GRanges}} with reads. See \code{\link{readBamFileAsGRanges}} and \code{\link{readBedFileAsGRanges}}.}
 
 \item{binsizes}{A vector with binsizes. Resulting bins will be close to the specified binsizes.}
 
@@ -27,7 +27,7 @@ Variable-width bins are produced by first binning the reference BAM file with fi
 bamfile <- system.file("extdata", "liver-H3K4me3-BN-male-bio2-tech1.bam",
                       package="chromstaRData")
 ## Read the file into a GRanges object
-reads <- readBamFile(bamfile, chromosomes='chr12', pairedEndReads=FALSE,
+reads <- readBamFileAsGRanges(bamfile, chromosomes='chr12', pairedEndReads=FALSE,
                     min.mapq=10, remove.duplicate.reads=TRUE)
 ## Make variable-width bins of size 1000bp
 bins <- variableWidthBins(reads, binsizes=1000)

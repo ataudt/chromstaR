@@ -46,8 +46,8 @@
 #'# Call multivariate peaks
 #'multimodel <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
 #'# Check some plots
-#'plot(multimodel, type='transitionMatrix')
-#'plot(multimodel, type='correlation')
+#'heatmapTransitionProbs(multimodel)
+#'heatmapCountCorrelation(multimodel)
 #'
 callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=TRUE, chromosomes=NULL, eps=0.01, post.cutoff=NULL, keep.posteriors=TRUE, num.threads=1, max.time=NULL, max.iter=NULL, keep.densities=FALSE, verbosity=1) {
 

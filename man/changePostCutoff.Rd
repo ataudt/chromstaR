@@ -34,9 +34,9 @@ binned <- binReads(bedfile, assembly=rn4_chrominfo, binsize=1000,
 hmm <- callPeaksUnivariate(binned, max.time=60, eps=1,
                           keep.posteriors=TRUE)
 ## Compare fits with different post.cutoffs
-plot(changePostCutoff(hmm, post.cutoff=0.01), type='histogram') + ylim(0,0.25)
-plot(hmm, type='histogram') + ylim(0,0.25)
-plot(changePostCutoff(hmm, post.cutoff=0.99), type='histogram') + ylim(0,0.25)
+plotHistogram(changePostCutoff(hmm, post.cutoff=0.01)) + ylim(0,0.25)
+plotHistogram(hmm) + ylim(0,0.25)
+plotHistogram(changePostCutoff(hmm, post.cutoff=0.99)) + ylim(0,0.25)
 
 }
 \author{

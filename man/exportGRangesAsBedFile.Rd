@@ -41,7 +41,7 @@ bedfile <- system.file("extdata", "euratrans",
 data(rn4_chrominfo)
 binned <- binReads(bedfile, assembly=rn4_chrominfo, binsize=1000,
                   chromosomes='chr12')
-plot(binned)
+plotHistogram(binned)
 # Export regions with read count above 20
 exportGRangesAsBedFile(binned[binned$counts > 20], filename=tempfile(),
              trackname='read counts above 20')

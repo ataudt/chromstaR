@@ -103,7 +103,7 @@ getStateColors <- function(labels=NULL) {
 # plot.multiHMM <- function(x, type='transitionMatrix', ...) {
 # 
 #     if (type == 'transitionMatrix' | type==1) {
-#         plotTransitionProbs(x, ...)
+#         heatmapTransitionProbs(x, ...)
 #     } else if (type == 'histograms' | type==2) {
 #         plotHistograms(x, ...)
 #     } else if (type == 'correlation' | type==3) {
@@ -141,30 +141,25 @@ get_rightxlim <- function(counts) {
 #' Plot histograms of binned read counts with fitted mixture distributions from a \code{\link{multiHMM}} object.
 #'
 #' @param model A \code{\link{multiHMM}} object or file that contains such an object.
-#' @param state Plot the histogram only for the specified state. One of \code{c('unmodified','modified')}.
-#' @param chromosomes,start,end Plot the histogram only for the specified chromosomes, start and end position.
-#' @param linewidth Width of the distribution lines.
+#' @param ... Additional arguments (see \code{\link{plotHistogram}}).
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
-#' @importFrom graphics hist
-#' @importFrom stats dnbinom
-#' @importFrom reshape2 melt
 #' @export
-plotHistograms <- function(multi.hmm, ...) {
+plotHistograms <- function(model, ...) {
 
     model <- suppressMessages( loadHmmsFromFiles(model, check.class=class.multivariate.hmm)[[1]] )
     ## Make fake uni.hmm and plot
-    binmapping <- dec2bin(names(multi.hmm$mapping))
+    binmapping <- dec2bin(names(model$mapping))
     ggplts <- list()
-    for (i1 in 1:length(multi.hmm$info$ID)) {
+    for (i1 in 1:length(model$info$ID)) {
         uni.hmm <- list()
-        uni.hmm$info <- multi.hmm$info[i1,]
-        uni.hmm$bins <- multi.hmm$bins
+        uni.hmm$info <- model$info[i1,]
+        uni.hmm$bins <- model$bins
         mapping <- c('unmodified','modified')[binmapping[,i1]+1]
         names(mapping) <- rownames(binmapping)
         uni.hmm$bins$state <- mapping[uni.hmm$bins$state]
-        uni.hmm$bins$counts <- multi.hmm$bins$counts[,i1]
-        uni.hmm$weights <- multi.hmm$weights.univariate[[i1]]
-        uni.hmm$distributions <- multi.hmm$distributions[[i1]]
+        uni.hmm$bins$counts <- model$bins$counts[,i1]
+        uni.hmm$weights <- model$weights.univariate[[i1]]
+        uni.hmm$distributions <- model$distributions[[i1]]
         class(uni.hmm) <- class.univariate.hmm
         ggplts[[i1]] <- plotHistogram(uni.hmm, ...)
     }
@@ -206,7 +201,7 @@ heatmapCountCorrelation <- function(model, cluster=TRUE) {
 #' @return A \code{\link[ggplot2]{ggplot}} object.
 #' @importFrom reshape2 melt
 #' @export
-plotTransitionProbs <- function(model) {
+heatmapTransitionProbs <- function(model) {
 
     model <- suppressMessages( loadHmmsFromFiles(model, check.class=class.multivariate.hmm)[[1]] )
     A <- reshape2::melt(model$transitionProbs, varnames=c('from','to'), value.name='prob')
@@ -239,7 +234,7 @@ plotTransitionProbs <- function(model) {
 heatmapCombinations <- function(model=NULL, marks=NULL) {
 
     if (is.null(marks)) {
-        model <- loadHmmsFromFiles(model, check.class=class.multivariate.model)[[1]]
+        model <- loadHmmsFromFiles(model, check.class=class.multivariate.hmm)[[1]]
         levels.combinations <- levels(model$bins$combination)
         levels.combinations <- gsub('\\[', '', levels.combinations)
         levels.combinations <- gsub('\\]', '', levels.combinations)

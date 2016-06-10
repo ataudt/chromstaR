@@ -8,7 +8,7 @@
 #' @param configfile A file specifying the parameters of this function (without \code{inputfolder}, \code{outputfolder} and \code{configfile}). Having the parameters in a file can be handy if many samples with the same parameter settings are to be run. If a \code{configfile} is specified, it will take priority over the command line parameters.
 #' @param numCPU Number of threads to use for the analysis. Beware that more CPUs also means more memory is needed. If you experience crashes of R with higher numbers of this parameter, leave it at \code{numCPU=1}.
 #' @param binsize An integer specifying the bin size that is used for the analysis.
-#' @inheritParams readBedFile
+#' @inheritParams readBedFileAsGRanges
 #' @inheritParams callPeaksUnivariate
 #' @param mode One of \code{c('condition','mark','full')}. The modes determine how the multivariate part is run. Here is some advice which mode to use:
 #' \describe{
@@ -336,7 +336,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         legend.cm <- 3
 
         savename2 <- paste0(savename, '_transitionMatrix.pdf')
-        ggplt <- suppressMessages( plotTransitionProbs(multimodel) )
+        ggplt <- suppressMessages( heatmapTransitionProbs(multimodel) )
         width <- length(levels(multimodel$bins$combination)) + max(sapply(levels(multimodel$bins$combination), nchar)) / char.per.cm + legend.cm
         height <- length(levels(multimodel$bins$combination)) + max(sapply(levels(multimodel$bins$combination), nchar)) / char.per.cm + 1
         ggsave(savename2, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')

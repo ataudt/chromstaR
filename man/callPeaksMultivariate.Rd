@@ -68,8 +68,8 @@ for (i1 in 1:length(binned.data)) {
 # Call multivariate peaks
 multimodel <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
 # Check some plots
-plot(multimodel, type='transitionMatrix')
-plot(multimodel, type='correlation')
+heatmapTransitionProbs(multimodel)
+heatmapCountCorrelation(multimodel)
 
 }
 \author{
