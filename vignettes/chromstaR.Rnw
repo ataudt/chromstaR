@@ -1,27 +1,22 @@
 %\VignetteIndexEntry{The chromstaR user's guide}
 %\VignetteEngine{knitr::knitr}
-\documentclass[11pt]{article}
-\usepackage{hyperref}
-\usepackage{url}
-\usepackage[authoryear,round]{natbib}
-\bibliographystyle{plainnat}
+\documentclass{article}
 
-\newcommand{\scscst}{\scriptscriptstyle}
-\newcommand{\scst}{\scriptstyle}
+<<style-knitr, eval=TRUE, echo=FALSE, results="asis">>=
+BiocStyle::latex()
+@
 
-\newcommand{\Rfunction}[1]{{\texttt{#1}}}
-\newcommand{\Robject}[1]{{\texttt{#1}}}
-\newcommand{\Rpackage}[1]{{\textit{#1}}}
-
-\author{Aaron Taudt\footnote{aaron.taudt@gmail.com}}
-\begin{document}
-\SweaveOpts{concordance=TRUE}
+\author{Aaron Taudt\thanks{\email{aaron.taudt@gmail.com}}}
 \title{The chromstaR user's guide}
 
+\begin{document}
 \maketitle
-
 \tableofcontents
 \clearpage
+<<options, results='hide', message=FALSE, eval=TRUE, echo=FALSE>>=
+library(chromstaR)
+options(width=120)
+@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
 
@@ -33,471 +28,470 @@ Every analysis with the \Rpackage{chromstaR} package starts from aligned reads i
 
 \section{\label{sec:univariate}Univariate analysis}
 
-%' \subsection{\label{sec:narrow}Task 1: Peak calling for a narrow histone modification}
-%' 
-%' Examples of histone modifications with a narrow profile are H3K4me3, H3K9ac and H3K27ac in most human tissues. For such peak-like modifications, the bin size should be set to a value between 200bp and 1000bp.
-%' 
-%' \begin{scriptsize}
-%' <<univariate_narrow_library, results='hide', message=FALSE, eval=TRUE>>=
-%' library(chromstaR)
-%' @
-%' 
-%' <<univariate_narrow_binning, results='markup', message=FALSE, eval=TRUE>>=
-%' ## === Step 1: Binning ===
-%' # Get an example BED file
-%' bedfile <- system.file("extdata","euratrans","lv-H3K4me3-BN-male-bio2-tech1.bed.gz",
-%'                         package="chromstaRData")
-%' # Get the chromosome lengths (see ?GenomeInfoDb::fetchExtendedChromInfoFromUCSC)
-%' # This is only necessary for BED files. BAM files are handled automatically.
-%' data(rn4_chrominfo)
-%' head(rn4_chrominfo)
-%' # We use bin size 1000bp and chromosome 12 to keep the example quick
-%' binned.data <- binReads(bedfile, assembly=rn4_chrominfo, binsizes=1000,
-%'                         chromosomes='chr12')
-%' print(binned.data)
-%' @
-%' 
-%' <<univariate_narrow_peak_calling, results='markup', eval=TRUE>>=
-%' ## === Step 2: Peak calling ===
-%' # We restrict the peak calling to 60 seconds to keep this example quick.
-%' model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
-%' @
-%' 
-%' <<univariate_narrow_plotting, fig.width=6, fig.height=4>>=
-%' ## === Step 3: Checking the fit ===
-%' # For a narrow modification, the fit should look something like this,
-%' # with the 'modified'-component near the bottom of the figure
-%' plot(model) + ggtitle('H3K4me3')
-%' @
-%' 
-%' <<univariate_narrow_export, results='hide', message=FALSE, eval=TRUE>>=
-%' ## === Step 4: Export to genome browser ===
-%' # We can export peak calls and binned read counts with
-%' exportUnivariates(list(model), filename=tempfile(), what=c('peaks','counts'))
-%' @
-%' \end{scriptsize}
-%' 
-%' \subsection{\label{sec:broad}Task 2: Peak calling for a broad histone modification}
-%' 
-%' Examples of histone modifications with a broad profile are H3K9me3, H3K27me3, H3K36me3, H4K20me1 in most human tissues. These modifications usually cover broad domains of the genome, and the enrichment is best captured with a bin size between 500bp and 2000bp.
-%' 
-%' \begin{scriptsize}
-%' <<univariate_broad_library, results='hide', message=FALSE, eval=TRUE>>=
-%' library(chromstaR)
-%' @
-%' 
-%' <<univariate_broad_binning, results='hide', message=FALSE, eval=TRUE>>=
-%' ## === Step 1: Binning ===
-%' # Get an example BED file
-%' bedfile <- system.file("extdata","euratrans","lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
-%'                         package="chromstaRData")
-%' # Get the chromosome lengths (see ?GenomeInfoDb::fetchExtendedChromInfoFromUCSC)
-%' # This is only necessary for BED files. BAM files are handled automatically.
-%' data(rn4_chrominfo)
-%' head(rn4_chrominfo)
-%' # We use bin size 1000bp and chromosome 12 to keep the example quick
-%' binned.data <- binReads(bedfile, assembly=rn4_chrominfo, binsizes=1000,
-%'                         chromosomes='chr12')
-%' @
-%' 
-%' <<univariate_broad_peak_calling, results='markup', eval=TRUE>>=
-%' ## === Step 2: Peak calling ===
-%' # We restrict the peak calling to 60 seconds to keep this example quick.
-%' model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
-%' @
-%' 
-%' <<univariate_broad_plotting, fig.width=6, fig.height=4>>=
-%' ## === Step 3: Checking the fit ===
-%' # For a broad modification, the fit should look something like this,
-%' # with a 'modified'-component that fits the thick tail of the distribution.
-%' plot(model) + ggtitle('H3K27me3')
-%' @
-%' 
-%' <<univariate_broad_export, results='hide', message=FALSE, eval=TRUE>>=
-%' ## === Step 4: Export to genome browser ===
-%' # We can export peak calls and binned read counts with
-%' exportUnivariates(list(model), filename=tempfile(), what=c('peaks','counts'))
-%' @
-%' 
-%' <<univariate_broad_H4K20me1, echo=TRUE, results='hide', message=FALSE, fig.width=6, fig.height=4>>=
-%' ## === Step 1-3: Another example for mark H4K20me1 ===
-%' bedfile <- system.file("extdata","euratrans","lv-H4K20me1-BN-male-bio1-tech1.bed.gz",
-%'                        package="chromstaRData")
-%' data(rn4_chrominfo)
-%' binned.data <- binReads(bedfile, assembly=rn4_chrominfo, binsizes=1000,
-%'                         chromosomes='chr12')
-%' model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
-%' plot(model) + ggtitle('H4K20me1')
-%' @
-%' 
-%' \end{scriptsize}
-%' 
-%' \subsection{Task 3: Peak calling for ATAC-seq, DNase-seq, FAIRE-seq, ...}
-%' 
-%' Peak calling for ATAC-seq and DNase-seq is similar to the peak calling of a narrow histone modification (see section~\ref{sec:narrow}). FAIRE-seq experiments seem to exhibit a broad profile with our model, so the procedure is similar to the domain calling of a broad histone modification (see section~\ref{sec:broad}).
-%' 
-%' \section{Multivariate analysis}
-%' \subsection{Task 1: Integrating multiple replicates}
-%' 
-%' \Rpackage{chromstaR} can be used to call peaks with multiple replicates, without the need of prior merging. The underlying statistical model integrates information from all replicates to identify common peaks. It is, however, important to note that replicates with poor quality can affect the joint peak calling negatively. It is therefore recommended to first check the replicate quality and discard poor-quality replicates. The necessary steps for peak calling for an example ChIP-seq experiment with 4 replicates are detailed below.
-%' 
-%' \begin{scriptsize}
-%' <<univariate_replicate_library, results='hide', message=FALSE, eval=TRUE>>=
-%' library(chromstaR)
-%' @
-%' 
-%' <<multivariate_replicate_binning, results='markup', message=FALSE, eval=TRUE>>=
-%' ## === Step 1: Binning ===
-%' # Let's get some example data with 3 replicates in spontaneous hypertensive rat (SHR)
-%' file.path <- system.file("extdata","euratrans", package='chromstaRData')
-%' bedfiles.good <- list.files(file.path, pattern="H3K27me3.*SHR", full.names=TRUE)[1:3]
-%' # We fake a replicate with poor quality by taking a different mark entirely
-%' bedfiles.poor <- list.files(file.path, pattern="H4K20me1.*SHR", full.names=TRUE)[1]
-%' bedfiles <- c(bedfiles.good, bedfiles.poor)
-%' # Obtain chromosome lengths. This is only necessary for BED files. BAM files are
-%' # handled automatically.
-%' data(rn4_chrominfo)
-%' head(rn4_chrominfo)
-%' # Define experiment structure
-%' exp <- data.frame(file=bedfiles, mark='H3K27me3', condition='SHR', replicate=1:4,
-%'                   pairedEndReads=FALSE)
-%' # We use bin size 1000bp and chromosome 12 to keep the example quick
-%' binned.data <- list()
-%' for (bedfile in bedfiles) {
-%'   binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
-%'                                          assembly=rn4_chrominfo, chromosomes='chr12',
-%'                                          experiment.table=exp)
-%' }
-%' @
-%' 
-%' <<multivariate_replicate_univariate, results='hide', message=FALSE, eval=TRUE>>=
-%' ## === Step 2: Univariate peak calling ===
-%' # The univariate fit is obtained for each replicate
-%' models <- list()
-%' for (i1 in 1:length(binned.data)) {
-%'   models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], max.time=60)
-%' }
-%' @
-%' 
-%' <<multivariate_replicate_peak_calling, results='markup', message=FALSE, eval=TRUE>>=
-%' ## === Step 3: Check replicate correlation ===
-%' # We run a multivariate peak calling on all 4 replicates
-%' # A warning is issued because replicate 4 is very different from the others
-%' multi.model <- callPeaksReplicates(models, max.time=60, eps=1)
-%' # Checking the correlation confirms that Rep4 is very different from the others
-%' print(multi.model$replicateInfo$correlation)
-%' @
-%' 
-%' <<multivariate_replicate_peak_calling2, results='hide', message=FALSE, eval=TRUE>>=
-%' ## === Step 4: Peak calling with replicates ===
-%' # We redo the previous step without the "bad" replicate
-%' # Also, we force all replicates to agree in their peak calls
-%' multi.model <- callPeaksReplicates(models[1:3], force.equal=TRUE, max.time=60)
-%' @
-%' 
-%' <<multivariate_replicate_export, results='hide', message=FALSE, eval=TRUE>>=
-%' ## === Step 5: Export to genome browser ===
-%' # Finally, we can export the results as BED file
-%' exportMultivariate(multi.model, filename=tempfile(), what=c('peaks','counts'))
-%' @
-%' \end{scriptsize}
-%' 
-%' \subsection{Task 2: Detecting differentially modified regions}
-%' 
-%' \Rpackage{chromstaR} is extremely powerful in detecting differentially modified regions in two or more samples. The following example illustrates this on ChIP-seq data for H4K20me1 in brown norway (BN) and spontaneous hypertensive rat (SHR) in left-ventricle (lv) heart tissue. The mode of analysis is called \emph{condition}, because all conditions are analyzed simultaneously.
-%' 
-%' \begin{scriptsize}
-%' <<multivariate_differential_library, results='hide', message=FALSE, eval=TRUE>>=
-%' library(chromstaR)
-%' @
-%' 
-%' <<multivariate_differential_preparation, results='markup', message=FALSE, eval=TRUE>>=
-%' #=== Step 1: Preparation ===
-%' ## Prepare the file paths. Exchange this with your input and output directories.
-%' inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
-%' outputfolder <- file.path(tempdir(), 'H4K20me1-example')
-%' 
-%' ## Define experiment structure
-%' data(experiment_table_H4K20me1)
-%' print(experiment_table_H4K20me1)
-%' 
-%' ## Define assembly
-%' # This is only necessary if you have BED files, BAM files are handled automatically.
-%' # For common assemblies you can also specify them as 'hg19' for example.
-%' data(rn4_chrominfo)
-%' head(rn4_chrominfo)
-%' @
-%' 
-%' <<multivariate_differential_Chromstar, results='hide', message=FALSE, eval=TRUE>>=
-%' #=== Step 2: Run Chromstar ===
-%' ## Run ChromstaR
-%' Chromstar(inputfolder, experiment.table=experiment_table_H4K20me1,
-%'           outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
-%'           prefit.on.chr='chr12', mode='condition')
-%' @
-%' <<multivariate_differential_listfiles, results='markup', message=FALSE, eval=TRUE>>=
-%' ## Results are stored in 'outputfolder' and can be loaded for further processing
-%' list.files(outputfolder)
-%' model <- get(load(file.path(outputfolder,'multivariate',
-%'                             'multivariate_mode-condition_mark-H4K20me1.RData')))
-%' @
-%' 
-%' <<multivariate_differential_stateBrewer, results='markup', message=TRUE, eval=TRUE>>=
-%' ## === Step 3: Construct differential and common states ===
-%' diff.states <- stateBrewer(experiment_table_H4K20me1, mode='condition',
-%'                            differential.states=TRUE)
-%' print(diff.states)
-%' common.states <- stateBrewer(experiment_table_H4K20me1, mode='condition',
-%'                              common.states=TRUE)
-%' print(common.states)
-%' @
-%' 
-%' <<multivariate_differential_export, results='hide', message=FALSE, eval=TRUE>>=
-%' ## === Step 5: Export to genome browser ===
-%' # Export only differential states
-%' exportMultivariate(model, filename=tempfile(),
-%'                    what=c('peaks','counts','combinations'),
-%'                    include.states=diff.states)
-%' @
-%' \end{scriptsize}
-%' 
-%' \subsection{Task 3: Finding combinatorial chromatin states}
-%' 
-%' Most experimental studies that probe several histone modifications are interested in combinatorial chromatin states. An example of a simple combinatorial state would be [H3K4me3+H3K27me3], which is also frequently called ``bivalent promoter'', due to the simultaneous occurrence of the promoter marking H3K4me3 and the repressive H3K27me3. Finding combinatorial states with \Rpackage{chromstaR} is equivalent to a multivariate peak calling. The following code chunks demonstrate how to find bivalent promoters and do some simple analysis. The mode of analysis is called \emph{mark}, because all marks are analyzed simultaneously.
-%' 
-%' \begin{scriptsize}
-%' <<multivariate_combinatorial_library, results='hide', message=FALSE, eval=TRUE>>=
-%' library(chromstaR)
-%' @
-%' 
-%' <<multivariate_combinatorial_preparation, results='markup', message=FALSE, eval=TRUE>>=
-%' #=== Step 1: Preparation ===
-%' ## Prepare the file paths. Exchange this with your input and output directories.
-%' inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
-%' outputfolder <- file.path(tempdir(), 'SHR-example')
-%' 
-%' ## Define experiment structure (SHR = spontaneous hypertensive rat)
-%' data(experiment_table_SHR)
-%' print(experiment_table_SHR)
-%' 
-%' ## Define assembly
-%' # This is only necessary if you have BED files, BAM files are handled automatically.
-%' # For common assemblies you can also specify them as 'hg19' for example.
-%' data(rn4_chrominfo)
-%' head(rn4_chrominfo)
-%' @
-%' 
-%' <<multivariate_combinatorial_Chromstar, results='hide', message=FALSE, eval=TRUE>>=
-%' #=== Step 2: Run Chromstar ===
-%' ## Run ChromstaR
-%' Chromstar(inputfolder, experiment.table=experiment_table_SHR,
-%'           outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
-%'           prefit.on.chr='chr12', mode='mark')
-%' @
-%' 
-%' <<multivariate_combinatorial_listfiles, results='markup', message=FALSE, eval=TRUE, fig.width=4, fig.height=3>>=
-%' ## Results are stored in 'outputfolder' and can be loaded for further processing
-%' list.files(outputfolder)
-%' model <- get(load(file.path(outputfolder,'multivariate',
-%'                             'multivariate_mode-mark_condition-SHR.RData')))
-%' # Obtain genomic frequencies for combinatorial states
-%' genomicFrequencies(model)
-%' # Plot transition probabilities and read count correlation
-%' plot(model, type='transitionMatrix') + # or plot(model, type=1)
-%'   ggtitle('Transition probabilities')
-%' plot(model, type='correlation') + # or plot(model, type=3)
-%'   ggtitle('Read count correlation')
-%' @
-%' 
-%' <<multivariate_combinatorial_enrichment, results='markup', message=FALSE, eval=TRUE>>=
-%' ## === Step 3: Enrichment analysis ===
-%' # Annotations can easily be obtained with the biomaRt package. Of course, you can
-%' # also load them from file if you already have annotation files available.
-%' library(biomaRt)
-%' ensembl <- useMart('ENSEMBL_MART_ENSEMBL', host='may2012.archive.ensembl.org',
-%'                    dataset='rnorvegicus_gene_ensembl')
-%' genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
-%'                             'end_position', 'strand', 'external_gene_id',
-%'                             'gene_biotype'),
-%'                mart=ensembl)
-%' # Transform to GRanges for easier handling
-%' genes <- GRanges(seqnames=paste0('chr',genes$chromosome_name),
-%'                  ranges=IRanges(start=genes$start, end=genes$end),
-%'                  strand=genes$strand,
-%'                  name=genes$external_gene_id, biotype=genes$gene_biotype)
-%' print(genes)
-%' @
-%' 
-%' <<multivariate_combinatorial_enrichment_plot1, results='markup', message=FALSE, eval=TRUE, fig.width=6, fig.height=4>>=
-%' # We expect promoter [H3K4me3] and bivalent-promoter signatures [H3K4me3+H3K27me3]
-%' # to be enriched at transcription start sites.
-%' plotEnrichment(hmm = model, annotation = genes, bp.around.annotation = 15000) +
-%'   ggtitle('Fold enrichment around genes') +
-%'   xlab('distance from gene body')
-%' # Plot enrichment only at TSS. We make use of the fact that TSS is the start of a gene.
-%' plotEnrichment(model, genes, region = 'start') +
-%'   ggtitle('Fold enrichment around TSS') +
-%'   xlab('distance from TSS in [bp]')
-%' # Note: If you want to facet the plot because you have many combinatorial states you
-%' # can do that with
-%' plotEnrichment(model, genes, region = 'start') +
-%'   facet_wrap(~ combination) + ggtitle('Fold enrichment around TSS')
-%' @
-%' <<multivariate_combinatorial_enrichment_plot2, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4>>=
-%' # Another form of visualization that shows every TSS in a heatmap
-%' tss <- resize(genes, width = 3, fix = 'start')
-%' plotHeatmap(model, tss) +
-%'   theme(strip.text.x = element_text(size=6)) +
-%'   ggtitle('Read count around TSS')
-%' @
-%' <<multivariate_combinatorial_enrichment_plot3, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4>>=
-%' # Fold enrichment with different biotypes, showing that protein coding genes are
-%' # enriched with (bivalent) promoter combinations [H3K4me3] and [H3K4me3+H3K27me3],
-%' # while rRNA is enriched with the empty [] combination.
-%' biotypes <- split(tss, tss$biotype)
-%' plotMultipleEnrichment(model, annotations=biotypes) + coord_flip() +
-%'   ggtitle('Fold enrichment with different biotypes')
-%' @
-%' 
-%' <<multivariate_combinatorial_expression, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4>>=
-%' # === Step 4: Expression analysis ===
-%' # Suppose you have expression data as well for your experiment. The following code
-%' # shows you how to get the expression values for each combinatorial state.
-%' data(expression_lv)
-%' head(expression_lv)
-%' 
-%' # We need to get coordinates for each of the genes
-%' library(biomaRt)
-%' ensembl <- useMart('ENSEMBL_MART_ENSEMBL', host='may2012.archive.ensembl.org',
-%'                    dataset='rnorvegicus_gene_ensembl')
-%' genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
-%'                             'end_position', 'strand', 'external_gene_id',
-%'                             'gene_biotype'),
-%'                mart=ensembl)
-%' expr <- merge(genes, expression_lv, by='ensembl_gene_id')
-%' # Transform to GRanges
-%' expression.SHR <- GRanges(seqnames=paste0('chr',expr$chromosome_name),
-%'                           ranges=IRanges(start=expr$start, end=expr$end),
-%'                           strand=expr$strand, name=expr$external_gene_id,
-%'                           biotype=expr$gene_biotype,
-%'                           expression=expr$expression_SHR)
-%' # We apply an asinh transformation to reduce the effect of outliers
-%' expression.SHR$expression <- asinh(expression.SHR$expression)
-%' 
-%' ## Plot
-%' plotExpression(model, expression.SHR) +
-%'   theme(axis.text.x=element_text(angle=0, hjust=0.5)) +
-%'   ggtitle('Expression of genes overlapping combinatorial states')
-%' plotExpression(model, expression.SHR, return.marks=TRUE) +
-%'   ggtitle('Expression of marks overlapping combinatorial states')
-%' @
-%' \end{scriptsize}
-%' 
-%' \subsection{\label{sec:Task4}Task 4: Finding differences between combinatorial chromatin states}
-%' 
-%' Consider bivalent promoters defined by [H3K4me3+H3K27me3] at two different developmental stages, or in two different strains or tissues. This is an example where one is interested in \emph{differences} between \emph{combinatorial states}. The following example demonstrates how such an analysis can be done with \Rpackage{chromstaR}. We use a data set from the Euratrans project (downsampled to chr12) to find differences in bivalent promoters between brown norway (BN) and spontaneous hypertensive rat (SHR) in left-ventricle (lv) heart tissue.
-%' 
-%' \Rfunction{Chromstar} can be run in three different modes:
-%' \begin{itemize}
-%' \item \emph{full}: Recommended mode if your (number of marks) * (number of conditions) is less or equal to 8. With 8 ChIP-seq experiments there are already $2^8 = 256$ combinatorial states which is the maximum that most computers can handle computationally for a human-sized genome at bin size 1000bp.
-%' \item \emph{condition}: Choose this mode if you are interested in highly significant differences between conditions. The computational limit for the number of conditions is $\sim 8$ for a human-sized genome. Combinatorial states are not as accurate as in mode \emph{mark} or \emph{full}.
-%' \item \textbf{DEFAULT} \emph{mark}: This mode will yield good combinatorial chromatin state calls for any number of marks and conditions. However, differences between conditions have more false positives than in mode \emph{condition} or \emph{full}.
-%' \end{itemize}
-%' 
-%' \begin{scriptsize}
-%' <<combined_library, results='hide', message=FALSE, eval=TRUE>>=
-%' library(chromstaR)
-%' @
-%' 
-%' <<combined_preparation, results='markup', message=FALSE, eval=TRUE>>=
-%' #=== Step 1: Preparation ===
-%' ## Prepare the file paths. Exchange this with your input and output directories.
-%' inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
-%' outputfolder <- file.path(tempdir(), 'SHR-BN-example')
-%' 
-%' ## Define experiment structure
-%' data(experiment_table)
-%' print(experiment_table)
-%' 
-%' ## Define assembly
-%' # This is only necessary if you have BED files, BAM files are handled automatically.
-%' # For common assemblies you can also specify them as 'hg19' for example.
-%' data(rn4_chrominfo)
-%' head(rn4_chrominfo)
-%' @
-%' 
-%' <<combined_Chromstar, results='hide', message=FALSE, eval=TRUE>>=
-%' #=== Step 2: Run Chromstar ===
-%' ## Run ChromstaR
-%' Chromstar(inputfolder, experiment.table=experiment_table,
-%'           outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
-%'           prefit.on.chr='chr12', mode='condition')
-%' @
-%' <<combined_listfiles, results='markup', message=FALSE, eval=TRUE>>=
-%' ## Results are stored in 'outputfolder' and can be loaded for further processing
-%' list.files(outputfolder)
-%' model <- get(load(file.path(outputfolder,'combined',
-%'                             'combined_mode-condition.RData')))
-%' @
-%' 
-%' <<combined_analysis, results='markup', message=FALSE, eval=TRUE>>=
-%' #=== Step 3: Analysis and export ===
-%' ## Obtain all genomic regions where the two tissues have different states
-%' segments <- model$segments
-%' diff.segments <- segments[segments$combination.SHR != segments$combination.BN]
-%' # Let's be strict with the differences and get only those where both marks are different
-%' diff.segments <- diff.segments[diff.segments$differential.score >= 1.9]
-%' exportGRanges(diff.segments, trackname='differential_chromatin_states',
-%'               filename=tempfile(), scorecol='differential.score')
-%' ## Obtain all genomic regions where we find a bivalent promoter in BN but not in SHR
-%' bivalent.BN <- segments[segments$combination.BN == '[H3K27me3+H3K4me3]' &
-%'                         segments$combination.SHR != '[H3K27me3+H3K4me3]']
-%' ## Obtain all genomic regions where BN and SHR have promoter signatures
-%' promoter.BN <- segments[segments$transition.group == 'constant [H3K4me3]']
-%' 
-%' ## Get transition frequencies
-%' print(model$frequencies)
-%' @
-%' <<combined_enrichment, results='markup', message=FALSE, eval=TRUE>>=
-%' ## === Step 4: Enrichment analysis ===
-%' # Annotations can easily be obtained with the biomaRt package. Of course, you can
-%' # also load them from file if you already have annotation files available.
-%' library(biomaRt)
-%' ensembl <- useMart('ENSEMBL_MART_ENSEMBL', host='may2012.archive.ensembl.org',
-%'                    dataset='rnorvegicus_gene_ensembl')
-%' genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
-%'                             'end_position', 'strand', 'external_gene_id',
-%'                             'gene_biotype'),
-%'                mart=ensembl)
-%' # Transform to GRanges for easier handling
-%' genes <- GRanges(seqnames=paste0('chr',genes$chromosome_name),
-%'                  ranges=IRanges(start=genes$start, end=genes$end),
-%'                  strand=genes$strand,
-%'                  name=genes$external_gene_id, biotype=genes$gene_biotype)
-%' print(genes)
-%' @
-%' 
-%' <<combined_enrichment_plot1, results='markup', message=FALSE, eval=TRUE, fig.width=6, fig.height=4>>=
-%' # We expect promoter [H3K4me3] and bivalent-promoter signatures [H3K4me3+H3K27me3]
-%' # to be enriched at transcription start sites.
-%' plots <- plotEnrichment(hmm=model, annotation=genes, region='start')
-%' plots[['BN']] + facet_wrap(~ combination) +
-%'   ggtitle('Fold enrichment around TSS') +
-%'   xlab('distance from TSS')
-%' @
-%' 
-%' <<combined_enrichment_plot3, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4>>=
-%' # Fold enrichment with different biotypes, showing that protein coding genes are
-%' # enriched with (bivalent) promoter combinations [H3K4me3] and [H3K4me3+H3K27me3],
-%' # while rRNA is enriched with the empty [] combination.
-%' tss <- resize(genes, width = 3, fix = 'start')
-%' biotypes <- split(tss, tss$biotype)
-%' plots <- plotMultipleEnrichment(model, annotations=biotypes)
-%' plots[['BN']] + coord_flip() + 
-%'   scale_fill_gradient(low='white', high='blue', limits=c(0,100)) + 
-%'   ggtitle('Fold enrichment with different biotypes')
-%' @
-%' \end{scriptsize}
+\subsection{\label{sec:narrow}Task 1: Peak calling for a narrow histone modification}
+
+Examples of histone modifications with a narrow profile are H3K4me3, H3K9ac and H3K27ac in most human tissues. For such peak-like modifications, the bin size should be set to a value between 200bp and 1000bp.
+
+\begin{scriptsize}
+<<univariate_narrow_library, results='hide', message=FALSE, eval=TRUE>>=
+library(chromstaR)
+@
+
+<<univariate_narrow_binning, results='markup', message=FALSE, eval=TRUE>>=
+## === Step 1: Binning ===
+# Get an example BED file
+bedfile <- system.file("extdata","euratrans","lv-H3K4me3-BN-male-bio2-tech1.bed.gz",
+                        package="chromstaRData")
+# Get the chromosome lengths (see ?GenomeInfoDb::fetchExtendedChromInfoFromUCSC)
+# This is only necessary for BED files. BAM files are handled automatically.
+data(rn4_chrominfo)
+head(rn4_chrominfo)
+# We use bin size 1000bp and chromosome 12 to keep the example quick
+binned.data <- binReads(bedfile, assembly=rn4_chrominfo, binsizes=1000,
+                        chromosomes='chr12')
+print(binned.data)
+@
+
+<<univariate_narrow_peak_calling, results='markup', eval=TRUE>>=
+## === Step 2: Peak calling ===
+# We restrict the peak calling to 60 seconds to keep this example quick.
+model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
+@
+
+<<univariate_narrow_plotting, fig.width=6, fig.height=4, out.width='0.5\\textwidth'>>=
+## === Step 3: Checking the fit ===
+# For a narrow modification, the fit should look something like this,
+# with the 'modified'-component near the bottom of the figure
+plot(model) + ggtitle('H3K4me3')
+@
+
+<<univariate_narrow_export, results='hide', message=FALSE, eval=TRUE>>=
+## === Step 4: Export to genome browser ===
+# We can export peak calls and binned read counts with
+exportUnivariates(list(model), filename=tempfile(), what=c('peaks','counts'))
+@
+\end{scriptsize}
+
+\subsection{\label{sec:broad}Task 2: Peak calling for a broad histone modification}
+
+Examples of histone modifications with a broad profile are H3K9me3, H3K27me3, H3K36me3, H4K20me1 in most human tissues. These modifications usually cover broad domains of the genome, and the enrichment is best captured with a bin size between 500bp and 2000bp.
+
+\begin{scriptsize}
+<<univariate_broad_library, results='hide', message=FALSE, eval=TRUE>>=
+library(chromstaR)
+@
+
+<<univariate_broad_binning, results='hide', message=FALSE, eval=TRUE>>=
+## === Step 1: Binning ===
+# Get an example BED file
+bedfile <- system.file("extdata","euratrans","lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
+                        package="chromstaRData")
+# Get the chromosome lengths (see ?GenomeInfoDb::fetchExtendedChromInfoFromUCSC)
+# This is only necessary for BED files. BAM files are handled automatically.
+data(rn4_chrominfo)
+head(rn4_chrominfo)
+# We use bin size 1000bp and chromosome 12 to keep the example quick
+binned.data <- binReads(bedfile, assembly=rn4_chrominfo, binsizes=1000,
+                        chromosomes='chr12')
+@
+
+<<univariate_broad_peak_calling, results='markup', eval=TRUE>>=
+## === Step 2: Peak calling ===
+# We restrict the peak calling to 60 seconds to keep this example quick.
+model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
+@
+
+<<univariate_broad_plotting, fig.width=6, fig.height=4, out.width='0.5\\textwidth'>>=
+## === Step 3: Checking the fit ===
+# For a broad modification, the fit should look something like this,
+# with a 'modified'-component that fits the thick tail of the distribution.
+plot(model) + ggtitle('H3K27me3')
+@
+
+<<univariate_broad_export, results='hide', message=FALSE, eval=TRUE>>=
+## === Step 4: Export to genome browser ===
+# We can export peak calls and binned read counts with
+exportUnivariates(list(model), filename=tempfile(), what=c('peaks','counts'))
+@
+
+<<univariate_broad_H4K20me1, echo=TRUE, results='hide', message=FALSE, fig.width=6, fig.height=4, out.width='0.5\\textwidth'>>=
+## === Step 1-3: Another example for mark H4K20me1 ===
+bedfile <- system.file("extdata","euratrans","lv-H4K20me1-BN-male-bio1-tech1.bed.gz",
+                       package="chromstaRData")
+data(rn4_chrominfo)
+binned.data <- binReads(bedfile, assembly=rn4_chrominfo, binsizes=1000,
+                        chromosomes='chr12')
+model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
+plot(model) + ggtitle('H4K20me1')
+@
+\end{scriptsize}
+
+\subsection{Task 3: Peak calling for ATAC-seq, DNase-seq, FAIRE-seq, ...}
+
+Peak calling for ATAC-seq and DNase-seq is similar to the peak calling of a narrow histone modification (see section~\ref{sec:narrow}). FAIRE-seq experiments seem to exhibit a broad profile with our model, so the procedure is similar to the domain calling of a broad histone modification (see section~\ref{sec:broad}).
+
+\section{Multivariate analysis}
+\subsection{Task 1: Integrating multiple replicates}
+
+\Rpackage{chromstaR} can be used to call peaks with multiple replicates, without the need of prior merging. The underlying statistical model integrates information from all replicates to identify common peaks. It is, however, important to note that replicates with poor quality can affect the joint peak calling negatively. It is therefore recommended to first check the replicate quality and discard poor-quality replicates. The necessary steps for peak calling for an example ChIP-seq experiment with 4 replicates are detailed below.
+
+\begin{scriptsize}
+<<univariate_replicate_library, results='hide', message=FALSE, eval=TRUE>>=
+library(chromstaR)
+@
+
+<<multivariate_replicate_binning, results='markup', message=FALSE, eval=TRUE>>=
+## === Step 1: Binning ===
+# Let's get some example data with 3 replicates in spontaneous hypertensive rat (SHR)
+file.path <- system.file("extdata","euratrans", package='chromstaRData')
+bedfiles.good <- list.files(file.path, pattern="H3K27me3.*SHR", full.names=TRUE)[1:3]
+# We fake a replicate with poor quality by taking a different mark entirely
+bedfiles.poor <- list.files(file.path, pattern="H4K20me1.*SHR", full.names=TRUE)[1]
+bedfiles <- c(bedfiles.good, bedfiles.poor)
+# Obtain chromosome lengths. This is only necessary for BED files. BAM files are
+# handled automatically.
+data(rn4_chrominfo)
+head(rn4_chrominfo)
+# Define experiment structure
+exp <- data.frame(file=bedfiles, mark='H3K27me3', condition='SHR', replicate=1:4,
+                  pairedEndReads=FALSE)
+# We use bin size 1000bp and chromosome 12 to keep the example quick
+binned.data <- list()
+for (bedfile in bedfiles) {
+  binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
+                                         assembly=rn4_chrominfo, chromosomes='chr12',
+                                         experiment.table=exp)
+}
+@
+
+<<multivariate_replicate_univariate, results='hide', message=FALSE, eval=TRUE>>=
+## === Step 2: Univariate peak calling ===
+# The univariate fit is obtained for each replicate
+models <- list()
+for (i1 in 1:length(binned.data)) {
+  models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], max.time=60)
+}
+@
+
+<<multivariate_replicate_peak_calling, results='markup', message=FALSE, eval=TRUE>>=
+## === Step 3: Check replicate correlation ===
+# We run a multivariate peak calling on all 4 replicates
+# A warning is issued because replicate 4 is very different from the others
+multi.model <- callPeaksReplicates(models, max.time=60, eps=1)
+# Checking the correlation confirms that Rep4 is very different from the others
+print(multi.model$replicateInfo$correlation)
+@
+
+<<multivariate_replicate_peak_calling2, results='hide', message=FALSE, eval=TRUE>>=
+## === Step 4: Peak calling with replicates ===
+# We redo the previous step without the "bad" replicate
+# Also, we force all replicates to agree in their peak calls
+multi.model <- callPeaksReplicates(models[1:3], force.equal=TRUE, max.time=60)
+@
+
+<<multivariate_replicate_export, results='hide', message=FALSE, eval=TRUE>>=
+## === Step 5: Export to genome browser ===
+# Finally, we can export the results as BED file
+exportMultivariate(multi.model, filename=tempfile(), what=c('peaks','counts'))
+@
+\end{scriptsize}
+
+\subsection{Task 2: Detecting differentially modified regions}
+
+\Rpackage{chromstaR} is extremely powerful in detecting differentially modified regions in two or more samples. The following example illustrates this on ChIP-seq data for H4K20me1 in brown norway (BN) and spontaneous hypertensive rat (SHR) in left-ventricle (lv) heart tissue. The mode of analysis is called \emph{condition}, because all conditions are analyzed simultaneously.
+
+\begin{scriptsize}
+<<multivariate_differential_library, results='hide', message=FALSE, eval=TRUE>>=
+library(chromstaR)
+@
+
+<<multivariate_differential_preparation, results='markup', message=FALSE, eval=TRUE>>=
+#=== Step 1: Preparation ===
+## Prepare the file paths. Exchange this with your input and output directories.
+inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
+outputfolder <- file.path(tempdir(), 'H4K20me1-example')
+
+## Define experiment structure
+data(experiment_table_H4K20me1)
+print(experiment_table_H4K20me1)
+
+## Define assembly
+# This is only necessary if you have BED files, BAM files are handled automatically.
+# For common assemblies you can also specify them as 'hg19' for example.
+data(rn4_chrominfo)
+head(rn4_chrominfo)
+@
+
+<<multivariate_differential_Chromstar, results='hide', message=FALSE, eval=TRUE>>=
+#=== Step 2: Run Chromstar ===
+## Run ChromstaR
+Chromstar(inputfolder, experiment.table=experiment_table_H4K20me1,
+          outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
+          prefit.on.chr='chr12', mode='condition')
+@
+<<multivariate_differential_listfiles, results='markup', message=FALSE, eval=TRUE>>=
+## Results are stored in 'outputfolder' and can be loaded for further processing
+list.files(outputfolder)
+model <- get(load(file.path(outputfolder,'multivariate',
+                            'multivariate_mode-condition_mark-H4K20me1.RData')))
+@
+
+<<multivariate_differential_stateBrewer, results='markup', message=TRUE, eval=TRUE>>=
+## === Step 3: Construct differential and common states ===
+diff.states <- stateBrewer(experiment_table_H4K20me1, mode='condition',
+                           differential.states=TRUE)
+print(diff.states)
+common.states <- stateBrewer(experiment_table_H4K20me1, mode='condition',
+                             common.states=TRUE)
+print(common.states)
+@
+
+<<multivariate_differential_export, results='hide', message=FALSE, eval=TRUE>>=
+## === Step 5: Export to genome browser ===
+# Export only differential states
+exportMultivariate(model, filename=tempfile(),
+                   what=c('peaks','counts','combinations'),
+                   include.states=diff.states)
+@
+\end{scriptsize}
+
+\subsection{Task 3: Finding combinatorial chromatin states}
+
+Most experimental studies that probe several histone modifications are interested in combinatorial chromatin states. An example of a simple combinatorial state would be [H3K4me3+H3K27me3], which is also frequently called ``bivalent promoter'', due to the simultaneous occurrence of the promoter marking H3K4me3 and the repressive H3K27me3. Finding combinatorial states with \Rpackage{chromstaR} is equivalent to a multivariate peak calling. The following code chunks demonstrate how to find bivalent promoters and do some simple analysis. The mode of analysis is called \emph{mark}, because all marks are analyzed simultaneously.
+
+\begin{scriptsize}
+<<multivariate_combinatorial_library, results='hide', message=FALSE, eval=TRUE>>=
+library(chromstaR)
+@
+
+<<multivariate_combinatorial_preparation, results='markup', message=FALSE, eval=TRUE>>=
+#=== Step 1: Preparation ===
+## Prepare the file paths. Exchange this with your input and output directories.
+inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
+outputfolder <- file.path(tempdir(), 'SHR-example')
+
+## Define experiment structure (SHR = spontaneous hypertensive rat)
+data(experiment_table_SHR)
+print(experiment_table_SHR)
+
+## Define assembly
+# This is only necessary if you have BED files, BAM files are handled automatically.
+# For common assemblies you can also specify them as 'hg19' for example.
+data(rn4_chrominfo)
+head(rn4_chrominfo)
+@
+
+<<multivariate_combinatorial_Chromstar, results='hide', message=FALSE, eval=TRUE>>=
+#=== Step 2: Run Chromstar ===
+## Run ChromstaR
+Chromstar(inputfolder, experiment.table=experiment_table_SHR,
+          outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
+          prefit.on.chr='chr12', mode='mark')
+@
+
+<<multivariate_combinatorial_listfiles, results='markup', message=FALSE, eval=TRUE, fig.width=4, fig.height=3, out.width='0.5\\textwidth'>>=
+## Results are stored in 'outputfolder' and can be loaded for further processing
+list.files(outputfolder)
+model <- get(load(file.path(outputfolder,'multivariate',
+                            'multivariate_mode-mark_condition-SHR.RData')))
+# Obtain genomic frequencies for combinatorial states
+genomicFrequencies(model)
+# Plot transition probabilities and read count correlation
+plot(model, type='transitionMatrix') + # or plot(model, type=1)
+  ggtitle('Transition probabilities')
+plot(model, type='correlation') + # or plot(model, type=3)
+  ggtitle('Read count correlation')
+@
+
+<<multivariate_combinatorial_enrichment, results='markup', message=FALSE, eval=TRUE>>=
+## === Step 3: Enrichment analysis ===
+# Annotations can easily be obtained with the biomaRt package. Of course, you can
+# also load them from file if you already have annotation files available.
+library(biomaRt)
+ensembl <- useMart('ENSEMBL_MART_ENSEMBL', host='may2012.archive.ensembl.org',
+                   dataset='rnorvegicus_gene_ensembl')
+genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
+                            'end_position', 'strand', 'external_gene_id',
+                            'gene_biotype'),
+               mart=ensembl)
+# Transform to GRanges for easier handling
+genes <- GRanges(seqnames=paste0('chr',genes$chromosome_name),
+                 ranges=IRanges(start=genes$start, end=genes$end),
+                 strand=genes$strand,
+                 name=genes$external_gene_id, biotype=genes$gene_biotype)
+print(genes)
+@
+
+<<multivariate_combinatorial_enrichment_plot1, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.8\\textwidth', fig.align='center'>>=
+# We expect promoter [H3K4me3] and bivalent-promoter signatures [H3K4me3+H3K27me3]
+# to be enriched at transcription start sites.
+plotEnrichment(hmm = model, annotation = genes, bp.around.annotation = 15000) +
+  ggtitle('Fold enrichment around genes') +
+  xlab('distance from gene body')
+# Plot enrichment only at TSS. We make use of the fact that TSS is the start of a gene.
+plotEnrichment(model, genes, region = 'start') +
+  ggtitle('Fold enrichment around TSS') +
+  xlab('distance from TSS in [bp]')
+# Note: If you want to facet the plot because you have many combinatorial states you
+# can do that with
+plotEnrichment(model, genes, region = 'start') +
+  facet_wrap(~ combination) + ggtitle('Fold enrichment around TSS')
+@
+<<multivariate_combinatorial_enrichment_plot2, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.8\\textwidth', fig.align='center'>>=
+# Another form of visualization that shows every TSS in a heatmap
+tss <- resize(genes, width = 3, fix = 'start')
+plotHeatmap(model, tss) +
+  theme(strip.text.x = element_text(size=6)) +
+  ggtitle('Read count around TSS')
+@
+<<multivariate_combinatorial_enrichment_plot3, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.8\\textwidth', fig.align='center'>>=
+# Fold enrichment with different biotypes, showing that protein coding genes are
+# enriched with (bivalent) promoter combinations [H3K4me3] and [H3K4me3+H3K27me3],
+# while rRNA is enriched with the empty [] combination.
+biotypes <- split(tss, tss$biotype)
+plotMultipleEnrichment(model, annotations=biotypes) + coord_flip() +
+  ggtitle('Fold enrichment with different biotypes')
+@
+
+<<multivariate_combinatorial_expression, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.5\\textwidth', fig.align='center'>>=
+# === Step 4: Expression analysis ===
+# Suppose you have expression data as well for your experiment. The following code
+# shows you how to get the expression values for each combinatorial state.
+data(expression_lv)
+head(expression_lv)
+
+# We need to get coordinates for each of the genes
+library(biomaRt)
+ensembl <- useMart('ENSEMBL_MART_ENSEMBL', host='may2012.archive.ensembl.org',
+                   dataset='rnorvegicus_gene_ensembl')
+genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
+                            'end_position', 'strand', 'external_gene_id',
+                            'gene_biotype'),
+               mart=ensembl)
+expr <- merge(genes, expression_lv, by='ensembl_gene_id')
+# Transform to GRanges
+expression.SHR <- GRanges(seqnames=paste0('chr',expr$chromosome_name),
+                          ranges=IRanges(start=expr$start, end=expr$end),
+                          strand=expr$strand, name=expr$external_gene_id,
+                          biotype=expr$gene_biotype,
+                          expression=expr$expression_SHR)
+# We apply an asinh transformation to reduce the effect of outliers
+expression.SHR$expression <- asinh(expression.SHR$expression)
+
+## Plot
+plotExpression(model, expression.SHR) +
+  theme(axis.text.x=element_text(angle=0, hjust=0.5)) +
+  ggtitle('Expression of genes overlapping combinatorial states')
+plotExpression(model, expression.SHR, return.marks=TRUE) +
+  ggtitle('Expression of marks overlapping combinatorial states')
+@
+\end{scriptsize}
+
+\subsection{\label{sec:Task4}Task 4: Finding differences between combinatorial chromatin states}
+
+Consider bivalent promoters defined by [H3K4me3+H3K27me3] at two different developmental stages, or in two different strains or tissues. This is an example where one is interested in \emph{differences} between \emph{combinatorial states}. The following example demonstrates how such an analysis can be done with \Rpackage{chromstaR}. We use a data set from the Euratrans project (downsampled to chr12) to find differences in bivalent promoters between brown norway (BN) and spontaneous hypertensive rat (SHR) in left-ventricle (lv) heart tissue.
+
+\Rfunction{Chromstar} can be run in three different modes:
+\begin{itemize}
+\item \emph{full}: Recommended mode if your (number of marks) * (number of conditions) is less or equal to 8. With 8 ChIP-seq experiments there are already $2^8 = 256$ combinatorial states which is the maximum that most computers can handle computationally for a human-sized genome at bin size 1000bp.
+\item \emph{condition}: Choose this mode if you are interested in highly significant differences between conditions. The computational limit for the number of conditions is $\sim 8$ for a human-sized genome. Combinatorial states are not as accurate as in mode \emph{mark} or \emph{full}.
+\item \textbf{DEFAULT} \emph{mark}: This mode will yield good combinatorial chromatin state calls for any number of marks and conditions. However, differences between conditions have more false positives than in mode \emph{condition} or \emph{full}.
+\end{itemize}
+
+\begin{scriptsize}
+<<combined_library, results='hide', message=FALSE, eval=TRUE>>=
+library(chromstaR)
+@
+
+<<combined_preparation, results='markup', message=FALSE, eval=TRUE>>=
+#=== Step 1: Preparation ===
+## Prepare the file paths. Exchange this with your input and output directories.
+inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
+outputfolder <- file.path(tempdir(), 'SHR-BN-example')
+
+## Define experiment structure
+data(experiment_table)
+print(experiment_table)
+
+## Define assembly
+# This is only necessary if you have BED files, BAM files are handled automatically.
+# For common assemblies you can also specify them as 'hg19' for example.
+data(rn4_chrominfo)
+head(rn4_chrominfo)
+@
+
+<<combined_Chromstar, results='hide', message=FALSE, eval=TRUE>>=
+#=== Step 2: Run Chromstar ===
+## Run ChromstaR
+Chromstar(inputfolder, experiment.table=experiment_table,
+          outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
+          prefit.on.chr='chr12', mode='condition')
+@
+<<combined_listfiles, results='markup', message=FALSE, eval=TRUE>>=
+## Results are stored in 'outputfolder' and can be loaded for further processing
+list.files(outputfolder)
+model <- get(load(file.path(outputfolder,'combined',
+                            'combined_mode-condition.RData')))
+@
+
+<<combined_analysis, results='markup', message=FALSE, eval=TRUE>>=
+#=== Step 3: Analysis and export ===
+## Obtain all genomic regions where the two tissues have different states
+segments <- model$segments
+diff.segments <- segments[segments$combination.SHR != segments$combination.BN]
+# Let's be strict with the differences and get only those where both marks are different
+diff.segments <- diff.segments[diff.segments$differential.score >= 1.9]
+exportGRanges(diff.segments, trackname='differential_chromatin_states',
+              filename=tempfile(), scorecol='differential.score')
+## Obtain all genomic regions where we find a bivalent promoter in BN but not in SHR
+bivalent.BN <- segments[segments$combination.BN == '[H3K27me3+H3K4me3]' &
+                        segments$combination.SHR != '[H3K27me3+H3K4me3]']
+## Obtain all genomic regions where BN and SHR have promoter signatures
+promoter.BN <- segments[segments$transition.group == 'constant [H3K4me3]']
+
+## Get transition frequencies
+print(model$frequencies)
+@
+<<combined_enrichment, results='markup', message=FALSE, eval=TRUE>>=
+## === Step 4: Enrichment analysis ===
+# Annotations can easily be obtained with the biomaRt package. Of course, you can
+# also load them from file if you already have annotation files available.
+library(biomaRt)
+ensembl <- useMart('ENSEMBL_MART_ENSEMBL', host='may2012.archive.ensembl.org',
+                   dataset='rnorvegicus_gene_ensembl')
+genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
+                            'end_position', 'strand', 'external_gene_id',
+                            'gene_biotype'),
+               mart=ensembl)
+# Transform to GRanges for easier handling
+genes <- GRanges(seqnames=paste0('chr',genes$chromosome_name),
+                 ranges=IRanges(start=genes$start, end=genes$end),
+                 strand=genes$strand,
+                 name=genes$external_gene_id, biotype=genes$gene_biotype)
+print(genes)
+@
+
+<<combined_enrichment_plot1, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.8\\textwidth', fig.align='center'>>=
+# We expect promoter [H3K4me3] and bivalent-promoter signatures [H3K4me3+H3K27me3]
+# to be enriched at transcription start sites.
+plots <- plotEnrichment(hmm=model, annotation=genes, region='start')
+plots[['BN']] + facet_wrap(~ combination) +
+  ggtitle('Fold enrichment around TSS') +
+  xlab('distance from TSS')
+@
+
+<<combined_enrichment_plot3, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.8\\textwidth', fig.align='center'>>=
+# Fold enrichment with different biotypes, showing that protein coding genes are
+# enriched with (bivalent) promoter combinations [H3K4me3] and [H3K4me3+H3K27me3],
+# while rRNA is enriched with the empty [] combination.
+tss <- resize(genes, width = 3, fix = 'start')
+biotypes <- split(tss, tss$biotype)
+plots <- plotMultipleEnrichment(model, annotations=biotypes)
+plots[['BN']] + coord_flip() + 
+  scale_fill_gradient(low='white', high='blue', limits=c(0,100)) + 
+  ggtitle('Fold enrichment with different biotypes')
+@
+\end{scriptsize}
 
 \section{\label{sec:output}Output of function \Rfunction{Chromstar()}}
 
@@ -508,51 +502,51 @@ Every analysis with the \Rpackage{chromstaR} package starts from aligned reads i
 \item \emph{experiment\_table.tsv}: \\ A tab-separated file of your experiment setup.
 \item \textbf{binned}: \\ RData files with the results of the binnig step. Contains GRanges objects with binned genomic coordinates and read counts.
 \item \textbf{BROWSERFILES}: \\ Bed files for upload to the UCSC genome browser. It contains files with combinatorial states (``\_combinations.bed.gz''), underlying peak calls (``\_peaks.bed.gz''), and read counts (``\_counts.wig.gz''). !!Always check the ``\_peaks.bed.gz'' files if you are satisfied with the peak calls. If not, there are ways to make the calls stricter (see section~\ref{sec:FAQ_peaks}).
-\item -->\textbf{combined}<--: \\ RData files with the combined results of all previous steps. This is what you want to use for downstream analyses. Contains combinedMultiHMM objects.
+\item $\rightarrow$\textbf{combined}$\leftarrow$: \\ RData files with the combined results of the uni- and multivariate peak calling steps. This is what you want to use for downstream analyses. Contains Rclass{combinedMultiHMM} objects.
 \begin{itemize}
 \item \emph{combined\_mode-separate.RData} Simple combination of univariate peak calls (replicates considered) without multivariate analysis.
 \item \emph{combined\_mode-mark.RData} Combination of multivariate results for mode='mark'.
 \item \emph{combined\_mode-condition.RData} Combination of multivariate results for mode='condition'.
 \item \emph{combined\_mode-full.RData} Combination of multivariate results for mode='full'.
 \end{itemize}
-\item \textbf{multivariate}: \\ RData files with the results of the multivariate peak calling step. Contains multiHMM objects.
+\item \textbf{multivariate}: \\ RData files with the results of the multivariate peak calling step. Contains Rclass{multiHMM} objects.
 \item \textbf{PLOTS}: \\ Several plots that are produced by default. Please check the plots in subfolder \textbf{univariate-distributions} for irregularities (see section~\ref{sec:univariate}).
 \item \textbf{replicates}: \\ RData files with the result of the replicate peak calling step. Contains multiHMM objects.
-\item \textbf{univariate}: \\ RData files with the result of the univariate peak calling step. Contains uniHMM objects.
+\item \textbf{univariate}: \\ RData files with the result of the univariate peak calling step. Contains Rclass{uniHMM} objects.
 \end{itemize}
 
 \section{\label{sec:faq}FAQ}
 
 \subsection{\label{sec:FAQ_peaks}The peak calls are too lenient. Can I adjust the strictness of the peak calling?}
 
-%' The strictness of the peak calling can be controlled with a posterior cutoff. The Hidden Markov Model gives posterior probabilities for each peak, and based on these probabilites the model decides if a peak is present or not by picking the state with the highest probability. This way of peak calling leads to very lenient peak calls, and for some applications it may be desirable to obtain only very clear peaks. This can be achieved by setting a posterior cutoff. To follow the below example, please first run step 1 and 2 from section~\ref{sec:Task4}. !!Note that in general more peaks are obtained with a stricter cutoff, as this will lead to the split-up of previously broader peaks into several smaller, more well defined peaks.
-%' 
-%' \begin{scriptsize}
-%' <<faq_postcutoff, results='markup', message=FALSE, eval=TRUE>>=
-%' model <- get(load(file.path(outputfolder,'combined',
-%'                             'combined_mode-condition.RData')))
-%' # Set a strict cutoff close to 1
-%' model2 <- changePostCutoff(model, post.cutoff=0.999)
-%' ## Compare the number and width of peaks before and after cutoff adjustment
-%' length(model$segments); mean(width(model$segments))
-%' length(model2$segments); mean(width(model2$segments))
-%' @
-%' \end{scriptsize}
-%' 
-%' It is even possible to adjust the posterior cutoff differently for the different marks or conditions.
-%' 
-%' \begin{scriptsize}
-%' <<faq_postcutoff_single, results='markup', message=FALSE, eval=TRUE>>=
-%' # Set a stricter cutoff for H3K4me3 than for H3K27me3
-%' cutoffs <- c(0.8, 0.8, 0.8, 0.8, 0.999, 0.999, 0.999, 0.999)
-%' names(cutoffs) <- model$info$ID
-%' print(cutoffs)
-%' model2 <- changePostCutoff(model, post.cutoff=cutoffs)
-%' ## Compare the number and width of peaks before and after cutoff adjustment
-%' length(model$segments); mean(width(model$segments))
-%' length(model2$segments); mean(width(model2$segments))
-%' @
-%' \end{scriptsize}
+The strictness of the peak calling can be controlled with a posterior cutoff. The Hidden Markov Model gives posterior probabilities for each peak, and based on these probabilites the model decides if a peak is present or not by picking the state with the highest probability. This way of peak calling leads to very lenient peak calls, and for some applications it may be desirable to obtain only very clear peaks. This can be achieved by setting a posterior cutoff. To follow the below example, please first run step 1 and 2 from section~\ref{sec:Task4}. !!Note that in general more peaks are obtained with a stricter cutoff, as this will lead to the split-up of previously broader peaks into several smaller, more well defined peaks.
+
+\begin{scriptsize}
+<<faq_postcutoff, results='markup', message=FALSE, eval=TRUE>>=
+model <- get(load(file.path(outputfolder,'combined',
+                            'combined_mode-condition.RData')))
+# Set a strict cutoff close to 1
+model2 <- changePostCutoff(model, post.cutoff=0.999)
+## Compare the number and width of peaks before and after cutoff adjustment
+length(model$segments); mean(width(model$segments))
+length(model2$segments); mean(width(model2$segments))
+@
+\end{scriptsize}
+
+It is even possible to adjust the posterior cutoff differently for the different marks or conditions.
+
+\begin{scriptsize}
+<<faq_postcutoff_single, results='markup', message=FALSE, eval=TRUE>>=
+# Set a stricter cutoff for H3K4me3 than for H3K27me3
+cutoffs <- c(0.8, 0.8, 0.8, 0.8, 0.999, 0.999, 0.999, 0.999)
+names(cutoffs) <- model$info$ID
+print(cutoffs)
+model2 <- changePostCutoff(model, post.cutoff=cutoffs)
+## Compare the number and width of peaks before and after cutoff adjustment
+length(model$segments); mean(width(model$segments))
+length(model2$segments); mean(width(model2$segments))
+@
+\end{scriptsize}
 
 \subsection{The combinatorial differences that chromstaR gives me are not convincing. Is there a way to restrict the results to a more convincing set?}
 
