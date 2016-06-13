@@ -198,22 +198,38 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
     
     ### Select exclusive states
     if (exclusive.hm) {
-        # get loci with histone modifications
+        if (is.null(tracks2compare) | is.null(conditions)) {
+            stop("arguments 'tracks2compare' and 'conditions' must be specified if 'exclusive.hm' is 'TRUE'")
+        }
+        
+        tracknames.split <- split(tracknames, conditions)
+        tracks2compare.split <- split(tracks2compare, conditions)
+
+        # get loci with histone modifications for all conditions
         # it is assumed that `tracks2compare` contains the histone marks
-        loci <- unique(substring(subset(tracks2compare, grepl('^H\\dK\\d', tracks2compare)), 1, 4))
-        for (locus in loci) {
-            for (cond in conditions) {
-                # get first indexes (no replicates) of histone modifications at specific locus
-                track.index <- which(startsWith(as.character(tracks2compare), locus)
-                                     & !duplicated(paste0(tracks2compare, '-', conditions))
-                                     & conditions == cond)
-                
-                # filter all combinations with no or one modification at this locus
-                mask <- rowSums(as.matrix(binstates[,track.index]), na.rm=TRUE) < 2
-                binstates <- binstates[mask,]
-                if (class(binstates)!='matrix') {
-                    binstates <- matrix(binstates, ncol=length(binstates))
-                    colnames(binstates) <- tracknames
+        pat <- "^(H\\dK\\d).*"
+        loci <- lapply(tracks2compare.split, function(x) { unique(sub(pat, "\\1", x[grepl(pat, x)]))})
+
+        for (cond in unique(conditions)) {
+            tracks <- tracks2compare.split[[as.character(cond)]]
+            names <- tracknames.split[[as.character(cond)]]
+            
+            for (locus in loci[[as.character(cond)]]) {
+                # get indexes (no replicates) of histone modifications at locus
+                track.index <- which(startsWith(as.character(tracks), locus) & !duplicated(tracks))
+
+                if (length(track.index) > 1) { # there are no restrictions if only one modification exists
+                    if (nrow(binstates) > 1) {
+                        mask <- rowSums(as.matrix(binstates[,names[track.index]]), na.rm = TRUE) < 2
+                    } else {
+                        mask <- sum(binstates[,names[track.index]], na.rm=TRUE) < 2
+                    }
+                    binstates <- binstates[mask,]
+                    
+                    if (class(binstates)!='matrix') {
+                        binstates <- matrix(binstates, ncol=length(binstates))
+                        colnames(binstates) <- tracknames
+                    }
                 }
             }
         }
