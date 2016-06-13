@@ -131,7 +131,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     cat("", file=savename)
     cat("This folder contains the following files:\n", file=savename, append=TRUE)
     cat("-----------------------------------------\n", file=savename, append=TRUE)
-    cat("- chrominfo.tsv: A tab-separated file with chromosome lengths.\n", file=savename, append=TRUE)
+    cat("- chrominfo.tsv: A tab-separated file with chromosome lengths (only if an assembly was specified).\n", file=savename, append=TRUE)
     cat("- chromstaR.config: A text file with all the parameters that were used to run Chromstar().\n", append=TRUE, file=savename)
     cat("- experiment_table.tsv: A tab-separated file of your experiment setup.\n", file=savename, append=TRUE)
     
