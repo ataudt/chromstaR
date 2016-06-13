@@ -7,6 +7,7 @@ NULL
 #'
 #' @param labels Any combination of \code{c("zero-inflation","unmodified","modified", "total", "counts")}.
 #' @return A character vector with colors.
+#' @seealso \code{\link{plotting}}
 #' @export
 #'@examples
 #'cols <- getStateColors()
@@ -143,6 +144,7 @@ get_rightxlim <- function(counts) {
 #' @param model A \code{\link{multiHMM}} object or file that contains such an object.
 #' @param ... Additional arguments (see \code{\link{plotHistogram}}).
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
+#' @seealso \code{\link{plotting}}
 #' @export
 plotHistograms <- function(model, ...) {
 
@@ -177,6 +179,7 @@ plotHistograms <- function(model, ...) {
 #' @return A \code{\link[ggplot2]{ggplot}} object.
 #' @importFrom stats dist hclust
 #' @importFrom reshape2 melt
+#' @seealso \code{\link{plotting}}
 #' @export
 heatmapCountCorrelation <- function(model, cluster=TRUE) {
 
@@ -200,6 +203,7 @@ heatmapCountCorrelation <- function(model, cluster=TRUE) {
 #' @param model A \code{\link{multiHMM}} object or file that contains such an object.
 #' @return A \code{\link[ggplot2]{ggplot}} object.
 #' @importFrom reshape2 melt
+#' @seealso \code{\link{plotting}}
 #' @export
 heatmapTransitionProbs <- function(model) {
 
@@ -221,6 +225,7 @@ heatmapTransitionProbs <- function(model) {
 #' @param marks A character vector with histone marks. If specified, \code{model} will be ignored.
 #' @return A \code{\link[ggplot2]{ggplot}} object.
 #' @importFrom reshape2 melt
+#' @seealso \code{\link{plotting}}
 #' @export
 #' @author Aaron Taudt
 #' @examples 
@@ -267,6 +272,7 @@ heatmapCombinations <- function(model=NULL, marks=NULL) {
 #' @importFrom graphics hist
 #' @importFrom stats dnbinom
 #' @importFrom reshape2 melt
+#' @seealso \code{\link{plotting}}
 #' @export
 plotHistogram <- function(model, state=NULL, chromosomes=NULL, start=NULL, end=NULL, linewidth=1) {
 

@@ -15,4 +15,7 @@ A \code{\link[ggplot2]{ggplot}} object.
 \description{
 Plot a heatmap of transition probabilities for a \code{\link{multiHMM}} model.
 }
+\seealso{
+\code{\link{plotting}}
+}
 

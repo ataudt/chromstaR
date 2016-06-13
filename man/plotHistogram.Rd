@@ -22,4 +22,7 @@ A \code{\link[ggplot2:ggplot]{ggplot}} object.
 \description{
 Plot a histogram of binned read counts with fitted mixture distributions from a \code{\link{uniHMM}} object.
 }
+\seealso{
+\code{\link{plotting}}
+}
 
