@@ -261,7 +261,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     names(files) <- paste0(exp.table$mark, '-', exp.table$condition)
     markconditions <- unique(names(files))
     for (markcond in markconditions) {
-        savename <- file.path(reppath, paste0(markcond, '_binsize', binsize, '.RData'))
+        savename <- file.path(reppath, paste0(markcond, '_binsize', binsize.string, '.RData'))
         if (!file.exists(savename)) {
             mask <- names(files) == markcond
             repfiles <- files[mask]
@@ -277,7 +277,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     
     message("Combining replicate HMMs")
     modename <- 'separate'
-    repfiles <- list.files(reppath, full.names=TRUE)
+    repfiles <- list.files(reppath, full.names=TRUE, pattern=paste0('binsize', binsize.string))
     ## Get the order correct
     names(repfiles) <- gsub('_binsize.*', '', basename(repfiles))
     ordering <- unique(gsub('-rep.*', '', IDs))
@@ -306,6 +306,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     width <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
     height <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
     ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
+    stopTimedMessage(ptm)
   
     #-------------------------
     ## Export browser files ##
