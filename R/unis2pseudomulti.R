@@ -29,7 +29,8 @@
 #'pseudo.multi.HMM <- unis2pseudomulti(models)
 #'## Compare frequencies with real multivariate HMM
 #'exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K4me3"),
-#'                  condition=rep("SHR",2), replicate=c(1,1), pairedEndReads=FALSE)
+#'                  condition=rep("SHR",2), replicate=c(1,1), pairedEndReads=FALSE,
+#'                  controlFiles=NA)
 #'states <- stateBrewer(exp, mode='mark')
 #'real.multi.HMM <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
 #'genomicFrequencies(real.multi.HMM)

@@ -154,7 +154,7 @@ data(rn4_chrominfo)
 head(rn4_chrominfo)
 # Define experiment structure
 exp <- data.frame(file=bedfiles, mark='H3K27me3', condition='SHR', replicate=1:4,
-                  pairedEndReads=FALSE)
+                  pairedEndReads=FALSE, controlFiles=NA)
 # We use bin size 1000bp and chromosome 12 to keep the example quick
 binned.data <- list()
 for (bedfile in bedfiles) {
@@ -211,7 +211,7 @@ library(chromstaR)
 inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
 outputfolder <- file.path(tempdir(), 'H4K20me1-example')
 
-## Define experiment structure
+## Define experiment structure, put NA if you don't have controls
 data(experiment_table_H4K20me1)
 print(experiment_table_H4K20me1)
 
@@ -270,7 +270,8 @@ library(chromstaR)
 inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
 outputfolder <- file.path(tempdir(), 'SHR-example')
 
-## Define experiment structure (SHR = spontaneous hypertensive rat)
+## Define experiment structure, put NA if you don't have controls
+# (SHR = spontaneous hypertensive rat)
 data(experiment_table_SHR)
 print(experiment_table_SHR)
 
@@ -408,7 +409,7 @@ library(chromstaR)
 inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
 outputfolder <- file.path(tempdir(), 'SHR-BN-example')
 
-## Define experiment structure
+## Define experiment structure, put NA if you don't have controls
 data(experiment_table)
 print(experiment_table)
 

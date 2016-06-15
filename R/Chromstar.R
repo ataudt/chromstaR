@@ -77,13 +77,25 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         if (!all(colnames(exp.table) == c('file','mark','condition','replicate','pairedEndReads'))) {
             stop("Your 'experiment.table' must be a tab-separated file with column names 'file', 'mark', 'condition', 'replicate' and 'pairedEndReads'.")
         }
-        rownames(exp.table) <- exp.table[,1]
     } else if (is.data.frame(experiment.table)) {
         exp.table <- experiment.table
-        rownames(exp.table) <- exp.table[,1]
     } else {
         stop("Argument 'experiment.table' must be a data.frame or a tab-separated file.")
     }
+    ## Prepare IDs and filenames
+    IDs <- paste0(exp.table$mark, '-', exp.table$condition, '-rep', exp.table$replicate)
+    datafiles <- file.path(inputfolder, basename(as.character(exp.table$file)))
+    names(datafiles) <- basename(datafiles)
+    names(IDs) <- basename(datafiles)
+    rownames(exp.table) <- basename(datafiles)
+    filenames <- paste0(IDs, '_binsize', binsize.string, '.RData')
+    names(filenames) <- basename(datafiles)
+    ## Inputfiles
+    inputfiles <- unique(unlist(strsplit(as.character(exp.table$controlFiles), '\\|')))
+    inputfiles <- inputfiles[!is.na(inputfiles)]
+    inputfiles <- file.path(inputfolder, basename(as.character(inputfiles)))
+    inputfilenames <- paste0(basename(inputfiles), '_binsize', binsize.string, '.RData')
+    names(inputfilenames) <- basename(inputfiles)
     
     ## Check usage of modes
     if (!mode %in% c('mark','condition','full')) {
@@ -99,7 +111,6 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     }
     
     ## Check if assembly must be present
-    datafiles <- file.path(inputfolder, basename(as.character(exp.table$file)))
     datafiles.clean <- sub('\\.gz$','', datafiles)
     format <- sapply(strsplit(datafiles.clean, '\\.'), function(x) { rev(x)[1] })
     if (any(format=='bed') & is.null(conf[['assembly']])) {
@@ -155,39 +166,37 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
 
     ## Write the experiment table to file
     utils::write.table(exp.table, file=file.path(outputfolder, 'experiment_table.tsv'), col.names=TRUE, quote=FALSE, row.names=FALSE, sep='\t')
-
-    ## Prepare IDs and filenames
-    IDs <- paste0(exp.table$mark, '-', exp.table$condition, '-rep', exp.table$replicate)
-    names(IDs) <- basename(datafiles)
-    filenames <- paste0(IDs, '_binsize', binsize.string, '.RData')
-    names(filenames) <- basename(datafiles)
-
     
   
     #==============
     ### Binning ###
     #==============
     if (!file.exists(binpath)) { dir.create(binpath) }
-    parallel.helper <- function(file) {
-        savename <- file.path(binpath, filenames[basename(file)])
+    parallel.helper <- function(file, input) {
+        if (!input) {
+            savename <- file.path(binpath, filenames[basename(file)])
+        } else {
+            savename <- file.path(binpath, inputfilenames[basename(file)])
+        }
         if (!file.exists(savename)) {
             tC <- tryCatch({
-                binReads(file=file, experiment.table=exp.table, assembly=conf[['assembly']], pairedEndReads=exp.table[basename(file),'pairedEndReads'], binsizes=binsize, chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']], outputfolder.binned=binpath, save.as.RData=TRUE)
+                exp.table.input <- NULL
+                if (!input) {
+                    exp.table.input <- exp.table
+                }
+                binReads(file=file, experiment.table=exp.table.input, assembly=conf[['assembly']], pairedEndReads=exp.table[basename(file),'pairedEndReads'], binsizes=binsize, chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']], outputfolder.binned=binpath, save.as.RData=TRUE)
             }, error = function(err) {
                 stop(file,'\n',err)
             })
         }
     }
     for (file in datafiles) {
-        parallel.helper(file)
+        parallel.helper(file, input=FALSE)
+    }
+    for (file in inputfiles) {
+        parallel.helper(file, input=TRUE)
     }
     
-    ## Delete input rows from exp.table
-    exp.table <- exp.table[exp.table$mark != 'input',]
-    IDs <- IDs[!grepl('input', IDs)]
-    filenames <- filenames[!grepl('input', basename(filenames))]
-  
-  
     #==============================
     ### Univariate peak calling ###
     #==============================
@@ -207,8 +216,9 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     if (!file.exists(unipath)) { dir.create(unipath) }
     if (!file.exists(uniplotpath)) { dir.create(uniplotpath) }
     files <- file.path(binpath, filenames)
-    inputfiles <- files[grep('input', basename(files))]
-    files <- files[grep('input', basename(files), invert=TRUE)]
+    names(files) <- names(filenames)
+    inputfiles.list <- lapply(strsplit(exp.table$controlFiles, '\\|'), function(x) { file.path(binpath, inputfilenames[x[!is.na(x)]]) })
+    names(inputfiles.list) <- names(filenames)
     
     parallel.helper <- function(file, inputfiles) {
         ## Peak calling
@@ -217,11 +227,11 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
             tC <- tryCatch({
                 mark <- strsplit(basename(file), '-')[[1]][1]
                 condition <- strsplit(basename(file), '-')[[1]][2]
-                input.files <- grep(paste0('input-',condition,'-'), inputfiles, value=TRUE)
-                if (length(input.files) == 0) {
-                    input.files <- NULL
+                input.files <- NULL
+                if (length(inputfiles)>0) {
+                    input.files <- inputfiles
                 }
-                model <- callPeaksUnivariate(file, input.data=input.files, eps=conf[['eps.univariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], read.cutoff.absolute=conf[['read.cutoff.absolute']], prefit.on.chr=conf[['prefit.on.chr']], keep.posteriors=FALSE)
+                model <- callPeaksUnivariate(file, input.data=input.files, eps=conf[['eps.univariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], read.cutoff.absolute=conf[['read.cutoff.absolute']], prefit.on.chr=conf[['prefit.on.chr']], keep.posteriors=FALSE, verbosity=0)
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(model, file=savename)
                 stopTimedMessage(ptm)
@@ -240,12 +250,16 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     }
     if (numcpu > 1) {
         ptm <- startTimedMessage("Univariate peak calling ...")
-        temp <- foreach (file = files, .packages=c("chromstaR")) %dopar% {
+        temp <- foreach (filename = names(files), .packages=c("chromstaR")) %dopar% {
+            file <- files[filename]
+            inputfiles <- inputfiles.list[[filename]]
             parallel.helper(file, inputfiles)
         }
         stopTimedMessage(ptm)
     } else {
-        for (file in files) {
+        for (filename in names(files)) {
+            file <- files[filename]
+            inputfiles <- inputfiles.list[[filename]]
             parallel.helper(file, inputfiles)
         }
     }

@@ -29,9 +29,7 @@
 #'
 stateBrewer <- function(experiment.table, mode, differential.states=FALSE, common.states=FALSE) {
 
-    if (check.experiment.table(experiment.table)!=0) {
-        stop("Argument 'experiment.table' expects a data.frame with columns 'file', 'mark', 'condition', 'replicate', 'pairedEndReads'.")
-    }
+    check.experiment.table(experiment.table)
     exp <- experiment.table
     exp <- exp[exp$mark != 'input', ]
     if (mode == 'full') {

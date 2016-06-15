@@ -14,7 +14,8 @@
 #'bedfiles <- list.files(file.path, full.names=TRUE, pattern='SHR')[c(1:2,6:7)]
 #'# Construct experiment structure
 #'exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
-#'                  condition=rep("SHR",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
+#'                  condition=rep("SHR",4), replicate=c(1:2,1:2), pairedEndReads=FALSE,
+#'                  controlFiles=NA)
 #'states <- stateBrewer(exp, mode='mark')
 #'# Bin the data
 #'data(rn4_chrominfo)
@@ -37,7 +38,8 @@
 #'bedfiles <- list.files(file.path, full.names=TRUE, pattern='BN')[c(1:2,7:8)]
 #'# Construct experiment structure
 #'exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
-#'                  condition=rep("BN",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
+#'                  condition=rep("BN",4), replicate=c(1:2,1:2), pairedEndReads=FALSE,
+#'                  controlFiles=NA)
 #'states <- stateBrewer(exp, mode='mark')
 #'# Bin the data
 #'data(rn4_chrominfo)
@@ -143,7 +145,7 @@ combineMultivariates <- function(hmms, mode) {
         for (condition in conditions) {
             index <- which(infos$condition==condition)
             # Make mapping
-            mapping.df <- stateBrewer(infos[index,1:5], mode='mark')
+            mapping.df <- stateBrewer(infos[index,setdiff(names(infos),'ID')], mode='mark')
             mapping <- mapping.df$combination
             names(mapping) <- mapping.df$state
             # Make combinations
@@ -217,7 +219,7 @@ combineMultivariates <- function(hmms, mode) {
             index <- which(infos$condition==condition)
             states <- factor(bin2dec(matrix(binstates[,index], ncol=length(index))))
             names(states) <- NULL
-            mapping.df <- stateBrewer(infos[index,1:5], mode='mark')
+            mapping.df <- stateBrewer(infos[index,setdiff(names(infos),'ID')], mode='mark')
             mapping <- mapping.df$combination
             names(mapping) <- mapping.df$state
             combs[[condition]] <- mapping[as.character(states)]
