@@ -13,7 +13,8 @@ plotEnrichCountHeatmap(hmm, annotation, bp.around.annotation = 10000,
   max.rows = 1000)
 
 plotFoldEnrichment(hmm, annotation, bp.around.annotation = 10000,
-  region = c("start", "inside", "end"), num.intervals = 20)
+  region = c("start", "inside", "end"), num.intervals = 20,
+  combinations = NULL)
 }
 \arguments{
 \item{hmm}{A \code{\link{combinedMultiHMM}} or \code{\link{multiHMM}} object or a file that contains such an object.}

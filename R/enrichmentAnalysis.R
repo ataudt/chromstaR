@@ -3,6 +3,7 @@
 #' Plotting functions for enrichment analysis of \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} objects with any annotation of interest, specified as a \code{\link[GenomicRanges]{GRanges}} object.
 #' 
 #' @name enrichment_analysis
+#' @param combinations A vector with combinations for which the fold enrichment will be calculated. If \code{NULL} all combinations will be considered.
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot or a list() with \code{\link[ggplot2:ggplot]{ggplot}} objects if several plots are returned. For \code{plotFoldEnrichHeatmap} a named array with fold enrichments if \code{plot=FALSE}.
 #' @author Aaron Taudt
 #' @seealso \code{\link{plotting}}
@@ -61,7 +62,6 @@ NULL
 #' @describeIn enrichment_analysis Compute the fold enrichment of combinatorial states for multiple annotations.
 #' @param hmm A \code{\link{combinedMultiHMM}} or \code{\link{multiHMM}} object or a file that contains such an object.
 #' @param annotations A \code{list()} with \code{\link{GRanges}} objects containing coordinates of multiple annotations The names of the list entries will be used to name the return values.
-#' @param combinations A vector with combinations for which the fold enrichment will be calculated. If \code{NULL} all combinations will be considered.
 #' @param plot A logical indicating whether the plot or an array with the fold enrichment values is returned.
 #' @importFrom S4Vectors subjectHits queryHits
 #' @importFrom reshape2 melt
@@ -256,7 +256,7 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
 #' @inheritParams enrichmentAtAnnotation
 #' @importFrom reshape2 melt
 #' @export
-plotFoldEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c("start","inside","end"), num.intervals=20) {
+plotFoldEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c("start","inside","end"), num.intervals=20, combinations=NULL) {
 
     hmm <- loadHmmsFromFiles(hmm, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     ## Variables
@@ -267,6 +267,11 @@ plotFoldEnrichment <- function(hmm, annotation, bp.around.annotation=10000, regi
         names(mcols(bins))[grep('combination', names(mcols(bins)))] <- 'combination.'
     }
     conditions <- sub('combination.', '', grep('combination', names(mcols(bins)), value=TRUE))
+    if (is.null(combinations)) {
+        comb.levels <- levels(mcols(bins)[,paste0('combination.', conditions[1])])
+    } else {
+        comb.levels <- combinations
+    }
 
     ggplts <- list()
     for (condition in conditions) {
@@ -292,6 +297,7 @@ plotFoldEnrichment <- function(hmm, annotation, bp.around.annotation=10000, regi
         }
         df$position[df$L1 == 'end'] <- df$position[df$L1 == 'end'] + bp.around.annotation
         df$position[df$L1 == 'inside'] <- df$position[df$L1 == 'inside'] * bp.around.annotation
+        df <- df[df$combination %in% comb.levels,]
 
         ### Plot
         ggplt <- ggplot(df) + geom_line(aes_string(x='position', y='value', col='combination'), size=2)
@@ -308,8 +314,6 @@ plotFoldEnrichment <- function(hmm, annotation, bp.around.annotation=10000, regi
     } else if (class(hmm) == class.combined.multivariate.hmm) {
         return(ggplts)
     }
-    
-    return(ggplt)
     
 }
 
@@ -367,7 +371,7 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
             index.inside.plus <- index.inside.plus[!is.na(index.inside.plus)]
             index.inside.minus <- index.inside.minus[!is.na(index.inside.minus)]
             index <- c(index.inside.plus, index.inside.minus)
-            index <- index[index>0 & index<=length(bins)]
+            index <- index[index>0 & index<=length(bins)] # index could cross chromosome boundaries, but we risk it
             if ('binstates' %in% what) binstates.inside[as.character(interval),] <- colMeans(binstates[index,])
             if ('combinations' %in% what) {
                 fold <- table(combinations[index]) / tcombinations / length(annotation) * length(bins) # fold enrichment

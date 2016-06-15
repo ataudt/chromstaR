@@ -7,7 +7,7 @@
 plotExpression(hmm, expression, combinations = NULL, return.marks = FALSE)
 }
 \arguments{
-\item{hmm}{A \code{\link{multiHMM}} or a file that contains such an object.}
+\item{hmm}{A \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object or file that contains such an object.}
 
 \item{expression}{A \code{\link{GRanges}} object with metadata column 'expression', containing the expression value for each range.}
 
@@ -59,5 +59,8 @@ plotExpression(model, expression.SHR, return.marks=TRUE) +
 }
 \author{
 Aaron Taudt
+}
+\seealso{
+\code{\link{plotting}}
 }
 

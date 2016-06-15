@@ -271,7 +271,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
             save(repmodel, file=savename)
             stopTimedMessage(ptm)
         } else {
-            repmodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
+            # repmodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
         }
     }
     
