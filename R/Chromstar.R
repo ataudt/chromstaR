@@ -20,7 +20,7 @@
 #' @param per.chrom If set to \code{TRUE} chromosomes will be treated separately in the multivariate part. This tremendously speeds up the calculation but results might be noisier as compared to \code{per.chrom=FALSE}, where all chromosomes are concatenated for the HMM.
 #' @param eps.univariate Convergence threshold for the univariate Baum-Welch algorithm.
 #' @param eps.multivariate Convergence threshold for the multivariate Baum-Welch algorithm.
-#' @param exclusive.hm If set to \code{TRUE} combinations of histone modifications at the same locus are not allowed, i.e. combinations of H3K4me1 and H3K4ac or H3K9me1 and H3K9me3 are not allowed.
+#' @param exclusive.table A \code{data.frame} or tab-separated text file with mutually exclusive groups of histone modifications.
 #' @return \code{NULL}
 #' @import foreach
 #' @import doParallel
@@ -42,7 +42,7 @@
 #'          outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
 #'          prefit.on.chr='chr12', mode='mark', eps.univariate=1, eps.multivariate=1)
 #'
-Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps.univariate=0.1, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=TRUE, mode='mark', max.states=128, per.chrom=TRUE, eps.multivariate=0.01, exclusive.hm=FALSE) {
+Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps.univariate=0.1, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=TRUE, mode='mark', max.states=128, per.chrom=TRUE, eps.multivariate=0.01, exclusive.table=NULL) {
   
     #========================
     ### General variables ###
@@ -63,7 +63,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     total.time <- proc.time()
   
     ## Put options into list and merge with conf
-    params <- list(numCPU=numCPU, binsize=binsize, assembly=assembly, chromosomes=chromosomes, remove.duplicate.reads=remove.duplicate.reads, min.mapq=min.mapq, prefit.on.chr=prefit.on.chr, eps.univariate=eps.univariate, max.time=max.time, max.iter=max.iter, read.cutoff.absolute=read.cutoff.absolute, keep.posteriors=keep.posteriors, mode=mode, max.states=max.states, per.chrom=per.chrom, eps.multivariate=eps.multivariate, exclusive.hm=exclusive.hm)
+    params <- list(numCPU=numCPU, binsize=binsize, assembly=assembly, chromosomes=chromosomes, remove.duplicate.reads=remove.duplicate.reads, min.mapq=min.mapq, prefit.on.chr=prefit.on.chr, eps.univariate=eps.univariate, max.time=max.time, max.iter=max.iter, read.cutoff.absolute=read.cutoff.absolute, keep.posteriors=keep.posteriors, mode=mode, max.states=max.states, per.chrom=per.chrom, eps.multivariate=eps.multivariate, exclusive.table=exclusive.table)
     conf <- c(conf, params[setdiff(names(params),names(conf))])
     
     ## Helpers
@@ -218,7 +218,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     if (!file.exists(uniplotpath)) { dir.create(uniplotpath) }
     files <- file.path(binpath, filenames)
     names(files) <- names(filenames)
-    inputfiles.list <- lapply(strsplit(exp.table$controlFiles, '\\|'), function(x) { file.path(binpath, inputfilenames[x[!is.na(x)]]) })
+    inputfiles.list <- lapply(strsplit(as.character(exp.table$controlFiles), '\\|'), function(x) { file.path(binpath, inputfilenames[x[!is.na(x)]]) })
     names(inputfiles.list) <- names(filenames)
     
     parallel.helper <- function(file, inputfiles) {
@@ -365,7 +365,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         savename <- file.path(multipath, paste0('multivariate_mode-', mode, '.RData'))
         if (!file.exists(savename)) {
             files <- file.path(unipath, filenames)
-            states <- stateBrewer(exp.table, mode=mode, exclusive.hm=conf[['exclusive.hm']])
+            states <- stateBrewer(exp.table, mode=mode, exclusive.table=conf[['exclusive.table']])
             multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
             ptm <- startTimedMessage("Saving to file ", savename, " ...")
             save(multimodel, file=savename)
@@ -397,7 +397,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
             if (!file.exists(savename)) {
                 mask <- exp.table[,'condition'] == condition
                 files <- file.path(unipath, filenames)[mask]
-                states <- stateBrewer(exp.table[mask,], mode=mode, exclusive.hm=conf[['exclusive.hm']])
+                states <- stateBrewer(exp.table[mask,], mode=mode, exclusive.table=conf[['exclusive.table']])
                 multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(multimodel, file=savename)
@@ -430,7 +430,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
             if (!file.exists(savename)) {
                 mask <- exp.table[,'mark'] == mark
                 files <- file.path(unipath, filenames)[mask]
-                states <- stateBrewer(exp.table[mask,], mode=mode, exclusive.hm=conf[[exclusive.hm]])
+                states <- stateBrewer(exp.table[mask,], mode=mode, exclusive.table=conf[['exclusive.table']])
                 multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(multimodel, file=savename)
