@@ -76,7 +76,8 @@ genomicFrequencies <- function(multi.hmm, combinations=NULL) {
 #'## Run ChromstaR
 #'Chromstar(inputfolder, experiment.table=experiment_table,
 #'          outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
-#'          prefit.on.chr='chr12', mode='mark', eps.univariate=1, eps.multivariate=1)
+#'          prefit.on.chr='chr12', chromosomes='chr12', mode='mark', eps.univariate=1,
+#'          eps.multivariate=1)
 #'## Results are stored in 'outputfolder' and can be loaded for further processing
 #'list.files(outputfolder)
 #'model <- get(load(file.path(outputfolder,'combined', 'combined_mode-mark.RData')))

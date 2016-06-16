@@ -39,15 +39,15 @@ library(chromstaR)
 
 <<univariate_narrow_binning, results='markup', message=FALSE, eval=TRUE>>=
 ## === Step 1: Binning ===
-# Get an example BED file
-bedfile <- system.file("extdata","euratrans","lv-H3K4me3-BN-male-bio2-tech1.bed.gz",
+# Get an example BAM file
+file <- system.file("extdata","euratrans","lv-H3K4me3-BN-male-bio2-tech1.bam",
                         package="chromstaRData")
 # Get the chromosome lengths (see ?GenomeInfoDb::fetchExtendedChromInfoFromUCSC)
 # This is only necessary for BED files. BAM files are handled automatically.
 data(rn4_chrominfo)
 head(rn4_chrominfo)
 # We use bin size 1000bp and chromosome 12 to keep the example quick
-binned.data <- binReads(bedfile, assembly=rn4_chrominfo, binsizes=1000,
+binned.data <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
                         chromosomes='chr12')
 print(binned.data)
 @
@@ -83,15 +83,15 @@ library(chromstaR)
 
 <<univariate_broad_binning, results='hide', message=FALSE, eval=TRUE>>=
 ## === Step 1: Binning ===
-# Get an example BED file
-bedfile <- system.file("extdata","euratrans","lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
+# Get an example BAM file
+file <- system.file("extdata","euratrans","lv-H3K27me3-BN-male-bio2-tech1.bam",
                         package="chromstaRData")
 # Get the chromosome lengths (see ?GenomeInfoDb::fetchExtendedChromInfoFromUCSC)
 # This is only necessary for BED files. BAM files are handled automatically.
 data(rn4_chrominfo)
 head(rn4_chrominfo)
 # We use bin size 1000bp and chromosome 12 to keep the example quick
-binned.data <- binReads(bedfile, assembly=rn4_chrominfo, binsizes=1000,
+binned.data <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
                         chromosomes='chr12')
 @
 
@@ -116,10 +116,10 @@ exportUnivariates(list(model), filename=tempfile(), what=c('peaks','counts'))
 
 <<univariate_broad_H4K20me1, echo=TRUE, results='hide', message=FALSE, fig.width=6, fig.height=4, out.width='0.5\\textwidth'>>=
 ## === Step 1-3: Another example for mark H4K20me1 ===
-bedfile <- system.file("extdata","euratrans","lv-H4K20me1-BN-male-bio1-tech1.bed.gz",
+file <- system.file("extdata","euratrans","lv-H4K20me1-BN-male-bio1-tech1.bam",
                        package="chromstaRData")
 data(rn4_chrominfo)
-binned.data <- binReads(bedfile, assembly=rn4_chrominfo, binsizes=1000,
+binned.data <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
                         chromosomes='chr12')
 model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
 plotHistogram(model) + ggtitle('H4K20me1')
@@ -144,21 +144,21 @@ library(chromstaR)
 ## === Step 1: Binning ===
 # Let's get some example data with 3 replicates in spontaneous hypertensive rat (SHR)
 file.path <- system.file("extdata","euratrans", package='chromstaRData')
-bedfiles.good <- list.files(file.path, pattern="H3K27me3.*SHR", full.names=TRUE)[1:3]
+files.good <- list.files(file.path, pattern="H3K27me3.*SHR.*bam$", full.names=TRUE)[1:3]
 # We fake a replicate with poor quality by taking a different mark entirely
-bedfiles.poor <- list.files(file.path, pattern="H4K20me1.*SHR", full.names=TRUE)[1]
-bedfiles <- c(bedfiles.good, bedfiles.poor)
+files.poor <- list.files(file.path, pattern="H4K20me1.*SHR.*bam$", full.names=TRUE)[1]
+files <- c(files.good, files.poor)
 # Obtain chromosome lengths. This is only necessary for BED files. BAM files are
 # handled automatically.
 data(rn4_chrominfo)
 head(rn4_chrominfo)
 # Define experiment structure
-exp <- data.frame(file=bedfiles, mark='H3K27me3', condition='SHR', replicate=1:4,
+exp <- data.frame(file=files, mark='H3K27me3', condition='SHR', replicate=1:4,
                   pairedEndReads=FALSE, controlFiles=NA)
 # We use bin size 1000bp and chromosome 12 to keep the example quick
 binned.data <- list()
-for (bedfile in bedfiles) {
-  binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
+for (file in files) {
+  binned.data[[basename(file)]] <- binReads(file, binsize=1000,
                                          assembly=rn4_chrominfo, chromosomes='chr12',
                                          experiment.table=exp)
 }
@@ -226,8 +226,8 @@ head(rn4_chrominfo)
 #=== Step 2: Run Chromstar ===
 ## Run ChromstaR
 Chromstar(inputfolder, experiment.table=experiment_table_H4K20me1,
-          outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
-          prefit.on.chr='chr12', mode='condition')
+          outputfolder=outputfolder, numCPU=4, binsize=1000, assembly=rn4_chrominfo,
+          prefit.on.chr='chr12', chromosomes='chr12', mode='condition')
 @
 <<multivariate_differential_listfiles, results='markup', message=FALSE, eval=TRUE>>=
 ## Results are stored in 'outputfolder' and can be loaded for further processing
@@ -286,8 +286,8 @@ head(rn4_chrominfo)
 #=== Step 2: Run Chromstar ===
 ## Run ChromstaR
 Chromstar(inputfolder, experiment.table=experiment_table_SHR,
-          outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
-          prefit.on.chr='chr12', mode='mark')
+          outputfolder=outputfolder, numCPU=4, binsize=1000, assembly=rn4_chrominfo,
+          prefit.on.chr='chr12', chromosomes='chr12', mode='mark')
 @
 
 <<multivariate_combinatorial_listfiles, results='markup', message=FALSE, eval=TRUE, fig.width=4, fig.height=3, out.width='0.5\\textwidth'>>=
@@ -390,12 +390,12 @@ plotExpression(model, expression.SHR, return.marks=TRUE) +
 
 Consider bivalent promoters defined by [H3K4me3+H3K27me3] at two different developmental stages, or in two different strains or tissues. This is an example where one is interested in \emph{differences} between \emph{combinatorial states}. The following example demonstrates how such an analysis can be done with \Rpackage{chromstaR}. We use a data set from the Euratrans project (downsampled to chr12) to find differences in bivalent promoters between brown norway (BN) and spontaneous hypertensive rat (SHR) in left-ventricle (lv) heart tissue.
 
-\Rfunction{Chromstar} can be run in three different modes:
+\Rfunction{Chromstar} can be run in 4 different modes:
 \begin{itemize}
 \item \emph{full}: Recommended mode if your (number of marks) * (number of conditions) is less or equal to 8. With 8 ChIP-seq experiments there are already $2^8 = 256$ combinatorial states which is the maximum that most computers can handle computationally for a human-sized genome at bin size 1000bp.
 \item \emph{condition}: Choose this mode if you are interested in highly significant differences between conditions. The computational limit for the number of conditions is $\sim 8$ for a human-sized genome. Combinatorial states are not as accurate as in mode \emph{mark} or \emph{full}.
 \item \textbf{DEFAULT} \emph{mark}: This mode will yield good combinatorial chromatin state calls for any number of marks and conditions. However, differences between conditions have more false positives than in mode \emph{condition} or \emph{full}.
-\item \emph{separate}: (This mode can't be selected and is automatically produced. It is a simple concatenation of the univariate peak calls.)
+\item \emph{separate}: Only replicates are processed in a multivariate manner. Combinatorial states are constructed by a simple post-hoc combination of peak calls.
 \end{itemize}
 
 \begin{scriptsize}
@@ -424,8 +424,8 @@ head(rn4_chrominfo)
 #=== Step 2: Run Chromstar ===
 ## Run ChromstaR
 Chromstar(inputfolder, experiment.table=experiment_table,
-          outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
-          prefit.on.chr='chr12', mode='condition')
+          outputfolder=outputfolder, numCPU=4, binsize=1000, assembly=rn4_chrominfo,
+          prefit.on.chr='chr12', chromosomes='chr12', mode='condition')
 @
 <<combined_listfiles, results='markup', message=FALSE, eval=TRUE>>=
 ## Results are stored in 'outputfolder' and can be loaded for further processing

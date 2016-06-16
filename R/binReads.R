@@ -15,7 +15,6 @@
 #' @param bins A named \code{list} with \code{\link{GRanges}} containing precalculated bins produced by \code{\link{fixedWidthBins}} or \code{\link{variableWidthBins}}. Names must correspond to the binsize.
 #' @param reads.per.bin Approximate number of desired reads per bin. The bin size will be selected accordingly.
 #' @param variable.width.reference A BAM file that is used as reference to produce variable width bins. See \code{\link{variableWidthBins}} for details.
-#' @param stepsize Fraction of the binsize that the sliding window is offset at each step. Example: If \code{stepsize=0.1} and \code{binsizes=c(200000,500000)}, the actual stepsize in basepairs is 20000 and 50000, respectively. NOT USED AT THE MOMENT.
 #' @param chromosomes If only a subset of the chromosomes should be binned, specify them here.
 #' @param use.bamsignals If \code{TRUE} the \pkg{\link[bamsignals]{bamsignals}} package is used for parsing of BAM files. This gives tremendous speed advantage for only one binsize but linearly increases for multiple binsizes, while \code{use.bamsignals=FALSE} has a binsize dependent runtime and might be faster if many binsizes are calculated.
 #' @return If only one bin size was specified for option \code{binsizes}, the function returns a single \code{\link{GRanges}} object with meta data column 'counts' that contains the read count. If multiple \code{binsizes} were specified , the function returns a named \code{list()} of \link{GRanges} objects.
@@ -24,15 +23,15 @@
 #' @export
 #'
 #'@examples
-#'## Get an example BED file with ChIP-seq reads
-#'bedfile <- system.file("extdata", "euratrans",
-#'                       "lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
-#'                        package="chromstaRData")
+#'## Get an example BAM file with ChIP-seq reads
+#'file <- system.file("extdata", "euratrans",
+#'                    "lv-H3K27me3-BN-male-bio2-tech1.bam",
+#'                     package="chromstaRData")
 #'## Bin the BED file into bin size 1000bp
 #'data(rn4_chrominfo)
 #'data(experiment_table)
-#'binned <- binReads(bedfile, experiment.table=experiment_table,
-#'                   assembly=rn4_chrominfo, binsize=1000,
+#'binned <- binReads(file, experiment.table=experiment_table,
+#'                   assembly=rn4_chrominfo, binsizes=1000,
 #'                   chromosomes='chr12')
 #'print(binned)
 #'

@@ -34,6 +34,15 @@ Export multivariate calls as genome browser viewable file
 \details{
 Export \code{\link{combinedMultiHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states are exported in BED format (.bed.gz).
 }
+\examples{
+## Get an example multiHMM
+file <- system.file("data","combined_mode-condition.RData",
+                    package="chromstaR")
+model <- get(load(file))
+## Export peak calls and combinatorial states
+exportCombinedMultivariate(model, filename=tempfile(), what=c('peaks','combinations'))
+
+}
 \author{
 Aaron Taudt
 }

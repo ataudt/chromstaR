@@ -21,7 +21,7 @@
 #'
 #'@examples
 #'## Get an example BAM file with ChIP-seq reads
-#'bamfile <- system.file("extdata", "liver-H3K4me3-BN-male-bio2-tech1.bam",
+#'bamfile <- system.file("extdata", "euratrans", "lv-H3K4me3-BN-female-bio1-tech1.bam",
 #'                       package="chromstaRData")
 #'## Read the file into a GRanges object
 #'reads <- readBamFileAsGRanges(bamfile, chromosomes='chr12', pairedEndReads=FALSE,
@@ -175,8 +175,7 @@ readBamFileAsGRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pa
 #'
 #'@examples
 #'## Get an example BED file with single-cell-sequencing reads
-#'bedfile <- system.file("extdata", "euratrans",
-#'                       "lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
+#'bedfile <- system.file("extdata", "liver-H3K4me3-BN-male-bio2-tech1.bed.gz",
 #'                        package="chromstaRData")
 #'## Read the file into a GRanges object
 #'data(rn4_chrominfo)

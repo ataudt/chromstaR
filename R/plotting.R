@@ -145,7 +145,6 @@ get_rightxlim <- function(counts) {
 #' @param ... Additional arguments (see \code{\link{plotHistogram}}).
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
 #' @seealso \code{\link{plotting}}
-#' @export
 plotHistograms <- function(model, ...) {
 
     model <- suppressMessages( loadHmmsFromFiles(model, check.class=class.multivariate.hmm)[[1]] )

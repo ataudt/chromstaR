@@ -26,6 +26,21 @@ NULL
 NULL
 
 
+#' Combined multivariate HMM for demonstration purposes
+#'
+#' A \code{\link{combinedMultiHMM}} object for demonstration purposes in examples of package \pkg{\link{chromstaR}}.
+#'
+#' @docType data
+#' @name combined_model
+#' @format A \code{\link{combinedMultiHMM}} object.
+#' @examples
+#'## Get an example combinedMultiHMM
+#'file <- system.file("data","combined_mode-condition.RData",
+#'                     package="chromstaR")
+#'model <- get(load(file))
+NULL
+
+
 #' chromstaR objects
 #'
 #' @description

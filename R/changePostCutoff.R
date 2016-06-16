@@ -10,13 +10,13 @@
 #' @return The input object is returned with adjusted peak calls.
 #' @export
 #' @examples
-#'## Get an example BED file
-#'bedfile <- system.file("extdata", "euratrans",
-#'                       "lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
+#'## Get an example BAM file
+#'file <- system.file("extdata", "euratrans",
+#'                       "lv-H3K27me3-BN-male-bio2-tech1.bam",
 #'                        package="chromstaRData")
-#'## Bin the BED file into bin size 1000bp
+#'## Bin the file into bin size 1000bp
 #'data(rn4_chrominfo)
-#'binned <- binReads(bedfile, assembly=rn4_chrominfo, binsize=1000,
+#'binned <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
 #'                   chromosomes='chr12')
 #'## Fit the univariate Hidden Markov Model
 #'# !Keep posteriors to change the post.cutoff later!

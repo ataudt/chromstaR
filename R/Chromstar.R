@@ -38,8 +38,9 @@
 #'data(rn4_chrominfo)
 #'## Run ChromstaR
 #'Chromstar(inputfolder, experiment.table=experiment_table_SHR,
-#'          outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
-#'          prefit.on.chr='chr12', mode='mark', eps.univariate=1, eps.multivariate=1)
+#'          outputfolder=outputfolder, numCPU=4, binsize=1000, assembly=rn4_chrominfo,
+#'          prefit.on.chr='chr12', chromosomes='chr12', mode='mark', eps.univariate=1,
+#'          eps.multivariate=1)
 #'
 Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps.univariate=0.1, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=TRUE, mode='mark', max.states=128, per.chrom=TRUE, eps.multivariate=0.01) {
   
@@ -98,7 +99,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     names(inputfilenames) <- basename(inputfiles)
     
     ## Check usage of modes
-    if (!mode %in% c('mark','condition','full')) {
+    if (!mode %in% c('separate','mark','condition','full')) {
         stop("Unknown mode '", mode, "'.")
     }
     marks <- setdiff(unique(as.character(exp.table[,'mark'])), 'input')
@@ -152,7 +153,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     cat("- binned: RData files with the results of the binnig step. Contains GRanges objects with binned genomic coordinates and read counts.\n", file=savename, append=TRUE)
     cat("- BROWSERFILES: Bed files for upload to the UCSC genome browser. It contains files with combinatorial states (*_combinations.bed.gz), underlying peak calls (*_peaks.bed.gz), and read counts (*_counts.wig.gz). !!Always check the *_peaks.bed.gz files if you are satisfied with the peak calls. If not, there are ways to make the calls stricter (see section FAQ of the vignette).\n", file=savename, append=TRUE)
     cat("- -->combined<--: RData files with the combined results of the uni- and multivariate peak calling steps. This is what you want to use for downstream analyses. Contains combinedMultiHMM objects.\n", file=savename, append=TRUE)
-    cat("    - combined_mode-separate.RData: Simple combination of univariate peak calls (replicates considered) without multivariate analysis.\n", file=savename, append=TRUE)
+    cat("    - combined_mode-separate.RData: Simple combination of peak calls (replicates considered) without multivariate analysis.\n", file=savename, append=TRUE)
     cat("    - combined_mode-mark.RData: Combination of multivariate results for mode='mark'.\n", file=savename, append=TRUE)
     cat("    - combined_mode-condition.RData: Combination of multivariate results for mode='condition'.\n", file=savename, append=TRUE)
     cat("    - combined_mode-full.RData: Combination of multivariate results for mode='full'.\n", file=savename, append=TRUE)
@@ -171,6 +172,27 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #==============
     ### Binning ###
     #==============
+    ### Make bins ###
+    ## Get first bam file
+    bamfile <- grep('bam$', datafiles, value=TRUE)[1]
+    if (!is.na(bamfile)) {
+        chrom.lengths <- GenomeInfoDb::seqlengths(Rsamtools::BamFile(bamfile))
+    } else {
+        ## Get first bed file
+        bedfile <- grep('bed$|bed.gz$', datafiles, value=TRUE)[1]
+        if (!is.na(bedfile)) {
+            firstline <- read.table(bedfile, nrows=1)
+            chrom.lengths <- conf[['assembly']][,'UCSC_seqlength']
+            if (grepl('^chr',firstline[1,1])) {
+                names(chrom.lengths) <- conf[['assembly']]$UCSC_seqlevel
+            } else {
+                names(chrom.lengths) <- conf[['assembly']]$NCBI_seqlevel
+            }
+        }
+    }
+    pre.bins <- fixedWidthBins(chrom.lengths=chrom.lengths, chromosomes=conf[['chromosomes']], binsizes=binsize)
+    
+    ### Count reads in bins ###
     if (!file.exists(binpath)) { dir.create(binpath) }
     parallel.helper <- function(file, input) {
         if (!input) {
@@ -190,7 +212,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 if (!input) {
                     exp.table.input <- exp.table
                 }
-                bins <- binReads(file=file, experiment.table=exp.table.input, assembly=conf[['assembly']], pairedEndReads=pairedEndReads, binsizes=binsize, chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']])
+                bins <- binReads(file=file, experiment.table=exp.table.input, assembly=conf[['assembly']], pairedEndReads=pairedEndReads, binsizes=NULL, reads.per.bin=NULL, bins=pre.bins, chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']])
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(bins, file=savename)
                 stopTimedMessage(ptm)
@@ -277,73 +299,76 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #================================
     ### Replicates                ###
     #================================
-    messageU("Analyzing replicates")
-    if (!file.exists(reppath)) { dir.create(reppath) }
-    
-    files <- file.path(unipath, filenames)
-    names(files) <- paste0(exp.table$mark, '-', exp.table$condition)
-    markconditions <- unique(names(files))
-    for (markcond in markconditions) {
-        savename <- file.path(reppath, paste0(markcond, '_binsize', binsize.string, '.RData'))
+    if (mode == 'separate') {
+      
+        messageU("Analyzing replicates")
+        if (!file.exists(reppath)) { dir.create(reppath) }
+        
+        files <- file.path(unipath, filenames)
+        names(files) <- paste0(exp.table$mark, '-', exp.table$condition)
+        markconditions <- unique(names(files))
+        for (markcond in markconditions) {
+            savename <- file.path(reppath, paste0(markcond, '_binsize', binsize.string, '.RData'))
+            if (!file.exists(savename)) {
+                mask <- names(files) == markcond
+                repfiles <- files[mask]
+                states <- stateBrewer(exp.table[mask,], mode='mark')
+                repmodel <- callPeaksMultivariate(repfiles, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
+                ptm <- startTimedMessage("Saving to file ", savename, " ...")
+                save(repmodel, file=savename)
+                stopTimedMessage(ptm)
+            } else {
+                # repmodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
+            }
+        }
+        
+        message("Combining replicate HMMs")
+        modename <- 'separate'
+        repfiles <- list.files(reppath, full.names=TRUE, pattern=paste0('binsize', binsize.string))
+        ## Get the order correct
+        names(repfiles) <- gsub('_binsize.*', '', basename(repfiles))
+        ordering <- unique(gsub('-rep.*', '', IDs))
+        repfiles <- repfiles[ordering]
+        if (!file.exists(combipath)) { dir.create(combipath) }
+        savename <- file.path(combipath, paste0('combined_mode-', modename, '.RData'))
         if (!file.exists(savename)) {
-            mask <- names(files) == markcond
-            repfiles <- files[mask]
-            states <- stateBrewer(exp.table[mask,], mode='mark')
-            repmodel <- callPeaksMultivariate(repfiles, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
+            combined.model <- combineMultivariates(repfiles, mode='replicate')
             ptm <- startTimedMessage("Saving to file ", savename, " ...")
-            save(repmodel, file=savename)
+            save(combined.model, file=savename)
             stopTimedMessage(ptm)
         } else {
-            # repmodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
+            combined.model <- loadHmmsFromFiles(savename, check.class=class.combined.multivariate.hmm)[[1]]
         }
-    }
-    
-    message("Combining replicate HMMs")
-    modename <- 'separate'
-    repfiles <- list.files(reppath, full.names=TRUE, pattern=paste0('binsize', binsize.string))
-    ## Get the order correct
-    names(repfiles) <- gsub('_binsize.*', '', basename(repfiles))
-    ordering <- unique(gsub('-rep.*', '', IDs))
-    repfiles <- repfiles[ordering]
-    if (!file.exists(combipath)) { dir.create(combipath) }
-    savename <- file.path(combipath, paste0('combined_mode-', modename, '.RData'))
-    if (!file.exists(savename)) {
-        combined.model <- combineMultivariates(repfiles, mode='replicate')
-        ptm <- startTimedMessage("Saving to file ", savename, " ...")
-        save(combined.model, file=savename)
+        ## Plot correlations
+        ptm <- startTimedMessage("Plotting read count correlation ...")
+        char.per.cm <- 10
+        legend.cm <- 3
+        savename <- file.path(plotpath, 'read-count-correlation.pdf')
+        ggplt <- heatmapCountCorrelation(combined.model, cluster=FALSE)
+        width <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
+        height <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
+        ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
+        savename <- file.path(plotpath, 'read-count-correlation-clustered.pdf')
+        ggplt <- heatmapCountCorrelation(combined.model, cluster=TRUE)
+        width <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
+        height <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
+        ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
         stopTimedMessage(ptm)
-    } else {
-        combined.model <- loadHmmsFromFiles(savename, check.class=class.combined.multivariate.hmm)[[1]]
+      
+        #-------------------------
+        ## Export browser files ##
+        #-------------------------
+        if (!file.exists(browserpath)) { dir.create(browserpath) }
+        savename <- file.path(browserpath, paste0('combined_mode-', modename))
+        trackname <- paste0('mode-', modename)
+        if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
+            exportCombinedMultivariate(combined.model, filename=savename, trackname=trackname, what='combinations')
+        }
+        if (!file.exists(paste0(savename, '_peaks.bed.gz'))) {
+            exportCombinedMultivariate(combined.model, filename=savename, trackname=trackname, what='peaks')
+        }
+        invisible()
     }
-    ## Plot correlations
-    ptm <- startTimedMessage("Plotting read count correlation ...")
-    char.per.cm <- 10
-    legend.cm <- 3
-    savename <- file.path(plotpath, 'read-count-correlation.pdf')
-    ggplt <- heatmapCountCorrelation(combined.model, cluster=FALSE)
-    width <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
-    height <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
-    ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
-    savename <- file.path(plotpath, 'read-count-correlation-clustered.pdf')
-    ggplt <- heatmapCountCorrelation(combined.model, cluster=TRUE)
-    width <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
-    height <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
-    ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
-    stopTimedMessage(ptm)
-  
-    #-------------------------
-    ## Export browser files ##
-    #-------------------------
-    if (!file.exists(browserpath)) { dir.create(browserpath) }
-    savename <- file.path(browserpath, paste0('combined_mode-', modename))
-    trackname <- paste0('mode-', modename)
-    if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
-        exportCombinedMultivariate(combined.model, filename=savename, trackname=trackname, what='combinations')
-    }
-    if (!file.exists(paste0(savename, '_peaks.bed.gz'))) {
-        exportCombinedMultivariate(combined.model, filename=savename, trackname=trackname, what='peaks')
-    }
-    
 
     #================================
     ### Multivariate peak calling ###

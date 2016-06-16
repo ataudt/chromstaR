@@ -24,7 +24,7 @@ Variable-width bins are produced by first binning the reference BAM file with fi
 }
 \examples{
 ## Get an example BAM file with ChIP-seq reads
-bamfile <- system.file("extdata", "liver-H3K4me3-BN-male-bio2-tech1.bam",
+bamfile <- system.file("extdata", "euratrans", "lv-H3K4me3-BN-female-bio1-tech1.bam",
                       package="chromstaRData")
 ## Read the file into a GRanges object
 reads <- readBamFileAsGRanges(bamfile, chromosomes='chr12', pairedEndReads=FALSE,

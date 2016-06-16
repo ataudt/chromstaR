@@ -9,14 +9,14 @@
 #' @return A \code{\link{multiHMM}} object.
 #' @export
 #' @examples
-#'# Get example BED files for 2 different marks in hypertensive rat (SHR)
+#'# Get example BAM files for 2 different marks in hypertensive rat (SHR)
 #'file.path <- system.file("extdata","euratrans", package='chromstaRData')
-#'bedfiles <- list.files(file.path, full.names=TRUE, pattern='SHR')[c(1,6)]
+#'files <- list.files(file.path, full.names=TRUE, pattern='SHR.*bam$')[c(1,4)]
 #'# Bin the data
 #'data(rn4_chrominfo)
 #'binned.data <- list()
-#'for (bedfile in bedfiles) {
-#'  binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
+#'for (file in files) {
+#'  binned.data[[basename(file)]] <- binReads(file, binsizes=1000,
 #'                                               assembly=rn4_chrominfo, chromosomes='chr12')
 #'}
 #'# Obtain the univariate fits
@@ -28,7 +28,7 @@
 #'names(models) <- c('H3K27me3','H3K4me3')
 #'pseudo.multi.HMM <- unis2pseudomulti(models)
 #'## Compare frequencies with real multivariate HMM
-#'exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K4me3"),
+#'exp <- data.frame(file=files, mark=c("H3K27me3","H3K4me3"),
 #'                  condition=rep("SHR",2), replicate=c(1,1), pairedEndReads=FALSE,
 #'                  controlFiles=NA)
 #'states <- stateBrewer(exp, mode='mark')

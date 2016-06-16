@@ -20,17 +20,17 @@
 #' @examples 
 #'# Let's get some example data with 3 replicates
 #'file.path <- system.file("extdata","euratrans", package='chromstaRData')
-#'bedfiles <- list.files(file.path, pattern="H3K27me3.*SHR", full.names=TRUE)[1:3]
+#'files <- list.files(file.path, pattern="H3K27me3.*SHR.*bam$", full.names=TRUE)[1:3]
 #'# Obtain chromosome lengths. This is only necessary for BED files. BAM files are
 #'# handled automatically.
 #'data(rn4_chrominfo)
 #'# Define experiment structure
-#'exp <- data.frame(file=bedfiles, mark='H3K27me3', condition='SHR', replicate=1:3,
+#'exp <- data.frame(file=files, mark='H3K27me3', condition='SHR', replicate=1:3,
 #'                  pairedEndReads=FALSE, controlFiles=NA)
 #'# We use bin size 1000bp and chromosome 12 to keep the example quick
 #'binned.data <- list()
-#'for (bedfile in bedfiles) {
-#'  binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000, experiment.table=exp,
+#'for (file in files) {
+#'  binned.data[[basename(file)]] <- binReads(file, binsizes=1000, experiment.table=exp,
 #'                                               assembly=rn4_chrominfo, chromosomes='chr12')
 #'}
 #'# The univariate fit is obtained for each replicate

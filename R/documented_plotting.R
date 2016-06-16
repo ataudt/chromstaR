@@ -9,7 +9,6 @@
 #' }
 #' Plotting functions that work on \code{\link{multiHMM}} objects:
 #' \describe{
-#'   \item{\code{\link{plotHistograms}}}{Read count histograms with fitted mixture distributions for each subtrack.}
 #'   \item{\code{\link{heatmapCountCorrelation}}}{Heatmap of read count correlations.}
 #'   \item{\code{\link{heatmapTransitionProbs}}}{Heatmap of transition probabilities of the Hidden Markov Model.}
 #'   \item{\code{\link{heatmapCombinations}}}{Binary presence/absence pattern of combinatorial states.}

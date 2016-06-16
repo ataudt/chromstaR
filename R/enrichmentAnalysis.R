@@ -351,7 +351,7 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
 
     ### Calculationg enrichment inside of annotation ###
     if ('inside' %in% region) {
-        message("Enrichment inside of annotations")
+        ptm <- startTimedMessage("Enrichment inside of annotations ...")
 
         intervals <- seq(from=0, to=1, length.out=num.intervals+1)
         widths.annotation <- width(annotation) - 1
@@ -390,11 +390,12 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
         if ('counts' %in% what) {
             enrich$counts$inside <- counts.inside
         }
+        stopTimedMessage(ptm)
     }
 
     ### 10000 bp before annotation ###
     if ('start' %in% region) {
-        message("Enrichment ",bp.around.annotation,"bp before annotations")
+        ptm <- startTimedMessage("Enrichment ",bp.around.annotation,"bp before annotations")
         # Get bins that overlap the start of annotation
         index.start.plus <- findOverlaps(annotation[strand(annotation)=='+' | strand(annotation)=='*'], bins, select="first")
         index.start.minus <- findOverlaps(annotation[strand(annotation)=='-'], bins, select="last")
@@ -428,11 +429,12 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
             rownames(counts.start) <- as.numeric(rownames(counts.start)) * binsize
             enrich$counts$start <- counts.start
         }
+        stopTimedMessage(ptm)
     }
 
     ### 10000 bp after annotation ###
     if ('end' %in% region) {
-        message("Enrichment ",bp.around.annotation,"bp after annotations")
+        ptm <- startTimedMessage("Enrichment ",bp.around.annotation,"bp after annotations")
         # Get bins that overlap the end of annotation
         index.end.plus <- findOverlaps(annotation[strand(annotation)=='+' | strand(annotation)=='*'], bins, select="last")
         index.end.minus <- findOverlaps(annotation[strand(annotation)=='-'], bins, select="first")
@@ -466,6 +468,7 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
             rownames(counts.end) <- as.numeric(rownames(counts.end)) * binsize
             enrich$counts$end <- counts.end
         }
+        stopTimedMessage(ptm)
     }
 
     return(enrich)

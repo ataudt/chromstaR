@@ -19,14 +19,14 @@
 #' @return Output is a vector of integers representing the combinatorial state of each bin.
 #' @seealso \code{\link{dec2bin}}, \code{\link{bin2dec}}
 #' @examples
-#'# Get example BED files for 4 different marks in hypertensive rat (SHR)
+#'# Get example BAM files for 3 different marks in hypertensive rat (SHR)
 #'file.path <- system.file("extdata","euratrans", package='chromstaRData')
-#'bedfiles <- list.files(file.path, full.names=TRUE, pattern='SHR')[c(1,4,6,8)]
+#'files <- list.files(file.path, full.names=TRUE, pattern='SHR.*bam$')[c(1,4,6)]
 #'# Bin the data
 #'data(rn4_chrominfo)
 #'binned.data <- list()
-#'for (bedfile in bedfiles) {
-#'  binned.data[[basename(bedfile)]] <- binReads(bedfile, binsize=1000,
+#'for (file in files) {
+#'  binned.data[[basename(file)]] <- binReads(file, binsizes=1000,
 #'                                               assembly=rn4_chrominfo, chromosomes='chr12')
 #'}
 #'# Obtain the univariate fits

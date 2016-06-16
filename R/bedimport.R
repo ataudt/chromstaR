@@ -14,8 +14,7 @@
 #'
 #'@examples
 #'## Get an example BED file
-#'bedfile <- system.file("extdata", "euratrans",
-#'                       "lv-H3K27me3-BN-male-bio2-tech1.bed.gz",
+#'bedfile <- system.file("extdata", "liver-H3K4me3-BN-male-bio2-tech1.bed.gz",
 #'                        package="chromstaRData")
 #'## Import the file and skip the first 10 lines
 #'data <- readCustomBedFile(bedfile, skip=10)
