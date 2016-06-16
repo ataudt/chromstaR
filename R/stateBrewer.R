@@ -198,7 +198,7 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
     ### Select exclusive states
     if (!is.null(exclusive.table)) {
         if (is.null(tracks2compare) | is.null(conditions)) {
-            stop("arguments 'tracks2compare' and 'conditions' must be specified if 'exclusive.hm' is 'TRUE'")
+            stop("Arguments 'tracks2compare' and 'conditions' must be specified if 'exclusive.table' was specified.")
         }
 
         if (is.character(exclusive.table)) {
@@ -211,22 +211,20 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
         } else {
             stop("Argument 'exclusive.table' must be a data.frame or a tab-separated file.")
         }
+        
+        loci <- split(excl.table$mark, excl.table$group)
 
         tracknames.split <- split(tracknames, conditions)
         tracks2compare.split <- split(tracks2compare, conditions)
-
-        # get loci with histone modifications for all conditions
-        loci <- split(excl.table$mark, excl.table$group)
-
         for (cond in unique(conditions)) {
             tracks <- tracks2compare.split[[as.character(cond)]]
             names <- tracknames.split[[as.character(cond)]]
             
             for (locus in loci) {
-                # get indexes (no replicates) of histone modifications at locus
+                # indexes (no replicates) of histone modifications at locus
                 track.index <- which((tracks %in% unlist(locus)) & !duplicated(tracks))
 
-                if (length(track.index) > 1) { # there are no restrictions if only one modification exists
+                if (length(track.index) > 1) { # no restrictions if only one modification exists
                     if (nrow(binstates) > 1) {
                         mask <- rowSums(as.matrix(binstates[,names[track.index]]), na.rm = TRUE) < 2
                     } else {
