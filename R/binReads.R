@@ -100,6 +100,7 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
     } else if (format == "GRanges") {
         ## GRanges (1-based)
         data <- file
+        chrom.lengths <- seqlengths(data)
     }
 
     ## Select chromosomes to bin

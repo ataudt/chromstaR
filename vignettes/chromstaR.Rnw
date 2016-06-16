@@ -504,7 +504,7 @@ plots[['BN']] + coord_flip() +
 \item \textbf{BROWSERFILES}: \\ Bed files for upload to the UCSC genome browser. It contains files with combinatorial states (``\_combinations.bed.gz''), underlying peak calls (``\_peaks.bed.gz''), and read counts (``\_counts.wig.gz''). !!Always check the ``\_peaks.bed.gz'' files if you are satisfied with the peak calls. If not, there are ways to make the calls stricter (see section~\ref{sec:FAQ_peaks}).
 \item $\rightarrow$\textbf{combined}$\leftarrow$: \\ RData files with the combined results of the uni- and multivariate peak calling steps. This is what you want to use for downstream analyses. Contains Rclass{combinedMultiHMM} objects.
 \begin{itemize}
-\item \emph{combined\_mode-separate.RData} Simple combination of univariate peak calls (replicates considered) without multivariate analysis.
+\item \emph{combined\_mode-separate.RData} Simple combination of peak calls (replicates considered) without multivariate analysis.
 \item \emph{combined\_mode-mark.RData} Combination of multivariate results for mode='mark'.
 \item \emph{combined\_mode-condition.RData} Combination of multivariate results for mode='condition'.
 \item \emph{combined\_mode-full.RData} Combination of multivariate results for mode='full'.
