@@ -91,7 +91,7 @@ changePostCutoff.multivariate <- function(model, post.cutoff) {
         ## Redo segmentation
         model$segments <- multivariateSegmentation(model$bins, column2collapseBy='state')
     } else if (is(model, class.combined.multivariate.hmm)) {
-        mapping.df <- stateBrewer(model$info[,1:5], mode='full')
+        mapping.df <- stateBrewer(model$info[,setdiff(names(model$info), 'ID')], mode='full')
         mapping <- mapping.df$combination
         names(mapping) <- mapping.df$state
         post <- model$bins$posteriors

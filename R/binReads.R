@@ -63,9 +63,7 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
 
     ## Create INFO object as row from the experiment.table
     if (!is.null(experiment.table)) {
-        if (check.experiment.table(experiment.table)!=0) {
-            stop("Please specify a valid 'experiment.table'.")
-        }
+        check.experiment.table(experiment.table)
         info <- experiment.table[basename(as.character(experiment.table$file))==basename(file),]
         ID <- paste0(info$mark, '-', info$condition, '-rep', info$rep)
         info$ID <- ID

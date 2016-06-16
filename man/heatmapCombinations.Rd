@@ -29,4 +29,7 @@ heatmapCombinations(file)
 \author{
 Aaron Taudt
 }
+\seealso{
+\code{\link{plotting}}
+}
 

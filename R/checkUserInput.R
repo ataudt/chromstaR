@@ -86,8 +86,12 @@ check.logical <- function(testbool) {
 }
 
 check.experiment.table <- function(experiment.table) {
-    if (!is.data.frame(experiment.table)) return(1)
-    if (any(names(experiment.table) != c('file', 'mark', 'condition', 'replicate', 'pairedEndReads'))) return(2)
-    return(0)
+    err <- 0
+    if (!is.data.frame(experiment.table)) err <- 1
+    if (any(names(experiment.table) != c('file', 'mark', 'condition', 'replicate', 'pairedEndReads', 'controlFiles'))) err <- 2
+    if (err > 0) {
+        stop("Argument 'experiment.table' expects a data.frame with columns 'file', 'mark', 'condition', 'replicate', 'pairedEndReads' and 'controlFiles'.")
+    }
+    return(err)
 }
 

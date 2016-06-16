@@ -44,7 +44,7 @@ bedfiles <- list.files(file.path, pattern="H3K27me3.*SHR", full.names=TRUE)[1:3]
 data(rn4_chrominfo)
 # Define experiment structure
 exp <- data.frame(file=bedfiles, mark='H3K27me3', condition='SHR', replicate=1:3,
-                 pairedEndReads=FALSE)
+                 pairedEndReads=FALSE, controlFiles=NA)
 # We use bin size 1000bp and chromosome 12 to keep the example quick
 binned.data <- list()
 for (bedfile in bedfiles) {

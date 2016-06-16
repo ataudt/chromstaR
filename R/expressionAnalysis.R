@@ -2,12 +2,13 @@
 #'
 #' Get the expression values that overlap with each combinatorial state.
 #'
-#' @param hmm A \code{\link{multiHMM}} or a file that contains such an object.
+#' @param hmm A \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object or file that contains such an object.
 #' @param expression A \code{\link{GRanges}} object with metadata column 'expression', containing the expression value for each range.
 #' @param combinations A vector with combinations for which the expression overlap will be calculated. If \code{NULL} all combinations will be considered.
 #' @param return.marks Set to \code{TRUE} if expression values for marks instead of combinations should be returned.
 #' @return A named list with expression values.
 #' @author Aaron Taudt
+#' @seealso \code{\link{plotting}}
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom reshape2 melt
 #' @export

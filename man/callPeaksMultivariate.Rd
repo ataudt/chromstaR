@@ -51,7 +51,8 @@ file.path <- system.file("extdata","euratrans", package='chromstaRData')
 bedfiles <- list.files(file.path, full.names=TRUE, pattern='SHR')[c(1:2,6:7)]
 # Construct experiment structure
 exp <- data.frame(file=bedfiles, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
-                 condition=rep("SHR",4), replicate=c(1:2,1:2), pairedEndReads=FALSE)
+                 condition=rep("SHR",4), replicate=c(1:2,1:2), pairedEndReads=FALSE,
+                 controlFiles=NA)
 states <- stateBrewer(exp, mode='mark')
 # Bin the data
 data(rn4_chrominfo)

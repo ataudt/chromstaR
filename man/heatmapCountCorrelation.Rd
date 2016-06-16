@@ -17,4 +17,7 @@ A \code{\link[ggplot2]{ggplot}} object.
 \description{
 Heatmap of read count correlations (see \code{\link[stats]{cor}}).
 }
+\seealso{
+\code{\link{plotting}}
+}
 
