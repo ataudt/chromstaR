@@ -30,7 +30,7 @@ Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
 
 \item{remove.duplicate.reads}{A logical indicating whether or not duplicate reads should be removed.}
 
-\item{min.mapq}{Minimum mapping quality when importing from BAM files. Set \code{min.mapq=NULL} to keep all reads.}
+\item{min.mapq}{Minimum mapping quality when importing from BAM files. Set \code{min.mapq=0} to keep all reads.}
 
 \item{prefit.on.chr}{A chromosome that is used to pre-fit the Hidden Markov Model. Set to \code{NULL} if you don't want to prefit but use the whole genome instead.}
 

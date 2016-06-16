@@ -75,53 +75,24 @@ fixedWidthBins <- function(bamfile=NULL, assembly=NULL, chrom.lengths=NULL, chro
     ### Making fixed-width bins ###
     bins.list <- list()
     for (binsize in binsizes) {
+      
         ptm <- startTimedMessage("Making fixed-width bins for bin size ", binsize, " ...")
-        bins <- GenomicRanges::GRangesList()
-        skipped.chroms <- character()
-        ## Loop over chromosomes
-        for (chromosome in chroms2use) {
-            ## Check last incomplete bin
-            incomplete.bin <- chrom.lengths[chromosome] %% binsize > 0
-            if (incomplete.bin) {
-                numbin <- floor(chrom.lengths[chromosome]/binsize)    # floor: we don't want incomplete bins, ceiling: we want incomplete bins at the end
-            } else {
-                numbin <- chrom.lengths[chromosome]/binsize
-            }
-            if (numbin == 0) {
-                skipped.chroms[chromosome] <- chromosome
-                next
-            }
-            ## Initialize vectors
-            chroms <- rep(chromosome,numbin)
-            reads <- rep(0,numbin)
-            start <- seq(from=1, by=binsize, length.out=numbin)
-            end <- seq(from=binsize, by=binsize, length.out=numbin)
-    #         end[length(end)] <- seqlengths(data)[chromosome] # last ending coordinate is size of chromosome, only if incomplete bins are desired
-
-            ## Create binned chromosome as GRanges object
-            bins.chr <- GenomicRanges::GRanges(seqnames = rep(chromosome, numbin),
-                            ranges = IRanges(start=start, end=end),
-                            strand = rep(strand("*"), numbin)
-                            )
-            suppressWarnings(
-                bins[[chromosome]] <- bins.chr
-            )
-
+        chrom.lengths.floor <- floor(chrom.lengths / binsize) * binsize
+        bins <- unlist(GenomicRanges::tileGenome(chrom.lengths.floor[chroms2use], tilewidth=binsize), use.names=FALSE)
+        if (any(width(bins)!=binsize)) {
+            stop("tileGenome failed")
         }
-        ## end loop chromosomes
-
-        ### Concatenate all chromosomes
-        bins <- unlist(bins, use.names=FALSE)
-        seqlengths(bins) <- as.integer(chrom.lengths[names(seqlengths(bins))])
+        seqlengths(bins) <- chrom.lengths[chroms2use]
         bins.list[[as.character(binsize)]] <- bins
-        stopTimedMessage(ptm)
 
+        skipped.chroms <- setdiff(seqlevels(bins), as.character(unique(seqnames(bins))))
         if (length(skipped.chroms)>0) {
-            warning("The following chromosomes were skipped because they are smaller than binsize ", binsize, ": ", paste0(skipped.chroms, collapse=', '))
+            warning("the following chromosomes were skipped because they are smaller than binsize ", binsize, ": ", paste0(skipped.chroms, collapse=', '))
         }
-
+        stopTimedMessage(ptm)
+        
     }
-
+    
     return(bins.list)
 
 }

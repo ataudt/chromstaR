@@ -23,7 +23,8 @@ Imports:
     IRanges,
     reshape2,
     Rsamtools,
-    GenomicAlignments
+    GenomicAlignments,
+    bamsignals
 Suggests:
     knitr,
     BiocStyle,

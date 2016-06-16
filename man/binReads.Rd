@@ -8,11 +8,8 @@
 binReads(file, experiment.table = NULL, assembly, bamindex = file,
   chromosomes = NULL, pairedEndReads = FALSE, min.mapq = 10,
   remove.duplicate.reads = TRUE, max.fragment.width = 1000,
-  blacklist = NULL, outputfolder.binned = "binned_data", binsizes = 1000,
-  reads.per.bin = NULL, bins = NULL, variable.width.reference = NULL,
-  stepsize = NULL, save.as.RData = FALSE, call = match.call(),
-  reads.store = FALSE, outputfolder.reads = "data", reads.return = FALSE,
-  reads.overwrite = FALSE, reads.only = FALSE)
+  blacklist = NULL, binsizes = 1000, reads.per.bin = NULL, bins = NULL,
+  variable.width.reference = NULL, use.bamsignals = TRUE)
 }
 \arguments{
 \item{file}{A file with aligned reads. Alternatively a \code{\link{GRanges}} with aligned reads if format is set to 'GRanges'.}
@@ -27,7 +24,7 @@ binReads(file, experiment.table = NULL, assembly, bamindex = file,
 
 \item{pairedEndReads}{Set to \code{TRUE} if you have paired-end reads in your BAM files (not implemented for BED files).}
 
-\item{min.mapq}{Minimum mapping quality when importing from BAM files. Set \code{min.mapq=NULL} to keep all reads.}
+\item{min.mapq}{Minimum mapping quality when importing from BAM files. Set \code{min.mapq=0} to keep all reads.}
 
 \item{remove.duplicate.reads}{A logical indicating whether or not duplicate reads should be removed.}
 
@@ -35,40 +32,26 @@ binReads(file, experiment.table = NULL, assembly, bamindex = file,
 
 \item{blacklist}{A \code{\link{GRanges}} or a bed(.gz) file with blacklisted regions. Reads falling into those regions will be discarded.}
 
-\item{outputfolder.binned}{Folder to which the binned data will be saved. If the specified folder does not exist, it will be created.}
+\item{binsizes}{An integer vector specifying the bin sizes to use.}
 
-\item{binsizes}{An integer vector with bin sizes. If more than one binsize is supplied, a \code{list()} with \code{\link{GRanges}} is returned instead of a single \code{\link{GRanges}}.}
-
-\item{reads.per.bin}{Approximate number of desired reads per bin. The bin size will be selected accordingly. Output files are produced for each value.}
+\item{reads.per.bin}{Approximate number of desired reads per bin. The bin size will be selected accordingly.}
 
 \item{bins}{A named \code{list} with \code{\link{GRanges}} containing precalculated bins produced by \code{\link{fixedWidthBins}} or \code{\link{variableWidthBins}}. Names must correspond to the binsize.}
 
 \item{variable.width.reference}{A BAM file that is used as reference to produce variable width bins. See \code{\link{variableWidthBins}} for details.}
 
+\item{use.bamsignals}{If \code{TRUE} the \pkg{\link[bamsignals]{bamsignals}} package is used for parsing of BAM files. This gives tremendous speed advantage for only one binsize but linearly increases for multiple binsizes, while \code{use.bamsignals=FALSE} has a binsize dependent runtime and might be faster if many binsizes are calculated.}
+
 \item{stepsize}{Fraction of the binsize that the sliding window is offset at each step. Example: If \code{stepsize=0.1} and \code{binsizes=c(200000,500000)}, the actual stepsize in basepairs is 20000 and 50000, respectively. NOT USED AT THE MOMENT.}
-
-\item{save.as.RData}{If set to \code{FALSE}, no output file will be written. Instead, a \link{GenomicRanges} object containing the binned data will be returned. Only the first binsize will be processed in this case.}
-
-\item{call}{The \code{match.call()} of the parent function.}
-
-\item{reads.store}{If \code{TRUE} processed read fragments will be saved to file. Reads are processed according to \code{min.mapq} and \code{remove.duplicate.reads}. Paired end reads are coerced to single end fragments.}
-
-\item{outputfolder.reads}{Folder to which the read fragments will be saved. If the specified folder does not exist, it will be created.}
-
-\item{reads.return}{If \code{TRUE} no binning is done and instead, read fragments from the input file are returned in \code{\link{GRanges}} format.}
-
-\item{reads.overwrite}{Whether or not an existing file with read fragments should be overwritten.}
-
-\item{reads.only}{If \code{TRUE} only read fragments are stored and/or returned and no binning is done.}
 }
 \value{
-If only one bin size was specified for option \code{binsizes}, the function returns a single \code{\link{GRanges}} object with meta data column 'counts' that contains the read count. If multiple \code{binsizes} were specified , the function returns a \code{list()} of \link{GRanges} objects. Results can also be written to file (\code{save.as.RData=TRUE}).
+If only one bin size was specified for option \code{binsizes}, the function returns a single \code{\link{GRanges}} object with meta data column 'counts' that contains the read count. If multiple \code{binsizes} were specified , the function returns a named \code{list()} of \link{GRanges} objects.
 }
 \description{
 Convert aligned reads in .bam or .bed(.gz) format into read counts in equidistant windows.
 }
 \details{
-Convert aligned reads from .bam or .bed(.gz) files into read counts in equidistant windows (bins). This function uses \code{\link[GenomicRanges]{countOverlaps}} to calculate the read counts.
+Convert aligned reads from .bam or .bed(.gz) files into read counts in equidistant windows (bins). This function uses \code{\link[GenomicRanges]{countOverlaps}} to calculate the read counts, or alternatively \code{\link[bamsignals]{bamProfile}} if option \code{use.bamsignals} is set (only effective for .bam files).
 }
 \examples{
 ## Get an example BED file with ChIP-seq reads

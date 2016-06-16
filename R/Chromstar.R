@@ -175,8 +175,14 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     parallel.helper <- function(file, input) {
         if (!input) {
             savename <- file.path(binpath, filenames[basename(file)])
+            pairedEndReads <- exp.table[basename(file),'pairedEndReads']
         } else {
             savename <- file.path(binpath, inputfilenames[basename(file)])
+            pairedEndReads <- exp.table[grep(basename(file), exp.table$controlFiles),'pairedEndReads']
+            if (any(pairedEndReads != pairedEndReads[1])) {
+                stop("Multiple definitions of 'pairedEndReads' for file ", file, ".")
+            }
+            pairedEndReads <- pairedEndReads[1]
         }
         if (!file.exists(savename)) {
             tC <- tryCatch({
@@ -184,7 +190,10 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 if (!input) {
                     exp.table.input <- exp.table
                 }
-                binReads(file=file, experiment.table=exp.table.input, assembly=conf[['assembly']], pairedEndReads=exp.table[basename(file),'pairedEndReads'], binsizes=binsize, chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']], outputfolder.binned=binpath, save.as.RData=TRUE)
+                bins <- binReads(file=file, experiment.table=exp.table.input, assembly=conf[['assembly']], pairedEndReads=pairedEndReads, binsizes=binsize, chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']])
+                ptm <- startTimedMessage("Saving to file ", savename, " ...")
+                save(bins, file=savename)
+                stopTimedMessage(ptm)
             }, error = function(err) {
                 stop(file,'\n',err)
             })
