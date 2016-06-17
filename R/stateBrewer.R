@@ -27,11 +27,15 @@
 #'stateBrewer(experiment_table, mode='condition')
 #'stateBrewer(experiment_table, mode='full', common.states=TRUE)
 #'
+#'## Exclude states with exclusive.table
+#'excl <- data.frame(mark=c('H3K4me3','H3K27me3'),
+#'                              group=c(1,1))
+#'stateBrewer(experiment_table, mode='full', exclusive.table=excl)
+#'
 stateBrewer <- function(experiment.table, mode, differential.states=FALSE, common.states=FALSE, exclusive.table=NULL) {
 
     check.experiment.table(experiment.table)
     exp <- experiment.table
-    exp <- exp[exp$mark != 'input', ]
     if (mode == 'full') {
         combstates <- state.brewer(replicates=paste0(exp$mark, '-', exp$condition), conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states, exclusive.table=exclusive.table)
     } else if (mode == 'mark') {
@@ -83,7 +87,7 @@ stateBrewer <- function(experiment.table, mode, differential.states=FALSE, commo
 #'     \item \code{'d[]'}: at least one sample in group [] has to be different from the other samples in group [] 
 #'   }
 #' 
-#' @param exclusive.table A \code{data.frame} or tab-separated text file with mutually exclusive groups of histone modifications.
+#' @param exclusive.table A \code{data.frame} or tab-separated text file with columns 'mark' and 'group'. Histone marks with the same group will be treated as mutually exclusive.
 #' @return A data.frame with combinations and their corresponding (decimal) combinatorial states.
 #' @examples
 #'# Get all combinatorial states where sample1=0, sample2=1, sample3=(0 or 1),
@@ -215,25 +219,20 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
         loci <- split(excl.table$mark, excl.table$group)
 
         tracknames.split <- split(tracknames, conditions)
-        tracks2compare.split <- split(tracks2compare, conditions)
+        # tracks2compare.split <- split(tracks2compare, conditions)
         for (cond in unique(conditions)) {
-            tracks <- tracks2compare.split[[as.character(cond)]]
             names <- tracknames.split[[as.character(cond)]]
             
             for (locus in loci) {
                 # indexes (no replicates) of histone modifications at locus
-                track.index <- which((tracks %in% unlist(locus)) & !duplicated(tracks))
+                track.index <- which((grepl(paste0(unlist(locus), collapse='|'), names)) & !duplicated(names))
 
                 if (length(track.index) > 1) { # no restrictions if only one modification exists
-                    if (nrow(binstates) > 1) {
-                        mask <- rowSums(as.matrix(binstates[,names[track.index]]), na.rm = TRUE) < 2
-                    } else {
-                        mask <- sum(binstates[,names[track.index]], na.rm=TRUE) < 2
-                    }
+                    mask <- rowSums(as.matrix(binstates[,names[track.index]]), na.rm = TRUE) < 2
                     binstates <- binstates[mask,]
                     
                     if (class(binstates)!='matrix') {
-                        binstates <- matrix(binstates, ncol=length(binstates))
+                        binstates <- matrix(binstates, ncol=numtracks)
                         colnames(binstates) <- tracknames
                     }
                 }

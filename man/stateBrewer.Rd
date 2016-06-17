@@ -5,7 +5,7 @@
 \title{Obtain combinatorial states from experiment table}
 \usage{
 stateBrewer(experiment.table, mode, differential.states = FALSE,
-  common.states = FALSE)
+  common.states = FALSE, exclusive.table = NULL)
 }
 \arguments{
 \item{experiment.table}{A \code{data.frame} specifying the experiment structure. See \code{\link{experiment.table}}.}
@@ -15,6 +15,8 @@ stateBrewer(experiment.table, mode, differential.states = FALSE,
 \item{differential.states}{A logical specifying whether differential states shall be returned.}
 
 \item{common.states}{A logical specifying whether common states shall be returned.}
+
+\item{exclusive.table}{A \code{data.frame} or tab-separated text file with columns 'mark' and 'group'. Histone marks with the same group will be treated as mutually exclusive.}
 }
 \value{
 A data.frame with combinations and their corresponding (decimal) combinatorial states.
@@ -41,6 +43,11 @@ print(experiment_table)
 stateBrewer(experiment_table, mode='mark')
 stateBrewer(experiment_table, mode='condition')
 stateBrewer(experiment_table, mode='full', common.states=TRUE)
+
+## Exclude states with exclusive.table
+excl <- data.frame(mark=c('H3K4me3','H3K27me3'),
+                             group=c(1,1))
+stateBrewer(experiment_table, mode='full', exclusive.table=excl)
 
 }
 \author{

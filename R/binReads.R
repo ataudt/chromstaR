@@ -27,7 +27,7 @@
 #'file <- system.file("extdata", "euratrans",
 #'                    "lv-H3K27me3-BN-male-bio2-tech1.bam",
 #'                     package="chromstaRData")
-#'## Bin the BED file into bin size 1000bp
+#'## Bin the file into bin size 1000bp
 #'data(rn4_chrominfo)
 #'data(experiment_table)
 #'binned <- binReads(file, experiment.table=experiment_table,

@@ -9,7 +9,8 @@ Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
   remove.duplicate.reads = TRUE, min.mapq = 10, prefit.on.chr = NULL,
   eps.univariate = 0.1, max.time = NULL, max.iter = 5000,
   read.cutoff.absolute = 500, keep.posteriors = TRUE, mode = "mark",
-  max.states = 128, per.chrom = TRUE, eps.multivariate = 0.01)
+  max.states = 128, per.chrom = TRUE, eps.multivariate = 0.01,
+  exclusive.table = NULL)
 }
 \arguments{
 \item{inputfolder}{Folder with either BAM or BED files.}
@@ -49,6 +50,7 @@ Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
   \item{\code{mark}}{Each condition is analyzed separately with all marks combined. Choose this mode if you have more than ~7 conditions or you want to have a high sensitivity for detecting combinatorial states. Differences between conditions will be more noisy (more false positives) than in mode \code{'condition'} but combinatorial states are more precise.}
   \item{\code{condition}}{Each mark is analyzed separately with all conditions combined. Choose this mode if you are interested in accurate differences. Combinatorial states will be more noisy (more false positives) than in mode \code{'mark'} but differences are more precise.}
   \item{\code{full}}{Full analysis of all marks and conditions combined. Best of both, but: Choose this mode only if (number of conditions * number of marks \eqn{\le} 8), otherwise it might be too slow or crash due to memory limitations.}
+  \item{\code{separate}}{Only replicates are analyzed multivariately. Combinatorial states are constructed by a simple post-hoc combination of peak calls.}
 }}
 
 \item{max.states}{The maximum number of states to use in the multivariate part. If set to \code{NULL}, the maximum number of theoretically possible states is used. CAUTION: This can be very slow or crash if you have too many states. \pkg{\link{chromstaR}} has a built in mechanism to select the best states in case that less states than theoretically possible are specified.}
@@ -56,6 +58,8 @@ Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
 \item{per.chrom}{If set to \code{TRUE} chromosomes will be treated separately in the multivariate part. This tremendously speeds up the calculation but results might be noisier as compared to \code{per.chrom=FALSE}, where all chromosomes are concatenated for the HMM.}
 
 \item{eps.multivariate}{Convergence threshold for the multivariate Baum-Welch algorithm.}
+
+\item{exclusive.table}{A \code{data.frame} or tab-separated text file with columns 'mark' and 'group'. Histone marks with the same group will be treated as mutually exclusive.}
 }
 \value{
 \code{NULL}

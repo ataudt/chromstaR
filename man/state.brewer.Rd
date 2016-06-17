@@ -6,7 +6,8 @@
 \usage{
 state.brewer(replicates = NULL, differential.states = FALSE, min.diff = 1,
   common.states = FALSE, conditions = NULL, tracks2compare = NULL,
-  sep = "+", statespec = NULL, diffstatespec = NULL)
+  sep = "+", statespec = NULL, diffstatespec = NULL,
+  exclusive.table = NULL)
 }
 \arguments{
 \item{replicates}{A vector specifying the replicate structure. Similar entries will be treated as replicates.}
@@ -38,6 +39,8 @@ state.brewer(replicates = NULL, differential.states = FALSE, min.diff = 1,
   \item \code{'d.B'}: at least one sample in group B has to be different from the other samples in group A 
   \item \code{'d[]'}: at least one sample in group [] has to be different from the other samples in group [] 
 }}
+
+\item{exclusive.table}{A \code{data.frame} or tab-separated text file with columns 'mark' and 'group'. Histone marks with the same group will be treated as mutually exclusive.}
 }
 \value{
 A data.frame with combinations and their corresponding (decimal) combinatorial states.
