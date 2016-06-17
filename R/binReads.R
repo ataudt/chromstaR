@@ -18,7 +18,7 @@
 #' @param chromosomes If only a subset of the chromosomes should be binned, specify them here.
 #' @param use.bamsignals If \code{TRUE} the \pkg{\link[bamsignals]{bamsignals}} package is used for parsing of BAM files. This gives tremendous speed advantage for only one binsize but linearly increases for multiple binsizes, while \code{use.bamsignals=FALSE} has a binsize dependent runtime and might be faster if many binsizes are calculated.
 #' @return If only one bin size was specified for option \code{binsizes}, the function returns a single \code{\link{GRanges}} object with meta data column 'counts' that contains the read count. If multiple \code{binsizes} were specified , the function returns a named \code{list()} of \link{GRanges} objects.
-#' @importFrom Rsamtools BamFile
+#' @importFrom Rsamtools BamFile indexBam
 #' @importFrom bamsignals bamCount
 #' @export
 #'
@@ -86,6 +86,16 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
     } else if (format == "bam") {
         ## BAM (1-based)
         if (use.bamsignals) {
+            ## Check if bamindex exists
+            bamindex.raw <- sub('\\.bai$', '', bamindex)
+            bamindex <- paste0(bamindex.raw,'.bai')
+            if (!file.exists(bamindex)) {
+                ptm <- startTimedMessage("Making bam-index file ...")
+                bamindex.own <- Rsamtools::indexBam(file)
+                warning("Couldn't find BAM index-file ",bamindex,". Creating our own file ",bamindex.own," instead.")
+                bamindex <- bamindex.own
+                stopTimedMessage(ptm)
+            }
             ptm <- startTimedMessage(paste0("Reading header from ", file, " ..."))
             chrom.lengths <- GenomeInfoDb::seqlengths(Rsamtools::BamFile(file))
             stopTimedMessage(ptm)
