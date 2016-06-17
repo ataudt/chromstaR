@@ -74,23 +74,24 @@ callPeaksUnivariate <- function(binned.data, input.data=NULL, prefit.on.chr=NULL
     }
 
     if (is.null(prefit.on.chr)) {
-        model <- callPeaksUnivariateAllChr(binned.data, input.data=input.data, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=keep.posteriors, keep.densities=FALSE, verbosity=verbosity)
+        model <- callPeaksUnivariateAllChr(binned.data=binned.data, input.data=input.data, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=keep.posteriors, keep.densities=FALSE, verbosity=verbosity)
     } else {
 
+        message("Fitting on chromosome ", prefit.on.chr)
         pre.binned.data <- binned.data[seqnames(binned.data)==prefit.on.chr]
         if (!is.null(input.data)) {
             pre.input.data <- input.data[seqnames(input.data)==prefit.on.chr]
         } else {
             pre.input.data <- NULL
         }
-        pre.model <- callPeaksUnivariateAllChr(pre.binned.data, input.data=pre.input.data, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=verbosity)
+        pre.model <- callPeaksUnivariateAllChr(binned.data=pre.binned.data, input.data=pre.input.data, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=verbosity)
 
         if (short) {
             max.iter=1
         }
         model <- pre.model
         model$bins <- binned.data
-        model <- suppressWarnings( callPeaksUnivariateAllChr(model, input.data=input.data, eps=eps, max.time=max.time, max.iter=max.iter, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity) )
+        model <- suppressWarnings( callPeaksUnivariateAllChr(binned.data=model, input.data=input.data, eps=eps, max.time=max.time, max.iter=max.iter, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity) )
 
     }
 
@@ -140,8 +141,8 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
 
     ### Intercept user input ###
     if (check.positive(eps)!=0) stop("argument 'eps' expects a positive numeric")
-    if (is.null(max.time)) { max.time <- -1 } else if (check.nonnegative.integer(max.time)!=0) { stop("argument 'max.time' expects a non-negative integer") }
-    if (is.null(max.iter)) { max.iter <- -1 } else if (check.nonnegative.integer(max.iter)!=0) { stop("argument 'max.iter' expects a non-negative integer") }
+    if (is.null(max.time)) { max.time <- -1 } else if (check.nonnegative.integer(max.time)!=0) { stop("argument 'max.time' expects a non-negative integer or NULL") }
+    if (is.null(max.iter)) { max.iter <- -1 } else if (check.nonnegative.integer(max.iter)!=0) { stop("argument 'max.iter' expects a non-negative integer or NULL") }
     if (check.positive.integer(num.trials)!=0) stop("argument 'num.trials' expects a positive integer")
     if (!is.null(eps.try)) {
         if (check.positive(eps.try)!=0) stop("argument 'eps.try' expects a positive numeric")
@@ -217,7 +218,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
         # inputf[mask.mean] <- mean.input.counts / input.data$counts[mask.mean]
         # inputf <- runmean(inputf, k=11, endrule='constant')
         inputf[mask.0] <- mean.input.counts / as.numeric(S4Vectors::runmean(S4Vectors::Rle(input.data$counts), k=15, endrule='constant'))[mask.0]
-        counts <- counts * as.numeric(inputf)
+        counts <- round(counts * as.numeric(inputf))
         stopTimedMessage(ptm)
     }
 
@@ -243,21 +244,23 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
         }
     }
     if (numfiltered > 0) {
-        message("Replaced read counts > ",read.cutoff.absolute, " by ",read.cutoff.absolute," in ",numfiltered," bins. Set option 'read.cutoff=FALSE' to disable this filtering. This filtering was done to increase the speed of the HMM.")
+        message("Replaced read counts > ",read.cutoff.absolute, " by ",read.cutoff.absolute," in ",numfiltered," bins to enhance performance (option 'read.cutoff').")
     }
 
     ### Filter out low read counts that arise when the bin size is larger than optimal (should correct the result to near optimal again) ###
-    hist <- graphics::hist(counts[counts>0], breaks=0:max(counts), right=FALSE, plot=FALSE)
-    maxhist <- which.max(hist$counts)
-    if (maxhist-1 > max.mean) {    # -1 to get from 1-based histogram indices to (0-based) read counts
-        # Two empirical rules to remove low counts
-        read.counts.to.remove.1 <- which(hist$counts[1:maxhist]<=hist$counts[2]) -1
-        minlow <- which.min(hist$counts[2:maxhist])
-        read.counts.to.remove <- max(c(read.counts.to.remove.1, 2*minlow))
-        index.filtered <- which(counts>0 & counts<=read.counts.to.remove)
-        counts[index.filtered] <- 0
-        if (length(index.filtered)>0) {
-            message(paste0("Replaced read counts <= ",read.counts.to.remove," by 0. This was done because the selected bin size is considered too big for this dataset: The mean of the read counts (zeros removed) is bigger than the specified max.mean = ",max.mean,". Check the fits!"))
+    if (!is.infinite(max.mean)) {
+        hist <- graphics::hist(counts[counts>0], breaks=0:max(counts), right=FALSE, plot=FALSE)
+        maxhist <- which.max(hist$counts)
+        if (maxhist-1 > max.mean) {    # -1 to get from 1-based histogram indices to (0-based) read counts
+            # Two empirical rules to remove low counts
+            read.counts.to.remove.1 <- which(hist$counts[1:maxhist]<=hist$counts[2]) -1
+            minlow <- which.min(hist$counts[2:maxhist])
+            read.counts.to.remove <- max(c(read.counts.to.remove.1, 2*minlow))
+            index.filtered <- which(counts>0 & counts<=read.counts.to.remove)
+            counts[index.filtered] <- 0
+            if (length(index.filtered)>0) {
+                message(paste0("Replaced read counts <= ",read.counts.to.remove," by 0. This was done because the selected bin size is considered too big for this dataset: The mean of the read counts (zeros removed) is bigger than the specified max.mean = ",max.mean,". Check the fits!"))
+            }
         }
     }
     
@@ -295,6 +298,9 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
 
 
     ## Call univariate in a for loop to enable multiple trials
+    if (verbosity==0) {
+        ptm <- startTimedMessage("Fitting Hidden Markov Model ...")
+    }
     modellist <- list()
     for (i_try in 1:num.trials) {
         if (verbosity>=1) message("------------------------------------ Try ",i_try," of ",num.trials," -------------------------------------")
@@ -336,6 +342,9 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
         # Set init procedure to random
         iniproc <- which('random'==c("standard","random","empiric")) # transform to int
     }
+    if (verbosity==0) {
+        stopTimedMessage(ptm)
+    }
 
     if (num.trials > 1) {
         # Select fit with best loglikelihood
@@ -345,6 +354,9 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     }
 
     if (eps != eps.try) {
+        if (verbosity==0) {
+            ptm <- startTimedMessage("Refining Hidden Markov Model ...")
+        }
         # Rerun the HMM with different epsilon and initial parameters from trial run
         if (verbosity>=1) message("------------------------- Rerunning try ",indexmax," with eps = ",eps," -------------------------")
         hmm <- .C("C_univariate_hmm",
@@ -374,6 +386,9 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
             read.cutoff = as.integer(max(counts)), # int* read_cutoff
             verbosity = as.integer(verbosity) # int* verbosity
         )
+        if (verbosity==0) {
+            stopTimedMessage(ptm)
+        }
     }
 
     ### Issue warnings ###

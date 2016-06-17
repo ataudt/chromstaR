@@ -92,7 +92,7 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
             if (!file.exists(bamindex)) {
                 ptm <- startTimedMessage("Making bam-index file ...")
                 bamindex.own <- Rsamtools::indexBam(file)
-                warning("Couldn't find BAM index-file ",bamindex,". Creating our own file ",bamindex.own," instead.")
+                # warning("Couldn't find BAM index-file ",bamindex,". Creating our own file ",bamindex.own," instead.")
                 bamindex <- bamindex.own
                 stopTimedMessage(ptm)
             }

@@ -283,7 +283,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 if (length(inputfiles)>0) {
                     input.files <- inputfiles
                 }
-                model <- callPeaksUnivariate(file, input.data=input.files, eps=conf[['eps.univariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], read.cutoff.absolute=conf[['read.cutoff.absolute']], prefit.on.chr=conf[['prefit.on.chr']], keep.posteriors=FALSE, verbosity=0)
+                model <- callPeaksUnivariate(binned.data=file, input.data=input.files, eps=conf[['eps.univariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], read.cutoff.absolute=conf[['read.cutoff.absolute']], prefit.on.chr=conf[['prefit.on.chr']], keep.posteriors=FALSE, verbosity=0)
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(model, file=savename)
                 stopTimedMessage(ptm)

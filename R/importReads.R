@@ -43,7 +43,7 @@ readBamFileAsGRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pa
     if (!file.exists(bamindex)) {
         ptm <- startTimedMessage("Making bam-index file ...")
         bamindex.own <- Rsamtools::indexBam(bamfile)
-        warning("Couldn't find BAM index-file ",bamindex,". Creating our own file ",bamindex.own," instead.")
+        # warning("Couldn't find BAM index-file ",bamindex,". Creating our own file ",bamindex.own," instead.")
         bamindex <- bamindex.own
         stopTimedMessage(ptm)
     }
