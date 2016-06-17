@@ -500,19 +500,19 @@ plots[['BN']] + coord_flip() +
 \item \emph{chrominfo.tsv}: \\ A tab-separated file with chromosome lengths.
 \item \emph{chromstaR.config}: \\ A text file with all the parameters that were used to run function \Rfunction{Chromstar()}.
 \item \emph{experiment\_table.tsv}: \\ A tab-separated file of your experiment setup.
-\item \textbf{binned}: \\ RData files with the results of the binnig step. Contains GRanges objects with binned genomic coordinates and read counts.
+\item \textbf{binned}: \\ RData files with the results of the binnig step. Contains \Rclass{GRanges} objects with binned genomic coordinates and read counts.
 \item \textbf{BROWSERFILES}: \\ Bed files for upload to the UCSC genome browser. It contains files with combinatorial states (``\_combinations.bed.gz''), underlying peak calls (``\_peaks.bed.gz''), and read counts (``\_counts.wig.gz''). !!Always check the ``\_peaks.bed.gz'' files if you are satisfied with the peak calls. If not, there are ways to make the calls stricter (see section~\ref{sec:FAQ_peaks}).
-\item $\rightarrow$\textbf{combined}$\leftarrow$: \\ RData files with the combined results of the uni- and multivariate peak calling steps. This is what you want to use for downstream analyses. Contains Rclass{combinedMultiHMM} objects.
+\item $\rightarrow$\textbf{combined}$\leftarrow$: \\ RData files with the combined results of the uni- and multivariate peak calling steps. This is what you want to use for downstream analyses. Contains \Rclass{combinedMultiHMM} objects.
 \begin{itemize}
 \item \emph{combined\_mode-separate.RData} Simple combination of peak calls (replicates considered) without multivariate analysis.
 \item \emph{combined\_mode-mark.RData} Combination of multivariate results for mode='mark'.
 \item \emph{combined\_mode-condition.RData} Combination of multivariate results for mode='condition'.
 \item \emph{combined\_mode-full.RData} Combination of multivariate results for mode='full'.
 \end{itemize}
-\item \textbf{multivariate}: \\ RData files with the results of the multivariate peak calling step. Contains Rclass{multiHMM} objects.
+\item \textbf{multivariate}: \\ RData files with the results of the multivariate peak calling step. Contains \Rclass{multiHMM} objects.
 \item \textbf{PLOTS}: \\ Several plots that are produced by default. Please check the plots in subfolder \textbf{univariate-distributions} for irregularities (see section~\ref{sec:univariate}).
-\item \textbf{replicates}: \\ RData files with the result of the replicate peak calling step. Contains multiHMM objects.
-\item \textbf{univariate}: \\ RData files with the result of the univariate peak calling step. Contains Rclass{uniHMM} objects.
+\item \textbf{replicates}: \\ RData files with the result of the replicate peak calling step. Contains \Rclass{multiHMM} objects.
+\item \textbf{univariate}: \\ RData files with the result of the univariate peak calling step. Contains \Rclass{uniHMM} objects.
 \end{itemize}
 
 \section{\label{sec:faq}FAQ}
