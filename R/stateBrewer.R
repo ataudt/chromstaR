@@ -27,17 +27,17 @@
 #'stateBrewer(experiment_table, mode='condition')
 #'stateBrewer(experiment_table, mode='full', common.states=TRUE)
 #'
-stateBrewer <- function(experiment.table, mode, differential.states=FALSE, common.states=FALSE) {
+stateBrewer <- function(experiment.table, mode, differential.states=FALSE, common.states=FALSE, exclusive.table=NULL) {
 
     check.experiment.table(experiment.table)
     exp <- experiment.table
     exp <- exp[exp$mark != 'input', ]
     if (mode == 'full') {
-        combstates <- state.brewer(replicates=paste0(exp$mark, '-', exp$condition), conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states)
+        combstates <- state.brewer(replicates=paste0(exp$mark, '-', exp$condition), conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states, exclusive.table=exclusive.table)
     } else if (mode == 'mark') {
-        combstates <- state.brewer(replicates=exp$mark, conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states)
+        combstates <- state.brewer(replicates=exp$mark, conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states, exclusive.table=exclusive.table)
     } else if (mode == 'condition') {
-        combstates <- state.brewer(replicates=exp$condition, conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states)
+        combstates <- state.brewer(replicates=exp$condition, conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states, exclusive.table=exclusive.table)
     } else {
         stop("Unknown mode.")
     }
@@ -82,6 +82,8 @@ stateBrewer <- function(experiment.table, mode, differential.states=FALSE, commo
 #'     \item \code{'d.B'}: at least one sample in group B has to be different from the other samples in group A 
 #'     \item \code{'d[]'}: at least one sample in group [] has to be different from the other samples in group [] 
 #'   }
+#' 
+#' @param exclusive.table A \code{data.frame} or tab-separated text file with mutually exclusive groups of histone modifications.
 #' @return A data.frame with combinations and their corresponding (decimal) combinatorial states.
 #' @examples
 #'# Get all combinatorial states where sample1=0, sample2=1, sample3=(0 or 1),
@@ -95,7 +97,7 @@ stateBrewer <- function(experiment.table, mode, differential.states=FALSE, commo
 #'#  sample4=(0 or 1)
 #'chromstaR:::state.brewer(statespec=c('r.A','1.B','1.C','x.D','r.A'))
 #'
-state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, common.states=FALSE, conditions=NULL, tracks2compare=NULL, sep='+', statespec=NULL, diffstatespec=NULL) {
+state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, common.states=FALSE, conditions=NULL, tracks2compare=NULL, sep='+', statespec=NULL, diffstatespec=NULL, exclusive.table=NULL) {
 
 #     ## Debug
 # #     conditions <- tissues
@@ -192,7 +194,53 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
     duplicate.mask <- !duplicated(decstates.all)
     decstates.all <- decstates.all[duplicate.mask]
     names(decstates.all) <- statenames[duplicate.mask]
+    
+    ### Select exclusive states
+    if (!is.null(exclusive.table)) {
+        if (is.null(tracks2compare) | is.null(conditions)) {
+            stop("Arguments 'tracks2compare' and 'conditions' must be specified if 'exclusive.table' was specified.")
+        }
 
+        if (is.character(exclusive.table)) {
+            excl.table <- utils::read.table(exclusive.table, header=TRUE, comment.char='#')
+            if (!all(colnames(exclusive.table) == c('mark','group'))) {
+                stop("Your 'exclusive.table' must be a tab-separated file with column names 'mark' and 'group'.")
+            }
+        } else if (is.data.frame(exclusive.table)) {
+            excl.table <- exclusive.table
+        } else {
+            stop("Argument 'exclusive.table' must be a data.frame or a tab-separated file.")
+        }
+        
+        loci <- split(excl.table$mark, excl.table$group)
+
+        tracknames.split <- split(tracknames, conditions)
+        tracks2compare.split <- split(tracks2compare, conditions)
+        for (cond in unique(conditions)) {
+            tracks <- tracks2compare.split[[as.character(cond)]]
+            names <- tracknames.split[[as.character(cond)]]
+            
+            for (locus in loci) {
+                # indexes (no replicates) of histone modifications at locus
+                track.index <- which((tracks %in% unlist(locus)) & !duplicated(tracks))
+
+                if (length(track.index) > 1) { # no restrictions if only one modification exists
+                    if (nrow(binstates) > 1) {
+                        mask <- rowSums(as.matrix(binstates[,names[track.index]]), na.rm = TRUE) < 2
+                    } else {
+                        mask <- sum(binstates[,names[track.index]], na.rm=TRUE) < 2
+                    }
+                    binstates <- binstates[mask,]
+                    
+                    if (class(binstates)!='matrix') {
+                        binstates <- matrix(binstates, ncol=length(binstates))
+                        colnames(binstates) <- tracknames
+                    }
+                }
+            }
+        }
+    }
+    
     ### Select specified differential states ###
     if (!is.null(diffstatespec)) {
         diffgroups <- levels(factor(diffstatespec))
