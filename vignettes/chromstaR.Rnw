@@ -15,7 +15,7 @@ BiocStyle::latex()
 \clearpage
 <<options, results='hide', message=FALSE, eval=TRUE, echo=FALSE>>=
 library(chromstaR)
-options(width=120)
+options(width=110)
 @
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}

@@ -73,9 +73,6 @@ writeConfig <- function(conf, configfile) {
     for (i1 in c('binsize', 'assembly', 'chromosomes', 'remove.duplicate.reads', 'min.mapq')) {
         cat(i1," = ",formatstring(conf[[i1]]),"\n", file=f)
     }
-    if (is.data.frame(conf[['assembly']])) {
-        utils::write.table(conf[['assembly']], file=file.path(dirname(configfile),'chrominfo.tsv'), row.names=FALSE, quote=FALSE, sep='\t')
-    }
     cat("\n[Univariate]\n", file=f)
     for (i1 in c('prefit.on.chr', 'eps.univariate', 'max.time', 'max.iter', 'read.cutoff.absolute')) {
         cat(i1," = ",formatstring(conf[[i1]]),"\n", file=f)

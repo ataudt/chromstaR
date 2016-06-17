@@ -73,6 +73,6 @@ chromstaR:::state.brewer(statespec=c('r.A','1.B','1.C','x.D','r.A'))
 
 }
 \author{
-Aaron Taudt
+Aaron Taudt, David Widmann
 }
 

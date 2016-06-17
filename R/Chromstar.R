@@ -2,12 +2,13 @@
 #' 
 #' This function performs \code{\link[chromstaR:binReads]{binning}}, \code{\link[chromstaR:callPeaksUnivariate]{univariate peak calling}} and \code{\link[chromstaR:callPeaksMultivariate]{multivariate peak calling}} from a list of input files.
 #' 
-#' @param inputfolder Folder with either BAM or BED files.
+#' @param inputfolder Folder with either BAM or BED-6 (see \code{\link{readBedFileAsGRanges}} files.
 #' @param experiment.table A \code{data.frame} or tab-separated text file with the structure of the experiment. See \code{\link{experiment.table}} for an example.
 #' @param outputfolder Folder where the results and intermediate files will be written to.
 #' @param configfile A file specifying the parameters of this function (without \code{inputfolder}, \code{outputfolder} and \code{configfile}). Having the parameters in a file can be handy if many samples with the same parameter settings are to be run. If a \code{configfile} is specified, it will take priority over the command line parameters.
 #' @param numCPU Number of threads to use for the analysis. Beware that more CPUs also means more memory is needed. If you experience crashes of R with higher numbers of this parameter, leave it at \code{numCPU=1}.
 #' @param binsize An integer specifying the bin size that is used for the analysis.
+#' @param assembly A \code{data.frame} or tab-separated file with columns 'chromosome' and 'length'. Alternatively a character specifying the assembly, see \code{\link[GenomeInfoDb]{fetchExtendedChromInfoFromUCSC}} for available assemblies. Specifying an assembly is only necessary when importing BED files. BAM files are handled automatically.
 #' @inheritParams readBedFileAsGRanges
 #' @inheritParams callPeaksUnivariate
 #' @param mode One of \code{c('condition','mark','full')}. The modes determine how the multivariate part is run. Here is some advice which mode to use:
@@ -21,7 +22,7 @@
 #' @param per.chrom If set to \code{TRUE} chromosomes will be treated separately in the multivariate part. This tremendously speeds up the calculation but results might be noisier as compared to \code{per.chrom=FALSE}, where all chromosomes are concatenated for the HMM.
 #' @param eps.univariate Convergence threshold for the univariate Baum-Welch algorithm.
 #' @param eps.multivariate Convergence threshold for the multivariate Baum-Welch algorithm.
-#' @param exclusive.table A \code{data.frame} or tab-separated text file with columns 'mark' and 'group'. Histone marks with the same group will be treated as mutually exclusive.
+#' @param exclusive.table A \code{data.frame} or tab-separated file with columns 'mark' and 'group'. Histone marks with the same group will be treated as mutually exclusive.
 #' @return \code{NULL}
 #' @import foreach
 #' @import doParallel
@@ -77,14 +78,11 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     ## Read in experiment table if necessary ##
     if (is.character(experiment.table)) {
         exp.table <- utils::read.table(experiment.table, header=TRUE, comment.char='#')
-        if (!all(colnames(exp.table) == c('file','mark','condition','replicate','pairedEndReads'))) {
-            stop("Your 'experiment.table' must be a tab-separated file with column names 'file', 'mark', 'condition', 'replicate' and 'pairedEndReads'.")
-        }
     } else if (is.data.frame(experiment.table)) {
         exp.table <- experiment.table
-    } else {
-        stop("Argument 'experiment.table' must be a data.frame or a tab-separated file.")
     }
+    check.experiment.table(exp.table)
+    
     ## Prepare IDs and filenames
     IDs <- paste0(exp.table$mark, '-', exp.table$condition, '-rep', exp.table$replicate)
     datafiles <- file.path(inputfolder, basename(as.character(exp.table$file)))
@@ -120,13 +118,6 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         stop("Please specify an 'assembly' for the BED files.")
     }
     
-    ## Read in assembly if necessary
-    if (is.character(conf[['assembly']])) {
-        if (file.exists(conf[['assembly']])) {
-            conf[['assembly']] <- utils::read.table(conf[['assembly']], sep='\t', header=TRUE)
-        }
-    }
-    
     ## Set up the directory structure ##
     binpath <- file.path(outputfolder, 'binned')
     unipath <- file.path(outputfolder, 'univariate')
@@ -145,7 +136,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     cat("", file=savename)
     cat("This folder contains the following files:\n", file=savename, append=TRUE)
     cat("-----------------------------------------\n", file=savename, append=TRUE)
-    cat("- chrominfo.tsv: A tab-separated file with chromosome lengths (only if an assembly was specified).\n", file=savename, append=TRUE)
+    cat("- chrominfo.tsv: A tab-separated file with chromosome lengths.\n", file=savename, append=TRUE)
     cat("- chromstaR.config: A text file with all the parameters that were used to run Chromstar().\n", append=TRUE, file=savename)
     cat("- experiment_table.tsv: A tab-separated file of your experiment setup.\n", file=savename, append=TRUE)
     
@@ -174,24 +165,43 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #==============
     ### Binning ###
     #==============
-    ### Make bins ###
+    ### Get chromosome lengths ###
     ## Get first bam file
     bamfile <- grep('bam$', datafiles, value=TRUE)[1]
     if (!is.na(bamfile)) {
         chrom.lengths <- GenomeInfoDb::seqlengths(Rsamtools::BamFile(bamfile))
     } else {
-        ## Get first bed file
-        bedfile <- grep('bed$|bed.gz$', datafiles, value=TRUE)[1]
-        if (!is.na(bedfile)) {
-            firstline <- read.table(bedfile, nrows=1)
-            chrom.lengths <- conf[['assembly']][,'UCSC_seqlength']
-            if (grepl('^chr',firstline[1,1])) {
-                names(chrom.lengths) <- conf[['assembly']]$UCSC_seqlevel
+        ## Read chromosome length information
+        if (is.character(conf[['assembly']])) {
+            if (file.exists(conf[['assembly']])) {
+                df <- utils::read.table(conf[['assembly']], sep='\t', header=TRUE)
             } else {
-                names(chrom.lengths) <- conf[['assembly']]$NCBI_seqlevel
+                df.chroms <- GenomeInfoDb::fetchExtendedChromInfoFromUCSC(conf[['assembly']])
+                ## Get first bed file
+                bedfile <- grep('bed$|bed.gz$', datafiles, value=TRUE)[1]
+                if (!is.na(bedfile)) {
+                    firstline <- read.table(bedfile, nrows=1)
+                    if (grepl('^chr',firstline[1,1])) {
+                        df <- df.chroms[,c('UCSC_seqlevel','UCSC_seqlength')]
+                    } else {
+                        df <- df.chroms[,c('NCBI_seqlevel','UCSC_seqlength')]
+                    }
+                }
             }
+        } else if (is.data.frame(conf[['assembly']])) {
+            df <- conf[['assembly']]
+        } else {
+            stop("'assembly' must be either a data.frame with columns 'chromosome' and 'length' or a character specifying the assembly.")
         }
+        chrom.lengths <- df[,2]
+        names(chrom.lengths) <- df[,1]
     }
+    chrom.lengths.df <- data.frame(chromosome=names(chrom.lengths), length=chrom.lengths)
+    
+    ## Write chromosome length information to file
+    utils::write.table(chrom.lengths.df, file=file.path(outputfolder, 'chrominfo.tsv'), sep='\t', row.names=FALSE, col.names=TRUE, quote=FALSE)
+    
+    ### Make bins ###
     pre.bins <- fixedWidthBins(chrom.lengths=chrom.lengths, chromosomes=conf[['chromosomes']], binsizes=binsize)
     
     ### Count reads in bins ###
@@ -214,7 +224,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 if (!input) {
                     exp.table.input <- exp.table
                 }
-                bins <- binReads(file=file, experiment.table=exp.table.input, assembly=conf[['assembly']], pairedEndReads=pairedEndReads, binsizes=NULL, reads.per.bin=NULL, bins=pre.bins, chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']])
+                bins <- binReads(file=file, experiment.table=exp.table.input, assembly=chrom.lengths.df, pairedEndReads=pairedEndReads, binsizes=NULL, reads.per.bin=NULL, bins=pre.bins, chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']])
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(bins, file=savename)
                 stopTimedMessage(ptm)
