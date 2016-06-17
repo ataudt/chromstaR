@@ -95,3 +95,13 @@ check.experiment.table <- function(experiment.table) {
     return(err)
 }
 
+check.exclusive.table <- function(exclusive.table) {
+    err <- 0
+    if (!is.data.frame(exclusive.table)) err <- 1
+    if (any(names(exclusive.table) != c('mark', 'group'))) err <- 2
+    if (err > 0) {
+        stop("Argument 'exclusive.table' expects a data.frame with columns 'mark', 'group'.")
+    }
+    return(err)
+}
+

@@ -160,6 +160,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         if (is.character(conf[['exclusive.table']])) {
             conf[['exclusive.table']] <- utils::read.table(conf[['exclusive.table']], header=TRUE, comment.char='#')
         }
+        check.exclusive.table(conf[['exclusive.table']])
         utils::write.table(conf[['exclusive.table']], file=file.path(outputfolder, 'exclusive_table.tsv'), col.names=TRUE, quote=FALSE, row.names=FALSE, sep='\t')
     }
     
