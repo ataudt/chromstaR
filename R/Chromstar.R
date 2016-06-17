@@ -155,6 +155,14 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     cat("- replicates: RData files with the result of the replicate peak calling step. Contains multiHMM objects.\n", file=savename, append=TRUE)
     cat("- univariate: RData files with the result of the univariate peak calling step. Contains uniHMM objects.\n", file=savename, append=TRUE)
     
+    ## Write exclusive.table to file
+    if (!is.null(conf[['exclusive.table']])) {
+        if (is.character(conf[['exclusive.table']])) {
+            conf[['exclusive.table']] <- utils::read.table(conf[['exclusive.table']], header=TRUE, comment.char='#')
+        }
+        utils::write.table(conf[['exclusive.table']], file=file.path(outputfolder, 'exclusive_table.tsv'), col.names=TRUE, quote=FALSE, row.names=FALSE, sep='\t')
+    }
+    
     ## Make a copy of the conf file
     writeConfig(conf, configfile=file.path(outputfolder, 'chromstaR.config'))
 

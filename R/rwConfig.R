@@ -58,7 +58,11 @@ writeConfig <- function(conf, configfile) {
         } else if (is.null(string)) {
             string <- "NULL"
         } else if (is.data.frame(string)) {
-            string <- paste0("'", file.path(dirname(configfile), 'chrominfo.tsv'), "'")
+            if (all(names(string) %in% c('chromosome','length'))) {
+                string <- paste0("'", file.path(dirname(configfile), 'chrominfo.tsv'), "'")
+            } else if (all(names(string) %in% c('mark','group'))) {
+                string <- paste0("'", file.path(dirname(configfile), 'exclusive_table.tsv'), "'")
+            }
         }
         return(string)
     }
