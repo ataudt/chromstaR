@@ -144,7 +144,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     cat("This folder contains the following folders:\n", file=savename, append=TRUE)
     cat("-------------------------------------------\n", file=savename, append=TRUE)
     cat("- binned: RData files with the results of the binnig step. Contains GRanges objects with binned genomic coordinates and read counts.\n", file=savename, append=TRUE)
-    cat("- BROWSERFILES: Bed files for upload to the UCSC genome browser. It contains files with combinatorial states (*_combinations.bed.gz), underlying peak calls (*_peaks.bed.gz), and read counts (*_counts.wig.gz). !!Always check the *_peaks.bed.gz files if you are satisfied with the peak calls. If not, there are ways to make the calls stricter (see section FAQ of the vignette).\n", file=savename, append=TRUE)
+    cat("- BROWSERFILES: Bed files for upload to the UCSC genome browser. It contains files with combinatorial states (*_combinations.bed.gz) and underlying peak calls (*_peaks.bed.gz). !!Always check the *_peaks.bed.gz files if you are satisfied with the peak calls. If not, there are ways to make the calls stricter (see section FAQ of the vignette).\n", file=savename, append=TRUE)
     cat("- -->combined<--: RData files with the combined results of the uni- and multivariate peak calling steps. This is what you want to use for downstream analyses. Contains combinedMultiHMM objects.\n", file=savename, append=TRUE)
     cat("    - combined_mode-separate.RData: Simple combination of peak calls (replicates considered) without multivariate analysis.\n", file=savename, append=TRUE)
     cat("    - combined_mode-mark.RData: Combination of multivariate results for mode='mark'.\n", file=savename, append=TRUE)
@@ -427,18 +427,6 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         } else {
             multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
         }
-        ## Export browser files
-        savename <- file.path(browserpath, paste0('multivariate_mode-', mode))
-        # if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
-        #     trackname <- paste0('combinations, mode-', mode)
-        #     exportMultivariate(multimodel, filename=savename, what='combinations', trackname=trackname)
-        # }
-        # if (!file.exists(paste0(savename, '_peaks.bed.gz'))) {
-        #     exportMultivariate(multimodel, filename=savename, what='peaks')
-        # }
-        if (!file.exists(paste0(savename, '_counts.wig.gz'))) {
-            exportMultivariate(multimodel, filename=savename, what='counts')
-        }
         ## Plot transition and correlations
         savename <- file.path(plotpath, paste0('multivariate_mode-', mode))
         plothelper(savename, multimodel)
@@ -458,18 +446,6 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 stopTimedMessage(ptm)
             } else {
                 multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
-            }
-            ## Export browser files
-            savename <- file.path(browserpath, paste0('multivariate_mode-', mode, '_condition-', condition))
-            # if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
-            #     trackname <- paste0('combinations, mode-', mode)
-            #     exportMultivariate(multimodel, filename=savename, what='combinations', trackname=trackname)
-            # }
-            # if (!file.exists(paste0(savename, '_peaks.bed.gz'))) {
-            #     exportMultivariate(multimodel, filename=savename, what='peaks')
-            # }
-            if (!file.exists(paste0(savename, '_counts.wig.gz'))) {
-                exportMultivariate(multimodel, filename=savename, what='counts')
             }
             ## Plot transition and correlations
             savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_condition-', condition))
@@ -491,18 +467,6 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 stopTimedMessage(ptm)
             } else {
                 multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
-            }
-            ## Export browser files
-            savename <- file.path(browserpath, paste0('multivariate_mode-', mode, '_mark-', mark))
-            # if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
-            #     trackname <- paste0('combinations, mode-', mode)
-            #     exportMultivariate(multimodel, filename=savename, what='combinations', trackname=trackname)
-            # }
-            # if (!file.exists(paste0(savename, '_peaks.bed.gz'))) {
-            #     exportMultivariate(multimodel, filename=savename, what='peaks')
-            # }
-            if (!file.exists(paste0(savename, '_counts.wig.gz'))) {
-                exportMultivariate(multimodel, filename=savename, what='counts')
             }
             ## Plot transition and correlations
             savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_mark-', mark))
