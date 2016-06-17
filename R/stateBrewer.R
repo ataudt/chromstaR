@@ -64,7 +64,7 @@ stateBrewer <- function(experiment.table, mode, differential.states=FALSE, commo
 #' bin5 \tab 0 \tab 0 \tab 1 \tab 0 \tab 1 \tab 5 \cr
 #' }
 #'
-#' @author Aaron Taudt
+#' @author Aaron Taudt, David Widmann
 #' @param replicates A vector specifying the replicate structure. Similar entries will be treated as replicates.
 #' @param differential.states A logical specifying whether differential states shall be returned.
 #' @param min.diff The minimum number of differences between conditions.
