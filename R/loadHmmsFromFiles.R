@@ -24,7 +24,7 @@
 #'
 loadHmmsFromFiles <- function(files, check.class=c('GRanges', 'uniHMM', 'multiHMM', 'combinedMultiHMM')) {
 
-    ptm <- startTimedMessage("Loading HMMs from files ...")
+    ptm <- startTimedMessage("Loading data from files ...")
     if (any(! check.class %in% c('GRanges', class.univariate.hmm, class.multivariate.hmm, class.combined.multivariate.hmm))) {
         stop("Argument 'check.class' must contain any combination of c('", paste0(c('GRanges', class.univariate.hmm, class.multivariate.hmm, class.combined.multivariate.hmm), collapse="', '"), "').")
     }

@@ -156,9 +156,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     if (is.null(eps.try)) eps.try <- eps
     ## Load binned.data and reuse values if present
     if (class(binned.data) == 'character') { 
-        message("Loading file ",binned.data)
-        temp.env <- new.env()
-        binned.data <- get(load(binned.data, envir=temp.env), envir=temp.env)
+        binned.data <- loadHmmsFromFiles(binned.data)[[1]]
     }
 
     ### Assign variables ###
@@ -201,8 +199,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     if (!is.null(input.data)) {
         ptm <- startTimedMessage("Correcting read counts for input ...")
         if (is.character(input.data)) {
-            temp.env <- new.env()
-            input.data <- get(load(input.data, envir=temp.env), envir=temp.env)
+            input.data <- loadHmmsFromFiles(input.data)[[1]]
         }
         # Artifacts with super high read count
         index <- which(input.data$counts >= quantile(input.data$counts[input.data$counts>0], 0.999))
@@ -213,12 +210,11 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
         # Correction factor
         inputf <- S4Vectors::Rle(1, length=length(input.data))
         mean.input.counts <- mean(input.data$counts[input.data$counts>0])
-        mask.mean <- input.data$counts >= mean.input.counts
         mask.0 <- input.data$counts > 0
-        # inputf[mask.mean] <- mean.input.counts / input.data$counts[mask.mean]
-        # inputf <- runmean(inputf, k=11, endrule='constant')
         inputf[mask.0] <- mean.input.counts / as.numeric(S4Vectors::runmean(S4Vectors::Rle(input.data$counts), k=15, endrule='constant'))[mask.0]
-        counts <- round(counts * as.numeric(inputf))
+        inputf[inputf > 1.5] <- 1
+        inputf <- as.numeric(inputf)
+        counts <- round(counts * inputf)
         stopTimedMessage(ptm)
     }
 
@@ -235,8 +231,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
         numfiltered <- length(which(mask))
     } else {
         if (read.cutoff) {
-            read.cutoff.by.quantile <- quantile(counts, read.cutoff.quantile)
-            read.cutoff.by.quantile <- as.integer(read.cutoff.by.quantile)
+            read.cutoff.by.quantile <- as.integer(quantile(counts, read.cutoff.quantile))
             read.cutoff.absolute <- min(read.cutoff.by.quantile, read.cutoff.absolute)
             mask <- counts > read.cutoff.absolute
             counts[mask] <- read.cutoff.absolute
