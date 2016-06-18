@@ -1,0 +1,107 @@
+check.positive.integer <- function(testvar) {
+    if (!is(testvar,"numeric") & !is(testvar,"integer")) return(1)
+    if (length(testvar)>1) return(2)
+    if (testvar <= 0) return(3)
+    if (testvar != as.integer(testvar)) return(4)
+    return(0)
+}
+check.nonnegative.integer <- function(testvar) {
+    if (!is(testvar,"numeric") & !is(testvar,"integer")) return(1)
+    if (length(testvar)>1) return(2)
+    if (testvar < 0) return(3)
+    if (testvar != as.integer(testvar)) return(4)
+    return(0)
+}
+check.positive.integer.vector <- function(testvec) {
+    if (!is(testvec,"numeric") & !is(testvec,"integer")) return(1)
+    for (elem in testvec) {
+        if (elem <= 0) return(2)
+        if (elem != as.integer(elem)) return(3)
+    }
+    return(0)
+}
+check.nonnegative.integer.vector <- function(testvec) {
+    if (!is(testvec,"numeric") & !is(testvec,"integer")) return(1)
+    for (elem in testvec) {
+        if (elem < 0) return(2)
+        if (elem != as.integer(elem)) return(3)
+    }
+    return(0)
+}
+check.positive <- function(testvar) {
+    if (!is(testvar,"numeric") & !is(testvar,"integer")) return(1)
+    if (length(testvar)>1) return(2)
+    if (testvar <= 0) return(3)
+    return(0)
+}
+check.positive.vector <- function(testvec) {
+    if (!is(testvec,"numeric") & !is(testvec,"integer")) return(1)
+    for (elem in testvec) {
+        if (elem <= 0) return(2)
+    }
+    return(0)
+}
+check.nonnegative.vector <- function(testvec) {
+    if (!is(testvec,"numeric") & !is(testvec,"integer")) return(1)
+    for (elem in testvec) {
+        if (elem < 0) return(2)
+    }
+    return(0)
+}
+check.integer <- function(testvar) {
+    if (!is(testvar,"numeric") & !is(testvar,"integer")) return(1)
+    if (length(testvar)>1) return(2)
+    if (testvar != as.integer(testvar)) return(3)
+    return(0)
+}
+
+check.univariate.modellist <- function(modellist) {
+    if (!is(modellist,"list")) return(1)
+    for (model in modellist) {
+        if (!is(model,class.univariate.hmm)) return(2)
+    }
+    return(0)
+}
+check.univariate.model <- function(model) {
+    if (!is(model,class.univariate.hmm)) return(1)
+    return(0)
+}
+
+check.multivariate.modellist <- function(modellist) {
+    if (!is(modellist,"list")) return(1)
+    for (model in modellist) {
+        if (!is(model,class.multivariate.hmm)) return(2)
+    }
+    return(0)
+}
+check.multivariate.model <- function(model) {
+    if (!is(model,class.multivariate.hmm)) return(1)
+    return(0)
+}
+
+check.logical <- function(testbool) {
+    if (!is(testbool,"logical")) return(1)
+    if (length(testbool)>1) return(2)
+    return(0)
+}
+
+check.experiment.table <- function(experiment.table) {
+    err <- 0
+    if (!is.data.frame(experiment.table)) err <- 1
+    if (any(names(experiment.table) != c('file', 'mark', 'condition', 'replicate', 'pairedEndReads', 'controlFiles'))) err <- 2
+    if (err > 0) {
+        stop("Argument 'experiment.table' expects a data.frame with columns 'file', 'mark', 'condition', 'replicate', 'pairedEndReads' and 'controlFiles'.")
+    }
+    return(err)
+}
+
+check.exclusive.table <- function(exclusive.table) {
+    err <- 0
+    if (!is.data.frame(exclusive.table)) err <- 1
+    if (any(names(exclusive.table) != c('mark', 'group'))) err <- 2
+    if (err > 0) {
+        stop("Argument 'exclusive.table' expects a data.frame with columns 'mark', 'group'.")
+    }
+    return(err)
+}
+

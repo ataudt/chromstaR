@@ -1,0 +1,17 @@
+citEntry(entry="article",
+         title = "chromstaR: Tracking combinatorial chromatin state dynamics in space and time",
+         author = personList( as.person("Aaron Taudt" ),
+                              as.person("Minh Anh Nguyen" ),
+                              as.person("Matthias Heinig" ),
+                              as.person("Frank Johannes" ),
+                              as.person("Maria Colome-Tatche" )
+                            ),
+         year = 2016,
+         journal = "bioRxiv",
+         volume = "",
+         issue = "",
+         doi = "http://dx.doi.org/10.1101/038612",
+         url = "http://dx.doi.org/10.1101/038612",
+         textVersion = 
+         "Taudt A. et al. (2016) chromstaR: Tracking combinatorial chromatin state dynamics in space and time. bioRxiv. http://dx.doi.org/10.1101/038612" )
+

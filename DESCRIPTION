@@ -1,0 +1,25 @@
+Package: chromstaR
+Type: Package
+Title: Combinatorial and Differential Chromatin State Analysis for
+        ChIP-Seq Data
+Version: 0.99.4
+Date: 2014-05-03
+Author: Aaron Taudt, Maria Colome Tatche, Matthias Heinig, Minh Anh
+        Nguyen
+Maintainer: Aaron Taudt <aaron.taudt@gmail.com>
+Description: This package implements functions for combinatorial and
+        differential analysis of ChIP-seq data. It includes uni- and
+        multivariate peak-calling, export to genome browser viewable
+        files, and functions for enrichment analyses.
+Depends: R (>= 3.3), GenomicRanges, ggplot2, chromstaRData
+Imports: utils, grDevices, graphics, stats, foreach, doParallel,
+        S4Vectors, GenomeInfoDb, IRanges, reshape2, Rsamtools,
+        GenomicAlignments, bamsignals
+Suggests: knitr, BiocStyle, testthat, biomaRt, ggbio
+License: Artistic-2.0
+LazyLoad: yes
+VignetteBuilder: knitr
+biocViews: Software, DifferentialPeakCalling, HiddenMarkovModel,
+        ChIPSeq, MultipleComparison
+RoxygenNote: 5.0.1
+NeedsCompilation: yes
