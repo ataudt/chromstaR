@@ -118,6 +118,11 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
         chromosomes <- names(chrom.lengths)
     }
     chroms2use <- intersect(chromosomes, names(chrom.lengths))
+  	## Stop if none of the specified chromosomes exist
+  	if (length(chroms2use)==0) {
+  		chrstring <- paste0(chromosomes, collapse=', ')
+  		stop('Could not find length information for any of the specified chromosomes: ', chrstring)
+  	}
     skipped.chroms <- setdiff(chromosomes, chroms2use)
     if (length(skipped.chroms)>0) {
         warning("Could not find chromosomes ", paste0(skipped.chroms, collapse=', '), ".")
@@ -181,30 +186,23 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
     bins.list <- c(bins, bins.binsize, bins.rpb)
  
     ### Loop over all binsizes ###
-    if (format == 'bam' & use.bamsignals) {
-        for (ibinsize in 1:length(bins.list)) {
-            binsize <- as.numeric(names(bins.list)[ibinsize])
-            bins <- bins.list[[ibinsize]]
-            ptm <- startTimedMessage("Counting overlaps for binsize ", binsize, " ...")
-            bins$counts <- bamsignals::bamCount(file, bins, mapqual=min.mapq, paired.end=paired.end, tlenFilter=c(0, max.fragment.width), verbose=FALSE)
-            stopTimedMessage(ptm)
-            
-            attr(bins, 'info') <- info
-            attr(bins, 'min.mapq') <- min.mapq
-            bins.list[[ibinsize]] <- bins
-        }
-    } else {
+		if (!use.bamsignals) {
         ptm <- startTimedMessage("Splitting into strands ...")
         data.plus <- data[strand(data)=='+']
         data.minus <- data[strand(data)=='-']
         data.star <- data[strand(data)=='*']
         ptm <- stopTimedMessage(ptm)
-        for (ibinsize in 1:length(bins.list)) {
-            binsize <- as.numeric(names(bins.list)[ibinsize])
+		}
+		for (ibinsize in 1:length(bins.list)) {
+				binsize <- as.numeric(names(bins.list)[ibinsize])
+				bins <- bins.list[[ibinsize]]
+				if (format == 'bam' & use.bamsignals) {
+            ptm <- startTimedMessage("Counting overlaps for binsize ", binsize, " ...")
+            bins$counts <- bamsignals::bamCount(file, bins, mapqual=min.mapq, paired.end=paired.end, tlenFilter=c(0, max.fragment.width), verbose=FALSE)
+            stopTimedMessage(ptm)
+            
+				} else {
             readsperbin <- round(length(data) / sum(as.numeric(seqlengths(data))) * binsize, 2)
-            bins <- bins.list[[ibinsize]]
-    
-            ## Count overlaps
             ptm <- startTimedMessage("Counting overlaps for binsize ",binsize," with on average ",readsperbin," reads per bin ...")
             scounts <- suppressWarnings( GenomicRanges::countOverlaps(bins, data.star) )
             mcounts <- suppressWarnings( GenomicRanges::countOverlaps(bins, data.minus) )
@@ -215,12 +213,12 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
             mcols(bins)$counts <- countmatrix[,'counts']
             stopTimedMessage(ptm)
     
-            attr(bins, 'info') <- info
-            attr(bins, 'min.mapq') <- min.mapq
-            bins.list[[as.character(binsize)]] <- bins
+				}
+				attr(bins, 'info') <- info
+				attr(bins, 'min.mapq') <- min.mapq
+				bins.list[[ibinsize]] <- bins
             
-        } ### end loop binsizes ###
-    }
+		} ### end loop binsizes ###
 
     if (length(bins.list) == 1) {
         return(bins.list[[1]])

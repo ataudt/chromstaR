@@ -178,13 +178,18 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     ## Get first bam file
     bamfile <- grep('bam$', datafiles, value=TRUE)[1]
     if (!is.na(bamfile)) {
+        ptm <- startTimedMessage("Obtaining chromosome length information from file ", bamfile, " ...")
         chrom.lengths <- GenomeInfoDb::seqlengths(Rsamtools::BamFile(bamfile))
+        stopTimedMessage(ptm)
     } else {
         ## Read chromosome length information
         if (is.character(conf[['assembly']])) {
             if (file.exists(conf[['assembly']])) {
+                ptm <- startTimedMessage("Obtaining chromosome length information from file ", conf[['assembly']], " ...")
                 df <- utils::read.table(conf[['assembly']], sep='\t', header=TRUE)
+                stopTimedMessage(ptm)
             } else {
+                ptm <- startTimedMessage("Obtaining chromosome length information from UCSC ...")
                 df.chroms <- GenomeInfoDb::fetchExtendedChromInfoFromUCSC(conf[['assembly']])
                 ## Get first bed file
                 bedfile <- grep('bed$|bed.gz$', datafiles, value=TRUE)[1]
@@ -196,6 +201,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                         df <- df.chroms[,c('NCBI_seqlevel','UCSC_seqlength')]
                     }
                 }
+                stopTimedMessage(ptm)
             }
         } else if (is.data.frame(conf[['assembly']])) {
             df <- conf[['assembly']]
@@ -204,6 +210,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         }
         chrom.lengths <- df[,2]
         names(chrom.lengths) <- df[,1]
+        chrom.lengths <- chrom.lengths[!is.na(chrom.lengths) & !is.na(names(chrom.lengths))]
     }
     chrom.lengths.df <- data.frame(chromosome=names(chrom.lengths), length=chrom.lengths)
     
