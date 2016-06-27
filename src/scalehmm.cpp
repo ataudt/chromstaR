@@ -262,7 +262,7 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 					state_last = 1;
 				}
 				this->states_prev[t] = state_last;
-				statesum += std::abs(state_last-state_last_old);
+				statesum += abs(state_last-state_last_old);
 				state_last = 0;
 				state_last_old = 0;
 			}
