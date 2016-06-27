@@ -7,6 +7,7 @@
 #include "utility.h"
 #include "densities.h"
 #include <string> // strcmp
+#include <cstdlib> // std::abs
 
 #ifdef _OPENMP
 #include <omp.h>
