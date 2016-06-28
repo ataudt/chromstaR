@@ -37,7 +37,7 @@ genomicFrequencies <- function(multi.hmm, combinations=NULL) {
         } else {
             comb.levels <- combinations
         }
-        t <- sapply(mcols(bins), function(x) { table(x) / length(bins) })
+        t <- sapply(mcols(bins)[grepl('combination', names(mcols(bins)))], function(x) { table(x) / length(bins) })
         t <- t[rownames(t) %in% comb.levels,]
         return(t)
       
