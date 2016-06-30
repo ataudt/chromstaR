@@ -1,3 +1,16 @@
+
+#=====================================================
+# Helper functions   
+#=====================================================
+insertchr <- function(gr) {
+    # Change chromosome names from '1' to 'chr1' if necessary
+    mask <- which(!grepl('chr', seqnames(gr)))
+    mcols(gr)$chromosome <- as.character(seqnames(gr))
+    mcols(gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(gr)$chromosome[mask])
+    mcols(gr)$chromosome <- as.factor(mcols(gr)$chromosome)
+    return(gr)
+}
+
 #=====================================================
 # Export binned data
 #=====================================================
@@ -32,27 +45,7 @@
 exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.files=FALSE) {
 
     ## Load data
-    if (is.character(binned.data.list)) {
-        ptm <- startTimedMessage('Loading binned.data from files ...')
-        binfiles <- binned.data.list
-        binned.data.list <- list()
-        for (binfile in binfiles) {
-            binned.data.list[[binfile]] <- get(load(binfile))
-        }
-        stopTimedMessage(ptm)
-    } else if (class(binned.data.list) == 'GRanges') {
-        binned.data.list <- list(binned.data.list)
-    }
-
-    ## Function definitions
-    insertchr <- function(hmm.gr) {
-        # Change chromosome names from '1' to 'chr1' if necessary
-        mask <- which(!grepl('chr', seqnames(hmm.gr)))
-        mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
-        mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
-        mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
-        return(hmm.gr)
-    }
+    binned.data.list <- loadHmmsFromFiles(binned.data.list)
 
     ## Transform to GRanges
     binned.data.list <- lapply(binned.data.list, insertchr)
@@ -139,7 +132,7 @@ exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'counts'), hea
         exportUnivariatePeaks(hmm.list, filename=paste0(filename, '_peaks'), header=header, separate.files=separate.files)
     }
     if ('counts' %in% what) {
-        exportUnivariateReadCounts(hmm.list, filename=paste0(filename, '_counts'), header=header, separate.files=separate.files)
+        exportUnivariateCounts(hmm.list, filename=paste0(filename, '_counts'), header=header, separate.files=separate.files)
     }
 }
 
@@ -149,16 +142,6 @@ exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'counts'), hea
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
 exportUnivariatePeaks <- function(hmm.list, filename, header=TRUE, separate.files=FALSE) {
-
-    ## Function definitions
-    insertchr <- function(hmm.gr) {
-        # Change chromosome names from '1' to 'chr1' if necessary
-        mask <- which(!grepl('chr', seqnames(hmm.gr)))
-        mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
-        mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
-        mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
-        return(hmm.gr)
-    }
 
     ## Load models
     hmm.list <- loadHmmsFromFiles(hmm.list, check.class=class.univariate.hmm)
@@ -240,17 +223,7 @@ exportUnivariatePeaks <- function(hmm.list, filename, header=TRUE, separate.file
 #----------------------------------------------------
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
-exportUnivariateReadCounts <- function(hmm.list, filename, header=TRUE, separate.files=FALSE) {
-
-    ## Function definitions
-    insertchr <- function(hmm.gr) {
-        # Change chromosome names from '1' to 'chr1' if necessary
-        mask <- which(!grepl('chr', seqnames(hmm.gr)))
-        mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
-        mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
-        mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
-        return(hmm.gr)
-    }
+exportUnivariateCounts <- function(hmm.list, filename, header=TRUE, separate.files=FALSE) {
 
     ## Load models
     hmm.list <- loadHmmsFromFiles(hmm.list, check.class=class.univariate.hmm)
@@ -322,7 +295,7 @@ exportUnivariateReadCounts <- function(hmm.list, filename, header=TRUE, separate
 #' Export \code{\link{uniHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states and peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wig.gz).
 #'
 #' @author Aaron Taudt
-#' @param multi.hmm A \code{\link{multiHMM}} object or file that contains such an object.
+#' @param hmm A \code{\link{multiHMM}} object or file that contains such an object.
 #' @param filename The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for combinatorial states and peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.
 #' @param what A character vector specifying what will be exported. Supported are \code{c('combinations', 'peaks', 'counts')}.
 #' @param exclude.states A character vector with combinatorial states that will be excluded from export.
@@ -341,15 +314,15 @@ exportUnivariateReadCounts <- function(hmm.list, filename, header=TRUE, separate
 #'## Export peak calls and combinatorial states
 #'exportMultivariate(model, filename=tempfile(), what=c('peaks','combinations'))
 #'
-exportMultivariate <- function(multi.hmm, filename, what=c('combinations', 'peaks', 'counts'), exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE) {
+exportMultivariate <- function(hmm, filename, what=c('combinations', 'peaks', 'counts'), exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE) {
     if ('combinations' %in% what) {
-        exportMultivariateCalls(multi.hmm, filename=paste0(filename, '_combinations'), separate.tracks=FALSE, exclude.states=exclude.states, include.states=include.states, trackname=trackname, header=header)
+        exportMultivariateCalls(hmm, filename=paste0(filename, '_combinations'), separate.tracks=FALSE, exclude.states=exclude.states, include.states=include.states, trackname=trackname, header=header)
     }
     if ('peaks' %in% what) {
-        exportMultivariateCalls(multi.hmm, filename=paste0(filename, '_peaks'), separate.tracks=TRUE, exclude.states=exclude.states, include.states=include.states, header=header, separate.files=separate.files)
+        exportMultivariateCalls(hmm, filename=paste0(filename, '_peaks'), separate.tracks=TRUE, exclude.states=exclude.states, include.states=include.states, header=header, separate.files=separate.files)
     }
     if ('counts' %in% what) {
-        exportMultivariateReadCounts(multi.hmm, filename=paste0(filename, '_counts'), header=header, separate.files=separate.files)
+        exportMultivariateCounts(hmm, filename=paste0(filename, '_counts'), header=header, separate.files=separate.files)
     }
 }
 
@@ -358,16 +331,12 @@ exportMultivariate <- function(multi.hmm, filename, what=c('combinations', 'peak
 #----------------------------------------------------
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
-exportMultivariateCalls <- function(multi.hmm, filename, separate.tracks=TRUE, exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE) {
+exportMultivariateCalls <- function(hmm, filename, separate.tracks=TRUE, exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE) {
+
+    ## Load models
+    hmm <- loadHmmsFromFiles(hmm, check.class=class.multivariate.hmm)[[1]]
 
     ## Intercept user input
-    if (class(multi.hmm)!=class.multivariate.hmm) {
-        multi.hmm <- loadHmmsFromFiles(multi.hmm, check.class=class.multivariate.hmm)
-        if (class(multi.hmm)!=class.multivariate.hmm) {
-            stop("argument 'multi.hmm' expects a multivariate hmm or a file which contains a multivariate hmm")
-        }
-    }
-
     if (is.data.frame(exclude.states)) {
         exclude.states <- exclude.states$combination
     }
@@ -375,18 +344,8 @@ exportMultivariateCalls <- function(multi.hmm, filename, separate.tracks=TRUE, e
         include.states <- include.states$combination
     }
 
-    ## Function definitions
-    insertchr <- function(hmm.gr) {
-        # Change chromosome names from '1' to 'chr1' if necessary
-        mask <- which(!grepl('chr', seqnames(hmm.gr)))
-        mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
-        mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
-        mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
-        return(hmm.gr)
-    }
-
     ## Variables
-    combstates <- levels(multi.hmm$bins$combination)
+    combstates <- levels(hmm$bins$combination)
     numstates <- length(combstates)
     if (is.null(include.states)) {
         combstates2use <- setdiff(combstates, exclude.states)
@@ -394,10 +353,10 @@ exportMultivariateCalls <- function(multi.hmm, filename, separate.tracks=TRUE, e
         combstates2use <- intersect(combstates, include.states)
     }
     numstates <- length(combstates2use)
-    nummod <- length(multi.hmm$info$ID)
+    nummod <- length(hmm$info$ID)
 
     ## Insert chromosome if missing
-    segments.df <- as.data.frame(insertchr(multi.hmm$segments))
+    segments.df <- as.data.frame(insertchr(hmm$segments))
 
     # Select only desired states
     segments.df <- segments.df[segments.df$combination %in% combstates2use,]
@@ -416,10 +375,10 @@ exportMultivariateCalls <- function(multi.hmm, filename, separate.tracks=TRUE, e
 
     if (separate.tracks) {
         ## Export peak calls
-        bin <- dec2bin(segments.df$state, ndigits=length(multi.hmm$info$ID))
-        colnames(bin) <- multi.hmm$info$ID
+        bin <- dec2bin(segments.df$state, ndigits=length(hmm$info$ID))
+        colnames(bin) <- hmm$info$ID
         for (imod in 1:nummod) {
-            ID <- multi.hmm$info$ID[imod]
+            ID <- hmm$info$ID[imod]
             if (separate.files) {
                 filename.sep <- paste0(sub('.bed.gz$', '', filename), '_', ID, '.bed.gz')
                 filename.gz <- gzfile(filename.sep, 'w')
@@ -504,31 +463,17 @@ exportMultivariateCalls <- function(multi.hmm, filename, separate.tracks=TRUE, e
 #----------------------------------------------------
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
-exportMultivariateReadCounts <- function(multi.hmm, filename, header=TRUE, separate.files=FALSE) {
+exportMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=FALSE) {
 
-    if (class(multi.hmm)!=class.multivariate.hmm) {
-        multi.hmm <- loadHmmsFromFiles(multi.hmm, check.class=class.multivariate.hmm)
-        if (class(multi.hmm)!=class.multivariate.hmm) {
-            stop("argument 'multi.hmm' expects a multivariate hmm or a file which contains a multivariate hmm")
-        }
-    }
-
-    ## Function definitions
-    insertchr <- function(hmm.gr) {
-        # Change chromosome names from '1' to 'chr1' if necessary
-        mask <- which(!grepl('chr', seqnames(hmm.gr)))
-        mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
-        mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
-        mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
-        return(hmm.gr)
-    }
+    ## Load models
+    hmm <- loadHmmsFromFiles(hmm, check.class=class.multivariate.hmm)[[1]]
 
     ## Variables
     filename <- paste0(filename,".wig.gz")
     if (!separate.files) {
         filename.gz <- gzfile(filename, 'w')
     }
-    nummod <- length(multi.hmm$info$ID)
+    nummod <- length(hmm$info$ID)
     readcol <- paste(grDevices::col2rgb(getStateColors('counts')), collapse=',')
 
     # Write first line to file
@@ -539,7 +484,7 @@ exportMultivariateReadCounts <- function(multi.hmm, filename, header=TRUE, separ
     
     ### Write every model to file ###
     for (imod in 1:nummod) {
-        ID <- multi.hmm$info$ID[imod]
+        ID <- hmm$info$ID[imod]
         if (separate.files) {
             filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', ID, '.wig.gz')
             filename.gz <- gzfile(filename.sep, 'w')
@@ -549,19 +494,19 @@ exportMultivariateReadCounts <- function(multi.hmm, filename, header=TRUE, separ
             ptm <- startTimedMessage('  Writing track ',imod,' / ',nummod, ' ...')
         }
         priority <- 50 + 4*imod
-        binsize <- width(multi.hmm$bins[1])
+        binsize <- width(hmm$bins[1])
         if (header) {
             cat(paste0('track type=wiggle_0 name="read count for ',ID,'" description="read count for ',ID,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
         }
         # Write read data
-        for (chrom in seqlevels(multi.hmm$bins)) {
+        for (chrom in seqlevels(hmm$bins)) {
             if (!grepl('chr', chrom)) {
                 chromr <- sub(pattern='^', replacement='chr', chrom)
             } else {
                 chromr <- chrom
             }
             cat(paste0("fixedStep chrom=",chromr," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-            utils::write.table(multi.hmm$bins[seqnames(multi.hmm$bins)==chrom]$counts[,imod], file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
+            utils::write.table(hmm$bins[seqnames(hmm$bins)==chrom]$counts[,imod], file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
         }
         if (separate.files) {
             close(filename.gz)
@@ -586,7 +531,7 @@ exportMultivariateReadCounts <- function(multi.hmm, filename, header=TRUE, separ
 #' @author Aaron Taudt
 #' @param hmm A \code{\link{combinedMultiHMM}} object or file that contains such an object.
 #' @param filename The name of the file that will be written. The ending ".bed.gz" for combinatorial states will be appended. Any existing file will be overwritten.
-#' @param what A character vector specifying what will be exported. Supported are \code{c('combinations','peaks')}.
+#' @param what A character vector specifying what will be exported. Supported are \code{c('combinations','peaks','counts')}.
 #' @param exclude.states A vector of combinatorial states that will be excluded from export.
 #' @param include.states A vector of combinatorial states that will be exported. If specified, \code{exclude.states} is ignored.
 #' @param trackname Name that will be used in the "track name" field of the BED file.
@@ -609,6 +554,9 @@ exportCombinedMultivariate <- function(hmm, filename, what=c('combinations','pea
     if ('peaks' %in% what) {
         exportCombinedMultivariateCalls(hmm, filename=paste0(filename, '_peaks'), separate.tracks=TRUE, exclude.states=exclude.states, include.states=include.states, trackname=trackname, header=header, separate.files=separate.files)
     }
+    if ('counts' %in% what) {
+        exportCombinedMultivariateCounts(hmm, filename=paste0(filename, '_counts'), header=header, separate.files=separate.files)
+    }
 }
 
 #-----------------------------------------------------------------
@@ -618,23 +566,10 @@ exportCombinedMultivariate <- function(hmm, filename, what=c('combinations','pea
 #' @importFrom grDevices col2rgb
 exportCombinedMultivariateCalls <- function(hmm, filename, separate.tracks=TRUE, exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE) {
 
-    if (class(hmm)!=class.combined.multivariate.hmm) {
-        hmm <- loadHmmsFromFiles(hmm, check.class=class.combined.multivariate.hmm)
-        if (class(hmm)!=class.combined.multivariate.hmm) {
-            stop("argument 'hmm' expects a combined multivariate hmm or a file which contains an object")
-        }
-    }
+    ## Load models
+    hmm <- loadHmmsFromFiles(hmm, check.class=class.combined.multivariate.hmm)[[1]]
 
     ## Function definitions
-    insertchr <- function(hmm.gr) {
-        # Change chromosome names from '1' to 'chr1' if necessary
-        mask <- which(!grepl('chr', seqnames(hmm.gr)))
-        mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
-        mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
-        mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
-        return(hmm.gr)
-    }
-
     ## Write first line to file
     if (!separate.files) {
         filename <- paste0(filename,".bed.gz")
@@ -758,6 +693,67 @@ exportCombinedMultivariateCalls <- function(hmm, filename, separate.tracks=TRUE,
 }
 
 
+#----------------------------------------------------
+# Export read counts from combinedMultiHMM
+#----------------------------------------------------
+#' @importFrom utils write.table
+#' @importFrom grDevices col2rgb
+exportCombinedMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=FALSE) {
+
+    ## Load models
+    hmm <- loadHmmsFromFiles(hmm, check.class=class.combined.multivariate.hmm)[[1]]
+
+    ## Variables
+    filename <- paste0(filename,".wig.gz")
+    if (!separate.files) {
+        filename.gz <- gzfile(filename, 'w')
+    }
+    nummod <- length(hmm$info$ID)
+    readcol <- paste(grDevices::col2rgb(getStateColors('counts')), collapse=',')
+
+    # Write first line to file
+    if (!separate.files) {
+        message('Writing to file ',filename)
+        cat("", file=filename.gz)
+    }
+    
+    ### Write every model to file ###
+    for (imod in 1:nummod) {
+        ID <- hmm$info$ID[imod]
+        if (separate.files) {
+            filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', ID, '.wig.gz')
+            filename.gz <- gzfile(filename.sep, 'w')
+            ptm <- startTimedMessage('Writing to file ',filename.sep, ' ...')
+            cat("", file=filename.gz)
+        } else {
+            ptm <- startTimedMessage('  Writing track ',imod,' / ',nummod, ' ...')
+        }
+        priority <- 50 + 4*imod
+        binsize <- width(hmm$bins[1])
+        if (header) {
+            cat(paste0('track type=wiggle_0 name="read count for ',ID,'" description="read count for ',ID,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
+        }
+        # Write read data
+        for (chrom in seqlevels(hmm$bins)) {
+            if (!grepl('chr', chrom)) {
+                chromr <- sub(pattern='^', replacement='chr', chrom)
+            } else {
+                chromr <- chrom
+            }
+            cat(paste0("fixedStep chrom=",chromr," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
+            utils::write.table(hmm$bins[seqnames(hmm$bins)==chrom]$counts[,imod], file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
+        }
+        if (separate.files) {
+            close(filename.gz)
+        }
+        stopTimedMessage(ptm)
+    }
+    if (!separate.files) {
+        close(filename.gz)
+    }
+}
+
+
 #====================================================
 # Export regions from GRanges
 #====================================================
@@ -799,16 +795,6 @@ exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination
     if (length(gr)==0) {
         warning("Supplied GRanges object contains no ranges.")
         return()
-    }
-
-    ## Function definitions
-    insertchr <- function(hmm.gr) {
-        # Change chromosome names from '1' to 'chr1' if necessary
-        mask <- which(!grepl('chr', seqnames(hmm.gr)))
-        mcols(hmm.gr)$chromosome <- as.character(seqnames(hmm.gr))
-        mcols(hmm.gr)$chromosome[mask] <- sub(pattern='^', replacement='chr', mcols(hmm.gr)$chromosome[mask])
-        mcols(hmm.gr)$chromosome <- as.factor(mcols(hmm.gr)$chromosome)
-        return(hmm.gr)
     }
 
     ## Transform to GRanges

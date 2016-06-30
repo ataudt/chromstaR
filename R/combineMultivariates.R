@@ -106,6 +106,7 @@ combineMultivariates <- function(hmms, mode) {
                 stopTimedMessage(ptm)
             }
         }
+        ptm <- startTimedMessage("Concatenating conditions ...")
         counts <- do.call(cbind, counts)
         posteriors <- do.call(cbind, posteriors)
         infos <- do.call(rbind, infos)
@@ -114,6 +115,7 @@ combineMultivariates <- function(hmms, mode) {
         names(states) <- NULL
         names(combs) <- conditions
         combs.df <- as(combs,'DataFrame')
+        stopTimedMessage(ptm)
         
     } else if (mode == 'condition') {
         ### Get posteriors and binary states
@@ -130,6 +132,7 @@ combineMultivariates <- function(hmms, mode) {
             binstates[[i1]] <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
             stopTimedMessage(ptm)
         }
+        ptm <- startTimedMessage("Concatenating HMMs ...")
         counts <- do.call(cbind, counts)
         posteriors <- do.call(cbind, posteriors)
         infos <- do.call(rbind, infos)
@@ -137,10 +140,12 @@ combineMultivariates <- function(hmms, mode) {
         binstates <- do.call(cbind, binstates)
         states <- factor(bin2dec(binstates))
         names(states) <- NULL
+        stopTimedMessage(ptm)
 
         bins <- hmm$bins
         mcols(bins) <- NULL
 
+        ptm <- startTimedMessage("Making combinations ...")
         combs <- list()
         for (condition in conditions) {
             index <- which(infos$condition==condition)
@@ -155,6 +160,7 @@ combineMultivariates <- function(hmms, mode) {
         }
         combs.df <- as.data.frame(combs) # get factors instead of characters
         combs.df <- as(combs.df, 'DataFrame')
+        stopTimedMessage(ptm)
         
     } else if (mode == 'full') {
         if (length(hmms) > 1) {
@@ -209,11 +215,15 @@ combineMultivariates <- function(hmms, mode) {
                 stopTimedMessage(ptm)
             }
         }
+        ptm <- startTimedMessage("Concatenating mark-conditions ...")
         counts <- do.call(cbind, counts)
         posteriors <- do.call(cbind, posteriors)
         binstates <- do.call(cbind, binstates)
         infos <- do.call(rbind, infos)
         conditions <- unique(infos$condition)
+        stopTimedMessage(ptm)
+        
+        ptm <- startTimedMessage("Making combinations ...")
         combs <- list()
         for (condition in conditions) {
             index <- which(infos$condition==condition)
@@ -226,13 +236,16 @@ combineMultivariates <- function(hmms, mode) {
         }
         names(combs) <- conditions
         combs.df <- as(combs,'DataFrame')
+        stopTimedMessage(ptm)
     } else {
         stop("Unknown mode '", mode, "'.")
     }
     # Reassign levels such that all conditions have the same levels
+    ptm <- startTimedMessage("Reassigning levels ...")
     comblevels <- sort(unique(unlist(lapply(combs.df, levels))))
     combs.df <- endoapply(combs.df, function(x) { x <- factor(x, levels=comblevels) })
     names(combs.df) <- paste0('combination.', names(combs.df))
+    stopTimedMessage(ptm)
 
     ## Assign transition groups
     ptm <- startTimedMessage("Assigning transition groups ...")

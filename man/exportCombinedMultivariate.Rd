@@ -13,7 +13,7 @@ exportCombinedMultivariate(hmm, filename, what = c("combinations", "peaks"),
 
 \item{filename}{The name of the file that will be written. The ending ".bed.gz" for combinatorial states will be appended. Any existing file will be overwritten.}
 
-\item{what}{A character vector specifying what will be exported. Supported are \code{c('combinations','peaks')}.}
+\item{what}{A character vector specifying what will be exported. Supported are \code{c('combinations','peaks','counts')}.}
 
 \item{exclude.states}{A vector of combinatorial states that will be excluded from export.}
 

@@ -3,6 +3,7 @@
 #' @import IRanges
 #' @import GenomicRanges
 #' @import chromstaRData
+#' @importFrom methods as is
 NULL
 
 # =======================================================
