@@ -100,6 +100,10 @@ check.experiment.table <- function(experiment.table) {
     if (any(grepl('[[:punct:]]', marks)) | any(grepl('[[:punct:]]', marks))) {
         stop("Column 'mark' of the experiment.table cannot contain special characters or spaces.")
     }
+    replicates <- unique(experiment.table$replicate)
+    if (any(grepl('[[:punct:]]', replicates)) | any(grepl('[[:punct:]]', replicates))) {
+        stop("Column 'replicate' of the experiment.table cannot contain special characters or spaces.")
+    }
     
     return(err)
 }

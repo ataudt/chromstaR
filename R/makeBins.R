@@ -126,7 +126,7 @@ fixedWidthBins <- function(bamfile=NULL, assembly=NULL, chrom.lengths=NULL, chro
 variableWidthBins <- function(reads, binsizes, chromosomes=NULL) {
     
     ### Check user input ###
-    chroms.in.data <- seqlevels(reads)
+    chroms.in.data <- unique(seqnames(reads))
     if (is.null(chromosomes)) {
         chromosomes <- chroms.in.data
     }

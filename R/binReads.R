@@ -186,7 +186,7 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
     bins.list <- c(bins, bins.binsize, bins.rpb)
  
     ### Loop over all binsizes ###
-    if (!use.bamsignals) {
+    if (!use.bamsignals | format=='bed' | format=='GRanges') {
         ptm <- startTimedMessage("Splitting into strands ...")
         data.plus <- data[strand(data)=='+']
         data.minus <- data[strand(data)=='-']

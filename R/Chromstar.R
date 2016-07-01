@@ -371,15 +371,15 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         ptm <- startTimedMessage("Plotting read count correlation ...")
         char.per.cm <- 10
         legend.cm <- 3
+        tiles.per.cm <- 0.66
+        min.tiles <- 5
+        width <- max(min.tiles, length(combined.model$info$ID)) / tiles.per.cm + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
+        height <- max(min.tiles, length(combined.model$info$ID)) / tiles.per.cm + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
         savename <- file.path(plotpath, 'read-count-correlation.pdf')
         ggplt <- heatmapCountCorrelation(combined.model, cluster=FALSE)
-        width <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
-        height <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
         ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
         savename <- file.path(plotpath, 'read-count-correlation-clustered.pdf')
         ggplt <- heatmapCountCorrelation(combined.model, cluster=TRUE)
-        width <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
-        height <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
         ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
         stopTimedMessage(ptm)
       
@@ -504,6 +504,21 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     } else {
         combined.model <- loadHmmsFromFiles(savename, check.class=class.combined.multivariate.hmm)[[1]]
     }
+    ## Plot correlations
+    ptm <- startTimedMessage("Plotting read count correlation ...")
+    char.per.cm <- 10
+    legend.cm <- 3
+    tiles.per.cm <- 0.66
+    min.tiles <- 5
+    width <- max(min.tiles, length(combined.model$info$ID)) / tiles.per.cm + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
+    height <- max(min.tiles, length(combined.model$info$ID)) / tiles.per.cm + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
+    savename <- file.path(plotpath, 'read-count-correlation.pdf')
+    ggplt <- heatmapCountCorrelation(combined.model, cluster=FALSE)
+    ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
+    savename <- file.path(plotpath, 'read-count-correlation-clustered.pdf')
+    ggplt <- heatmapCountCorrelation(combined.model, cluster=TRUE)
+    ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
+    stopTimedMessage(ptm)
   
     #-------------------------
     ## Export browser files ##
