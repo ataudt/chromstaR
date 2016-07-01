@@ -5,7 +5,7 @@
 \title{Fit a multivariate Hidden Markov Model to multiple ChIP-seq replicates}
 \usage{
 callPeaksReplicates(hmm.list, max.states = 32, force.equal = FALSE,
-  eps = 0.01, max.iter = NULL, max.time = NULL, keep.posteriors = FALSE,
+  eps = 0.01, max.iter = NULL, max.time = NULL, keep.posteriors = TRUE,
   num.threads = 1, max.distance = 0.2, per.chrom = TRUE)
 }
 \arguments{

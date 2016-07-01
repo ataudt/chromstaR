@@ -458,9 +458,9 @@ exportMultivariatePeaks <- function(hmm, filename, trackname=NULL, header=TRUE, 
         }
         if (header) {
             if (is.null(trackname)) {
-                trackname.string <- paste0("peaks for ", colnames(bin)[imod])
+                trackname.string <- paste0("peaks for ", ID)
             } else {
-                trackname.string <- paste0("peaks for ", colnames(bin)[imod], ", ", trackname)
+                trackname.string <- paste0("peaks for ", ID, ", ", trackname)
             }
             priority <- 52 + 4*imod
             cat(paste0('track name="', trackname.string, '" description="', trackname.string, '" visibility=1 itemRgb=On priority=',priority,'\n'), file=filename.gz, append=TRUE)
@@ -633,9 +633,9 @@ exportCombinedMultivariatePeaks <- function(hmm, filename, trackname=NULL, heade
         }
         if (header) {
             if (is.null(trackname)) {
-                trackname.string <- paste0("peaks for ", colnames(bin)[imod])
+                trackname.string <- paste0("peaks for ", ID)
             } else {
-                trackname.string <- paste0("peaks for ", colnames(bin)[imod], ", ", trackname)
+                trackname.string <- paste0("peaks for ", ID, ", ", trackname)
             }
             priority <- 52 + 4*imod
             cat(paste0('track name="', trackname.string, '" description="', trackname.string, '" visibility=1 itemRgb=On priority=',priority,'\n'), file=filename.gz, append=TRUE)
