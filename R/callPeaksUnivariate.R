@@ -433,8 +433,8 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     ## Segmentation
         ptm <- startTimedMessage("Making segmentation ...")
         df <- as.data.frame(result$bins)
-        red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c('score'), columns2drop=c('width',grep('posterior', names(df), value=TRUE), 'counts')))
-        red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], score=red.df[,'mean.score'])
+        red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2getMax=c('score'), columns2drop=c('width',grep('posterior', names(df), value=TRUE), 'counts')))
+        red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], score=red.df[,'max.score'])
         result$segments <- red.gr
         seqlengths(result$segments) <- seqlengths(binned.data)[seqlevels(result$segments)]
         if (!keep.posteriors) {

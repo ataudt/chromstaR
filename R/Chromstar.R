@@ -386,6 +386,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         #-------------------------
         ## Export browser files ##
         #-------------------------
+        messageU("Exporting browser files")
         if (!file.exists(browserpath)) { dir.create(browserpath) }
         savename <- file.path(browserpath, paste0('combined_mode-', modename))
         trackname <- paste0('mode-', modename)
@@ -523,6 +524,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #-------------------------
     ## Export browser files ##
     #-------------------------
+    messageU("Exporting browser files")
     if (!file.exists(browserpath)) { dir.create(browserpath) }
     savename <- file.path(browserpath, paste0('combined_mode-', mode))
     trackname <- paste0('mode-', mode)
