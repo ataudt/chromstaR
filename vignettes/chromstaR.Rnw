@@ -52,10 +52,10 @@ binned.data <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
 print(binned.data)
 @
 
-<<univariate_narrow_peak_calling, results='markup', eval=TRUE>>=
+<<univariate_narrow_peak_calling, results='markup', eval=TRUE, message=FALSE>>=
 ## === Step 2: Peak calling ===
-# We restrict the peak calling to 60 seconds to keep this example quick.
-model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
+# We keep the posterior probabilities to be able to change the cutoff later in step 4)
+model <- callPeaksUnivariate(binned.data, verbosity=0, keep.posteriors=TRUE)
 @
 
 <<univariate_narrow_plotting, fig.width=6, fig.height=4, out.width='0.5\\textwidth'>>=
@@ -65,8 +65,22 @@ model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
 plotHistogram(model) + ggtitle('H3K4me3')
 @
 
+<<univariate_narrow_posterior, results='markup', message=FALSE, eval=TRUE>>=
+## === Step 4: Working with peaks ===
+# Get the number and average size of peaks
+segments <- model$segments
+peaks <- segments[segments$state == 'modified']
+length(peaks); mean(width(peaks))
+
+# Change the posterior cutoff and get number of peaks
+model <- changePostCutoff(model, post.cutoff=0.999)
+segments <- model$segments
+peaks <- segments[segments$state == 'modified']
+length(peaks); mean(width(peaks))
+@
+
 <<univariate_narrow_export, results='hide', message=FALSE, eval=TRUE>>=
-## === Step 4: Export to genome browser ===
+## === Step 5: Export to genome browser ===
 # We can export peak calls and binned read counts with
 exportUnivariates(list(model), filename=tempfile(), what=c('peaks','counts'))
 @
@@ -95,10 +109,10 @@ binned.data <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
                         chromosomes='chr12')
 @
 
-<<univariate_broad_peak_calling, results='markup', eval=TRUE>>=
+<<univariate_broad_peak_calling, results='markup', eval=TRUE, message=FALSE>>=
 ## === Step 2: Peak calling ===
-# We restrict the peak calling to 60 seconds to keep this example quick.
-model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
+# We keep the posterior probabilities to be able to change the cutoff later in step 4)
+model <- callPeaksUnivariate(binned.data, verbosity=0, keep.posteriors=TRUE)
 @
 
 <<univariate_broad_plotting, fig.width=6, fig.height=4, out.width='0.5\\textwidth'>>=
@@ -108,8 +122,24 @@ model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
 plotHistogram(model) + ggtitle('H3K27me3')
 @
 
+<<univariate_broad_posterior, results='markup', message=FALSE, eval=TRUE>>=
+## === Step 4: Working with peaks ===
+# Get the number and average size of peaks
+segments <- model$segments
+peaks <- segments[segments$state == 'modified']
+length(peaks); mean(width(peaks))
+
+# Change the posterior cutoff and get number of peaks
+# !! Note that for broad peaks, setting a posterior cutoff
+# will split the peaks into smaller, better defined peaks !!
+model <- changePostCutoff(model, post.cutoff=0.999)
+segments <- model$segments
+peaks <- segments[segments$state == 'modified']
+length(peaks); mean(width(peaks))
+@
+
 <<univariate_broad_export, results='hide', message=FALSE, eval=TRUE>>=
-## === Step 4: Export to genome browser ===
+## === Step 5: Export to genome browser ===
 # We can export peak calls and binned read counts with
 exportUnivariates(list(model), filename=tempfile(), what=c('peaks','counts'))
 @
@@ -128,7 +158,7 @@ plotHistogram(model) + ggtitle('H4K20me1')
 
 \subsection{Task 3: Peak calling for ATAC-seq, DNase-seq, FAIRE-seq, ...}
 
-Peak calling for ATAC-seq and DNase-seq is similar to the peak calling of a narrow histone modification (see section~\ref{sec:narrow}). FAIRE-seq experiments seem to exhibit a broad profile with our model, so the procedure is similar to the domain calling of a broad histone modification (see section~\ref{sec:broad}).
+Peak calling for ATAC-seq and DNase-seq is similar to the peak calling of a narrow histone modification (section~\ref{sec:narrow}). FAIRE-seq experiments seem to exhibit a broad profile with our model, so the procedure is similar to the domain calling of a broad histone modification (section~\ref{sec:broad}).
 
 \section{Multivariate analysis}
 \subsection{Task 1: Integrating multiple replicates}
