@@ -202,10 +202,10 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
         bins <- bins.list[[ibinsize]]
         if (format == 'bam' & use.bamsignals) {
             ptm <- startTimedMessage("Counting overlaps for binsize ", binsize, " ...")
-            counts <- tryCatch({
+            bins$counts <- tryCatch({
                 bins$counts <- bamsignals::bamCount(file, bins, mapqual=min.mapq, paired.end=paired.end, tlenFilter=c(0, max.fragment.width), verbose=FALSE)
             }, error = function(err) {
-                bins$counts <- bamsignals::bamCount(file, bins, mapqual=min.mapq, paired.end=paired.end, paired.end.max.frag.length=max.fragment.width, verbose=FALSE)
+                bins$counts <<- bamsignals::bamCount(file, bins, mapqual=min.mapq, paired.end=paired.end, paired.end.max.frag.length=max.fragment.width, verbose=FALSE)
             })
             stopTimedMessage(ptm)
             
