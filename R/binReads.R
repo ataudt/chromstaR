@@ -175,7 +175,11 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
     } else if (use.bamsignals & !is.null(reads.per.bin)) {
         ptm <- startTimedMessage("Parsing bamfile to determine binsize for reads.per.bin option ...")
         bins.helper <- suppressMessages( fixedWidthBins(chrom.lengths=chrom.lengths, chromosomes=chroms2use, binsizes=1e6)[[1]] )
-        counts <- bamsignals::bamCount(file, bins.helper, mapqual=min.mapq, paired.end=paired.end, tlenFilter=c(0, max.fragment.width), verbose=FALSE)
+        counts <- tryCatch({
+            counts <- bamsignals::bamCount(file, bins.helper, mapqual=min.mapq, paired.end=paired.end, tlenFilter=c(0, max.fragment.width), verbose=FALSE)
+        }, error = function(err) {
+            counts <- bamsignals::bamCount(file, bins.helper, mapqual=min.mapq, paired.end=paired.end, paired.end.max.frag.length=max.fragment.width, verbose=FALSE)
+        })
         stopTimedMessage(ptm)
         numcountsperbp <- sum(as.numeric(counts)) / sum(as.numeric(chrom.lengths[chroms2use]))
         binsizes.rpb <- round(reads.per.bin / numcountsperbp, -2)
@@ -198,7 +202,11 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
         bins <- bins.list[[ibinsize]]
         if (format == 'bam' & use.bamsignals) {
             ptm <- startTimedMessage("Counting overlaps for binsize ", binsize, " ...")
-            bins$counts <- bamsignals::bamCount(file, bins, mapqual=min.mapq, paired.end=paired.end, tlenFilter=c(0, max.fragment.width), verbose=FALSE)
+            counts <- tryCatch({
+                bins$counts <- bamsignals::bamCount(file, bins, mapqual=min.mapq, paired.end=paired.end, tlenFilter=c(0, max.fragment.width), verbose=FALSE)
+            }, error = function(err) {
+                bins$counts <- bamsignals::bamCount(file, bins, mapqual=min.mapq, paired.end=paired.end, paired.end.max.frag.length=max.fragment.width, verbose=FALSE)
+            })
             stopTimedMessage(ptm)
             
         } else {
