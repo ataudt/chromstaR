@@ -1,8 +1,13 @@
-messageU <- function(..., underline='=') {
+messageU <- function(..., underline='=', overline='=') {
 
     x <- paste0(..., collapse='')
+    if (!is.null(overline)) {
+        message(rep(overline, nchar(x)))
+    }
     message(x)
-    message(rep(underline, nchar(x)))
+    if (!is.null(underline)) {
+        message(rep(underline, nchar(x)))
+    }
 
 }
 

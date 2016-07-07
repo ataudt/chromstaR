@@ -174,6 +174,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #==============
     ### Binning ###
     #==============
+    messageU("Binning the data")
     ### Get chromosome lengths ###
     ## Get first bam file
     bamfile <- grep('bam$', datafiles, value=TRUE)[1]
@@ -259,6 +260,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #==============================
     ### Univariate peak calling ###
     #==============================
+    messageU("Calling univariate peaks")
     ## Parallelization ##
     if (numcpu > 1) {
         ptm <- startTimedMessage("Setting up parallel execution with ", numcpu, " threads ...")
@@ -442,7 +444,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #---------------------------
     } else if (mode == 'mark') {
         for (condition in conditions) {
-            messageU("condition = ", condition, underline='-')
+            messageU("condition = ", condition, underline='-', overline='-')
             savename <- file.path(multipath, paste0('multivariate_mode-', mode, '_condition-', condition, '.RData'))
             if (!file.exists(savename)) {
                 mask <- exp.table[,'condition'] == condition
@@ -463,7 +465,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #--------------------------------
     } else if (mode == 'condition') {
         for (mark in marks) {
-            messageU("mark = ", mark, underline='-')
+            messageU("mark = ", mark, underline='-', overline='-')
             savename <- file.path(multipath, paste0('multivariate_mode-', mode, '_mark-', mark, '.RData'))
             if (!file.exists(savename)) {
                 mask <- exp.table[,'mark'] == mark
@@ -488,12 +490,6 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #================================
     messageU("Combining multivariate HMMs")
     multifiles <- list.files(multipath, full.names=TRUE, pattern=paste0('mode-',mode))
-    if (mode=='condition') {
-        names(multifiles) <- marks
-    }
-    if (mode=='mark') {
-        names(multifiles) <- conditions
-    }
 
     if (!file.exists(combipath)) { dir.create(combipath) }
     savename <- file.path(combipath, paste0('combined_mode-', mode, '.RData'))

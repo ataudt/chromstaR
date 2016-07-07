@@ -10,7 +10,7 @@ loadHmmsFromFiles(files, check.class = c("GRanges", "uniHMM", "multiHMM",
 \arguments{
 \item{files}{A list of \code{\link{chromstaR-objects}} or a vector of files that contain such objects.}
 
-\item{check.class}{Any combination of \code{c('uniHMM', 'multiHMM', 'combinedMultiHMM')}. If any of the loaded objects does not belong to the specified class, an error is thrown.}
+\item{check.class}{Any combination of \code{c('GRanges', 'uniHMM', 'multiHMM', 'combinedMultiHMM')}. If any of the loaded objects does not belong to the specified class, an error is thrown.}
 }
 \value{
 A list of \code{\link[chromstaR:chromstaR-objects]{chromstaR-object}}.

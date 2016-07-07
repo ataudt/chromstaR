@@ -5,6 +5,8 @@
 #' This is a simple convenience function to read a bed(.gz)-file into a \code{\link{GRanges}} object. The bed-file is expected to have the following fields: \code{chromosome, start, end, name, score, strand}.
 #'
 #' @param bedfile Filename of the bed or bed.gz file.
+#' @param col.names A character vector giving the names of the columns in the \code{bedfile}. Must contain at least \code{c('chromosome','start','end')}.
+#' @param col.classes A character vector giving the classes of the columns in \code{bedfile}. Speeds up the import.
 #' @param skip Number of lines to skip at the beginning.
 #' @param chromosome.format Desired format of the chromosomes. Either 'NCBI' for (1,2,3 ...) or 'UCSC' for (chr1,chr2,chr3 ...).
 #' @return A \code{\link{GRanges}} object with the contents of the bed-file.
@@ -19,24 +21,28 @@
 #'## Import the file and skip the first 10 lines
 #'data <- readCustomBedFile(bedfile, skip=10)
 #'
-readCustomBedFile <- function(bedfile, skip=0, chromosome.format='NCBI') {
+readCustomBedFile <- function(bedfile, col.names=c('chromosome','start','end','name','score','strand'), col.classes=NULL, skip=0, chromosome.format='NCBI') {
 
-    # File with reads, determine classes first for faster import (0-based)
-    classes <- c('character','numeric','numeric','character','integer','character')
-    data <- utils::read.table(bedfile, colClasses=classes, skip=skip)
-    # GRanges compatible strand information
-    data[,6] <- sub('.','*',data[,6])
+    if (!is.null(col.classes)) {
+        names(col.classes) <- col.names
+        data <- utils::read.table(bedfile, col.names=col.names, colClasses=col.classes, skip=skip)
+    } else {
+        data <- utils::read.table(bedfile, col.names=col.names, skip=skip)
+    }
+    if (!is.null(data$strand)) {
+        # GRanges compatible strand information
+        data$strand <- sub('.','*',data$strand)
+    } else {
+        data$strand <- '*'
+    }
     # Adjust chromosome format
-    data[,1] <- sub('^chr', '', data[,1])
+    data$chromosome <- sub('^chr', '', data$chromosome)
     if (chromosome.format=='UCSC') {
-        data[,1] <- paste0('chr', data[,1])
+        data$chromosome <- paste0('chr', data$chromosome)
     }
     # Convert to GRanges object
-    gr <- GenomicRanges::GRanges(seqnames=data[,1],
-                                ranges=IRanges(start=data[,2]+1, end=data[,3]),    # +1 to match coordinate systems
-                                strand=data[,6],
-                                name=data[,4],
-                                score=data[,5])
+    gr <- methods::as(data, 'GRanges')
+    start(gr) <- start(gr) + 1
 
     return(gr)
 
