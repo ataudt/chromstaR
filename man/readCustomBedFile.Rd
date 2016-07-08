@@ -4,10 +4,16 @@
 \alias{readCustomBedFile}
 \title{Read bed-file into GRanges}
 \usage{
-readCustomBedFile(bedfile, skip = 0, chromosome.format = "NCBI")
+readCustomBedFile(bedfile, col.names = c("chromosome", "start", "end", "name",
+  "score", "strand"), col.classes = NULL, skip = 0,
+  chromosome.format = "NCBI")
 }
 \arguments{
 \item{bedfile}{Filename of the bed or bed.gz file.}
+
+\item{col.names}{A character vector giving the names of the columns in the \code{bedfile}. Must contain at least \code{c('chromosome','start','end')}.}
+
+\item{col.classes}{A character vector giving the classes of the columns in \code{bedfile}. Speeds up the import.}
 
 \item{skip}{Number of lines to skip at the beginning.}
 

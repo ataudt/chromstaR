@@ -42,7 +42,7 @@ insertchr <- function(gr) {
 #'## Export the binned read counts
 #'exportBinnedData(list(binned), filename=tempfile())
 #'
-exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.files=FALSE) {
+exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.files=TRUE) {
 
     ## Load data
     binned.data.list <- loadHmmsFromFiles(binned.data.list)
@@ -127,7 +127,7 @@ exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.f
 #'## Export
 #'exportUnivariates(list(hmm), filename=tempfile(), what=c('peaks','counts'))
 #'
-exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'counts'), header=TRUE, separate.files=FALSE) {
+exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'counts'), header=TRUE, separate.files=TRUE) {
     if ('peaks' %in% what) {
         exportUnivariatePeaks(hmm.list, filename=paste0(filename, '_peaks'), header=header, separate.files=separate.files)
     }
@@ -141,7 +141,7 @@ exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'counts'), hea
 #----------------------------------------------------
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
-exportUnivariatePeaks <- function(hmm.list, filename, header=TRUE, separate.files=FALSE) {
+exportUnivariatePeaks <- function(hmm.list, filename, header=TRUE, separate.files=TRUE) {
 
     ## Load models
     hmm.list <- loadHmmsFromFiles(hmm.list, check.class=class.univariate.hmm)
@@ -223,7 +223,7 @@ exportUnivariatePeaks <- function(hmm.list, filename, header=TRUE, separate.file
 #----------------------------------------------------
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
-exportUnivariateCounts <- function(hmm.list, filename, header=TRUE, separate.files=FALSE) {
+exportUnivariateCounts <- function(hmm.list, filename, header=TRUE, separate.files=TRUE) {
 
     ## Load models
     hmm.list <- loadHmmsFromFiles(hmm.list, check.class=class.univariate.hmm)
@@ -314,7 +314,7 @@ exportUnivariateCounts <- function(hmm.list, filename, header=TRUE, separate.fil
 #'## Export peak calls and combinatorial states
 #'exportMultivariate(model, filename=tempfile(), what=c('peaks','combinations'))
 #'
-exportMultivariate <- function(hmm, filename, what=c('combinations', 'peaks', 'counts'), exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE) {
+exportMultivariate <- function(hmm, filename, what=c('combinations', 'peaks', 'counts'), exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=TRUE) {
     if ('combinations' %in% what) {
         exportMultivariateCombinations(hmm, filename=paste0(filename, '_combinations'), exclude.states=exclude.states, include.states=include.states, trackname=trackname, header=header)
     }
@@ -402,7 +402,7 @@ exportMultivariateCombinations <- function(hmm, filename, separate.tracks=TRUE, 
 
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
-exportMultivariatePeaks <- function(hmm, filename, trackname=NULL, header=TRUE, separate.files=FALSE) {
+exportMultivariatePeaks <- function(hmm, filename, trackname=NULL, header=TRUE, separate.files=TRUE) {
 
     ## Load models
     hmm <- loadHmmsFromFiles(hmm, check.class=class.multivariate.hmm)[[1]]
@@ -426,15 +426,24 @@ exportMultivariatePeaks <- function(hmm, filename, trackname=NULL, header=TRUE, 
         ## Collapse bins by column imod
         ptm <- startTimedMessage("Collapsing track ", ID, " ...")
         ID.dot <- gsub('-', '.', ID)
-        bins.imod <- bins.df[c('chromosome', 'start', 'end', 'combination', paste0('posteriors.',ID.dot), paste0('bin.',ID.dot))]
-        segments.df <- suppressMessages( collapseBins(bins.imod, column2collapseBy=paste0('bin.',ID.dot), columns2getMax=paste0('posteriors.',ID.dot)) )
+        if (!is.null(bins$posteriors)) {
+            bins.imod <- bins.df[c('chromosome', 'start', 'end', paste0('combination.',cond), paste0('posteriors.',ID.dot), paste0('bin.',ID.dot))]
+            segments.df <- suppressMessages( collapseBins(bins.imod, column2collapseBy=paste0('bin.',ID.dot), columns2getMax=paste0('posteriors.',ID.dot)) )
+        } else {
+            bins.imod <- bins.df[c('chromosome', 'start', 'end', paste0('combination.',cond), paste0('bin.',ID.dot))]
+            segments.df <- suppressMessages( collapseBins(bins.imod, column2collapseBy=paste0('bin.',ID.dot)) )
+        } 
         stopTimedMessage(ptm)
         
         ## Select only segments with peaks
         segments.df <- segments.df[segments.df[,paste0('bin.',ID.dot)] == TRUE, ]
         
         ## Score
-        segments.df$score <- round(segments.df[,paste0('max.posteriors.',ID.dot)] * 1000)
+        if (!is.null(bins$posteriors)) {
+            segments.df$score <- round(segments.df[,paste0('max.posteriors.',ID.dot)] * 1000)
+        } else {
+            segments.df$score <- 0
+        }
         
         # Data.frame for write.table
         df <- segments.df[,c('chromosome','start','end','combination','score')]
@@ -478,7 +487,7 @@ exportMultivariatePeaks <- function(hmm, filename, trackname=NULL, header=TRUE, 
 
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
-exportMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=FALSE) {
+exportMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=TRUE) {
 
     ## Load models
     hmm <- loadHmmsFromFiles(hmm, check.class=class.multivariate.hmm)[[1]]
@@ -562,7 +571,7 @@ exportMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=
 #'## Export peak calls and combinatorial states
 #'exportCombinedMultivariate(model, filename=tempfile(), what=c('peaks','combinations'))
 #'
-exportCombinedMultivariate <- function(hmm, filename, what=c('combinations','peaks'), exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE) {
+exportCombinedMultivariate <- function(hmm, filename, what=c('combinations','peaks'), exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=TRUE) {
     if ('combinations' %in% what) {
         exportCombinedMultivariateCombinations(hmm, filename=paste0(filename, '_combinations'), exclude.states=exclude.states, include.states=include.states, trackname=trackname, header=header, separate.files=separate.files)
     }
@@ -576,7 +585,7 @@ exportCombinedMultivariate <- function(hmm, filename, what=c('combinations','pea
 
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
-exportCombinedMultivariatePeaks <- function(hmm, filename, trackname=NULL, header=TRUE, separate.files=FALSE) {
+exportCombinedMultivariatePeaks <- function(hmm, filename, trackname=NULL, header=TRUE, separate.files=TRUE) {
 
     ## Load models
     hmm <- loadHmmsFromFiles(hmm, check.class=class.combined.multivariate.hmm)[[1]]
@@ -601,15 +610,24 @@ exportCombinedMultivariatePeaks <- function(hmm, filename, trackname=NULL, heade
         ## Collapse bins by column imod
         ptm <- startTimedMessage("Collapsing track ", ID, " ...")
         ID.dot <- gsub('-', '.', ID)
-        bins.imod <- bins.df[c('chromosome', 'start', 'end', paste0('combination.',cond), paste0('posteriors.',ID.dot), paste0('bin.',ID.dot))]
-        segments.df <- suppressMessages( collapseBins(bins.imod, column2collapseBy=paste0('bin.',ID.dot), columns2getMax=paste0('posteriors.',ID.dot)) )
+        if (!is.null(bins$posteriors)) {
+            bins.imod <- bins.df[c('chromosome', 'start', 'end', paste0('combination.',cond), paste0('posteriors.',ID.dot), paste0('bin.',ID.dot))]
+            segments.df <- suppressMessages( collapseBins(bins.imod, column2collapseBy=paste0('bin.',ID.dot), columns2getMax=paste0('posteriors.',ID.dot)) )
+        } else {
+            bins.imod <- bins.df[c('chromosome', 'start', 'end', paste0('combination.',cond), paste0('bin.',ID.dot))]
+            segments.df <- suppressMessages( collapseBins(bins.imod, column2collapseBy=paste0('bin.',ID.dot)) )
+        }
         stopTimedMessage(ptm)
         
         ## Select only segments with peaks
         segments.df <- segments.df[segments.df[,paste0('bin.',ID.dot)] == TRUE, ]
         
         ## Score
-        segments.df$score <- round(segments.df[,paste0('max.posteriors.',ID.dot)] * 1000)
+        if (!is.null(bins$posteriors)) {
+            segments.df$score <- round(segments.df[,paste0('max.posteriors.',ID.dot)] * 1000)
+        } else {
+            segments.df$score <- 0
+        }
         
         # Data.frame for write.table
         df <- segments.df[,c('chromosome','start','end',paste0('combination.',cond),'score')]
@@ -653,7 +671,7 @@ exportCombinedMultivariatePeaks <- function(hmm, filename, trackname=NULL, heade
 
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
-exportCombinedMultivariateCombinations <- function(hmm, filename, exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=FALSE) {
+exportCombinedMultivariateCombinations <- function(hmm, filename, exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=TRUE) {
 
     ## Intercept user input
     if (is.data.frame(exclude.states)) {
@@ -743,7 +761,7 @@ exportCombinedMultivariateCombinations <- function(hmm, filename, exclude.states
 
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
-exportCombinedMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=FALSE) {
+exportCombinedMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=TRUE) {
 
     ## Load models
     hmm <- loadHmmsFromFiles(hmm, check.class=class.combined.multivariate.hmm)[[1]]

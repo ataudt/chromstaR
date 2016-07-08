@@ -6,7 +6,7 @@
 \usage{
 exportCombinedMultivariate(hmm, filename, what = c("combinations", "peaks"),
   exclude.states = "[]", include.states = NULL, trackname = NULL,
-  header = TRUE, separate.files = FALSE)
+  header = TRUE, separate.files = TRUE)
 }
 \arguments{
 \item{hmm}{A \code{\link{combinedMultiHMM}} object or file that contains such an object.}
