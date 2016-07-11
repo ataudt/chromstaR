@@ -423,8 +423,8 @@ Consider bivalent promoters defined by [H3K4me3+H3K27me3] at two different devel
 \Rfunction{Chromstar} can be run in 4 different modes:
 \begin{itemize}
 \item \emph{full}: Recommended mode if your (number of marks) * (number of conditions) is less or equal to 8. With 8 ChIP-seq experiments there are already $2^8 = 256$ combinatorial states which is the maximum that most computers can handle computationally for a human-sized genome at bin size 1000bp.
-\item \emph{condition}: Choose this mode if you are interested in highly significant differences between conditions. The computational limit for the number of conditions is $\sim 8$ for a human-sized genome. Combinatorial states are not as accurate as in mode \emph{mark} or \emph{full}.
-\item \textbf{DEFAULT} \emph{mark}: This mode will yield good combinatorial chromatin state calls for any number of marks and conditions. However, differences between conditions have more false positives than in mode \emph{condition} or \emph{full}.
+\item \textbf{DEFAULT} \emph{condition}: Choose this mode if you are interested in highly significant differences between conditions. The computational limit for the number of conditions is $\sim 8$ for a human-sized genome. Combinatorial states are not as accurate as in mode \emph{mark} or \emph{full}.
+\item \emph{mark}: This mode will yield good combinatorial chromatin state calls for any number of marks and conditions. However, differences between conditions have more false positives than in mode \emph{condition} or \emph{full}.
 \item \emph{separate}: Only replicates are processed in a multivariate manner. Combinatorial states are constructed by a simple post-hoc combination of peak calls.
 \end{itemize}
 

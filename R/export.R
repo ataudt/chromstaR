@@ -427,10 +427,10 @@ exportMultivariatePeaks <- function(hmm, filename, trackname=NULL, header=TRUE, 
         ptm <- startTimedMessage("Collapsing track ", ID, " ...")
         ID.dot <- gsub('-', '.', ID)
         if (!is.null(bins$posteriors)) {
-            bins.imod <- bins.df[c('chromosome', 'start', 'end', paste0('combination.',cond), paste0('posteriors.',ID.dot), paste0('bin.',ID.dot))]
+            bins.imod <- bins.df[c('chromosome', 'start', 'end', 'combination', paste0('posteriors.',ID.dot), paste0('bin.',ID.dot))]
             segments.df <- suppressMessages( collapseBins(bins.imod, column2collapseBy=paste0('bin.',ID.dot), columns2getMax=paste0('posteriors.',ID.dot)) )
         } else {
-            bins.imod <- bins.df[c('chromosome', 'start', 'end', paste0('combination.',cond), paste0('bin.',ID.dot))]
+            bins.imod <- bins.df[c('chromosome', 'start', 'end', 'combination', paste0('bin.',ID.dot))]
             segments.df <- suppressMessages( collapseBins(bins.imod, column2collapseBy=paste0('bin.',ID.dot)) )
         } 
         stopTimedMessage(ptm)
