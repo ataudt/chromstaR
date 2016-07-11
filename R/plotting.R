@@ -222,6 +222,7 @@ heatmapTransitionProbs <- function(model) {
 #'
 #' @param model A \code{\link{multiHMM}} object or file that contains such an object.
 #' @param marks A character vector with histone marks. If specified, \code{model} will be ignored.
+#' @param emissionProbs A matrix with emission probabilities where \code{dimnames(emissionProbs)} gives the state labels and marks. This option is helpful to plot probabilistic chromatin states (not part of \pkg{\link{chromstaR}}). If specified, \code{model} and \code{marks} will be ignored.
 #' @return A \code{\link[ggplot2]{ggplot}} object.
 #' @importFrom reshape2 melt
 #' @seealso \code{\link{plotting}}
@@ -235,23 +236,34 @@ heatmapTransitionProbs <- function(model) {
 #'                     package="chromstaR")
 #'heatmapCombinations(file)
 #'
-heatmapCombinations <- function(model=NULL, marks=NULL) {
+heatmapCombinations <- function(model=NULL, marks=NULL, emissionProbs=NULL) {
 
-    if (is.null(marks)) {
-        model <- loadHmmsFromFiles(model, check.class=class.multivariate.hmm)[[1]]
-        levels.combinations <- levels(model$bins$combination)
-        levels.combinations <- gsub('\\[', '', levels.combinations)
-        levels.combinations <- gsub('\\]', '', levels.combinations)
-        marks <- unique(unlist(strsplit(levels.combinations, '\\+')))
+    if (!is.null(emissionProbs)) {
+        df <- reshape2::melt(emissionProbs, value.name='emission')
+        names(df)[1:2] <- c('combination', 'mark')
+        df$combination <- factor(df$combination)
+    } else {
+        if (is.null(marks)) {
+            model <- loadHmmsFromFiles(model, check.class=class.multivariate.hmm)[[1]]
+            levels.combinations <- levels(model$bins$combination)
+            levels.combinations <- gsub('\\[', '', levels.combinations)
+            levels.combinations <- gsub('\\]', '', levels.combinations)
+            marks <- unique(unlist(strsplit(levels.combinations, '\\+')))
+        }
+        d <- dec2bin(0:(2^length(marks)-1), colnames=marks)
+        d <- as.data.frame(d)
+        d$combination <- apply(d, 1, function(x) { paste(colnames(d)[x],collapse='+') })
+        d$combination <- paste0('[',d$combination,']')
+        df <- reshape2::melt(d, variable.name='mark', value.name='emission', id.vars='combination')
+        df$emission <- as.numeric(df$emission)
     }
-    d <- dec2bin(0:(2^length(marks)-1), colnames=marks)
-    d <- as.data.frame(d)
-    d$combination <- apply(d, 1, function(x) { paste(colnames(d)[x],collapse='+') })
-    d$combination <- paste0('[',d$combination,']')
-    df <- reshape2::melt(d, variable.name='mark', value.name='emission', id.vars='combination')
-    df$emission <- as.numeric(df$emission)
 
-    ggplt <- ggplot(df) + geom_tile(aes_string(x='combination', y='mark', fill='emission')) + scale_fill_gradient(low='white', high='blue', guide=FALSE, limits=c(0,1)) + theme_bw() + theme(axis.text.x=element_text(angle=45,hjust=1))
+    ggplt <- ggplot(df) + geom_tile(aes_string(x='combination', y='mark', fill='emission')) + theme_bw() + theme(axis.text.x=element_text(angle=45,hjust=1))
+    if (!is.null(emissionProbs)) {
+        ggplt <- ggplt + scale_fill_gradient(low='white', high='blue', limits=c(0,1))
+    } else {
+        ggplt <- ggplt + scale_fill_gradient(low='white', high='blue', guide=FALSE, limits=c(0,1))
+    }
 
     return(ggplt)
 }

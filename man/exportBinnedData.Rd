@@ -5,7 +5,7 @@
 \title{Export genome browser viewable files}
 \usage{
 exportBinnedData(binned.data.list, filename, header = TRUE,
-  separate.files = FALSE)
+  separate.files = TRUE)
 }
 \arguments{
 \item{binned.data.list}{A \code{list()} of \code{\link{binned.data}} objects or vector of files that contain such objects.}

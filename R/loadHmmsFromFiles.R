@@ -3,7 +3,7 @@
 #' Wrapper to load \pkg{\link{chromstaR}} objects from file and check the class of the loaded objects.
 #'
 #' @param files A list of \code{\link{chromstaR-objects}} or a vector of files that contain such objects.
-#' @param check.class Any combination of \code{c('uniHMM', 'multiHMM', 'combinedMultiHMM')}. If any of the loaded objects does not belong to the specified class, an error is thrown.
+#' @param check.class Any combination of \code{c('GRanges', 'uniHMM', 'multiHMM', 'combinedMultiHMM')}. If any of the loaded objects does not belong to the specified class, an error is thrown.
 #' @return A list of \code{\link[chromstaR:chromstaR-objects]{chromstaR-object}}.
 #' @export
 #' @examples
@@ -24,7 +24,7 @@
 #'
 loadHmmsFromFiles <- function(files, check.class=c('GRanges', 'uniHMM', 'multiHMM', 'combinedMultiHMM')) {
 
-    ptm <- startTimedMessage("Loading HMMs from files ...")
+    ptm <- startTimedMessage("Loading data from files ...")
     if (any(! check.class %in% c('GRanges', class.univariate.hmm, class.multivariate.hmm, class.combined.multivariate.hmm))) {
         stop("Argument 'check.class' must contain any combination of c('", paste0(c('GRanges', class.univariate.hmm, class.multivariate.hmm, class.combined.multivariate.hmm), collapse="', '"), "').")
     }

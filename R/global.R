@@ -3,6 +3,7 @@
 #' @import IRanges
 #' @import GenomicRanges
 #' @import chromstaRData
+#' @importFrom methods as is
 NULL
 
 # =======================================================
@@ -31,22 +32,5 @@ dnbinom.mean <- function(size, prob) {
 
 dnbinom.variance <- function(size, prob) {
     return( (size - prob*size) / prob^2 )
-}
-
-# ==================
-# Printing functions
-# ==================
-message.underlined <- function(string, line='=') {
-    string.length <- nchar(string)
-    underline <- paste0(rep(line, string.length), collapse='')
-    message(string)
-    message(underline)
-}
-
-message.overlined <- function(string, line='=') {
-    string.length <- nchar(string)
-    overline <- paste0(rep(line, string.length), collapse='')
-    message(string)
-    message(overline)
 }
 

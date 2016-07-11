@@ -5,7 +5,7 @@
 \title{Export genome browser viewable files}
 \usage{
 exportUnivariates(hmm.list, filename, what = c("peaks", "counts"),
-  header = TRUE, separate.files = FALSE)
+  header = TRUE, separate.files = TRUE)
 }
 \arguments{
 \item{hmm.list}{A \code{list()} of \code{\link{uniHMM}} objects or vector of files that contain such objects.}

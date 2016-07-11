@@ -27,7 +27,7 @@ scanBinsizes = function(files.binned, outputfolder, chromosomes="chr10", eps=0.0
         unifile = file.path(path.uni, paste0("univariate_",basename(binfile)))
         if (!file.exists(unifile)) {
             message()
-            message.underlined(paste0('Univariate for ',basename(binfile),':'), line='=')
+            messageU(paste0('Univariate for ',basename(binfile),':'))
             binned.data <- get(load(binfile))
             if (!is.null(chromosomes)) {
                 binned.data <- binned.data[seqnames(binned.data) %in% chromosomes]
@@ -40,7 +40,7 @@ scanBinsizes = function(files.binned, outputfolder, chromosomes="chr10", eps=0.0
     message()
     performance = NULL
     for (irep in 1:repetitions) {
-        message.underlined(paste0('Simulation ',irep,':'), line='=')
+        messageU(paste0('Simulation ',irep,':'))
 
         ## Simulate data from univariates
         path.sim.bin = file.path(outputfolder, paste0("simulated_rep_",irep,"_binned"))
@@ -91,7 +91,7 @@ scanBinsizes = function(files.binned, outputfolder, chromosomes="chr10", eps=0.0
             sim.unifile = file.path(path.sim.uni, paste0("univariate_simulated_",basename(binfile)))
             if (!file.exists(sim.unifile)) {
                 message()
-                message.underlined(paste0('Univariate for simulated ',basename(binfile),':'), line='-')
+                messageU(paste0('Univariate for simulated ',basename(binfile),':'))
                 binned.data <- get(load(sim.binfile))
                 if (!is.null(chromosomes)) {
                     binned.data <- binned.data[seqnames(binned.data) %in% chromosomes]

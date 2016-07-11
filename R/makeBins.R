@@ -87,7 +87,7 @@ fixedWidthBins <- function(bamfile=NULL, assembly=NULL, chrom.lengths=NULL, chro
 
         skipped.chroms <- setdiff(seqlevels(bins), as.character(unique(seqnames(bins))))
         if (length(skipped.chroms)>0) {
-            warning("the following chromosomes were skipped because they are smaller than binsize ", binsize, ": ", paste0(skipped.chroms, collapse=', '))
+            warning("The following chromosomes were skipped because they are smaller than binsize ", binsize, ": ", paste0(skipped.chroms, collapse=', '))
         }
         stopTimedMessage(ptm)
         
@@ -126,7 +126,7 @@ fixedWidthBins <- function(bamfile=NULL, assembly=NULL, chrom.lengths=NULL, chro
 variableWidthBins <- function(reads, binsizes, chromosomes=NULL) {
     
     ### Check user input ###
-    chroms.in.data <- seqlevels(reads)
+    chroms.in.data <- unique(seqnames(reads))
     if (is.null(chromosomes)) {
         chromosomes <- chroms.in.data
     }

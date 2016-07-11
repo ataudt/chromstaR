@@ -45,7 +45,7 @@
 #'          prefit.on.chr='chr12', chromosomes='chr12', mode='mark', eps.univariate=1,
 #'          eps.multivariate=1)
 #'
-Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps.univariate=0.1, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=TRUE, mode='mark', max.states=128, per.chrom=TRUE, eps.multivariate=0.01, exclusive.table=NULL) {
+Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps.univariate=0.1, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=TRUE, mode='condition', max.states=128, per.chrom=TRUE, eps.multivariate=0.01, exclusive.table=NULL) {
   
     #========================
     ### General variables ###
@@ -174,17 +174,23 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #==============
     ### Binning ###
     #==============
+    messageU("Binning the data")
     ### Get chromosome lengths ###
     ## Get first bam file
     bamfile <- grep('bam$', datafiles, value=TRUE)[1]
     if (!is.na(bamfile)) {
+        ptm <- startTimedMessage("Obtaining chromosome length information from file ", bamfile, " ...")
         chrom.lengths <- GenomeInfoDb::seqlengths(Rsamtools::BamFile(bamfile))
+        stopTimedMessage(ptm)
     } else {
         ## Read chromosome length information
         if (is.character(conf[['assembly']])) {
             if (file.exists(conf[['assembly']])) {
+                ptm <- startTimedMessage("Obtaining chromosome length information from file ", conf[['assembly']], " ...")
                 df <- utils::read.table(conf[['assembly']], sep='\t', header=TRUE)
+                stopTimedMessage(ptm)
             } else {
+                ptm <- startTimedMessage("Obtaining chromosome length information from UCSC ...")
                 df.chroms <- GenomeInfoDb::fetchExtendedChromInfoFromUCSC(conf[['assembly']])
                 ## Get first bed file
                 bedfile <- grep('bed$|bed.gz$', datafiles, value=TRUE)[1]
@@ -196,6 +202,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                         df <- df.chroms[,c('NCBI_seqlevel','UCSC_seqlength')]
                     }
                 }
+                stopTimedMessage(ptm)
             }
         } else if (is.data.frame(conf[['assembly']])) {
             df <- conf[['assembly']]
@@ -204,6 +211,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         }
         chrom.lengths <- df[,2]
         names(chrom.lengths) <- df[,1]
+        chrom.lengths <- chrom.lengths[!is.na(chrom.lengths) & !is.na(names(chrom.lengths))]
     }
     chrom.lengths.df <- data.frame(chromosome=names(chrom.lengths), length=chrom.lengths)
     
@@ -252,6 +260,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #==============================
     ### Univariate peak calling ###
     #==============================
+    messageU("Calling univariate peaks")
     ## Parallelization ##
     if (numcpu > 1) {
         ptm <- startTimedMessage("Setting up parallel execution with ", numcpu, " threads ...")
@@ -364,29 +373,30 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         ptm <- startTimedMessage("Plotting read count correlation ...")
         char.per.cm <- 10
         legend.cm <- 3
+        tiles.per.cm <- 0.66
+        min.tiles <- 5
+        width <- max(min.tiles, length(combined.model$info$ID)) / tiles.per.cm + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
+        height <- max(min.tiles, length(combined.model$info$ID)) / tiles.per.cm + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
         savename <- file.path(plotpath, 'read-count-correlation.pdf')
         ggplt <- heatmapCountCorrelation(combined.model, cluster=FALSE)
-        width <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
-        height <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
         ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
         savename <- file.path(plotpath, 'read-count-correlation-clustered.pdf')
         ggplt <- heatmapCountCorrelation(combined.model, cluster=TRUE)
-        width <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
-        height <- length(combined.model$info$ID) + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
         ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
         stopTimedMessage(ptm)
       
         #-------------------------
         ## Export browser files ##
         #-------------------------
+        messageU("Exporting browser files")
         if (!file.exists(browserpath)) { dir.create(browserpath) }
         savename <- file.path(browserpath, paste0('combined_mode-', modename))
         trackname <- paste0('mode-', modename)
         if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
-            exportCombinedMultivariate(combined.model, filename=savename, trackname=trackname, what='combinations')
+            exportCombinedMultivariate(combined.model, filename=savename, trackname=trackname, what='combinations', separate.files=TRUE)
         }
         if (!file.exists(paste0(savename, '_peaks.bed.gz'))) {
-            exportCombinedMultivariate(combined.model, filename=savename, trackname=trackname, what='peaks')
+            exportCombinedMultivariate(combined.model, filename=savename, trackname=trackname, what='peaks', separate.files=TRUE)
         }
         invisible()
     }
@@ -434,7 +444,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #---------------------------
     } else if (mode == 'mark') {
         for (condition in conditions) {
-            messageU("condition = ", condition, underline='-')
+            messageU("condition = ", condition, underline='-', overline='-')
             savename <- file.path(multipath, paste0('multivariate_mode-', mode, '_condition-', condition, '.RData'))
             if (!file.exists(savename)) {
                 mask <- exp.table[,'condition'] == condition
@@ -455,7 +465,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #--------------------------------
     } else if (mode == 'condition') {
         for (mark in marks) {
-            messageU("mark = ", mark, underline='-')
+            messageU("mark = ", mark, underline='-', overline='-')
             savename <- file.path(multipath, paste0('multivariate_mode-', mode, '_mark-', mark, '.RData'))
             if (!file.exists(savename)) {
                 mask <- exp.table[,'mark'] == mark
@@ -480,12 +490,6 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #================================
     messageU("Combining multivariate HMMs")
     multifiles <- list.files(multipath, full.names=TRUE, pattern=paste0('mode-',mode))
-    if (mode=='condition') {
-        names(multifiles) <- marks
-    }
-    if (mode=='mark') {
-        names(multifiles) <- conditions
-    }
 
     if (!file.exists(combipath)) { dir.create(combipath) }
     savename <- file.path(combipath, paste0('combined_mode-', mode, '.RData'))
@@ -497,18 +501,34 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     } else {
         combined.model <- loadHmmsFromFiles(savename, check.class=class.combined.multivariate.hmm)[[1]]
     }
+    ## Plot correlations
+    ptm <- startTimedMessage("Plotting read count correlation ...")
+    char.per.cm <- 10
+    legend.cm <- 3
+    tiles.per.cm <- 0.66
+    min.tiles <- 5
+    width <- max(min.tiles, length(combined.model$info$ID)) / tiles.per.cm + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
+    height <- max(min.tiles, length(combined.model$info$ID)) / tiles.per.cm + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
+    savename <- file.path(plotpath, 'read-count-correlation.pdf')
+    ggplt <- heatmapCountCorrelation(combined.model, cluster=FALSE)
+    ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
+    savename <- file.path(plotpath, 'read-count-correlation-clustered.pdf')
+    ggplt <- heatmapCountCorrelation(combined.model, cluster=TRUE)
+    ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
+    stopTimedMessage(ptm)
   
     #-------------------------
     ## Export browser files ##
     #-------------------------
+    messageU("Exporting browser files")
     if (!file.exists(browserpath)) { dir.create(browserpath) }
     savename <- file.path(browserpath, paste0('combined_mode-', mode))
     trackname <- paste0('mode-', mode)
     if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
-        exportCombinedMultivariate(combined.model, filename=savename, trackname=trackname, what='combinations')
+        exportCombinedMultivariate(combined.model, filename=savename, trackname=trackname, what='combinations', separate.files=TRUE)
     }
     if (!file.exists(paste0(savename, '_peaks.bed.gz'))) {
-        exportCombinedMultivariate(combined.model, filename=savename, trackname=trackname, what='peaks')
+        exportCombinedMultivariate(combined.model, filename=savename, trackname=trackname, what='peaks', separate.files=TRUE)
     }
   
     total.time <- proc.time() - total.time
