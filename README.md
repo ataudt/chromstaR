@@ -1,7 +1,7 @@
 chromstaR
 =========
 
-This R-package is a versatile and powerful ChIP-seq analysis suite. It implements high-quality peak-calling for broad and narrow marks and combinatorial and differential chromatin state analysis. It provides ready-to-use functions for any type of enrichment analysis and results can easily be assessed in a genome browser. The method is described [here](http://biorxiv.org/content/early/2016/02/04/038612). Please read the [tutorial](https://github.com/ataudt/chromstaR/blob/master/vignettes/chromstaR.pdf) on how to use this package.
+This R-package is a versatile and powerful ChIP-seq analysis suite. It implements high-quality peak-calling for broad and narrow marks and combinatorial and differential chromatin state analysis. It provides ready-to-use functions for any type of enrichment analysis and results can easily be assessed in a genome browser. The method is described [here](http://biorxiv.org/content/early/2016/02/04/038612) and a tutorial is available [here](https://github.com/ataudt/chromstaR/blob/master/vignettes/chromstaR.pdf).
 
 Please visit also the website at https://chromstar.org/.
 Installation
