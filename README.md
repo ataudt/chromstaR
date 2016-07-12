@@ -1,4 +1,4 @@
-![chromstaR](chromstaR_logo.png)
+![chromstaR](chromstaR_logo.svg)
 ================================
 
 chromstaR is a versatile ChIP-seq analysis suite with the following features:
