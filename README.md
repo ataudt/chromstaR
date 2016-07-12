@@ -1,4 +1,4 @@
-<img source="https://github.com/ataudt/chromstaR/blob/master/chromstaR_logo.png" \>
+<img source="https://github.com/ataudt/chromstaR/raw/master/chromstaR_logo.png" \>
 
 chromstaR
 =========
