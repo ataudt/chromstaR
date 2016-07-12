@@ -1,3 +1,5 @@
+<img source="https://github.com/ataudt/chromstaR/blob/master/chromstaR_logo.png" \>
+
 chromstaR
 =========
 
