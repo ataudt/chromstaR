@@ -149,13 +149,14 @@ combineMultivariates <- function(hmms, mode) {
         combs <- list()
         for (condition in conditions) {
             index <- which(infos$condition==condition)
+            # Make states
+            binstates.cond <- matrix(binstates[,index], ncol=length(index))
+            states.cond <- factor(bin2dec(binstates.cond))
             # Make mapping
-            mapping.df <- stateBrewer(infos[index,setdiff(names(infos),'ID')], mode='mark')
+            mapping.df <- stateBrewer(infos[index,setdiff(names(infos),'ID')], mode='mark', binary.matrix=dec2bin(unique(states.cond), colnames=infos$ID[index]))
             mapping <- mapping.df$combination
             names(mapping) <- mapping.df$state
             # Make combinations
-            binstates.cond <- matrix(binstates[,index], ncol=length(index))
-            states.cond <- factor(bin2dec(binstates.cond))
             combs[[condition]] <- mapping[as.character(states.cond)]
         }
         combs.df <- as.data.frame(combs) # get factors instead of characters
@@ -229,7 +230,7 @@ combineMultivariates <- function(hmms, mode) {
             index <- which(infos$condition==condition)
             states <- factor(bin2dec(matrix(binstates[,index], ncol=length(index))))
             names(states) <- NULL
-            mapping.df <- stateBrewer(infos[index,setdiff(names(infos),'ID')], mode='mark')
+            mapping.df <- stateBrewer(infos[index,setdiff(names(infos),'ID')], mode='mark', binary.matrix=dec2bin(unique(states), colnames=infos$ID[index]))
             mapping <- mapping.df$combination
             names(mapping) <- mapping.df$state
             combs[[condition]] <- mapping[as.character(states)]

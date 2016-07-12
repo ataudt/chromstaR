@@ -7,7 +7,7 @@
 state.brewer(replicates = NULL, differential.states = FALSE, min.diff = 1,
   common.states = FALSE, conditions = NULL, tracks2compare = NULL,
   sep = "+", statespec = NULL, diffstatespec = NULL,
-  exclusive.table = NULL)
+  exclusive.table = NULL, binary.matrix = NULL)
 }
 \arguments{
 \item{replicates}{A vector specifying the replicate structure. Similar entries will be treated as replicates.}
@@ -41,6 +41,8 @@ state.brewer(replicates = NULL, differential.states = FALSE, min.diff = 1,
 }}
 
 \item{exclusive.table}{A \code{data.frame} or tab-separated text file with columns 'mark' and 'group'. Histone marks with the same group will be treated as mutually exclusive.}
+
+\item{binary.matrix}{A logical matrix produced by \code{\link{dec2bin}}. If this is specified, only states specified by the rows of this matrix will be considered. The number of columns must match \code{length(replicates)} or \code{length(statespec)}. Only for advanced use. No error handling for incorrect input.}
 }
 \value{
 A data.frame with combinations and their corresponding (decimal) combinatorial states.

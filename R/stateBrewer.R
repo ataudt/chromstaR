@@ -32,16 +32,16 @@
 #'                              group=c(1,1))
 #'stateBrewer(experiment_table, mode='full', exclusive.table=excl)
 #'
-stateBrewer <- function(experiment.table, mode, differential.states=FALSE, common.states=FALSE, exclusive.table=NULL) {
+stateBrewer <- function(experiment.table, mode, differential.states=FALSE, common.states=FALSE, exclusive.table=NULL, binary.matrix=NULL) {
 
     check.experiment.table(experiment.table)
     exp <- experiment.table
     if (mode == 'full') {
-        combstates <- state.brewer(replicates=paste0(exp$mark, '-', exp$condition), conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states, exclusive.table=exclusive.table)
+        combstates <- state.brewer(replicates=paste0(exp$mark, '-', exp$condition), conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states, exclusive.table=exclusive.table, binary.matrix=binary.matrix)
     } else if (mode == 'mark') {
-        combstates <- state.brewer(replicates=exp$mark, conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states, exclusive.table=exclusive.table)
+        combstates <- state.brewer(replicates=exp$mark, conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states, exclusive.table=exclusive.table, binary.matrix=binary.matrix)
     } else if (mode == 'condition') {
-        combstates <- state.brewer(replicates=exp$condition, conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states, exclusive.table=exclusive.table)
+        combstates <- state.brewer(replicates=exp$condition, conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states, exclusive.table=exclusive.table, binary.matrix=binary.matrix)
     } else {
         stop("Unknown mode.")
     }
@@ -88,6 +88,7 @@ stateBrewer <- function(experiment.table, mode, differential.states=FALSE, commo
 #'   }
 #' 
 #' @param exclusive.table A \code{data.frame} or tab-separated text file with columns 'mark' and 'group'. Histone marks with the same group will be treated as mutually exclusive.
+#' @param binary.matrix A logical matrix produced by \code{\link{dec2bin}}. If this is specified, only states specified by the rows of this matrix will be considered. The number of columns must match \code{length(replicates)} or \code{length(statespec)}. Only for advanced use. No error handling for incorrect input.
 #' @return A data.frame with combinations and their corresponding (decimal) combinatorial states.
 #' @examples
 #'# Get all combinatorial states where sample1=0, sample2=1, sample3=(0 or 1),
@@ -101,7 +102,7 @@ stateBrewer <- function(experiment.table, mode, differential.states=FALSE, commo
 #'#  sample4=(0 or 1)
 #'chromstaR:::state.brewer(statespec=c('r.A','1.B','1.C','x.D','r.A'))
 #'
-state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, common.states=FALSE, conditions=NULL, tracks2compare=NULL, sep='+', statespec=NULL, diffstatespec=NULL, exclusive.table=NULL) {
+state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1, common.states=FALSE, conditions=NULL, tracks2compare=NULL, sep='+', statespec=NULL, diffstatespec=NULL, exclusive.table=NULL, binary.matrix=NULL) {
 
 #     ## Debug
 # #     conditions <- tissues
@@ -146,6 +147,11 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
             stop("Please specify 'conditions' and 'tracks2compare' if you want to obtain differential or common states.")
         }
     }
+    if (!is.null(binary.matrix)) {
+        if (class(binary.matrix) != 'matrix' | mode(binary.matrix) != 'logical') {
+            stop("argument 'binary.matrix' expects a logical matrix")
+        }
+    }
 
     ## Variables
     tracknames <- sub('^.\\.', '', statespec)
@@ -153,26 +159,34 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
     ### Generate replicate-reduced binary states ###
     numtracks <- length(statespec)
     groups <- levels(factor(statespec))
-    numstates <- 2^(length(which(grepl('^r\\.', groups))) + length(which(grepl('^x\\.', statespec))))
-    binstates <- matrix(FALSE, ncol=numtracks, nrow=numstates)
-    i1 <- 1
-    for (group in groups) {
-        track.index <- which(statespec==group)
-        for (itrack in track.index) {
-            if (grepl('^1\\.', group)) {
-                binstates[,itrack] <- TRUE
-            } else if (grepl('^x\\.', group)) {
-                numeach <- numstates/2 / 2^(i1-1)
-                binstates[,itrack] <- rep(c(rep(FALSE, numeach), rep(TRUE, numeach)), 2^(i1-1))
+    
+    if (is.null(binary.matrix)) {
+        numstates <- 2^(length(which(grepl('^r\\.', groups))) + length(which(grepl('^x\\.', statespec))))
+        binstates <- matrix(FALSE, ncol=numtracks, nrow=numstates)
+        i1 <- 1
+        for (group in groups) {
+            track.index <- which(statespec==group)
+            for (itrack in track.index) {
+                if (grepl('^1\\.', group)) {
+                    binstates[,itrack] <- TRUE
+                } else if (grepl('^x\\.', group)) {
+                    numeach <- numstates/2 / 2^(i1-1)
+                    binstates[,itrack] <- rep(c(rep(FALSE, numeach), rep(TRUE, numeach)), 2^(i1-1))
+                    i1 <- i1 + 1
+                } else if (grepl('^r\\.', group)) {
+                    numeach <- numstates/2 / 2^(i1-1)
+                    binstates[,itrack] <- rep(c(rep(FALSE, numeach), rep(TRUE, numeach)), 2^(i1-1))
+                }
+            }
+            if (grepl('^r\\.', group)) {
                 i1 <- i1 + 1
-            } else if (grepl('^r\\.', group)) {
-                numeach <- numstates/2 / 2^(i1-1)
-                binstates[,itrack] <- rep(c(rep(FALSE, numeach), rep(TRUE, numeach)), 2^(i1-1))
             }
         }
-        if (grepl('^r\\.', group)) {
-            i1 <- i1 + 1
+    } else {
+        if (ncol(binary.matrix) != length(tracknames)) {
+            stop("The number of columns in 'binary.matrix' must match the number of 'replicates' or 'statespec'.")
         }
+        binstates <- binary.matrix
     }
     colnames(binstates) <- tracknames
 

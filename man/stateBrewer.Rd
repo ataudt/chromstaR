@@ -5,7 +5,7 @@
 \title{Obtain combinatorial states from experiment table}
 \usage{
 stateBrewer(experiment.table, mode, differential.states = FALSE,
-  common.states = FALSE, exclusive.table = NULL)
+  common.states = FALSE, exclusive.table = NULL, binary.matrix = NULL)
 }
 \arguments{
 \item{experiment.table}{A \code{data.frame} specifying the experiment structure. See \code{\link{experiment.table}}.}
@@ -17,6 +17,8 @@ stateBrewer(experiment.table, mode, differential.states = FALSE,
 \item{common.states}{A logical specifying whether common states shall be returned.}
 
 \item{exclusive.table}{A \code{data.frame} or tab-separated text file with columns 'mark' and 'group'. Histone marks with the same group will be treated as mutually exclusive.}
+
+\item{binary.matrix}{A logical matrix produced by \code{\link{dec2bin}}. If this is specified, only states specified by the rows of this matrix will be considered. The number of columns must match \code{length(replicates)} or \code{length(statespec)}. Only for advanced use. No error handling for incorrect input.}
 }
 \value{
 A data.frame with combinations and their corresponding (decimal) combinatorial states.
