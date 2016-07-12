@@ -1,7 +1,7 @@
 ![chromstaR](chromstaR_logo.png)
 ================================
 
-chromstaR is a versatile ChIP-seq analysis suite with the following features:
+ChromstaR is a versatile ChIP-seq analysis suite with the following features:
 
 * Combinatorial chromatin state analysis
 * Differential chromatin state analysis
@@ -40,7 +40,7 @@ To install the *development* version from Github, follow the steps given below. 
 How to use chromstaR
 --------------------
 
-Please refer to the vignette at https://github.com/ataudt/chromstaR/blob/master/vignettes/chromstaR.pdf for tutorials on all chromstaR features.
+Please refer to the [vignette](https://github.com/ataudt/chromstaR/blob/master/vignettes/chromstaR.pdf) for tutorials on all chromstaR features.
 
 Report Errors
 -------------
