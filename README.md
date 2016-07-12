@@ -1,9 +1,7 @@
-<img source="chromstaR_logo.png" \>
+![chromstaR](chromstaR_logo.png)
+================================
 
-chromstaR
-=========
-
-A versatile ChIP-seq analysis suite with the following features:
+chromstaR is a versatile ChIP-seq analysis suite with the following features:
 
 * Combinatorial chromatin state analysis
 * Differential chromatin state analysis
