@@ -14,7 +14,7 @@ transitionFrequencies(multi.hmms = NULL, combined.hmm = NULL,
 
 \item{zero.states}{The string(s) which identifies the zero.states.}
 
-\item{combstates}{Alternative input instead of \code{multi.hmms}: A named list of combinatorial state vectors instead of HMMs. If this is specified, \code{multi.hmms} and \code{combined.hmm} will be ignored.}
+\item{combstates}{Alternative input instead of \code{multi.hmms}: A named list of combinatorial state vectors instead of HMMs. Names must be of the form "combination.X", where X is an arbitrary string. If this is specified, \code{multi.hmms} and \code{combined.hmm} will be ignored.}
 }
 \value{
 A data.frame with transition frequencies.
@@ -35,6 +35,7 @@ print(experiment_table)
 # For common assemblies you can also specify them as 'hg19' for example.
 data(rn4_chrominfo)
 head(rn4_chrominfo)
+
 #=== Step 2: Run Chromstar ===
 ## Run ChromstaR
 Chromstar(inputfolder, experiment.table=experiment_table,
@@ -44,6 +45,7 @@ Chromstar(inputfolder, experiment.table=experiment_table,
 ## Results are stored in 'outputfolder' and can be loaded for further processing
 list.files(outputfolder)
 model <- get(load(file.path(outputfolder,'combined', 'combined_mode-mark.RData')))
+
 #=== Step 3: Analysis ===
 # Get frequencies
 freqs <- transitionFrequencies(combined.hmm=model)

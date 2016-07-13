@@ -52,7 +52,7 @@ genomicFrequencies <- function(multi.hmm, combinations=NULL) {
 #' @param multi.hmms A named list with \code{\link{multiHMM}} objects or a vector with filenames that contain such objects.
 #' @param combined.hmm A \code{\link{combinedMultiHMM}} object. If specified, \code{multi.hmms} is ignored.
 #' @param zero.states The string(s) which identifies the zero.states.
-#' @param combstates Alternative input instead of \code{multi.hmms}: A named list of combinatorial state vectors instead of HMMs. If this is specified, \code{multi.hmms} and \code{combined.hmm} will be ignored.
+#' @param combstates Alternative input instead of \code{multi.hmms}: A named list of combinatorial state vectors instead of HMMs. Names must be of the form "combination.X", where X is an arbitrary string. If this is specified, \code{multi.hmms} and \code{combined.hmm} will be ignored.
 #' @return A data.frame with transition frequencies.
 #' @author Aaron Taudt
 #' @export
@@ -61,17 +61,15 @@ genomicFrequencies <- function(multi.hmm, combinations=NULL) {
 #'## Prepare the file paths. Exchange this with your input and output directories.
 #'inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
 #'outputfolder <- file.path(tempdir(), 'SHR-BN-example')
-
 #'## Define experiment structure
 #'data(experiment_table)
 #'print(experiment_table)
-
 #'## Define assembly
 #'# This is only necessary if you have BED files, BAM files are handled automatically.
 #'# For common assemblies you can also specify them as 'hg19' for example.
 #'data(rn4_chrominfo)
 #'head(rn4_chrominfo)
-
+#'
 #'#=== Step 2: Run Chromstar ===
 #'## Run ChromstaR
 #'Chromstar(inputfolder, experiment.table=experiment_table,
@@ -81,7 +79,7 @@ genomicFrequencies <- function(multi.hmm, combinations=NULL) {
 #'## Results are stored in 'outputfolder' and can be loaded for further processing
 #'list.files(outputfolder)
 #'model <- get(load(file.path(outputfolder,'combined', 'combined_mode-mark.RData')))
-
+#'
 #'#=== Step 3: Analysis ===
 #'# Get frequencies
 #'freqs <- transitionFrequencies(combined.hmm=model)
@@ -93,6 +91,9 @@ transitionFrequencies <- function(multi.hmms=NULL, combined.hmm=NULL, zero.state
         if (is.null(combined.hmm)) {
             if (is.null(names(multi.hmms))) {
                 stop("'multi.hmms' must be a named list of multiHMM objects.")
+            }
+            if (!all(grepl('^combination.', names(multi.hmms)))) {
+                stop("'multi.hmms' must be a named list of multiHMM objects. Names must have the form 'combination.X', where X is an arbitrary string.")
             }
             ## Get combinatorial states in loop to save memory
             ptm <- startTimedMessage("Loading HMMs ...")
@@ -110,6 +111,9 @@ transitionFrequencies <- function(multi.hmms=NULL, combined.hmm=NULL, zero.state
     } else {
         if (is.null(names(combstates))) {
             stop("'combstates' must be a named list.")
+        }
+        if (!all(grepl('^combination.', names(combstates)))) {
+            stop("'combstates' must be a named list. Names must have the form 'combination.X', where X is an arbitrary string.")
         }
     }
     num.models <- length(combstates)
@@ -168,12 +172,15 @@ assignGroups <- function(freqtrans, zero.states, num.models) {
     ## Stage specific transitions
     mask <- num.zeros == (num.models - 1)
     combination <- t(combs)[,mask][!t(zero.matrix)[,mask]]
-    freqtrans$group[mask] <- paste0('stage-specific ',gsub('\\\\','',combination))
+    freqtrans$group[mask] <- paste0('stage-specific ', gsub('\\\\','',combination))
     ## Constant transitions
     mask <- rep(TRUE, nrow(freqtrans))
-    for (i1 in 2:ncol(combs)) {
-        mask <- mask & (combs[,1] == combs[,i1])
+    if (ncol(combs) >= 2) {
+        for (i1 in 2:ncol(combs)) {
+            mask <- mask & (combs[,1] == combs[,i1])
+        }
     }
+    combination <- combs[mask,1]
     freqtrans$group[mask] <- paste0('constant ', gsub('\\\\','',combination))
     # Zero transitions
     mask <- num.zeros == num.models
