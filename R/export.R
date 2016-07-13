@@ -160,7 +160,12 @@ exportUnivariatePeaks <- function(hmm.list, filename, header=TRUE, separate.file
     # Generate the colors
     colors <- getStateColors(levels(hmm.grl[[1]]$state))
     RGBs <- t(grDevices::col2rgb(colors))
-    RGBs <- apply(RGBs,1,paste,collapse=",")
+    RGBlist <- list()
+    for (i1 in 1:3) {
+        RGBlist[[i1]] <- RGBs[,i1]
+    }
+    RGBlist$sep <- ','
+    RGBs <- do.call(paste, RGBlist)
 
     # Write first line to file
     if (!separate.files) {
@@ -369,7 +374,12 @@ exportMultivariateCombinations <- function(hmm, filename, separate.tracks=TRUE, 
     # Generate the colors for each combinatorial state
     colors <- getDistinctColors(length(levels(segments.df$combination)))
     RGBs <- t(grDevices::col2rgb(colors))
-    RGBs <- apply(RGBs,1,paste,collapse=",")
+    RGBlist <- list()
+    for (i1 in 1:3) {
+        RGBlist[[i1]] <- RGBs[,i1]
+    }
+    RGBlist$sep <- ','
+    RGBs <- do.call(paste, RGBlist)
     itemRgb <- RGBs[as.integer(factor(segments.df$combination, levels=sort(levels(segments.df$combination))))]
 
     ## Write first line to file
@@ -726,7 +736,12 @@ exportCombinedMultivariateCombinations <- function(hmm, filename, exclude.states
         # Generate the colors for each combinatorial state
         colors <- getDistinctColors(length(levels(segments.df$combination)))
         RGBs <- t(grDevices::col2rgb(colors))
-        RGBs <- apply(RGBs,1,paste,collapse=",")
+        RGBlist <- list()
+        for (i1 in 1:3) {
+            RGBlist[[i1]] <- RGBs[,i1]
+        }
+        RGBlist$sep <- ','
+        RGBs <- do.call(paste, RGBlist)
         itemRgb <- RGBs[as.integer(factor(segments.df$combination, levels=sort(levels(segments.df$combination))))]
 
         # Write to file
