@@ -32,6 +32,9 @@ getDistinctColors <- function(n, start.color='blue4', exclude.colors=c('white','
     # Calculate distance
     coldist <- as.matrix(stats::dist(rgbs, method='euclidean'))
     
+    if (n == 1) {
+        return(start.color)
+    }
     # Iteratively select colors
     selected.cols <- character()
     selected.cols[1] <- start.color
@@ -40,7 +43,15 @@ getDistinctColors <- function(n, start.color='blue4', exclude.colors=c('white','
         closest.dist <- apply(m, 1, min)
         furthest.dist <- which.max(closest.dist)
         selected.cols[i1] <- names(furthest.dist)
+        if (selected.cols[i1] == selected.cols[i1-1]) {
+            selected.cols <- selected.cols[-length(selected.cols)]
+            break
+        }
     }
-    return(selected.cols)
+    colors <- rep(selected.cols, ceiling(n / length(selected.cols)))[1:n]
+    if (length(colors) > length(selected.cols)) {
+        warning("Recycling colors because we only have ", length(selected.cols), " distinct colors to choose from.")
+    }
+    return(colors)
     
 }

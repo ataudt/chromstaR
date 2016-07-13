@@ -411,76 +411,81 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
 
     ## Plot helper ##
     plothelper <- function(savename, multimodel) {
-        ptm <- startTimedMessage("Making plots ...")
         char.per.cm <- 10
         legend.cm <- 3
-
         savename2 <- paste0(savename, '_transitionMatrix.pdf')
-        ggplt <- suppressMessages( heatmapTransitionProbs(multimodel) )
-        width <- length(levels(multimodel$bins$combination)) + max(sapply(levels(multimodel$bins$combination), nchar)) / char.per.cm + legend.cm
-        height <- length(levels(multimodel$bins$combination)) + max(sapply(levels(multimodel$bins$combination), nchar)) / char.per.cm + 1
-        ggsave(savename2, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
-        stopTimedMessage(ptm)
+        if (!file.exists(savename2)) {
+            ptm <- startTimedMessage("Making plots ...")
+            multimodel <- suppressMessages( loadHmmsFromFiles(multimodel, check.class=class.multivariate.hmm)[[1]] )
+            ggplt <- suppressMessages( heatmapTransitionProbs(multimodel) )
+            width <- length(levels(multimodel$bins$combination)) + max(sapply(levels(multimodel$bins$combination), nchar)) / char.per.cm + legend.cm
+            height <- length(levels(multimodel$bins$combination)) + max(sapply(levels(multimodel$bins$combination), nchar)) / char.per.cm + 1
+            ggsave(savename2, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
+            stopTimedMessage(ptm)
+        }
     }
   
     ## Run multivariate depending on mode
     #--------------------
     if (mode == 'full') {
-        savename <- file.path(multipath, paste0('multivariate_mode-', mode, '.RData'))
-        if (!file.exists(savename)) {
+        multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '.RData'))
+        savename <- file.path(plotpath, paste0('multivariate_mode-', mode))
+        if (!file.exists(multifile)) {
             files <- file.path(unipath, filenames)
             states <- stateBrewer(exp.table, mode=mode, exclusive.table=conf[['exclusive.table']])
             multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
-            ptm <- startTimedMessage("Saving to file ", savename, " ...")
-            save(multimodel, file=savename)
+            ptm <- startTimedMessage("Saving to file ", multifile, " ...")
+            save(multimodel, file=multifile)
             stopTimedMessage(ptm)
+            ## Plot transitions
+            plothelper(savename, multimodel)
         } else {
-            multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
+            ## Plot transitions
+            plothelper(savename, multifile)
         }
-        ## Plot transition and correlations
-        savename <- file.path(plotpath, paste0('multivariate_mode-', mode))
-        plothelper(savename, multimodel)
     
     #---------------------------
     } else if (mode == 'mark') {
         for (condition in conditions) {
             messageU("condition = ", condition, underline='-', overline='-')
-            savename <- file.path(multipath, paste0('multivariate_mode-', mode, '_condition-', condition, '.RData'))
-            if (!file.exists(savename)) {
+            multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '_condition-', condition, '.RData'))
+            savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_condition-', condition))
+            if (!file.exists(multifile)) {
                 mask <- exp.table[,'condition'] == condition
                 files <- file.path(unipath, filenames)[mask]
                 states <- stateBrewer(exp.table[mask,], mode=mode, exclusive.table=conf[['exclusive.table']])
                 multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
-                ptm <- startTimedMessage("Saving to file ", savename, " ...")
-                save(multimodel, file=savename)
+                ptm <- startTimedMessage("Saving to file ", multifile, " ...")
+                save(multimodel, file=multifile)
                 stopTimedMessage(ptm)
+                ## Plot transitions
+                plothelper(savename, multimodel)
             } else {
-                multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
+                ## Plot transitions
+                plothelper(savename, multifile)
             }
-            ## Plot transition and correlations
-            savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_condition-', condition))
-            plothelper(savename, multimodel)
         }
     
     #--------------------------------
     } else if (mode == 'condition') {
         for (mark in marks) {
             messageU("mark = ", mark, underline='-', overline='-')
-            savename <- file.path(multipath, paste0('multivariate_mode-', mode, '_mark-', mark, '.RData'))
-            if (!file.exists(savename)) {
+            multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '_mark-', mark, '.RData'))
+            savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_mark-', mark))
+            if (!file.exists(multifile)) {
                 mask <- exp.table[,'mark'] == mark
                 files <- file.path(unipath, filenames)[mask]
                 states <- stateBrewer(exp.table[mask,], mode=mode, exclusive.table=conf[['exclusive.table']])
                 multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
-                ptm <- startTimedMessage("Saving to file ", savename, " ...")
-                save(multimodel, file=savename)
+                ptm <- startTimedMessage("Saving to file ", multifile, " ...")
+                save(multimodel, file=multifile)
                 stopTimedMessage(ptm)
+                ## Plot transitions
+                plothelper(savename, multimodel)
             } else {
-                multimodel <- loadHmmsFromFiles(savename, check.class=class.multivariate.hmm)[[1]]
+                ## Plot transitions
+                plothelper(savename, multifile)
             }
-            ## Plot transition and correlations
-            savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_mark-', mark))
-            plothelper(savename, multimodel)
         }
     }
 
