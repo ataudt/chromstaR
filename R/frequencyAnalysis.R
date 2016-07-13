@@ -161,30 +161,22 @@ assignGroups <- function(freqtrans, zero.states, num.models) {
     levels.combstates <- gsub('\\+','\\\\+',levels.combstates)
     levels.combstates <- gsub('\\[','\\\\[', levels.combstates)
     levels.combstates <- gsub('\\]','\\\\]', levels.combstates)
-    for (combination in levels.combstates) {
-        other.levels <- setdiff(levels.combstates, combination)
-        mask <- grepl(combination, freqtrans$transition)
-        for (other.level in other.levels) {
-            mask <- mask & !grepl(other.level, freqtrans$transition)
-        }
-        # string.other.levels <- paste(setdiff(levels.combstates,combination), collapse='|')
-        # if (string.other.levels=="") {
-        #     string.other.levels <- 'AAAAAA' # workaround
-        # }
-        # mask <- intersect(grep(combination, freqtrans$transition), grep(string.other.levels, freqtrans$transition, invert=TRUE))
-        freqtrans$group[mask] <- paste0('stage-specific ',gsub('\\\\','',combination))
-        mask <- sapply(gregexpr(combination,freqtrans$transition), function(x) { length(which(x!=-1)) }) == num.models
-        freqtrans$group[mask] <- paste0('constant ', gsub('\\\\','',combination))
+    ## Determine number of zero.states in each transition
+    combs <- as.matrix(freqtrans[,grep("combination", names(freqtrans))])
+    zero.matrix <- apply(combs, 2, function(x) { x %in% zero.states })
+    num.zeros <- rowSums(zero.matrix)
+    ## Stage specific transitions
+    mask <- num.zeros == (num.models - 1)
+    combination <- t(combs)[,mask][!t(zero.matrix)[,mask]]
+    freqtrans$group[mask] <- paste0('stage-specific ',gsub('\\\\','',combination))
+    ## Constant transitions
+    mask <- rep(TRUE, nrow(freqtrans))
+    for (i1 in 2:ncol(combs)) {
+        mask <- mask & (combs[,1] == combs[,i1])
     }
+    freqtrans$group[mask] <- paste0('constant ', gsub('\\\\','',combination))
     # Zero transitions
-    freqtrans.split <- strsplit(sub('<>$','<><>',as.character(freqtrans$transition)),'<>')
-    freqtrans.split <- do.call(rbind, freqtrans.split)
-    df <- as.data.frame(apply(freqtrans.split, 2, function(x) { x %in% zero.states } ))
-    # if (ncol(df)==1) {
-    #     iszero <- Reduce('&', df[,1])
-    # } else {
-        iszero <- Reduce('&', as.list(df))
-    # }
-    freqtrans$group[iszero] <- 'zero transition'
+    mask <- num.zeros == num.models
+    freqtrans$group[mask] <- 'zero transition'
     return(freqtrans)
 }
