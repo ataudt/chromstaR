@@ -162,11 +162,16 @@ assignGroups <- function(freqtrans, zero.states, num.models) {
     levels.combstates <- gsub('\\[','\\\\[', levels.combstates)
     levels.combstates <- gsub('\\]','\\\\]', levels.combstates)
     for (combination in levels.combstates) {
-        string.other.levels <- paste(setdiff(levels.combstates,combination), collapse='|')
-        if (string.other.levels=="") {
-            string.other.levels <- 'AAAAAA' # workaround
+        other.levels <- setdiff(levels.combstates, combination)
+        mask <- grepl(combination, freqtrans$transition)
+        for (other.level in other.levels) {
+            mask <- mask & !grepl(other.level, freqtrans$transition)
         }
-        mask <- intersect(grep(combination, freqtrans$transition), grep(string.other.levels, freqtrans$transition, invert=TRUE))
+        # string.other.levels <- paste(setdiff(levels.combstates,combination), collapse='|')
+        # if (string.other.levels=="") {
+        #     string.other.levels <- 'AAAAAA' # workaround
+        # }
+        # mask <- intersect(grep(combination, freqtrans$transition), grep(string.other.levels, freqtrans$transition, invert=TRUE))
         freqtrans$group[mask] <- paste0('stage-specific ',gsub('\\\\','',combination))
         mask <- sapply(gregexpr(combination,freqtrans$transition), function(x) { length(which(x!=-1)) }) == num.models
         freqtrans$group[mask] <- paste0('constant ', gsub('\\\\','',combination))
