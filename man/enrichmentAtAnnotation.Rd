@@ -5,8 +5,8 @@
 \title{Enrichment of (combinatorial) states for genomic annotations}
 \usage{
 enrichmentAtAnnotation(bins, info, annotation, bp.around.annotation = 10000,
-  region = c("start", "inside", "end"), what = c("combinations",
-  "binstates", "counts"), num.intervals = 21)
+  region = c("start", "inside", "end"), what = c("combinations", "peaks",
+  "counts"), num.intervals = 21)
 }
 \arguments{
 \item{bins}{The \code{$bins} entry from a \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object.}
@@ -19,7 +19,7 @@ enrichmentAtAnnotation(bins, info, annotation, bp.around.annotation = 10000,
 
 \item{region}{A combination of \code{c('start','inside','end')} specifying the region of the annotation for which the enrichment will be calculated. Select \code{'start'} if you have a point-sized annotation like transcription start sites. Select \code{c('start','inside','end')} if you have long annotations like genes.}
 
-\item{what}{A combination of \code{c('combinations','binstates','counts')} specifying which statistic to calculate.}
+\item{what}{One of \code{c('combinations','peaks','counts')} specifying which statistic to calculate.}
 
 \item{num.intervals}{Number of intervals for enrichment 'inside' of annotation.}
 }

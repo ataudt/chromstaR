@@ -508,6 +508,10 @@ plots <- plotFoldEnrichment(hmm=model, annotation=genes, region='start')
 plots[['BN']] + facet_wrap(~ combination) +
   ggtitle('Fold enrichment around TSS') +
   xlab('distance from TSS')
+plots <- plotFoldEnrichment(hmm=model, annotation=genes, region='start', what='peaks')
+plots[['BN']] + facet_wrap(~ mark) +
+  ggtitle('Fold enrichment around TSS') +
+  xlab('distance from TSS')
 @
 
 <<combined_enrichment_plot3, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.8\\textwidth', fig.align='center'>>=
