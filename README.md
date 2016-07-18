@@ -17,7 +17,7 @@ Please visit also the website at https://chromstar.org/.
 Installation
 ------------
 
-### Stable release version from Bioconductor (not available yet)
+### Stable release version from Bioconductor
 To install the *current stable* version from Bioconductor, please visit http://bioconductor.org/packages/chromstaR/ and follow the provided instructions.
 
 ### Development version from Github
