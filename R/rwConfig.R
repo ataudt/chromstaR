@@ -47,6 +47,9 @@ writeConfig <- function(conf, configfile) {
 
     ## Printing function
     formatstring <- function(string) {
+        if (is.factor(string)) {
+            string <- as.character(string)
+        }
         if (is.character(string) & length(string)>1) {
             string <- paste0("c('",paste0(string,collapse="','"),"')")
         } else if (is.character(string) & length(string)==1) {

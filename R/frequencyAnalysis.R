@@ -4,6 +4,7 @@
 #'
 #' @param multi.hmm A \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object or a file that contains such an object.
 #' @param combinations A vector with combinations for which the frequency will be calculated. If \code{NULL} all combinations will be considered.
+#' @param per.mark Set to \code{TRUE} if you want frequencies per mark instead of per combination.
 #' @return A table with frequencies of each combinatorial state.
 #' @author Aaron Taudt
 #' @export
@@ -14,10 +15,16 @@
 #'model <- get(load(file))
 #'genomicFrequencies(model)
 #'
-genomicFrequencies <- function(multi.hmm, combinations=NULL) {
+genomicFrequencies <- function(multi.hmm, combinations=NULL, per.mark=FALSE) {
 
     multi.hmm <- loadHmmsFromFiles(multi.hmm, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     bins <- multi.hmm$bins
+    
+    if (per.mark) {
+        binstates <- dec2bin(bins$state, colnames=multi.hmm$info$ID)
+        t <- colSums(binstates) / nrow(binstates)
+        return(t)
+    }
       
     if (class(multi.hmm)==class.multivariate.hmm) {
 

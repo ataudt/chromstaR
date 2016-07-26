@@ -641,6 +641,7 @@ exportCombinedMultivariatePeaks <- function(hmm, filename, trackname=NULL, heade
         
         # Data.frame for write.table
         df <- segments.df[,c('chromosome','start','end',paste0('combination.',cond),'score')]
+        df$strand <- "."
         
         # Convert from 1-based closed to 0-based half open
         df$start <- df$start - 1

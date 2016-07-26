@@ -603,9 +603,8 @@ heatmapCombinations(marks=c('H3K4me3', 'H3K27me3', 'H3K36me3', 'H3K27Ac'))
 
 \section{Session Info}
 \begin{scriptsize}
-<<>>=
-sessionInfo()
-warnings()
+<<sessionInfo, eval=TRUE, results="asis">>=
+toLatex(sessionInfo())
 @
 \end{scriptsize}
 
