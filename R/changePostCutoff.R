@@ -64,7 +64,7 @@ changePostCutoff.multivariate <- function(model, post.cutoff) {
 
     # Check if replicates have the same post.cutoff value
     reps <- sub('-rep.*', '', model$info$ID)
-    if (any(sapply(split(post.cutoff, reps), function(x) { Reduce('==', x) }) == FALSE)) {
+    if (any(sapply(split(post.cutoff, reps), function(x) { Reduce('&', x==x[1]) }) == FALSE)) {
         stop("Replicates must have the same post.cutoff value.")
     }
     

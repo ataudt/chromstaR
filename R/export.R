@@ -447,24 +447,29 @@ exportMultivariatePeaks <- function(hmm, filename, trackname=NULL, header=TRUE, 
         
         ## Select only segments with peaks
         segments.df <- segments.df[segments.df[,paste0('bin.',ID.dot)] == TRUE, ]
-        
-        ## Score
-        if (!is.null(bins$posteriors)) {
-            segments.df$score <- round(segments.df[,paste0('max.posteriors.',ID.dot)] * 1000)
+        if (nrow(segments.df) == 0) {
+            df <- segments.df[,c('chromosome','start','end','combination')]
         } else {
-            segments.df$score <- 0
+        
+            ## Score
+            if (!is.null(bins$posteriors)) {
+                segments.df$score <- round(segments.df[,paste0('max.posteriors.',ID.dot)] * 1000)
+            } else {
+                segments.df$score <- 0
+            }
+            
+            # Data.frame for write.table
+            df <- segments.df[,c('chromosome','start','end','combination','score')]
+            
+            # Convert from 1-based closed to 0-based half open
+            df$start <- df$start - 1
+            df$thickStart <- df$start
+            df$thickEnd <- df$end
+            # Colors
+            RGB <- t(grDevices::col2rgb(getStateColors('modified')))
+            df$itemRgb <- apply(RGB,1,paste,collapse=",")
+            
         }
-        
-        # Data.frame for write.table
-        df <- segments.df[,c('chromosome','start','end','combination','score')]
-        
-        # Convert from 1-based closed to 0-based half open
-        df$start <- df$start - 1
-        df$thickStart <- df$start
-        df$thickEnd <- df$end
-        # Colors
-        RGB <- t(grDevices::col2rgb(getStateColors('modified')))
-        df$itemRgb <- apply(RGB,1,paste,collapse=",")
         
         ## Write to file
         if (separate.files) {
@@ -631,25 +636,30 @@ exportCombinedMultivariatePeaks <- function(hmm, filename, trackname=NULL, heade
         
         ## Select only segments with peaks
         segments.df <- segments.df[segments.df[,paste0('bin.',ID.dot)] == TRUE, ]
-        
-        ## Score
-        if (!is.null(bins$posteriors)) {
-            segments.df$score <- round(segments.df[,paste0('max.posteriors.',ID.dot)] * 1000)
+        if (nrow(segments.df) == 0) {
+            df <- segments.df[,c('chromosome','start','end',paste0('combination.',cond))]
         } else {
-            segments.df$score <- 0
+        
+            ## Score
+            if (!is.null(bins$posteriors)) {
+                segments.df$score <- round(segments.df[,paste0('max.posteriors.',ID.dot)] * 1000)
+            } else {
+                segments.df$score <- 0
+            }
+            
+            # Data.frame for write.table
+            df <- segments.df[,c('chromosome','start','end',paste0('combination.',cond),'score')]
+            df$strand <- "."
+            
+            # Convert from 1-based closed to 0-based half open
+            df$start <- df$start - 1
+            df$thickStart <- df$start
+            df$thickEnd <- df$end
+            # Colors
+            RGB <- t(grDevices::col2rgb(getStateColors('modified')))
+            df$itemRgb <- apply(RGB,1,paste,collapse=",")
+            
         }
-        
-        # Data.frame for write.table
-        df <- segments.df[,c('chromosome','start','end',paste0('combination.',cond),'score')]
-        df$strand <- "."
-        
-        # Convert from 1-based closed to 0-based half open
-        df$start <- df$start - 1
-        df$thickStart <- df$start
-        df$thickEnd <- df$end
-        # Colors
-        RGB <- t(grDevices::col2rgb(getStateColors('modified')))
-        df$itemRgb <- apply(RGB,1,paste,collapse=",")
         
         ## Write to file
         if (separate.files) {
