@@ -1,6 +1,6 @@
 #' Combine combinatorial states from several Multivariates
 #' 
-#' Combine combinatorial states from several \code{\link{multiHMM}} objects. Combinatorial states can be combined for objects containing multiple marks (\code{mode='mark'}) or multiple conditions (\code{mode='condition'}).
+#' Combine combinatorial states from several \code{\link{multiHMM}} objects. Combinatorial states can be combined for objects containing multiple marks (\code{mode='combinatorial'}) or multiple conditions (\code{mode='differential'}).
 #' 
 #' @param hmms A \code{list()} with \code{\link{multiHMM}} objects. Alternatively a character vector with filenames that contain \code{\link{multiHMM}} objects.
 #' @param mode Mode of combination. See \code{\link{Chromstar}} for a description of the \code{mode} parameter.
@@ -16,7 +16,7 @@
 #'exp <- data.frame(file=files, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
 #'                  condition=rep("SHR",4), replicate=c(1:2,1:2), pairedEndReads=FALSE,
 #'                  controlFiles=NA)
-#'states <- stateBrewer(exp, mode='mark')
+#'states <- stateBrewer(exp, mode='combinatorial')
 #'# Bin the data
 #'data(rn4_chrominfo)
 #'binned.data <- list()
@@ -40,7 +40,7 @@
 #'exp <- data.frame(file=files, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
 #'                  condition=rep("BN",4), replicate=c(1:2,1:2), pairedEndReads=FALSE,
 #'                  controlFiles=NA)
-#'states <- stateBrewer(exp, mode='mark')
+#'states <- stateBrewer(exp, mode='combinatorial')
 #'# Bin the data
 #'data(rn4_chrominfo)
 #'binned.data <- list()
@@ -58,7 +58,7 @@
 #'
 #'### Combine multivariates ###
 #'hmms <- list(multimodel.SHR, multimodel.BN)
-#'comb.model <- combineMultivariates(hmms, mode='mark')
+#'comb.model <- combineMultivariates(hmms, mode='combinatorial')
 #'
 combineMultivariates <- function(hmms, mode) {
     
@@ -75,7 +75,7 @@ combineMultivariates <- function(hmms, mode) {
         return(combinations.condition)
     }
       
-    if (mode == 'mark') {
+    if (mode == 'combinatorial') {
         ## Load first HMM for coordinates
         ptm <- startTimedMessage("Processing condition ",1," ...")
         hmm <- suppressMessages( loadHmmsFromFiles(hmms[[1]], check.class=class.multivariate.hmm)[[1]] )
@@ -117,7 +117,7 @@ combineMultivariates <- function(hmms, mode) {
         combs.df <- as(combs,'DataFrame')
         stopTimedMessage(ptm)
         
-    } else if (mode == 'condition') {
+    } else if (mode == 'differential') {
         ### Get posteriors and binary states
         infos <- list()
         counts <- list()
@@ -153,7 +153,7 @@ combineMultivariates <- function(hmms, mode) {
             binstates.cond <- matrix(binstates[,index], ncol=length(index))
             states.cond <- factor(bin2dec(binstates.cond))
             # Make mapping
-            mapping.df <- stateBrewer(infos[index,setdiff(names(infos),'ID')], mode='mark', binary.matrix=dec2bin(unique(states.cond), colnames=infos$ID[index]))
+            mapping.df <- stateBrewer(infos[index,setdiff(names(infos),'ID')], mode='combinatorial', binary.matrix=dec2bin(unique(states.cond), colnames=infos$ID[index]))
             mapping <- mapping.df$combination
             names(mapping) <- mapping.df$state
             # Make combinations
@@ -230,7 +230,7 @@ combineMultivariates <- function(hmms, mode) {
             index <- which(infos$condition==condition)
             states <- factor(bin2dec(matrix(binstates[,index], ncol=length(index))))
             names(states) <- NULL
-            mapping.df <- stateBrewer(infos[index,setdiff(names(infos),'ID')], mode='mark', binary.matrix=dec2bin(unique(states), colnames=infos$ID[index]))
+            mapping.df <- stateBrewer(infos[index,setdiff(names(infos),'ID')], mode='combinatorial', binary.matrix=dec2bin(unique(states), colnames=infos$ID[index]))
             mapping <- mapping.df$combination
             names(mapping) <- mapping.df$state
             combs[[condition]] <- mapping[as.character(states)]

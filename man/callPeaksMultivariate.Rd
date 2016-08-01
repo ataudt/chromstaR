@@ -53,7 +53,7 @@ files <- list.files(file.path, full.names=TRUE, pattern='SHR.*bam$')[c(1:2,6:7)]
 exp <- data.frame(file=files, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
                  condition=rep("SHR",4), replicate=c(1:2,1:2), pairedEndReads=FALSE,
                  controlFiles=NA)
-states <- stateBrewer(exp, mode='mark')
+states <- stateBrewer(exp, mode='combinatorial')
 # Bin the data
 data(rn4_chrominfo)
 binned.data <- list()

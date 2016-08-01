@@ -15,7 +15,7 @@ combineMultivariates(hmms, mode)
 A \code{\link{combinedMultiHMM}} objects with combinatorial states for each condition.
 }
 \description{
-Combine combinatorial states from several \code{\link{multiHMM}} objects. Combinatorial states can be combined for objects containing multiple marks (\code{mode='mark'}) or multiple conditions (\code{mode='condition'}).
+Combine combinatorial states from several \code{\link{multiHMM}} objects. Combinatorial states can be combined for objects containing multiple marks (\code{mode='combinatorial'}) or multiple conditions (\code{mode='differential'}).
 }
 \examples{
 ### Multivariate peak calling for spontaneous hypertensive rat (SHR) ###
@@ -26,7 +26,7 @@ files <- list.files(file.path, full.names=TRUE, pattern='SHR.*bam$')[c(1:2,4:5)]
 exp <- data.frame(file=files, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
                  condition=rep("SHR",4), replicate=c(1:2,1:2), pairedEndReads=FALSE,
                  controlFiles=NA)
-states <- stateBrewer(exp, mode='mark')
+states <- stateBrewer(exp, mode='combinatorial')
 # Bin the data
 data(rn4_chrominfo)
 binned.data <- list()
@@ -50,7 +50,7 @@ files <- list.files(file.path, full.names=TRUE, pattern='BN.*bam$')[c(1:2,3:4)]
 exp <- data.frame(file=files, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
                  condition=rep("BN",4), replicate=c(1:2,1:2), pairedEndReads=FALSE,
                  controlFiles=NA)
-states <- stateBrewer(exp, mode='mark')
+states <- stateBrewer(exp, mode='combinatorial')
 # Bin the data
 data(rn4_chrominfo)
 binned.data <- list()
@@ -68,7 +68,7 @@ multimodel.BN <- callPeaksMultivariate(models, use.states=states, eps=1, max.tim
 
 ### Combine multivariates ###
 hmms <- list(multimodel.SHR, multimodel.BN)
-comb.model <- combineMultivariates(hmms, mode='mark')
+comb.model <- combineMultivariates(hmms, mode='combinatorial')
 
 }
 \author{
