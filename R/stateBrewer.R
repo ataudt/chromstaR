@@ -23,8 +23,8 @@
 #'data(experiment_table)
 #'print(experiment_table)
 #'## Construct combinatorial states
-#'stateBrewer(experiment_table, mode='mark')
-#'stateBrewer(experiment_table, mode='condition')
+#'stateBrewer(experiment_table, mode='combinatorial')
+#'stateBrewer(experiment_table, mode='differential')
 #'stateBrewer(experiment_table, mode='full', common.states=TRUE)
 #'
 #'## Exclude states with exclusive.table
@@ -38,9 +38,9 @@ stateBrewer <- function(experiment.table, mode, differential.states=FALSE, commo
     exp <- experiment.table
     if (mode == 'full') {
         combstates <- state.brewer(replicates=paste0(exp$mark, '-', exp$condition), conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states, exclusive.table=exclusive.table, binary.matrix=binary.matrix)
-    } else if (mode == 'mark') {
+    } else if (mode == 'combinatorial') {
         combstates <- state.brewer(replicates=exp$mark, conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states, exclusive.table=exclusive.table, binary.matrix=binary.matrix)
-    } else if (mode == 'condition') {
+    } else if (mode == 'differential') {
         combstates <- state.brewer(replicates=exp$condition, conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states, exclusive.table=exclusive.table, binary.matrix=binary.matrix)
     } else {
         stop("Unknown mode.")

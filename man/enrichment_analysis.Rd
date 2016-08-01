@@ -7,21 +7,26 @@
 \alias{plotFoldEnrichment}
 \title{Enrichment analysis}
 \usage{
-plotFoldEnrichHeatmap(hmm, annotations, combinations = NULL, plot = TRUE)
+plotFoldEnrichHeatmap(hmm, annotations, what = "combinations",
+  combinations = NULL, marks = NULL, plot = TRUE)
 
 plotEnrichCountHeatmap(hmm, annotation, bp.around.annotation = 10000,
   max.rows = 1000)
 
 plotFoldEnrichment(hmm, annotation, bp.around.annotation = 10000,
   region = c("start", "inside", "end"), num.intervals = 20,
-  combinations = NULL)
+  what = "combinations", combinations = NULL, marks = NULL)
 }
 \arguments{
 \item{hmm}{A \code{\link{combinedMultiHMM}} or \code{\link{multiHMM}} object or a file that contains such an object.}
 
 \item{annotations}{A \code{list()} with \code{\link{GRanges}} objects containing coordinates of multiple annotations The names of the list entries will be used to name the return values.}
 
+\item{what}{One of \code{c('combinations','peaks','counts')} specifying which statistic to calculate.}
+
 \item{combinations}{A vector with combinations for which the fold enrichment will be calculated. If \code{NULL} all combinations will be considered.}
+
+\item{marks}{A vector with marks for which the enrichment is plotted. If \code{NULL} all marks will be considered.}
 
 \item{plot}{A logical indicating whether the plot or an array with the fold enrichment values is returned.}
 
@@ -51,7 +56,7 @@ Plotting functions for enrichment analysis of \code{\link{multiHMM}} or \code{\l
 }}
 \examples{
 ### Get an example multiHMM ###
-file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
                     package="chromstaR")
 model <- get(load(file))
 

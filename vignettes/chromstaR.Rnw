@@ -228,7 +228,7 @@ exportMultivariate(multi.model, filename=tempfile(), what=c('peaks','counts'))
 
 \subsection{Task 2: Detecting differentially modified regions}
 
-\Rpackage{chromstaR} is extremely powerful in detecting differentially modified regions in two or more samples. The following example illustrates this on ChIP-seq data for H4K20me1 in brown norway (BN) and spontaneous hypertensive rat (SHR) in left-ventricle (lv) heart tissue. The mode of analysis is called \emph{condition}, because all conditions are analyzed simultaneously.
+\Rpackage{chromstaR} is extremely powerful in detecting differentially modified regions in two or more samples. The following example illustrates this on ChIP-seq data for H4K20me1 in brown norway (BN) and spontaneous hypertensive rat (SHR) in left-ventricle (lv) heart tissue. The mode of analysis is called \emph{differential}.
 
 \begin{scriptsize}
 <<multivariate_differential_library, results='hide', message=FALSE, eval=TRUE>>=
@@ -257,21 +257,21 @@ head(rn4_chrominfo)
 ## Run ChromstaR
 Chromstar(inputfolder, experiment.table=experiment_table_H4K20me1,
           outputfolder=outputfolder, numCPU=4, binsize=1000, assembly=rn4_chrominfo,
-          prefit.on.chr='chr12', chromosomes='chr12', mode='condition')
+          prefit.on.chr='chr12', chromosomes='chr12', mode='differential')
 @
 <<multivariate_differential_listfiles, results='markup', message=FALSE, eval=TRUE>>=
 ## Results are stored in 'outputfolder' and can be loaded for further processing
 list.files(outputfolder)
 model <- get(load(file.path(outputfolder,'multivariate',
-                            'multivariate_mode-condition_mark-H4K20me1.RData')))
+                            'multivariate_mode-differential_mark-H4K20me1.RData')))
 @
 
 <<multivariate_differential_stateBrewer, results='markup', message=TRUE, eval=TRUE>>=
 ## === Step 3: Construct differential and common states ===
-diff.states <- stateBrewer(experiment_table_H4K20me1, mode='condition',
+diff.states <- stateBrewer(experiment_table_H4K20me1, mode='differential',
                            differential.states=TRUE)
 print(diff.states)
-common.states <- stateBrewer(experiment_table_H4K20me1, mode='condition',
+common.states <- stateBrewer(experiment_table_H4K20me1, mode='differential',
                              common.states=TRUE)
 print(common.states)
 @
@@ -287,7 +287,7 @@ exportMultivariate(model, filename=tempfile(),
 
 \subsection{Task 3: Finding combinatorial chromatin states}
 
-Most experimental studies that probe several histone modifications are interested in combinatorial chromatin states. An example of a simple combinatorial state would be [H3K4me3+H3K27me3], which is also frequently called ``bivalent promoter'', due to the simultaneous occurrence of the promoter marking H3K4me3 and the repressive H3K27me3. Finding combinatorial states with \Rpackage{chromstaR} is equivalent to a multivariate peak calling. The following code chunks demonstrate how to find bivalent promoters and do some simple analysis. The mode of analysis is called \emph{mark}, because all marks are analyzed simultaneously.
+Most experimental studies that probe several histone modifications are interested in combinatorial chromatin states. An example of a simple combinatorial state would be [H3K4me3+H3K27me3], which is also frequently called ``bivalent promoter'', due to the simultaneous occurrence of the promoter marking H3K4me3 and the repressive H3K27me3. Finding combinatorial states with \Rpackage{chromstaR} is equivalent to a multivariate peak calling. The following code chunks demonstrate how to find bivalent promoters and do some simple analysis. The mode of analysis is called \emph{combinatorial}.
 
 \begin{scriptsize}
 <<multivariate_combinatorial_library, results='hide', message=FALSE, eval=TRUE>>=
@@ -317,14 +317,14 @@ head(rn4_chrominfo)
 ## Run ChromstaR
 Chromstar(inputfolder, experiment.table=experiment_table_SHR,
           outputfolder=outputfolder, numCPU=4, binsize=1000, assembly=rn4_chrominfo,
-          prefit.on.chr='chr12', chromosomes='chr12', mode='mark')
+          prefit.on.chr='chr12', chromosomes='chr12', mode='combinatorial')
 @
 
 <<multivariate_combinatorial_listfiles, results='markup', message=FALSE, eval=TRUE, fig.width=4, fig.height=3, out.width='0.5\\textwidth'>>=
 ## Results are stored in 'outputfolder' and can be loaded for further processing
 list.files(outputfolder)
 model <- get(load(file.path(outputfolder,'multivariate',
-                            'multivariate_mode-mark_condition-SHR.RData')))
+                            'multivariate_mode-combinatorial_condition-SHR.RData')))
 # Obtain genomic frequencies for combinatorial states
 genomicFrequencies(model)
 # Plot transition probabilities and read count correlation
@@ -423,8 +423,8 @@ Consider bivalent promoters defined by [H3K4me3+H3K27me3] at two different devel
 \Rfunction{Chromstar} can be run in 4 different modes:
 \begin{itemize}
 \item \emph{full}: Recommended mode if your (number of marks) * (number of conditions) is less or equal to 8. With 8 ChIP-seq experiments there are already $2^8 = 256$ combinatorial states which is the maximum that most computers can handle computationally for a human-sized genome at bin size 1000bp.
-\item \textbf{DEFAULT} \emph{condition}: Choose this mode if you are interested in highly significant differences between conditions. The computational limit for the number of conditions is $\sim 8$ for a human-sized genome. Combinatorial states are not as accurate as in mode \emph{mark} or \emph{full}.
-\item \emph{mark}: This mode will yield good combinatorial chromatin state calls for any number of marks and conditions. However, differences between conditions have more false positives than in mode \emph{condition} or \emph{full}.
+\item \textbf{DEFAULT} \emph{differential}: Choose this mode if you are interested in highly significant differences between conditions. The computational limit for the number of conditions is $\sim 8$ for a human-sized genome. Combinatorial states are not as accurate as in mode \emph{combinatorial} or \emph{full}.
+\item \emph{combinatorial}: This mode will yield good combinatorial chromatin state calls for any number of marks and conditions. However, differences between conditions have more false positives than in mode \emph{differential} or \emph{full}.
 \item \emph{separate}: Only replicates are processed in a multivariate manner. Combinatorial states are constructed by a simple post-hoc combination of peak calls.
 \end{itemize}
 
@@ -455,13 +455,13 @@ head(rn4_chrominfo)
 ## Run ChromstaR
 Chromstar(inputfolder, experiment.table=experiment_table,
           outputfolder=outputfolder, numCPU=4, binsize=1000, assembly=rn4_chrominfo,
-          prefit.on.chr='chr12', chromosomes='chr12', mode='condition')
+          prefit.on.chr='chr12', chromosomes='chr12', mode='differential')
 @
 <<combined_listfiles, results='markup', message=FALSE, eval=TRUE>>=
 ## Results are stored in 'outputfolder' and can be loaded for further processing
 list.files(outputfolder)
 model <- get(load(file.path(outputfolder,'combined',
-                            'combined_mode-condition.RData')))
+                            'combined_mode-differential.RData')))
 @
 
 <<combined_analysis, results='markup', message=FALSE, eval=TRUE>>=
@@ -508,6 +508,10 @@ plots <- plotFoldEnrichment(hmm=model, annotation=genes, region='start')
 plots[['BN']] + facet_wrap(~ combination) +
   ggtitle('Fold enrichment around TSS') +
   xlab('distance from TSS')
+plots <- plotFoldEnrichment(hmm=model, annotation=genes, region='start', what='peaks')
+plots[['BN']] + facet_wrap(~ mark) +
+  ggtitle('Fold enrichment around TSS') +
+  xlab('distance from TSS')
 @
 
 <<combined_enrichment_plot3, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.8\\textwidth', fig.align='center'>>=
@@ -535,8 +539,8 @@ plots[['BN']] + coord_flip() +
 \item $\rightarrow$\textbf{combined}$\leftarrow$: \\ RData files with the combined results of the uni- and multivariate peak calling steps. This is what you want to use for downstream analyses. Contains \Rclass{combinedMultiHMM} objects.
 \begin{itemize}
 \item \emph{combined\_mode-separate.RData} Simple combination of peak calls (replicates considered) without multivariate analysis.
-\item \emph{combined\_mode-mark.RData} Combination of multivariate results for mode='mark'.
-\item \emph{combined\_mode-condition.RData} Combination of multivariate results for mode='condition'.
+\item \emph{combined\_mode-combinatorial.RData} Combination of multivariate results for mode='combinatorial'.
+\item \emph{combined\_mode-differential.RData} Combination of multivariate results for mode='differential'.
 \item \emph{combined\_mode-full.RData} Combination of multivariate results for mode='full'.
 \end{itemize}
 \item \textbf{multivariate}: \\ RData files with the results of the multivariate peak calling step. Contains \Rclass{multiHMM} objects.
@@ -554,7 +558,7 @@ The strictness of the peak calling can be controlled with a posterior cutoff. Th
 \begin{scriptsize}
 <<faq_postcutoff, results='markup', message=FALSE, eval=TRUE>>=
 model <- get(load(file.path(outputfolder,'combined',
-                            'combined_mode-condition.RData')))
+                            'combined_mode-differential.RData')))
 # Set a strict cutoff close to 1
 model2 <- changePostCutoff(model, post.cutoff=0.999)
 ## Compare the number and width of peaks before and after cutoff adjustment
@@ -582,7 +586,7 @@ length(model2$segments); mean(width(model2$segments))
 
 You were interested in combinatorial state differences as in section~\ref{sec:Task4} and checked the results in a genome browser. You found that some differences are convincing by eye and some are not. There are several possibilities to explore:
 \begin{enumerate}
-\item Run \Rfunction{Chromstar} in mode='condition' (instead of mode='mark') and see if the results improve.
+\item Run \Rfunction{Chromstar} in mode='differential' (instead of mode='combinatorial') and see if the results improve.
 \item You can play with the ``differential.score'' (see section~\ref{sec:Task4}, step 3) and export only differences with a high score. A differential score around 1 means that one modification is different, a score close to 2 means that two modifications are different etc. The score is calculated as the sum of differences in posterior probabilities between marks.
 \item Check for bad replicates that are very different from the rest and exclude them prior to the analysis.
 \end{enumerate}
@@ -599,9 +603,8 @@ heatmapCombinations(marks=c('H3K4me3', 'H3K27me3', 'H3K36me3', 'H3K27Ac'))
 
 \section{Session Info}
 \begin{scriptsize}
-<<>>=
-sessionInfo()
-warnings()
+<<sessionInfo, eval=TRUE, results="asis">>=
+toLatex(sessionInfo())
 @
 \end{scriptsize}
 

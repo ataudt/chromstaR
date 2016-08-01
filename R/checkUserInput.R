@@ -93,8 +93,8 @@ check.experiment.table <- function(experiment.table) {
         stop("Argument 'experiment.table' expects a data.frame with columns 'file', 'mark', 'condition', 'replicate', 'pairedEndReads' and 'controlFiles'.")
     }
     conditions <- unique(experiment.table$condition)
-    if (any(grepl('[[:punct:]]', conditions)) | any(grepl('[[:punct:]]', conditions))) {
-        stop("Column 'condition' of the experiment.table cannot contain special characters or spaces.")
+    if (any(grepl('[[:punct:]]', conditions)) | any(grepl('[[:punct:]]', conditions)) | any(grepl('^[0-9]', conditions))) {
+        stop("Column 'condition' of the experiment.table cannot contain special characters or spaces or start with a number.")
     }
     marks <- unique(experiment.table$mark)
     if (any(grepl('[[:punct:]]', marks)) | any(grepl('[[:punct:]]', marks))) {

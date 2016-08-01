@@ -1,2 +1,2 @@
-combined_mode-condition: combined_model
-multivariate_mode-mark_condition-SHR: multivariate_model
+combined_mode-differential: combined_model
+multivariate_mode-combinatorial_condition-SHR: multivariate_model

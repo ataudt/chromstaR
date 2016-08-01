@@ -36,7 +36,7 @@ Export \code{\link{combinedMultiHMM}} objects as files which can be uploaded int
 }
 \examples{
 ## Get an example multiHMM
-file <- system.file("data","combined_mode-condition.RData",
+file <- system.file("data","combined_mode-differential.RData",
                     package="chromstaR")
 model <- get(load(file))
 ## Export peak calls and combinatorial states

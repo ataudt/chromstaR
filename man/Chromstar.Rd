@@ -8,9 +8,9 @@ Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
   numCPU = 1, binsize = 1000, assembly = NULL, chromosomes = NULL,
   remove.duplicate.reads = TRUE, min.mapq = 10, prefit.on.chr = NULL,
   eps.univariate = 0.1, max.time = NULL, max.iter = 5000,
-  read.cutoff.absolute = 500, keep.posteriors = TRUE, mode = "condition",
-  max.states = 128, per.chrom = TRUE, eps.multivariate = 0.01,
-  exclusive.table = NULL)
+  read.cutoff.absolute = 500, keep.posteriors = TRUE,
+  mode = "differential", max.states = 128, per.chrom = TRUE,
+  eps.multivariate = 0.01, exclusive.table = NULL)
 }
 \arguments{
 \item{inputfolder}{Folder with either BAM or BED-6 (see \code{\link{readBedFileAsGRanges}} files.}
@@ -45,10 +45,10 @@ Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
 
 \item{keep.posteriors}{If set to \code{TRUE} (default=\code{FALSE}), posteriors will be available in the output. This is useful to change the post.cutoff later, but increases the necessary disk space to store the result.}
 
-\item{mode}{One of \code{c('condition','mark','full')}. The modes determine how the multivariate part is run. Here is some advice which mode to use:
+\item{mode}{One of \code{c('differential','combinatorial','full')}. The modes determine how the multivariate part is run. Here is some advice which mode to use:
 \describe{
-  \item{\code{mark}}{Each condition is analyzed separately with all marks combined. Choose this mode if you have more than ~7 conditions or you want to have a high sensitivity for detecting combinatorial states. Differences between conditions will be more noisy (more false positives) than in mode \code{'condition'} but combinatorial states are more precise.}
-  \item{\code{condition}}{Each mark is analyzed separately with all conditions combined. Choose this mode if you are interested in accurate differences. Combinatorial states will be more noisy (more false positives) than in mode \code{'mark'} but differences are more precise.}
+  \item{\code{combinatorial}}{Each condition is analyzed separately with all marks combined. Choose this mode if you have more than ~7 conditions or you want to have a high sensitivity for detecting combinatorial states. Differences between conditions will be more noisy (more false positives) than in mode \code{'differential'} but combinatorial states are more precise.}
+  \item{\code{differential}}{Each mark is analyzed separately with all conditions combined. Choose this mode if you are interested in accurate differences. Combinatorial states will be more noisy (more false positives) than in mode \code{'combinatorial'} but differences are more precise.}
   \item{\code{full}}{Full analysis of all marks and conditions combined. Best of both, but: Choose this mode only if (number of conditions * number of marks \eqn{\le} 8), otherwise it might be too slow or crash due to memory limitations.}
   \item{\code{separate}}{Only replicates are analyzed multivariately. Combinatorial states are constructed by a simple post-hoc combination of peak calls.}
 }}
@@ -80,7 +80,7 @@ data(rn4_chrominfo)
 ## Run ChromstaR
 Chromstar(inputfolder, experiment.table=experiment_table_SHR,
          outputfolder=outputfolder, numCPU=4, binsize=1000, assembly=rn4_chrominfo,
-         prefit.on.chr='chr12', chromosomes='chr12', mode='mark', eps.univariate=1,
+         prefit.on.chr='chr12', chromosomes='chr12', mode='combinatorial', eps.univariate=1,
          eps.multivariate=1)
 
 }

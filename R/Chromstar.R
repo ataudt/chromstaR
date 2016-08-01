@@ -11,10 +11,10 @@
 #' @param assembly A \code{data.frame} or tab-separated file with columns 'chromosome' and 'length'. Alternatively a character specifying the assembly, see \code{\link[GenomeInfoDb]{fetchExtendedChromInfoFromUCSC}} for available assemblies. Specifying an assembly is only necessary when importing BED files. BAM files are handled automatically.
 #' @inheritParams readBedFileAsGRanges
 #' @inheritParams callPeaksUnivariate
-#' @param mode One of \code{c('condition','mark','full')}. The modes determine how the multivariate part is run. Here is some advice which mode to use:
+#' @param mode One of \code{c('differential','combinatorial','full')}. The modes determine how the multivariate part is run. Here is some advice which mode to use:
 #' \describe{
-#'   \item{\code{mark}}{Each condition is analyzed separately with all marks combined. Choose this mode if you have more than ~7 conditions or you want to have a high sensitivity for detecting combinatorial states. Differences between conditions will be more noisy (more false positives) than in mode \code{'condition'} but combinatorial states are more precise.}
-#'   \item{\code{condition}}{Each mark is analyzed separately with all conditions combined. Choose this mode if you are interested in accurate differences. Combinatorial states will be more noisy (more false positives) than in mode \code{'mark'} but differences are more precise.}
+#'   \item{\code{combinatorial}}{Each condition is analyzed separately with all marks combined. Choose this mode if you have more than ~7 conditions or you want to have a high sensitivity for detecting combinatorial states. Differences between conditions will be more noisy (more false positives) than in mode \code{'differential'} but combinatorial states are more precise.}
+#'   \item{\code{differential}}{Each mark is analyzed separately with all conditions combined. Choose this mode if you are interested in accurate differences. Combinatorial states will be more noisy (more false positives) than in mode \code{'combinatorial'} but differences are more precise.}
 #'   \item{\code{full}}{Full analysis of all marks and conditions combined. Best of both, but: Choose this mode only if (number of conditions * number of marks \eqn{\le} 8), otherwise it might be too slow or crash due to memory limitations.}
 #'   \item{\code{separate}}{Only replicates are analyzed multivariately. Combinatorial states are constructed by a simple post-hoc combination of peak calls.}
 #' }
@@ -42,10 +42,10 @@
 #'## Run ChromstaR
 #'Chromstar(inputfolder, experiment.table=experiment_table_SHR,
 #'          outputfolder=outputfolder, numCPU=4, binsize=1000, assembly=rn4_chrominfo,
-#'          prefit.on.chr='chr12', chromosomes='chr12', mode='mark', eps.univariate=1,
+#'          prefit.on.chr='chr12', chromosomes='chr12', mode='combinatorial', eps.univariate=1,
 #'          eps.multivariate=1)
 #'
-Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps.univariate=0.1, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=TRUE, mode='condition', max.states=128, per.chrom=TRUE, eps.multivariate=0.01, exclusive.table=NULL) {
+Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps.univariate=0.1, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=TRUE, mode='differential', max.states=128, per.chrom=TRUE, eps.multivariate=0.01, exclusive.table=NULL) {
   
     #========================
     ### General variables ###
@@ -77,7 +77,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
   
     ## Read in experiment table if necessary ##
     if (is.character(experiment.table)) {
-        exp.table <- utils::read.table(experiment.table, header=TRUE, comment.char='#')
+        exp.table <- utils::read.table(experiment.table, header=TRUE, comment.char='#', stringsAsFactors=FALSE)
     } else if (is.data.frame(experiment.table)) {
         exp.table <- experiment.table
     }
@@ -99,15 +99,15 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     names(inputfilenames) <- basename(inputfiles)
     
     ## Check usage of modes
-    if (!mode %in% c('separate','mark','condition','full')) {
+    if (!mode %in% c('separate','combinatorial','differential','full')) {
         stop("Unknown mode '", mode, "'.")
     }
     marks <- setdiff(unique(as.character(exp.table[,'mark'])), 'input')
     conditions <- unique(as.character(exp.table[,'condition']))
-    if (length(conditions) < 2 & conf[['mode']] == 'condition') {
+    if (length(conditions) < 2 & conf[['mode']] == 'differential') {
         stop("Mode 'condition' can only be used if two or more conditions are present.")
     }
-    if (length(marks) < 2 & conf[['mode']] == 'mark') {
+    if (length(marks) < 2 & conf[['mode']] == 'combinatorial') {
         stop("Mode 'mark' can only be used if two or more marks are present.")
     }
     
@@ -147,8 +147,8 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     cat("- BROWSERFILES: Bed files for upload to the UCSC genome browser. It contains files with combinatorial states (*_combinations.bed.gz) and underlying peak calls (*_peaks.bed.gz). !!Always check the *_peaks.bed.gz files if you are satisfied with the peak calls. If not, there are ways to make the calls stricter (see section FAQ of the vignette).\n", file=savename, append=TRUE)
     cat("- -->combined<--: RData files with the combined results of the uni- and multivariate peak calling steps. This is what you want to use for downstream analyses. Contains combinedMultiHMM objects.\n", file=savename, append=TRUE)
     cat("    - combined_mode-separate.RData: Simple combination of peak calls (replicates considered) without multivariate analysis.\n", file=savename, append=TRUE)
-    cat("    - combined_mode-mark.RData: Combination of multivariate results for mode='mark'.\n", file=savename, append=TRUE)
-    cat("    - combined_mode-condition.RData: Combination of multivariate results for mode='condition'.\n", file=savename, append=TRUE)
+    cat("    - combined_mode-combinatorial.RData: Combination of multivariate results for mode='combinatorial'.\n", file=savename, append=TRUE)
+    cat("    - combined_mode-differential.RData: Combination of multivariate results for mode='differential'.\n", file=savename, append=TRUE)
     cat("    - combined_mode-full.RData: Combination of multivariate results for mode='full'.\n", file=savename, append=TRUE)
     cat("- multivariate: RData files with the results of the multivariate peak calling step. Contains multiHMM objects.\n", file=savename, append=TRUE)
     cat("- PLOTS: Several plots that are produced by default. Please check the plots in subfolder \"univariate-distributions\" for irregularities (see section \"Univariate Analysis\" of the vignette).\n", file=savename, append=TRUE)
@@ -342,7 +342,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
             if (!file.exists(savename)) {
                 mask <- names(files) == markcond
                 repfiles <- files[mask]
-                states <- stateBrewer(exp.table[mask,], mode='mark')
+                states <- stateBrewer(exp.table[mask,], mode='combinatorial')
                 repmodel <- callPeaksMultivariate(repfiles, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(repmodel, file=savename)
@@ -445,7 +445,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         }
     
     #---------------------------
-    } else if (mode == 'mark') {
+    } else if (mode == 'combinatorial') {
         for (condition in conditions) {
             messageU("condition = ", condition, underline='-', overline='-')
             multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '_condition-', condition, '.RData'))
@@ -467,7 +467,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         }
     
     #--------------------------------
-    } else if (mode == 'condition') {
+    } else if (mode == 'differential') {
         for (mark in marks) {
             messageU("mark = ", mark, underline='-', overline='-')
             multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '_mark-', mark, '.RData'))

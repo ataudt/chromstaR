@@ -10,7 +10,7 @@ A \code{\link{multiHMM}} object for demonstration purposes in examples of packag
 }
 \examples{
 ## Get an example multiHMM
-file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
                     package="chromstaR")
 model <- get(load(file))
 }

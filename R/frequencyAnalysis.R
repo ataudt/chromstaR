@@ -4,20 +4,27 @@
 #'
 #' @param multi.hmm A \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object or a file that contains such an object.
 #' @param combinations A vector with combinations for which the frequency will be calculated. If \code{NULL} all combinations will be considered.
+#' @param per.mark Set to \code{TRUE} if you want frequencies per mark instead of per combination.
 #' @return A table with frequencies of each combinatorial state.
 #' @author Aaron Taudt
 #' @export
 #' @examples
 #'## Get an example multiHMM
-#'file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+#'file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
 #'                     package="chromstaR")
 #'model <- get(load(file))
 #'genomicFrequencies(model)
 #'
-genomicFrequencies <- function(multi.hmm, combinations=NULL) {
+genomicFrequencies <- function(multi.hmm, combinations=NULL, per.mark=FALSE) {
 
     multi.hmm <- loadHmmsFromFiles(multi.hmm, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     bins <- multi.hmm$bins
+    
+    if (per.mark) {
+        binstates <- dec2bin(bins$state, colnames=multi.hmm$info$ID)
+        t <- colSums(binstates) / nrow(binstates)
+        return(t)
+    }
       
     if (class(multi.hmm)==class.multivariate.hmm) {
 
@@ -74,11 +81,11 @@ genomicFrequencies <- function(multi.hmm, combinations=NULL) {
 #'## Run ChromstaR
 #'Chromstar(inputfolder, experiment.table=experiment_table,
 #'          outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
-#'          prefit.on.chr='chr12', chromosomes='chr12', mode='mark', eps.univariate=1,
+#'          prefit.on.chr='chr12', chromosomes='chr12', mode='combinatorial', eps.univariate=1,
 #'          eps.multivariate=1)
 #'## Results are stored in 'outputfolder' and can be loaded for further processing
 #'list.files(outputfolder)
-#'model <- get(load(file.path(outputfolder,'combined', 'combined_mode-mark.RData')))
+#'model <- get(load(file.path(outputfolder,'combined', 'combined_mode-combinatorial.RData')))
 #'
 #'#=== Step 3: Analysis ===
 #'# Get frequencies

@@ -23,7 +23,7 @@ Plot a heatmap that shows the binary presence/absence of marks for the different
 marks <- c('H3K4me3','H3K27me3','H4K20me1')
 heatmapCombinations(marks=marks)
 
-file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
                     package="chromstaR")
 heatmapCombinations(file)
 

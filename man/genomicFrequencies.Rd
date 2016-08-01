@@ -4,12 +4,14 @@
 \alias{genomicFrequencies}
 \title{Frequencies of combinatorial states}
 \usage{
-genomicFrequencies(multi.hmm, combinations = NULL)
+genomicFrequencies(multi.hmm, combinations = NULL, per.mark = FALSE)
 }
 \arguments{
 \item{multi.hmm}{A \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object or a file that contains such an object.}
 
 \item{combinations}{A vector with combinations for which the frequency will be calculated. If \code{NULL} all combinations will be considered.}
+
+\item{per.mark}{Set to \code{TRUE} if you want frequencies per mark instead of per combination.}
 }
 \value{
 A table with frequencies of each combinatorial state.
@@ -19,7 +21,7 @@ Get the genomewide frequency of each combinatorial state.
 }
 \examples{
 ## Get an example multiHMM
-file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
                     package="chromstaR")
 model <- get(load(file))
 genomicFrequencies(model)
