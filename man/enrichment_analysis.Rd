@@ -56,7 +56,7 @@ Plotting functions for enrichment analysis of \code{\link{multiHMM}} or \code{\l
 }}
 \examples{
 ### Get an example multiHMM ###
-file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
                     package="chromstaR")
 model <- get(load(file))
 

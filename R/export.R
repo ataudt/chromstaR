@@ -313,7 +313,7 @@ exportUnivariateCounts <- function(hmm.list, filename, header=TRUE, separate.fil
 #' @export
 #' @examples
 #'## Get an example multiHMM
-#'file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+#'file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
 #'                     package="chromstaR")
 #'model <- get(load(file))
 #'## Export peak calls and combinatorial states
@@ -580,7 +580,7 @@ exportMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=
 #' @export
 #' @examples
 #'## Get an example multiHMM
-#'file <- system.file("data","combined_mode-condition.RData",
+#'file <- system.file("data","combined_mode-differential.RData",
 #'                     package="chromstaR")
 #'model <- get(load(file))
 #'## Export peak calls and combinatorial states

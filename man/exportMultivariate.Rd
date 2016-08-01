@@ -36,7 +36,7 @@ Export \code{\link{uniHMM}} objects as files which can be uploaded into a genome
 }
 \examples{
 ## Get an example multiHMM
-file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
                     package="chromstaR")
 model <- get(load(file))
 ## Export peak calls and combinatorial states

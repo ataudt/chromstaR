@@ -44,7 +44,7 @@ Chromstar(inputfolder, experiment.table=experiment_table,
          eps.multivariate=1)
 ## Results are stored in 'outputfolder' and can be loaded for further processing
 list.files(outputfolder)
-model <- get(load(file.path(outputfolder,'combined', 'combined_mode-mark.RData')))
+model <- get(load(file.path(outputfolder,'combined', 'combined_mode-combinatorial.RData')))
 
 #=== Step 3: Analysis ===
 # Get frequencies

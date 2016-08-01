@@ -10,7 +10,7 @@ A \code{\link{combinedMultiHMM}} object for demonstration purposes in examples o
 }
 \examples{
 ## Get an example combinedMultiHMM
-file <- system.file("data","combined_mode-condition.RData",
+file <- system.file("data","combined_mode-differential.RData",
                     package="chromstaR")
 model <- get(load(file))
 }

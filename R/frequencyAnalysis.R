@@ -10,7 +10,7 @@
 #' @export
 #' @examples
 #'## Get an example multiHMM
-#'file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+#'file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
 #'                     package="chromstaR")
 #'model <- get(load(file))
 #'genomicFrequencies(model)
@@ -85,7 +85,7 @@ genomicFrequencies <- function(multi.hmm, combinations=NULL, per.mark=FALSE) {
 #'          eps.multivariate=1)
 #'## Results are stored in 'outputfolder' and can be loaded for further processing
 #'list.files(outputfolder)
-#'model <- get(load(file.path(outputfolder,'combined', 'combined_mode-mark.RData')))
+#'model <- get(load(file.path(outputfolder,'combined', 'combined_mode-combinatorial.RData')))
 #'
 #'#=== Step 3: Analysis ===
 #'# Get frequencies

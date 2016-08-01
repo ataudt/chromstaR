@@ -20,7 +20,7 @@ NULL
 #' @format A \code{\link{multiHMM}} object.
 #' @examples
 #'## Get an example multiHMM
-#'file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+#'file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
 #'                     package="chromstaR")
 #'model <- get(load(file))
 NULL
@@ -35,7 +35,7 @@ NULL
 #' @format A \code{\link{combinedMultiHMM}} object.
 #' @examples
 #'## Get an example combinedMultiHMM
-#'file <- system.file("data","combined_mode-condition.RData",
+#'file <- system.file("data","combined_mode-differential.RData",
 #'                     package="chromstaR")
 #'model <- get(load(file))
 NULL
@@ -122,7 +122,7 @@ NULL
 #' @aliases multi.hmm
 #' @examples
 #'## Get an example multiHMM
-#'file <- system.file("data","multivariate_mode-mark_condition-SHR.RData",
+#'file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
 #'                     package="chromstaR")
 #'model <- get(load(file))
 NULL
