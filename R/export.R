@@ -914,19 +914,19 @@ exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination
     } else {
         gr$score <- mcols(gr)[,scorecol]
     }
-    regions <- as.data.frame(gr)[c('chromosome','start','end','score')]
+    regions <- as.data.frame(gr)[c('chromosome','start','end','score','strand')]
+    regions$strand <- sub("\\*", ".", regions$strand)
     if (! namecol %in% names(mcols(gr))) {
         regions$name <- paste0('region_', 1:nrow(regions))
     } else {
         regions$name <- mcols(gr)[,namecol]
     }
-    regions <- regions[c('chromosome','start','end','name','score')]
+    regions <- regions[c('chromosome','start','end','name','score','strand')]
     # Make score integer
     if (min(regions$score) < 0 | max(regions$score) > 1000 | all(regions$score<=1.2) | !is.integer(regions$score)) {
         warning("Column '", scorecol, "' should contain integer values between 0 and 1000 for compatibility with the UCSC convention.")
     }
-    numsegments <- nrow(regions)
-    df <- cbind(regions, strand=rep(".",numsegments), thickStart=regions$start, thickEnd=regions$end)
+    df <- cbind(regions, thickStart=regions$start, thickEnd=regions$end)
     # Convert from 1-based closed to 0-based half open
     df$start <- df$start - 1
     df$thickStart <- df$thickStart - 1

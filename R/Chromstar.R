@@ -105,10 +105,10 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     marks <- setdiff(unique(as.character(exp.table[,'mark'])), 'input')
     conditions <- unique(as.character(exp.table[,'condition']))
     if (length(conditions) < 2 & conf[['mode']] == 'differential') {
-        stop("Mode 'condition' can only be used if two or more conditions are present.")
+        stop("Mode 'differential' can only be used if two or more conditions are present.")
     }
     if (length(marks) < 2 & conf[['mode']] == 'combinatorial') {
-        stop("Mode 'mark' can only be used if two or more marks are present.")
+        stop("Mode 'combinatorial' can only be used if two or more marks are present.")
     }
     
     ## Check if assembly must be present
@@ -195,8 +195,8 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 ## Get first bed file
                 bedfile <- grep('bed$|bed.gz$', datafiles, value=TRUE)[1]
                 if (!is.na(bedfile)) {
-                    firstline <- read.table(bedfile, nrows=1)
-                    if (grepl('^chr',firstline[1,1])) {
+                    firstlines <- read.table(bedfile, nrows=10)
+                    if (grepl('^chr',firstlines[1,1])) {
                         df <- df.chroms[,c('UCSC_seqlevel','UCSC_seqlength')]
                     } else {
                         df <- df.chroms[,c('NCBI_seqlevel','UCSC_seqlength')]
