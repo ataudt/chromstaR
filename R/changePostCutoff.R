@@ -1,4 +1,4 @@
-#' Change the false discovery rate of a Hidden Markov Model
+#' Change the posterior cutoff of a Hidden Markov Model
 #'
 #' Adjusts the peak calls of a \code{\link{uniHMM}} or \code{\link{multiHMM}} object with the given posterior cutoff.
 #'

@@ -2,7 +2,7 @@
 % Please edit documentation in R/changePostCutoff.R
 \name{changePostCutoff}
 \alias{changePostCutoff}
-\title{Change the false discovery rate of a Hidden Markov Model}
+\title{Change the posterior cutoff of a Hidden Markov Model}
 \usage{
 changePostCutoff(model, post.cutoff = 0.5)
 }
