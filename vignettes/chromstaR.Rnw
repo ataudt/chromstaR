@@ -354,16 +354,16 @@ print(genes)
 <<multivariate_combinatorial_enrichment_plot1, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.8\\textwidth', fig.align='center'>>=
 # We expect promoter [H3K4me3] and bivalent-promoter signatures [H3K4me3+H3K27me3]
 # to be enriched at transcription start sites.
-plotFoldEnrichment(hmm = model, annotation = genes, bp.around.annotation = 15000) +
+plotEnrichment(hmm = model, annotation = genes, bp.around.annotation = 15000) +
   ggtitle('Fold enrichment around genes') +
   xlab('distance from gene body')
 # Plot enrichment only at TSS. We make use of the fact that TSS is the start of a gene.
-plotFoldEnrichment(model, genes, region = 'start') +
+plotEnrichment(model, genes, region = 'start') +
   ggtitle('Fold enrichment around TSS') +
   xlab('distance from TSS in [bp]')
 # Note: If you want to facet the plot because you have many combinatorial states you
 # can do that with
-plotFoldEnrichment(model, genes, region = 'start') +
+plotEnrichment(model, genes, region = 'start') +
   facet_wrap(~ combination) + ggtitle('Fold enrichment around TSS')
 @
 <<multivariate_combinatorial_enrichment_plot2, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.8\\textwidth', fig.align='center'>>=
@@ -504,11 +504,11 @@ print(genes)
 <<combined_enrichment_plot1, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.8\\textwidth', fig.align='center'>>=
 # We expect promoter [H3K4me3] and bivalent-promoter signatures [H3K4me3+H3K27me3]
 # to be enriched at transcription start sites.
-plots <- plotFoldEnrichment(hmm=model, annotation=genes, region='start')
+plots <- plotEnrichment(hmm=model, annotation=genes, region='start')
 plots[['BN']] + facet_wrap(~ combination) +
   ggtitle('Fold enrichment around TSS') +
   xlab('distance from TSS')
-plots <- plotFoldEnrichment(hmm=model, annotation=genes, region='start', what='peaks')
+plots <- plotEnrichment(hmm=model, annotation=genes, region='start', what='peaks')
 plots[['BN']] + facet_wrap(~ mark) +
   ggtitle('Fold enrichment around TSS') +
   xlab('distance from TSS')

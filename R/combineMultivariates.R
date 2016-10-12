@@ -114,7 +114,7 @@ combineMultivariates <- function(hmms, mode) {
         states <- factor(bin2dec(do.call(cbind, binstates)))
         names(states) <- NULL
         names(combs) <- conditions
-        combs.df <- as(combs,'DataFrame')
+        combs.df <- methods::as(combs,'DataFrame')
         stopTimedMessage(ptm)
         
     } else if (mode == 'differential') {
@@ -160,7 +160,7 @@ combineMultivariates <- function(hmms, mode) {
             combs[[condition]] <- mapping[as.character(states.cond)]
         }
         combs.df <- as.data.frame(combs) # get factors instead of characters
-        combs.df <- as(combs.df, 'DataFrame')
+        combs.df <- methods::as(combs.df, 'DataFrame')
         stopTimedMessage(ptm)
         
     } else if (mode == 'full') {
@@ -186,7 +186,7 @@ combineMultivariates <- function(hmms, mode) {
             stopTimedMessage(ptm)
         }
         combs.df <- as.data.frame(combs) # get factors instead of characters
-        combs.df <- as(combs.df, 'DataFrame')
+        combs.df <- methods::as(combs.df, 'DataFrame')
         
     } else if (mode == 'replicate') {
         ## Load first HMM for coordinates
@@ -236,7 +236,7 @@ combineMultivariates <- function(hmms, mode) {
             combs[[condition]] <- mapping[as.character(states)]
         }
         names(combs) <- conditions
-        combs.df <- as(combs,'DataFrame')
+        combs.df <- methods::as(combs,'DataFrame')
         stopTimedMessage(ptm)
     } else {
         stop("Unknown mode '", mode, "'.")
@@ -280,7 +280,7 @@ combineMultivariates <- function(hmms, mode) {
         df <- as.data.frame(bins.cond)
         names(df)[6] <- cond
         segments.cond <- suppressMessages( collapseBins(df, column2collapseBy=cond, columns2drop=c('width', grep('posteriors', names(df), value=TRUE))) )
-        segments.cond <- as(segments.cond, 'GRanges')
+        segments.cond <- methods::as(segments.cond, 'GRanges')
         names(mcols(segments.cond)) <- 'combination'
         seqlengths(segments.cond) <- seqlengths(bins)[seqlevels(segments.cond)]
         segments.separate[[cond]] <- segments.cond

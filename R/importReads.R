@@ -76,9 +76,9 @@ readBamFileAsGRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pa
         }
     } else {
         if (pairedEndReads) {
-            data.raw <- GenomicAlignments::readGAlignmentPairs(bamfile, index=bamindex, param=Rsamtools::ScanBamParam(which=range(gr), what=what, flag=scanBamFlag(isDuplicate=FALSE)))
+            data.raw <- GenomicAlignments::readGAlignmentPairs(bamfile, index=bamindex, param=Rsamtools::ScanBamParam(which=range(gr), what=what, flag=Rsamtools::scanBamFlag(isDuplicate=FALSE)))
         } else {
-            data.raw <- GenomicAlignments::readGAlignments(bamfile, index=bamindex, param=Rsamtools::ScanBamParam(which=range(gr), what=what, flag=scanBamFlag(isDuplicate=FALSE)))
+            data.raw <- GenomicAlignments::readGAlignments(bamfile, index=bamindex, param=Rsamtools::ScanBamParam(which=range(gr), what=what, flag=Rsamtools::scanBamFlag(isDuplicate=FALSE)))
         }
     }
     stopTimedMessage(ptm)
@@ -93,7 +93,7 @@ readBamFileAsGRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pa
     ## Filter by mapping quality
     if (pairedEndReads) {
         ptm <- startTimedMessage("Converting to GRanges ...")
-        data <- as(data.raw, 'GRanges') # treat as one fragment
+        data <- methods::as(data.raw, 'GRanges') # treat as one fragment
         stopTimedMessage(ptm)
 
         ptm <- startTimedMessage("Filtering reads (mapq >= ", min.mapq, ") ...")
@@ -111,7 +111,7 @@ readBamFileAsGRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pa
         stopTimedMessage(ptm)
     } else {
         ptm <- startTimedMessage("Converting to GRanges ...")
-        data <- as(data.raw, 'GRanges')
+        data <- methods::as(data.raw, 'GRanges')
         stopTimedMessage(ptm)
 
         ptm <- startTimedMessage("Filtering reads (mapq >= ", min.mapq, ") ...")

@@ -14,6 +14,7 @@ ChromstaR is a versatile ChIP-seq analysis suite with the following features:
 ChromstaR is a powerful tool for any type of ChIP-seq analysis. For instance, you can use it to find bivalent promoters, poised enhancers etc. between two or more experimental conditions. It implements high-quality peak calling for broad and narrow marks and enables combinatorial and differential chromatin state analysis. It provides ready-to-use functions for any type of enrichment analysis and results can easily be assessed in a genome browser. The method is described [here](http://biorxiv.org/content/early/2016/02/04/038612) and a tutorial is available [here](https://github.com/ataudt/chromstaR/blob/master/vignettes/chromstaR.pdf).
 
 Please visit also the website at https://chromstar.org/.
+
 Installation
 ------------
 

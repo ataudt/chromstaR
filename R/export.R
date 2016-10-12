@@ -16,9 +16,9 @@ insertchr <- function(gr) {
 #=====================================================
 #' Export genome browser viewable files
 #'
-#' Export read counts as genome browser viewable file
+#' Export read counts (RPKM) as genome browser viewable file
 #'
-#' Export read counts from \code{\link{binned.data}} as a file which can be uploaded into a genome browser. Read counts are exported in WIGGLE format (.wig.gz).
+#' Export read counts from \code{\link{binned.data}} as a file which can be uploaded into a genome browser. Read counts are exported in WIGGLE format as RPKM (.wig.gz).
 #'
 #' @author Aaron Taudt
 #' @param binned.data.list A \code{list()} of \code{\link{binned.data}} objects or vector of files that contain such objects.
@@ -81,9 +81,10 @@ exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.f
             cat(paste0('track type=wiggle_0 name="read count for ',name,'" description="read count for ',name,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
         }
         # Write read data
+        b$counts <- rpkm.vector(b$counts, binsize=mean(width(b))) # RPKM normalization
         for (chrom in unique(b$chromosome)) {
             cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-            utils::write.table(mcols(b[b$chromosome==chrom])$counts, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
+            utils::write.table(b[b$chromosome==chrom]$counts, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
         }
         if (separate.files) {
             close(filename.gz)
@@ -100,9 +101,9 @@ exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.f
 #=====================================================
 #' Export genome browser viewable files
 #'
-#' Export univariate peak-calls and read counts as genome browser viewable file
+#' Export univariate peak-calls and read counts (RPKM) as genome browser viewable file
 #'
-#' Export \code{\link{uniHMM}} objects as files which can be uploaded into a genome browser. Peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wig.gz).
+#' Export \code{\link{uniHMM}} objects as files which can be uploaded into a genome browser. Peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format as RPKM (.wig.gz).
 #'
 #' @author Aaron Taudt
 #' @param hmm.list A \code{list()} of \code{\link{uniHMM}} objects or vector of files that contain such objects.
@@ -274,9 +275,10 @@ exportUnivariateCounts <- function(hmm.list, filename, header=TRUE, separate.fil
             cat(paste0('track type=wiggle_0 name="read count for ',ID,'" description="read count for ',ID,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
         }
         # Write read data
+        hmm.gr$counts <- rpkm.vector(hmm.gr$counts, binsize=mean(width(hmm.gr))) # RPKM normalization
         for (chrom in unique(hmm.gr$chromosome)) {
             cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-            utils::write.table(mcols(hmm.gr[hmm.gr$chromosome==chrom])$counts, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
+            utils::write.table(hmm.gr[hmm.gr$chromosome==chrom]$counts, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
         }
         if (separate.files) {
             close(filename.gz)
@@ -295,9 +297,9 @@ exportUnivariateCounts <- function(hmm.list, filename, header=TRUE, separate.fil
 #=====================================================
 #' Export genome browser viewable files
 #'
-#' Export multivariate calls and read counts as genome browser viewable file
+#' Export multivariate calls and read counts (RPKM) as genome browser viewable file
 #'
-#' Export \code{\link{uniHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states and peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wig.gz).
+#' Export \code{\link{uniHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states and peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format as RPKM (.wig.gz).
 #'
 #' @author Aaron Taudt
 #' @param hmm A \code{\link{multiHMM}} object or file that contains such an object.
@@ -507,6 +509,9 @@ exportMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=
     ## Load models
     hmm <- loadHmmsFromFiles(hmm, check.class=class.multivariate.hmm)[[1]]
 
+    ## RPKM normalization
+    hmm$bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
+    
     ## Variables
     filename <- paste0(filename,".wig.gz")
     if (!separate.files) {
@@ -565,7 +570,7 @@ exportMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=
 #'
 #' Export multivariate calls as genome browser viewable file
 #'
-#' Export \code{\link{combinedMultiHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states are exported in BED format (.bed.gz).
+#' Export \code{\link{combinedMultiHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states are exported in BED format (.bed.gz). Read counts are exported in WIGGLE format as RPKM (.wig.gz).
 #'
 #' @author Aaron Taudt
 #' @param hmm A \code{\link{combinedMultiHMM}} object or file that contains such an object.
@@ -792,6 +797,10 @@ exportCombinedMultivariateCounts <- function(hmm, filename, header=TRUE, separat
     ## Load models
     hmm <- loadHmmsFromFiles(hmm, check.class=class.combined.multivariate.hmm)[[1]]
 
+    ## RPKM normalization
+    hmm$bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
+    
+    
     ## Variables
     filename <- paste0(filename,".wig.gz")
     if (!separate.files) {

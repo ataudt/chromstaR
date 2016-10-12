@@ -20,10 +20,10 @@ exportBinnedData(binned.data.list, filename, header = TRUE,
 \code{NULL}
 }
 \description{
-Export read counts as genome browser viewable file
+Export read counts (RPKM) as genome browser viewable file
 }
 \details{
-Export read counts from \code{\link{binned.data}} as a file which can be uploaded into a genome browser. Read counts are exported in WIGGLE format (.wig.gz).
+Export read counts from \code{\link{binned.data}} as a file which can be uploaded into a genome browser. Read counts are exported in WIGGLE format as RPKM (.wig.gz).
 }
 \examples{
 ## Get an example BAM file

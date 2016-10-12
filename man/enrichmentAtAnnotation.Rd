@@ -6,7 +6,7 @@
 \usage{
 enrichmentAtAnnotation(bins, info, annotation, bp.around.annotation = 10000,
   region = c("start", "inside", "end"), what = c("combinations", "peaks",
-  "counts"), num.intervals = 21)
+  "counts"), num.intervals = 21, statistic = "fold")
 }
 \arguments{
 \item{bins}{The \code{$bins} entry from a \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object.}
@@ -22,6 +22,8 @@ enrichmentAtAnnotation(bins, info, annotation, bp.around.annotation = 10000,
 \item{what}{One of \code{c('combinations','peaks','counts')} specifying which statistic to calculate.}
 
 \item{num.intervals}{Number of intervals for enrichment 'inside' of annotation.}
+
+\item{statistic}{The statistic to calculate. Either 'fold' for fold enrichments or 'fraction' for fraction of positions.}
 }
 \value{
 A \code{list()} containing \code{data.frame()}s for enrichment of combinatorial states and binary states at the start, end and inside of the annotation.

@@ -29,10 +29,10 @@ exportMultivariate(hmm, filename, what = c("combinations", "peaks", "counts"),
 \code{NULL}
 }
 \description{
-Export multivariate calls and read counts as genome browser viewable file
+Export multivariate calls and read counts (RPKM) as genome browser viewable file
 }
 \details{
-Export \code{\link{uniHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states and peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format (.wig.gz).
+Export \code{\link{uniHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states and peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format as RPKM (.wig.gz).
 }
 \examples{
 ## Get an example multiHMM
