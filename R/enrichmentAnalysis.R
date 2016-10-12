@@ -498,7 +498,7 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
                 combinations.inside[as.character(interval),] <- fold
             }
             if ('counts' %in% what) {
-                counts.inside[as.character(interval),] <- colSums(counts[index,])
+                counts.inside[as.character(interval),] <- colMeans(counts[index,])
             }
         }
         if ('peaks' %in% what) {
@@ -545,7 +545,7 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
                 combinations.start[as.character(ilag),] <- fold
             }
             if ('counts' %in% what) {
-                counts.start[as.character(ilag),] <- colSums(counts[index,])
+                counts.start[as.character(ilag),] <- colMeans(counts[index,])
             }
         }
         if ('peaks' %in% what) {
@@ -595,7 +595,7 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
                 combinations.end[as.character(ilag),] <- fold
             }
             if ('counts' %in% what) {
-                counts.end[as.character(ilag),] <- colSums(counts[index,])
+                counts.end[as.character(ilag),] <- colMeans(counts[index,])
             }
         }
         if ('peaks' %in% what) {
