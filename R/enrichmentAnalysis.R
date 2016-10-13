@@ -267,7 +267,8 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
         panel.border = element_rect(fill='NA'),
         panel.background = element_rect(fill='white'),
         axis.text.y = element_blank(),
-        axis.ticks.y = element_blank()
+        axis.ticks.y = element_blank(),
+        axis.line.y = element_blank()
     )
     
     ## Prepare data.frame
@@ -284,6 +285,7 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
     
     ## Plot as heatmap
     ggplt <- ggplot(df) + geom_tile(aes_string(x='position', y='id', color='combination'))
+    ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$combination))))
     ggplt <- ggplt + geom_tile(aes_string(x='position', y='id', fill='RPKM'), alpha=0.6)
     ggplt <- ggplt + facet_wrap( ~ track, nrow=1) + custom_theme
     ggplt <- ggplt + xlab('distance from annotation in [bp]') + ylab('')

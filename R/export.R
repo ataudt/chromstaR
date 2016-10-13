@@ -867,6 +867,8 @@ exportCombinedMultivariateCounts <- function(hmm, filename, header=TRUE, separat
 #' @param filename The name of the file that will be written. The ending ".bed.gz". Any existing file will be overwritten.
 #' @param namecol A character specifying the column that is used as name-column.
 #' @param scorecol A character specifying the column that is used as score-column. The score should contain integers in the interval [0,1000] for compatibility with the UCSC genome browser convention.
+#' @param colorcol A character specifying the column that is used for coloring the track. There will be one color for each unique element in \code{colorcol}.
+#' @param colors A character vector with the colors that are used for the unique elements in \code{colorcol}.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @param append Whether or not to append to an existing file.
 #' @return \code{NULL}
@@ -888,7 +890,7 @@ exportCombinedMultivariateCounts <- function(hmm, filename, header=TRUE, separat
 #'exportGRangesAsBedFile(binned[binned$counts > 20], filename=tempfile(),
 #'              trackname='read counts above 20')
 #'
-exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination', scorecol='score', header=TRUE, append=FALSE) {
+exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination', scorecol='score', colorcol=NULL, colors=NULL, header=TRUE, append=FALSE) {
 
     if (length(gr)==0) {
         warning("Supplied GRanges object contains no ranges.")
@@ -916,7 +918,7 @@ exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination
     
     ### Write every model to file ###
     if (header) {
-        cat(paste0("track name=\"",trackname,"\" description=\"",trackname,"\" visibility=1 itemRgb=Off\n"), file=filename.gz, append=TRUE)
+        cat(paste0("track name=\"",trackname,"\" description=\"",trackname,"\" visibility=1 itemRgb=On\n"), file=filename.gz, append=TRUE)
     }
     if (! scorecol %in% names(mcols(gr))) {
         gr$score <- 0
@@ -936,6 +938,25 @@ exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination
         warning("Column '", scorecol, "' should contain integer values between 0 and 1000 for compatibility with the UCSC convention.")
     }
     df <- cbind(regions, thickStart=regions$start, thickEnd=regions$end)
+    
+    if (!is.null(colorcol)) {
+        # Generate the colors for each element in 'namecol'
+        if (colorcol %in% names(mcols(gr))) {
+            if (is.null(colors)) {
+                colors <- getDistinctColors(length(unique(df$name)))
+            }
+            RGBs <- t(grDevices::col2rgb(colors))
+            RGBlist <- list()
+            for (i1 in 1:3) {
+                RGBlist[[i1]] <- RGBs[,i1]
+            }
+            RGBlist$sep <- ','
+            RGBs <- do.call(paste, RGBlist)
+            itemRgb <- RGBs[as.integer(factor(df$name))]
+            df$itemRgb <- itemRgb
+        }
+    }
+    
     # Convert from 1-based closed to 0-based half open
     df$start <- df$start - 1
     df$thickStart <- df$thickStart - 1

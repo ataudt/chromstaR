@@ -5,7 +5,7 @@
 \title{Export genome browser viewable files}
 \usage{
 exportGRangesAsBedFile(gr, trackname, filename, namecol = "combination",
-  scorecol = "score", header = TRUE, append = FALSE)
+  scorecol = "score", colorcol = NULL, header = TRUE, append = FALSE)
 }
 \arguments{
 \item{gr}{A \code{\link{GRanges}} object.}
@@ -17,6 +17,8 @@ exportGRangesAsBedFile(gr, trackname, filename, namecol = "combination",
 \item{namecol}{A character specifying the column that is used as name-column.}
 
 \item{scorecol}{A character specifying the column that is used as score-column. The score should contain integers in the interval [0,1000] for compatibility with the UCSC genome browser convention.}
+
+\item{colorcol}{A character specifying the column that is used for coloring the track. There will be one color for each unique element in 'colorcol'.}
 
 \item{header}{A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).}
 
