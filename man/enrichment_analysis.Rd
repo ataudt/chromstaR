@@ -41,7 +41,7 @@ plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
 
 \item{num.intervals}{Number of intervals for enrichment 'inside' of annotation.}
 
-\item{statistic}{The statistic to calculate. Either 'fold' for fold enrichments or 'fraction' for fraction of positions.}
+\item{statistic}{The statistic to calculate. Either 'fold' for fold enrichments or 'fraction' for fraction of bins falling into the annotation.}
 }
 \value{
 A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot or a list() with \code{\link[ggplot2:ggplot]{ggplot}} objects if several plots are returned. For \code{plotFoldEnrichHeatmap} a named array with fold enrichments if \code{plot=FALSE}.

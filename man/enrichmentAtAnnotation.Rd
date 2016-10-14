@@ -23,7 +23,7 @@ enrichmentAtAnnotation(bins, info, annotation, bp.around.annotation = 10000,
 
 \item{num.intervals}{Number of intervals for enrichment 'inside' of annotation.}
 
-\item{statistic}{The statistic to calculate. Either 'fold' for fold enrichments or 'fraction' for fraction of positions.}
+\item{statistic}{The statistic to calculate. Either 'fold' for fold enrichments or 'fraction' for fraction of bins falling into the annotation.}
 }
 \value{
 A \code{list()} containing \code{data.frame()}s for enrichment of combinatorial states and binary states at the start, end and inside of the annotation.
