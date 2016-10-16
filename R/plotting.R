@@ -110,7 +110,7 @@ getStateColors <- function(labels=NULL) {
 #     } else if (type == 'correlation' | type==3) {
 #         heatmapCountCorrelation(x, ...)
 #     } else if (type == 'enrichment' | type==4) {
-#         plotFoldEnrichment(x, ...)
+#         plotEnrichment(x, ...)
 #     }
 # 
 # }

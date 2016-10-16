@@ -522,7 +522,6 @@ tss <- resize(genes, width = 3, fix = 'start')
 biotypes <- split(tss, tss$biotype)
 plots <- plotFoldEnrichHeatmap(model, annotations=biotypes)
 plots[['BN']] + coord_flip() + 
-  scale_fill_gradient(low='white', high='blue', limits=c(0,100)) + 
   ggtitle('Fold enrichment with different biotypes')
 @
 \end{scriptsize}

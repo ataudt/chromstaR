@@ -168,7 +168,7 @@ plotFoldEnrichHeatmap <- function(hmm, annotations, what="combinations", combina
     }
     if (plot) {
         maxfolds <- unlist(maxfolds)
-        ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_fill_gradientn(colors=grDevices::colorRampPalette(c("blue","yellow","red"))(20), values=c(seq(0,1,length.out=10), seq(1,max(maxfolds, na.rm=TRUE),length.out=10)), rescaler=function(x,...) {x}, oob=identity, limits=c(0,max(maxfolds, na.rm=TRUE))) })
+        ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_fill_gradientn(colors=grDevices::colorRampPalette(c("blue","white","red"))(20), values=c(seq(0,1,length.out=10), seq(1,max(maxfolds, na.rm=TRUE),length.out=10)), rescaler=function(x,...) {x}, oob=identity, limits=c(0,max(maxfolds, na.rm=TRUE))) })
     }
 
     if (class(hmm) == class.multivariate.hmm) {
@@ -200,21 +200,20 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
     ## Variables
     bins <- hmm$bins
     if (class(hmm) == class.combined.multivariate.hmm) {
+        conditions <- sub('combination.', '', grep('combination', names(mcols(bins)), value=TRUE))
+        comb.levels <- levels(mcols(bins)[,paste0('combination.', conditions[1])])
+        ## Create new column combination with all conditions combined
+        combinations <- list()
+        for (condition in conditions) {
+            combinations[[condition]] <- paste0(condition, ":", mcols(bins)[,paste0('combination.', condition)])
+        }
+        combinations$sep <- ', '
+        bins$combination <- factor(do.call(paste, combinations))
     } else if (class(hmm) == class.multivariate.hmm) {
-        # Rename 'combination' to 'combination.' for coherence with combinedMultiHMM
-        names(mcols(bins))[grep('combination', names(mcols(bins)))] <- 'combination.'
+        comb.levels <- levels(bins$combination)
     }
-    conditions <- sub('combination.', '', grep('combination', names(mcols(bins)), value=TRUE))
-    comb.levels <- levels(mcols(bins)[,paste0('combination.', conditions[1])])
     binsize <- width(bins)[1]
     around <- round(bp.around.annotation/binsize)
-    ## Create new column combination with all conditions combined
-    combinations <- list()
-    for (condition in conditions) {
-        combinations[[condition]] <- paste0(condition, ":", mcols(bins)[,paste0('combination.', condition)])
-    }
-    combinations$sep <- ', '
-    bins$combination <- factor(do.call(paste, combinations))
     
     ## Get RPKM values
     bins$counts <- sweep(bins$counts, MARGIN = 2, STATS = colSums(bins$counts), FUN = '/')
@@ -352,6 +351,7 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
         enrich <- enrichmentAtAnnotation(hmm$bins, hmm$info, annotation, bp.around.annotation=bp.around.annotation, region=region, what=what, num.intervals=num.intervals, statistic=statistic)
     }
     ggplts <- list()
+    maxfolds <- list()
     for (condition in conditions) {
         if (what == 'combinations') {
             ### Get fold enrichment
@@ -396,6 +396,7 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
             ggplt <- ggplot(df) + geom_line(aes_string(x='position', y='value', col='combination'), size=2)
             if (statistic == 'fold') {
                 ggplt <- ggplt + ylab('fold enrichment')
+                ggplt <- ggplt + geom_hline(yintercept=1, lty=2)
             } else if (statistic == 'fraction') {
                 ggplt <- ggplt + ylab('fraction')
             }
@@ -403,6 +404,7 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
             ggplt <- ggplot(df) + geom_line(aes_string(x='position', y='value', col='mark'), size=2)
             if (statistic == 'fold') {
                 ggplt <- ggplt + ylab('fold enrichment')
+                ggplt <- ggplt + geom_hline(yintercept=1, lty=2)
             } else if (statistic == 'fraction') {
                 ggplt <- ggplt + ylab('fraction')
             }
@@ -415,7 +417,14 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
             labels <- c(-bp.around.annotation, -bp.around.annotation/2, '0%', '50%', '100%', bp.around.annotation/2, bp.around.annotation)
             ggplt <- ggplt + scale_x_continuous(breaks=breaks, labels=labels)
         }
+        maxfolds[[condition]] <- max(df$value, na.rm=TRUE)
         ggplts[[condition]] <- ggplt
+    }
+    maxfolds <- unlist(maxfolds)
+    if (statistic == 'fraction' & what %in% c('combinations','peaks')) {
+        ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_y_continuous(limits=c(0,1)) })
+    } else {
+        ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_y_continuous(limits=c(0,max(maxfolds, na.rm=TRUE)*1.1)) })
     }
     if (class(hmm) == class.multivariate.hmm) {
         return(ggplts[[1]])

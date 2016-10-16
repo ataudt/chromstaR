@@ -23,7 +23,7 @@ Plotting functions that work on \code{\link{multiHMM}} and \code{\link{combinedM
 \describe{
   \item{\code{\link{heatmapCountCorrelation}}}{Heatmap of read count correlations.}
   \item{\code{\link{plotEnrichCountHeatmap}}}{Heatmap of read counts around annotation.}
-  \item{\code{\link{plotFoldEnrichment}}}{Enrichment of combinatorial states around annotation.}
+  \item{\code{\link{plotEnrichment}}}{Enrichment of combinatorial states around annotation.}
   \item{\code{\link{plotFoldEnrichHeatmap}}}{Enrichment of combinatorial states at multiple annotations.}
   \item{\code{\link{plotExpression}}}{Boxplot of expression values that overlap combinatorial states.}
 }
