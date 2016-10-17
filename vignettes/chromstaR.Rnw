@@ -579,7 +579,7 @@ You were interested in combinatorial state differences as in section~\ref{sec:Ta
 \begin{enumerate}
 \item Run \Rfunction{Chromstar} in mode='differential' (instead of mode='combinatorial') and see if the results improve.
 \item You can play with the ``differential.score'' (see section~\ref{sec:Task4}, step 3) and export only differences with a high score. A differential score around 1 means that one modification is different, a score close to 2 means that two modifications are different etc. The score is calculated as the sum of differences in posterior probabilities between marks.
-\item Set a strict false discovery rate (previous example) to obtain only high confidence peaks
+\item Set a strict false discovery rate (previous example) to obtain only high confidence peaks.
 \item Check for bad replicates that are very different from the rest and exclude them prior to the analysis.
 \end{enumerate}
 
