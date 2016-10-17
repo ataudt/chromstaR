@@ -16,7 +16,7 @@ NULL
 #' A \code{\link{multiHMM}} object for demonstration purposes in examples of package \pkg{\link{chromstaR}}.
 #'
 #' @docType data
-#' @name multivariate_mode-combinatorial_condition-SHR
+#' @name multivariate_model
 #' @format A \code{\link{multiHMM}} object.
 #' @examples
 #'## Get an example multiHMM
@@ -31,7 +31,7 @@ NULL
 #' A \code{\link{combinedMultiHMM}} object for demonstration purposes in examples of package \pkg{\link{chromstaR}}.
 #'
 #' @docType data
-#' @name combined_mode-differential
+#' @name combined_model
 #' @format A \code{\link{combinedMultiHMM}} object.
 #' @examples
 #'## Get an example combinedMultiHMM
