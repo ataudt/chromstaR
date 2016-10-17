@@ -56,6 +56,6 @@ exportGRangesAsBedFile(binned[binned$counts > 20], filename=tempfile(),
 Aaron Taudt
 }
 \seealso{
-\code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
+\code{\link{exportPeaks}}, \code{\link{exportCounts}}, \code{\link{exportCombinations}}
 }
 

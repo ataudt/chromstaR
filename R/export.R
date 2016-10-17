@@ -836,7 +836,7 @@ exportCombinedMultivariateCounts <- function(hmm, filename, header=TRUE, separat
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @param append Whether or not to append to an existing file.
 #' @return \code{NULL}
-#' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
+#' @seealso \code{\link{exportPeaks}}, \code{\link{exportCounts}}, \code{\link{exportCombinations}}
 #' @importFrom utils write.table
 #' @export
 #' @examples 
