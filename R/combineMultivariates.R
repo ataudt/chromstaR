@@ -90,6 +90,10 @@ combineMultivariates <- function(hmms, mode) {
         counts[[1]] <- hmm$bins$counts
         posteriors <- list()
         posteriors[[1]] <- hmm$bins$posteriors
+        peakScores <- list()
+        peakScores[[1]] <- hmm$bins$peakScores
+        peaks <- list()
+        peaks[[1]] <- hmm$peaks
         binstates <- list()
         binstates[[1]] <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
         stopTimedMessage(ptm)
@@ -102,6 +106,8 @@ combineMultivariates <- function(hmms, mode) {
                 combs[[i1]] <- hmm$bins$combination
                 counts[[i1]] <- hmm$bins$counts
                 posteriors[[i1]] <- hmm$bins$posteriors
+                peakScores[[i1]] <- hmm$bins$peakScores
+                peaks[[i1]] <- hmm$peaks
                 binstates[[i1]] <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
                 stopTimedMessage(ptm)
             }
@@ -109,6 +115,7 @@ combineMultivariates <- function(hmms, mode) {
         ptm <- startTimedMessage("Concatenating conditions ...")
         counts <- do.call(cbind, counts)
         posteriors <- do.call(cbind, posteriors)
+        peakScores <- do.call(cbind, peakScores)
         infos <- do.call(rbind, infos)
         conditions <- unique(infos$condition)
         states <- factor(bin2dec(do.call(cbind, binstates)))
@@ -122,6 +129,8 @@ combineMultivariates <- function(hmms, mode) {
         infos <- list()
         counts <- list()
         posteriors <- list()
+        peakScores <- list()
+        peaks <- list()
         binstates <- list()
         for (i1 in 1:length(hmms)) {
             ptm <- startTimedMessage("Processing HMM ",i1," ...")
@@ -129,12 +138,15 @@ combineMultivariates <- function(hmms, mode) {
             infos[[i1]] <- hmm$info
             counts[[i1]] <- hmm$bins$counts
             posteriors[[i1]] <- hmm$bins$posteriors
+            peakScores[[i1]] <- hmm$bins$peakScores
+            peaks[[i1]] <- hmm$peaks
             binstates[[i1]] <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
             stopTimedMessage(ptm)
         }
         ptm <- startTimedMessage("Concatenating HMMs ...")
         counts <- do.call(cbind, counts)
         posteriors <- do.call(cbind, posteriors)
+        peakScores <- do.call(cbind, peakScores)
         infos <- do.call(rbind, infos)
         conditions <- unique(infos$condition)
         binstates <- do.call(cbind, binstates)
@@ -175,6 +187,8 @@ combineMultivariates <- function(hmms, mode) {
         conditions <- unique(infos$condition)
         counts <- hmm$bins$counts
         posteriors <- hmm$bins$posteriors
+        peakScores <- hmm$bins$peakScores
+        peaks <- hmm$peaks
         states <- hmm$bins$state
         combs <- list()
         for (condition in conditions) {
@@ -201,6 +215,10 @@ combineMultivariates <- function(hmms, mode) {
         counts[[1]] <- hmm$bins$counts
         posteriors <- list()
         posteriors[[1]] <- hmm$bins$posteriors
+        peakScores <- list()
+        peakScores[[1]] <- hmm$bins$peakScores
+        peaks <- list()
+        peaks[[1]] <- hmm$peaks
         binstates <- list()
         binstates[[1]] <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
         stopTimedMessage(ptm)
@@ -212,6 +230,8 @@ combineMultivariates <- function(hmms, mode) {
                 infos[[i1]] <- hmm$info
                 counts[[i1]] <- hmm$bins$counts
                 posteriors[[i1]] <- hmm$bins$posteriors
+                peakScores[[i1]] <- hmm$bins$peakScores
+                peaks[[i1]] <- hmm$peaks
                 binstates[[i1]] <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
                 stopTimedMessage(ptm)
             }
@@ -219,6 +239,7 @@ combineMultivariates <- function(hmms, mode) {
         ptm <- startTimedMessage("Concatenating mark-conditions ...")
         counts <- do.call(cbind, counts)
         posteriors <- do.call(cbind, posteriors)
+        peakScores <- do.call(cbind, peakScores)
         binstates <- do.call(cbind, binstates)
         infos <- do.call(rbind, infos)
         conditions <- unique(infos$condition)
@@ -261,9 +282,10 @@ combineMultivariates <- function(hmms, mode) {
     ## Transferring counts and posteriors
     bins$counts <- counts
     bins$posteriors <- posteriors
+    bins$peakScores <- peakScores
 
     ## Add differential score ##
-    bins$differential.score <- differentialScoreSum(bins$posteriors, infos)
+    bins$differential.score <- differentialScoreSum(bins$peakScores, infos)
 
     ### Redo the segmentation for all conditions combined
     ptm <- startTimedMessage("Redoing segmentation for all conditions combined ...")
@@ -287,6 +309,9 @@ combineMultivariates <- function(hmms, mode) {
     }
     stopTimedMessage(ptm)
     
+    ### Flatten peak list ###
+    peaks <- unlist(peaks)
+    
     ### Make return object
     hmm <- list()
     class(hmm) <- class.combined.multivariate.hmm
@@ -295,6 +320,7 @@ combineMultivariates <- function(hmms, mode) {
     hmm$bins <- bins
     hmm$segments <- segments
     hmm$segments.separate <- segments.separate
+    hmm$peaks <- peaks
     hmm$frequencies <- freqs$table
     return(hmm)
     

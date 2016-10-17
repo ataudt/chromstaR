@@ -5,7 +5,7 @@
 \title{Export genome browser viewable files}
 \usage{
 exportUnivariates(hmm.list, filename, what = c("peaks", "counts"),
-  header = TRUE, separate.files = TRUE)
+  header = TRUE, separate.files = TRUE, trackname = NULL)
 }
 \arguments{
 \item{hmm.list}{A \code{list()} of \code{\link{uniHMM}} objects or vector of files that contain such objects.}
@@ -17,6 +17,8 @@ exportUnivariates(hmm.list, filename, what = c("peaks", "counts"),
 \item{header}{A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).}
 
 \item{separate.files}{A logical indicating whether or not to produce separate files for each hmm in \code{hmm.list}.}
+
+\item{trackname}{Name that will be used in the "track name" field of the file.}
 }
 \value{
 \code{NULL}

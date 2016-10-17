@@ -25,11 +25,11 @@ insertchr <- function(gr) {
 #' @param filename The name of the file that will be written. The ending ".wig.gz" for read counts will be appended. Any existing file will be overwritten.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @param separate.files A logical indicating whether or not to produce separate files for each object in \code{binned.data.list}.
+#' @param trackname Name that will be used in the "track name" field of the file.
 #' @return \code{NULL}
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
-#' @export
 #' @examples
 #'## Get an example BAM file
 #'file <- system.file("extdata", "euratrans",
@@ -42,7 +42,7 @@ insertchr <- function(gr) {
 #'## Export the binned read counts
 #'exportBinnedData(list(binned), filename=tempfile())
 #'
-exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.files=TRUE) {
+exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.files=TRUE, trackname=NULL) {
 
     ## Load data
     binned.data.list <- loadHmmsFromFiles(binned.data.list)
@@ -78,7 +78,12 @@ exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.f
         binsize <- width(b[1])
         name <- names(binned.data.list)[imod]
         if (header) {
-            cat(paste0('track type=wiggle_0 name="read count for ',name,'" description="read count for ',name,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
+            if (is.null(trackname)) {
+                trackname.string <- paste0("read count for ", name)
+            } else {
+                trackname.string <- paste0("read count for ", name, ", ", trackname)
+            }
+            cat(paste0('track type=wiggle_0 name="',trackname.string,'" description="',trackname.string,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
         }
         # Write read data
         b$counts <- rpkm.vector(b$counts, binsize=mean(width(b))) # RPKM normalization
@@ -111,9 +116,9 @@ exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.f
 #' @param what A character vector specifying what will be exported. Supported are \code{c('peaks', 'counts')}.
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @param separate.files A logical indicating whether or not to produce separate files for each hmm in \code{hmm.list}.
+#' @param trackname Name that will be used in the "track name" field of the file.
 #' @return \code{NULL}
 #' @seealso \code{\link{exportBinnedData}}, \code{\link{exportMultivariate}}
-#' @export
 #' @examples
 #'## Get an example BAM file
 #'file <- system.file("extdata", "euratrans",
@@ -128,12 +133,12 @@ exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.f
 #'## Export
 #'exportUnivariates(list(hmm), filename=tempfile(), what=c('peaks','counts'))
 #'
-exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'counts'), header=TRUE, separate.files=TRUE) {
+exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'counts'), header=TRUE, separate.files=TRUE, trackname=NULL) {
     if ('peaks' %in% what) {
-        exportUnivariatePeaks(hmm.list, filename=paste0(filename, '_peaks'), header=header, separate.files=separate.files)
+        exportUnivariatePeaks(hmm.list, filename=paste0(filename, '_peaks'), header=header, separate.files=separate.files, trackname=trackname)
     }
     if ('counts' %in% what) {
-        exportUnivariateCounts(hmm.list, filename=paste0(filename, '_counts'), header=header, separate.files=separate.files)
+        exportUnivariateCounts(hmm.list, filename=paste0(filename, '_counts'), header=header, separate.files=separate.files, trackname=trackname)
     }
 }
 
@@ -142,14 +147,14 @@ exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'counts'), hea
 #----------------------------------------------------
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
-exportUnivariatePeaks <- function(hmm.list, filename, header=TRUE, separate.files=TRUE) {
+exportUnivariatePeaks <- function(hmm.list, filename, header=TRUE, separate.files=TRUE, trackname=NULL) {
 
     ## Load models
     hmm.list <- loadHmmsFromFiles(hmm.list, check.class=class.univariate.hmm)
 
     ## Transform to GRanges
-    hmm.grl <- lapply(hmm.list, '[[', 'segments')
-    hmm.grl <- lapply(hmm.grl, insertchr)
+    peaklist <- lapply(hmm.list, '[[', 'peaks')
+    peaklist <- lapply(peaklist, insertchr)
 
     # Variables
     nummod <- length(hmm.list)
@@ -157,16 +162,6 @@ exportUnivariatePeaks <- function(hmm.list, filename, header=TRUE, separate.file
     if (!separate.files) {
         filename.gz <- gzfile(filename, 'w')
     }
-
-    # Generate the colors
-    colors <- getStateColors(levels(hmm.grl[[1]]$state))
-    RGBs <- t(grDevices::col2rgb(colors))
-    RGBlist <- list()
-    for (i1 in 1:3) {
-        RGBlist[[i1]] <- RGBs[,i1]
-    }
-    RGBlist$sep <- ','
-    RGBs <- do.call(paste, RGBlist)
 
     # Write first line to file
     if (!separate.files) {
@@ -188,24 +183,33 @@ exportUnivariatePeaks <- function(hmm.list, filename, header=TRUE, separate.file
             ptm <- startTimedMessage('Writing to file ',filename.sep, ' ...')
             cat("", file=filename.gz)
         }
-        hmm.gr <- hmm.grl[[imod]]
+        peaks <- peaklist[[imod]]
         priority <- 51 + 4*imod
         if (header) {
-            cat(paste0("track name=\"univariate calls for ",ID,"\" description=\"univariate calls for ",ID,"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
+            if (is.null(trackname)) {
+                trackname.string <- paste0("univariate peak calls for ", ID)
+            } else {
+                trackname.string <- paste0("univariate peak calls for ", ID, ", ", trackname)
+            }
+            cat(paste0("track name=\"",trackname.string,"\" description=\"",trackname.string,"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
         }
-        if (is.null(hmm.gr$score)) {
-            hmm.gr$score <- 0
+        if (is.null(peaks$peakScores)) {
+            peaks$peakScores <- 0
         }
-        collapsed.calls <- as.data.frame(hmm.gr)[c('chromosome','start','end','state','score')]
+        df <- as.data.frame(peaks)
+        df$peakNumber <- paste0('peak_', 1:nrow(df))
+        df$strand <- sub('\\*', '.', df$strand)
+        df <- df[,c('chromosome','start','end','peakNumber','peakScores','strand')]
         # Make score integer
-        collapsed.calls$score <- round(collapsed.calls$score*1000)
-        itemRgb <- RGBs[as.character(collapsed.calls$state)]
-        numsegments <- nrow(collapsed.calls)
-        df <- cbind(collapsed.calls, strand=rep(".",numsegments), thickStart=collapsed.calls$start, thickEnd=collapsed.calls$end, itemRgb=itemRgb)
+        df$peakScores <- round(df$peakScores*1000)
+        numsegments <- nrow(df)
+        df <- cbind(df, thickStart=df$start, thickEnd=df$end)
         # Convert from 1-based closed to 0-based half open
         df$start <- df$start - 1
         df$thickStart <- df$thickStart - 1
-        df <- df[df$state=='modified',]
+        # Colors
+        RGB <- t(grDevices::col2rgb(getStateColors('modified')))
+        df$itemRgb <- apply(RGB,1,paste,collapse=",")
         if (nrow(df) == 0) {
             warning('hmm ',imod,' does not contain any \'modified\' calls')
         } else {
@@ -229,7 +233,7 @@ exportUnivariatePeaks <- function(hmm.list, filename, header=TRUE, separate.file
 #----------------------------------------------------
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
-exportUnivariateCounts <- function(hmm.list, filename, header=TRUE, separate.files=TRUE) {
+exportUnivariateCounts <- function(hmm.list, filename, header=TRUE, separate.files=TRUE, trackname=NULL) {
 
     ## Load models
     hmm.list <- loadHmmsFromFiles(hmm.list, check.class=class.univariate.hmm)
@@ -272,7 +276,12 @@ exportUnivariateCounts <- function(hmm.list, filename, header=TRUE, separate.fil
         priority <- 50 + 4*imod
         binsize <- width(hmm.gr[1])
         if (header) {
-            cat(paste0('track type=wiggle_0 name="read count for ',ID,'" description="read count for ',ID,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
+            if (is.null(trackname)) {
+                trackname.string <- paste0("read count for ", ID)
+            } else {
+                trackname.string <- paste0("read count for ", ID, ", ", trackname)
+            }
+            cat(paste0('track type=wiggle_0 name="',trackname.string,'" description="',trackname.string,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
         }
         # Write read data
         hmm.gr$counts <- rpkm.vector(hmm.gr$counts, binsize=mean(width(hmm.gr))) # RPKM normalization
@@ -312,7 +321,6 @@ exportUnivariateCounts <- function(hmm.list, filename, header=TRUE, separate.fil
 #' @param separate.files A logical indicating whether or not to produce separate files for peaks if \code{what} contains 'peaks' or 'counts'.
 #' @return \code{NULL}
 #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportBinnedData}}
-#' @export
 #' @examples
 #'## Get an example multiHMM
 #'file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
@@ -326,10 +334,10 @@ exportMultivariate <- function(hmm, filename, what=c('combinations', 'peaks', 'c
         exportMultivariateCombinations(hmm, filename=paste0(filename, '_combinations'), exclude.states=exclude.states, include.states=include.states, trackname=trackname, header=header)
     }
     if ('peaks' %in% what) {
-        exportMultivariatePeaks(hmm, filename=paste0(filename, '_peaks'), header=header, separate.files=separate.files)
+        exportMultivariatePeaks(hmm, filename=paste0(filename, '_peaks'), header=header, separate.files=separate.files, trackname=trackname)
     }
     if ('counts' %in% what) {
-        exportMultivariateCounts(hmm, filename=paste0(filename, '_counts'), header=header, separate.files=separate.files)
+        exportMultivariateCounts(hmm, filename=paste0(filename, '_counts'), header=header, separate.files=separate.files, trackname=trackname)
     }
 }
 
@@ -427,51 +435,28 @@ exportMultivariatePeaks <- function(hmm, filename, trackname=NULL, header=TRUE, 
     }
 
     ## Export peaks on a per bin basis to obtain proper posterior scores
-    ptm <- startTimedMessage("Transforming to binary representation ...")
-    bins <- insertchr(hmm$bins)
-    bins$bin <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
-    bins.df <- as.data.frame(bins)
-    stopTimedMessage(ptm)
     for (imod in 1:length(hmm$info$ID)) {
         ID <- hmm$info$ID[imod]
         
-        ## Collapse bins by column imod
-        ptm <- startTimedMessage("Collapsing track ", ID, " ...")
-        ID.dot <- gsub('-', '.', ID)
-        if (!is.null(bins$posteriors)) {
-            bins.imod <- bins.df[c('chromosome', 'start', 'end', 'combination', paste0('posteriors.',ID.dot), paste0('bin.',ID.dot))]
-            segments.df <- suppressMessages( collapseBins(bins.imod, column2collapseBy=paste0('bin.',ID.dot), columns2getMax=paste0('posteriors.',ID.dot)) )
-        } else {
-            bins.imod <- bins.df[c('chromosome', 'start', 'end', 'combination', paste0('bin.',ID.dot))]
-            segments.df <- suppressMessages( collapseBins(bins.imod, column2collapseBy=paste0('bin.',ID.dot)) )
-        } 
-        stopTimedMessage(ptm)
-        
         ## Select only segments with peaks
-        segments.df <- segments.df[segments.df[,paste0('bin.',ID.dot)] == TRUE, ]
-        if (nrow(segments.df) == 0) {
-            df <- segments.df[,c('chromosome','start','end','combination')]
-        } else {
+        peaks <- insertchr(hmm$peaks[[ID]])
+        peaks.df <- as.data.frame(peaks)
+        peaks.df$peakNumber <- paste0('peak_', 1:nrow(peaks.df))
         
-            ## Score
-            if (!is.null(bins$posteriors)) {
-                segments.df$score <- round(segments.df[,paste0('max.posteriors.',ID.dot)] * 1000)
-            } else {
-                segments.df$score <- 0
-            }
-            
-            # Data.frame for write.table
-            df <- segments.df[,c('chromosome','start','end','combination','score')]
-            
-            # Convert from 1-based closed to 0-based half open
-            df$start <- df$start - 1
-            df$thickStart <- df$start
-            df$thickEnd <- df$end
-            # Colors
-            RGB <- t(grDevices::col2rgb(getStateColors('modified')))
-            df$itemRgb <- apply(RGB,1,paste,collapse=",")
-            
-        }
+        # Data.frame for write.table
+        df <- peaks.df[,c('chromosome','start','end','peakNumber','peakScores','strand')]
+        df$strand <- sub('\\*', '.', df$strand)
+        
+        # Make score integer
+        df$peakScores <- round(df$peakScores*1000)
+        
+        # Convert from 1-based closed to 0-based half open
+        df$start <- df$start - 1
+        df$thickStart <- df$start
+        df$thickEnd <- df$end
+        # Colors
+        RGB <- t(grDevices::col2rgb(getStateColors('modified')))
+        df$itemRgb <- apply(RGB,1,paste,collapse=",")
         
         ## Write to file
         if (separate.files) {
@@ -504,7 +489,7 @@ exportMultivariatePeaks <- function(hmm, filename, trackname=NULL, header=TRUE, 
 
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
-exportMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=TRUE) {
+exportMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=TRUE, trackname=NULL) {
 
     ## Load models
     hmm <- loadHmmsFromFiles(hmm, check.class=class.multivariate.hmm)[[1]]
@@ -540,7 +525,12 @@ exportMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=
         priority <- 50 + 4*imod
         binsize <- width(hmm$bins[1])
         if (header) {
-            cat(paste0('track type=wiggle_0 name="read count for ',ID,'" description="read count for ',ID,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
+            if (is.null(trackname)) {
+                trackname.string <- paste0("read count for ", ID)
+            } else {
+                trackname.string <- paste0("read count for ", ID, ", ", trackname)
+            }
+            cat(paste0('track type=wiggle_0 name="',trackname.string,'" description="',trackname.string,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
         }
         # Write read data
         for (chrom in seqlevels(hmm$bins)) {
@@ -582,7 +572,6 @@ exportMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=
 #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
 #' @param separate.files A logical indicating whether or not to produce separate files for each condition.
 #' @return \code{NULL}
-#' @export
 #' @examples
 #'## Get an example multiHMM
 #'file <- system.file("data","combined_mode-differential.RData",
@@ -599,7 +588,7 @@ exportCombinedMultivariate <- function(hmm, filename, what=c('combinations','pea
         exportCombinedMultivariatePeaks(hmm, filename=paste0(filename, '_peaks'), trackname=trackname, header=header, separate.files=separate.files)
     }
     if ('counts' %in% what) {
-        exportCombinedMultivariateCounts(hmm, filename=paste0(filename, '_counts'), header=header, separate.files=separate.files)
+        exportCombinedMultivariateCounts(hmm, filename=paste0(filename, '_counts'), header=header, separate.files=separate.files, trackname=trackname)
     }
 }
 
@@ -617,54 +606,29 @@ exportCombinedMultivariatePeaks <- function(hmm, filename, trackname=NULL, heade
         cat("", file=filename.gz)
     }
 
-    ## Export peaks on a per bin basis to obtain proper posterior scores
-    ptm <- startTimedMessage("Transforming to binary representation ...")
-    bins <- insertchr(hmm$bins)
-    bins$bin <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
-    bins.df <- as.data.frame(bins)
-    stopTimedMessage(ptm)
     for (imod in 1:length(hmm$info$ID)) {
         ID <- hmm$info$ID[imod]
         cond <- hmm$info$condition[imod]
         
-        ## Collapse bins by column imod
-        ptm <- startTimedMessage("Collapsing track ", ID, " ...")
-        ID.dot <- gsub('-', '.', ID)
-        if (!is.null(bins$posteriors)) {
-            bins.imod <- bins.df[c('chromosome', 'start', 'end', paste0('combination.',cond), paste0('posteriors.',ID.dot), paste0('bin.',ID.dot))]
-            segments.df <- suppressMessages( collapseBins(bins.imod, column2collapseBy=paste0('bin.',ID.dot), columns2getMax=paste0('posteriors.',ID.dot)) )
-        } else {
-            bins.imod <- bins.df[c('chromosome', 'start', 'end', paste0('combination.',cond), paste0('bin.',ID.dot))]
-            segments.df <- suppressMessages( collapseBins(bins.imod, column2collapseBy=paste0('bin.',ID.dot)) )
-        }
-        stopTimedMessage(ptm)
-        
         ## Select only segments with peaks
-        segments.df <- segments.df[segments.df[,paste0('bin.',ID.dot)] == TRUE, ]
-        if (nrow(segments.df) == 0) {
-            df <- segments.df[,c('chromosome','start','end',paste0('combination.',cond))]
-        } else {
+        peaks <- insertchr(hmm$peaks[[ID]])
+        peaks.df <- as.data.frame(peaks)
+        peaks.df$peakNumber <- paste0('peak_', 1:nrow(peaks.df))
         
-            ## Score
-            if (!is.null(bins$posteriors)) {
-                segments.df$score <- round(segments.df[,paste0('max.posteriors.',ID.dot)] * 1000)
-            } else {
-                segments.df$score <- 0
-            }
-            
-            # Data.frame for write.table
-            df <- segments.df[,c('chromosome','start','end',paste0('combination.',cond),'score')]
-            df$strand <- "."
-            
-            # Convert from 1-based closed to 0-based half open
-            df$start <- df$start - 1
-            df$thickStart <- df$start
-            df$thickEnd <- df$end
-            # Colors
-            RGB <- t(grDevices::col2rgb(getStateColors('modified')))
-            df$itemRgb <- apply(RGB,1,paste,collapse=",")
-            
-        }
+        # Data.frame for write.table
+        df <- peaks.df[,c('chromosome','start','end','peakNumber','peakScores','strand')]
+        df$strand <- sub('\\*', '.', df$strand)
+        
+        # Make score integer
+        df$peakScores <- round(df$peakScores*1000)
+        
+        # Convert from 1-based closed to 0-based half open
+        df$start <- df$start - 1
+        df$thickStart <- df$start
+        df$thickEnd <- df$end
+        # Colors
+        RGB <- t(grDevices::col2rgb(getStateColors('modified')))
+        df$itemRgb <- apply(RGB,1,paste,collapse=",")
         
         ## Write to file
         if (separate.files) {
@@ -792,7 +756,7 @@ exportCombinedMultivariateCombinations <- function(hmm, filename, exclude.states
 
 #' @importFrom utils write.table
 #' @importFrom grDevices col2rgb
-exportCombinedMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=TRUE) {
+exportCombinedMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=TRUE, trackname=NULL) {
 
     ## Load models
     hmm <- loadHmmsFromFiles(hmm, check.class=class.combined.multivariate.hmm)[[1]]

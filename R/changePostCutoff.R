@@ -8,25 +8,24 @@
 #' @param model A \code{\link{uniHMM}} or \code{\link{multiHMM}} object with posteriors.
 #' @param post.cutoff A vector of posterior cutoff values between 0 and 1 the same length as \code{ncol(model$bins$posteriors)}. If only one value is given, it will be reused for all columns. Values close to 1 will yield more stringent peak calls with lower false positive but higher false negative rate.
 #' @return The input object is returned with adjusted peak calls.
-#' @export
-#' @examples
-#'## Get an example BAM file
-#'file <- system.file("extdata", "euratrans",
-#'                       "lv-H3K27me3-BN-male-bio2-tech1.bam",
-#'                        package="chromstaRData")
-#'## Bin the file into bin size 1000bp
-#'data(rn4_chrominfo)
-#'binned <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
-#'                   chromosomes='chr12')
-#'## Fit the univariate Hidden Markov Model
-#'# !Keep posteriors to change the post.cutoff later!
-#'hmm <- callPeaksUnivariate(binned, max.time=60, eps=1,
-#'                           keep.posteriors=TRUE)
-#'## Compare fits with different post.cutoffs
-#'plotHistogram(changePostCutoff(hmm, post.cutoff=0.01)) + ylim(0,0.25)
-#'plotHistogram(hmm) + ylim(0,0.25)
-#'plotHistogram(changePostCutoff(hmm, post.cutoff=0.99)) + ylim(0,0.25)
-#'
+# #' @examples
+# #'## Get an example BAM file
+# #'file <- system.file("extdata", "euratrans",
+# #'                       "lv-H3K27me3-BN-male-bio2-tech1.bam",
+# #'                        package="chromstaRData")
+# #'## Bin the file into bin size 1000bp
+# #'data(rn4_chrominfo)
+# #'binned <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
+# #'                   chromosomes='chr12')
+# #'## Fit the univariate Hidden Markov Model
+# #'# !Keep posteriors to change the post.cutoff later!
+# #'hmm <- callPeaksUnivariate(binned, max.time=60, eps=1,
+# #'                           keep.posteriors=TRUE)
+# #'## Compare fits with different post.cutoffs
+# #'plotHistogram(changePostCutoff(hmm, post.cutoff=0.01)) + ylim(0,0.25)
+# #'plotHistogram(hmm) + ylim(0,0.25)
+# #'plotHistogram(changePostCutoff(hmm, post.cutoff=0.99)) + ylim(0,0.25)
+# #'
 changePostCutoff <- function(model, post.cutoff=0.5) {
 
     if (!is.numeric(post.cutoff)) {
@@ -80,7 +79,7 @@ changePostCutoff.multivariate <- function(model, post.cutoff) {
         for (icol in 1:ncol(post)) {
             post.thresholded[,icol] <- post[,icol] >= threshold[icol]
         }
-        states <- factor(bin2dec(model$bins$posteriors >= threshold), levels=levels(model$bins$state))
+        states <- factor(bin2dec(post.thresholded), levels=levels(model$bins$state))
         model$bins$state <- states
         ## Combinations
         if (!is.null(model$bins$combination)) {

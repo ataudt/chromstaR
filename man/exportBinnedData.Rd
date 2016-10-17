@@ -5,7 +5,7 @@
 \title{Export genome browser viewable files}
 \usage{
 exportBinnedData(binned.data.list, filename, header = TRUE,
-  separate.files = TRUE)
+  separate.files = TRUE, trackname = NULL)
 }
 \arguments{
 \item{binned.data.list}{A \code{list()} of \code{\link{binned.data}} objects or vector of files that contain such objects.}
@@ -15,6 +15,8 @@ exportBinnedData(binned.data.list, filename, header = TRUE,
 \item{header}{A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).}
 
 \item{separate.files}{A logical indicating whether or not to produce separate files for each object in \code{binned.data.list}.}
+
+\item{trackname}{Name that will be used in the "track name" field of the file.}
 }
 \value{
 \code{NULL}

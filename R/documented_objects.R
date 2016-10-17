@@ -16,7 +16,7 @@ NULL
 #' A \code{\link{multiHMM}} object for demonstration purposes in examples of package \pkg{\link{chromstaR}}.
 #'
 #' @docType data
-#' @name multivariate_model
+#' @name multivariate_mode-combinatorial_condition-SHR
 #' @format A \code{\link{multiHMM}} object.
 #' @examples
 #'## Get an example multiHMM
@@ -31,13 +31,26 @@ NULL
 #' A \code{\link{combinedMultiHMM}} object for demonstration purposes in examples of package \pkg{\link{chromstaR}}.
 #'
 #' @docType data
-#' @name combined_model
+#' @name combined_mode-differential
 #' @format A \code{\link{combinedMultiHMM}} object.
 #' @examples
 #'## Get an example combinedMultiHMM
 #'file <- system.file("data","combined_mode-differential.RData",
 #'                     package="chromstaR")
 #'model <- get(load(file))
+NULL
+
+
+#' Gene coordinates for rn4
+#'
+#' A data.frame containing gene coordinates and biotypes of the rn4 assembly.
+#'
+#' @docType data
+#' @name genes_rn4
+#' @format A data.frame.
+#' @examples
+#'data(genes_rn4)
+#'head(genes_rn4)
 NULL
 
 
