@@ -7,6 +7,7 @@
 #' @author Aaron Taudt
 #' @param model A \code{\link{uniHMM}} or \code{\link{multiHMM}} object with posteriors.
 #' @param fdr A vector of values between 0 and 1 for each column in \code{model$bins$peakScores}. If only one value is given, it will be reused for all columns. Values close to 0 will yield more stringent peak calls with lower false positive but higher false negative rate.
+#' @param invert Select peaks below (\code{FDR}) or above (\code{TRUE}) the given \code{fdr}. This is useful to select low confidence peaks.
 #' @return The input object is returned with adjusted peak calls.
 #' @export
 #' @examples
@@ -25,23 +26,23 @@
 #'plotHistogram(changeFDR(hmm, fdr=0.01)) + ylim(0,0.3)
 #'plotHistogram(changeFDR(hmm, fdr=1e-12)) + ylim(0,0.3)
 #'
-changeFDR <- function(model, fdr=0.01) {
+changeFDR <- function(model, fdr=0.01, invert=FALSE) {
 
     if (!is.numeric(fdr)) {
         warning("'fdr' is not numeric. Nothing done.")
         return(model)
     }
     if (is(model, class.univariate.hmm)) {
-        model.new <- changeFDR.univariate(model=model, fdr=fdr)
+        model.new <- changeFDR.univariate(model=model, fdr=fdr, invert=invert)
     } else if (is(model, class.multivariate.hmm) | is(model, class.combined.multivariate.hmm)) {
-        model.new <- changeFDR.multivariate(model=model, fdr=fdr)
+        model.new <- changeFDR.multivariate(model=model, fdr=fdr, invert=invert)
     }
     return(model.new)
     
 }
 
 
-changeFDR.multivariate <- function(model, fdr) {
+changeFDR.multivariate <- function(model, fdr, invert=FALSE) {
   
     ## Make fdr vector
     if (is.null(model$bins$peakScores)) stop("Cannot recalculate states because peakScores are missing.")
@@ -52,7 +53,6 @@ changeFDR.multivariate <- function(model, fdr) {
     if (length(fdr) != numcol) {
         stop("Need ", numcol, " values in 'fdr' but only ", length(fdr), " are provided.")
     }
-    names(fdr) <- 
     
     for (fdr.i in fdr) {
         if (fdr.i < 0 | fdr.i > 1) {
@@ -77,7 +77,11 @@ changeFDR.multivariate <- function(model, fdr) {
         p <- model$bins$peakScores
         p.thresholded <- matrix(FALSE, ncol=ncol(p), nrow=nrow(p))
         for (icol in 1:ncol(p)) {
-            p.thresholded[,icol] <- p[,icol] >= threshold[icol]
+            if (!invert) {
+                p.thresholded[,icol] <- p[,icol] >= threshold[icol]
+            } else {
+                p.thresholded[,icol] <- p[,icol] < threshold[icol] & p[,icol] > 0
+            }
         }
         states <- factor(bin2dec(p.thresholded), levels=levels(model$bins$state))
         model$bins$state <- states
@@ -107,7 +111,11 @@ changeFDR.multivariate <- function(model, fdr) {
         p <- model$bins$peakScores
         p.thresholded <- matrix(FALSE, ncol=ncol(p), nrow=nrow(p))
         for (icol in 1:ncol(p)) {
-            p.thresholded[,icol] <- p[,icol] >= threshold[icol]
+            if (!invert) {
+                p.thresholded[,icol] <- p[,icol] >= threshold[icol]
+            } else {
+                p.thresholded[,icol] <- p[,icol] < threshold[icol] & p[,icol] > 0
+            }
         }
         states <- factor(bin2dec(p.thresholded), levels=mapping.df$state)
         ## Make fake multiHMM
@@ -125,7 +133,11 @@ changeFDR.multivariate <- function(model, fdr) {
         ## Apply FDR on peaks ##
         for (i1 in 1:length(model$peaks)) {
             peaks <- model$peaks[[i1]]
-            model$peaks[[i1]] <- peaks[peaks$peakScores >= threshold[names(model$peaks)[i1]]]
+            if (!invert) {
+                model$peaks[[i1]] <- peaks[peaks$peakScores >= threshold[names(model$peaks)[i1]]]
+            } else {
+                model$peaks[[i1]] <- peaks[peaks$peakScores < threshold[names(model$peaks)[i1]]]
+            }
         }
     } else {
         stop("Supply either a uniHMM, multiHMM or combinedMultiHMM object.")
@@ -139,7 +151,7 @@ changeFDR.multivariate <- function(model, fdr) {
 }
 
 
-changeFDR.univariate <- function(model, fdr) {
+changeFDR.univariate <- function(model, fdr, invert=FALSE) {
   
     fdr <- suppressWarnings( as.numeric(fdr) )
     if (!is.numeric(fdr) | is.na(fdr)) {
@@ -152,14 +164,17 @@ changeFDR.univariate <- function(model, fdr) {
 
     ## fdr threshold
     threshold <- 1-fdr
-    model$fdr <- fdr
 
     if (is.null(model$bins$peakScores)) stop("Cannot recalculate states because column 'peakScores' is missing.")
     ## Calculate states
     ptm <- startTimedMessage("Calculating states from peakScores ...")
     states <- model$bins$state
     states[model$bins$state == 'modified'] <- 'unmodified'
-    states[ model$bins$peakScores >= threshold ] <- 'modified'
+    if (!invert) {
+        states[ model$bins$peakScores >= threshold ] <- 'modified'
+    } else {
+        states[ model$bins$peakScores < threshold & model$bins$peakScores > 0 ] <- 'modified'
+    }
     model$bins$state <- states
     stopTimedMessage(ptm)
     ## Redo segmentation

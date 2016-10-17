@@ -14,34 +14,34 @@ insertchr <- function(gr) {
 #=====================================================
 # Export binned data
 #=====================================================
-#' Export genome browser viewable files
-#'
-#' Export read counts (RPKM) as genome browser viewable file
-#'
-#' Export read counts from \code{\link{binned.data}} as a file which can be uploaded into a genome browser. Read counts are exported in WIGGLE format as RPKM (.wig.gz).
-#'
-#' @author Aaron Taudt
-#' @param binned.data.list A \code{list()} of \code{\link{binned.data}} objects or vector of files that contain such objects.
-#' @param filename The name of the file that will be written. The ending ".wig.gz" for read counts will be appended. Any existing file will be overwritten.
-#' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
-#' @param separate.files A logical indicating whether or not to produce separate files for each object in \code{binned.data.list}.
-#' @param trackname Name that will be used in the "track name" field of the file.
-#' @return \code{NULL}
-#' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
-#' @importFrom utils write.table
-#' @importFrom grDevices col2rgb
-#' @examples
-#'## Get an example BAM file
-#'file <- system.file("extdata", "euratrans",
-#'                       "lv-H3K27me3-BN-male-bio2-tech1.bam",
-#'                        package="chromstaRData")
-#'## Bin the file into bin size 1000bp
-#'data(rn4_chrominfo)
-#'binned <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
-#'                   chromosomes='chr12')
-#'## Export the binned read counts
-#'exportBinnedData(list(binned), filename=tempfile())
-#'
+# #' Export genome browser viewable files
+# #'
+# #' Export read counts (RPKM) as genome browser viewable file
+# #'
+# #' Export read counts from \code{\link{binned.data}} as a file which can be uploaded into a genome browser. Read counts are exported in WIGGLE format as RPKM (.wig.gz).
+# #'
+# #' @author Aaron Taudt
+# #' @param binned.data.list A \code{list()} of \code{\link{binned.data}} objects or vector of files that contain such objects.
+# #' @param filename The name of the file that will be written. The ending ".wig.gz" for read counts will be appended. Any existing file will be overwritten.
+# #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
+# #' @param separate.files A logical indicating whether or not to produce separate files for each object in \code{binned.data.list}.
+# #' @param trackname Name that will be used in the "track name" field of the file.
+# #' @return \code{NULL}
+# #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportMultivariate}}
+# #' @importFrom utils write.table
+# #' @importFrom grDevices col2rgb
+# #' @examples
+# #'## Get an example BAM file
+# #'file <- system.file("extdata", "euratrans",
+# #'                       "lv-H3K27me3-BN-male-bio2-tech1.bam",
+# #'                        package="chromstaRData")
+# #'## Bin the file into bin size 1000bp
+# #'data(rn4_chrominfo)
+# #'binned <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
+# #'                   chromosomes='chr12')
+# #'## Export the binned read counts
+# #'exportBinnedData(list(binned), filename=tempfile())
+# #'
 exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.files=TRUE, trackname=NULL) {
 
     ## Load data
@@ -104,35 +104,35 @@ exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.f
 #=====================================================
 # Export univariate HMMs
 #=====================================================
-#' Export genome browser viewable files
-#'
-#' Export univariate peak-calls and read counts (RPKM) as genome browser viewable file
-#'
-#' Export \code{\link{uniHMM}} objects as files which can be uploaded into a genome browser. Peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format as RPKM (.wig.gz).
-#'
-#' @author Aaron Taudt
-#' @param hmm.list A \code{list()} of \code{\link{uniHMM}} objects or vector of files that contain such objects.
-#' @param filename The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.
-#' @param what A character vector specifying what will be exported. Supported are \code{c('peaks', 'counts')}.
-#' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
-#' @param separate.files A logical indicating whether or not to produce separate files for each hmm in \code{hmm.list}.
-#' @param trackname Name that will be used in the "track name" field of the file.
-#' @return \code{NULL}
-#' @seealso \code{\link{exportBinnedData}}, \code{\link{exportMultivariate}}
-#' @examples
-#'## Get an example BAM file
-#'file <- system.file("extdata", "euratrans",
-#'                       "lv-H3K27me3-BN-male-bio2-tech1.bam",
-#'                        package="chromstaRData")
-#'## Bin the file into bin size 1000bp
-#'data(rn4_chrominfo)
-#'binned <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
-#'                   chromosomes='chr12')
-#'## Fit the univariate Hidden Markov Model
-#'hmm <- callPeaksUnivariate(binned, max.time=60, eps=1)
-#'## Export
-#'exportUnivariates(list(hmm), filename=tempfile(), what=c('peaks','counts'))
-#'
+# #' Export genome browser viewable files
+# #'
+# #' Export univariate peak-calls and read counts (RPKM) as genome browser viewable file
+# #'
+# #' Export \code{\link{uniHMM}} objects as files which can be uploaded into a genome browser. Peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format as RPKM (.wig.gz).
+# #'
+# #' @author Aaron Taudt
+# #' @param hmm.list A \code{list()} of \code{\link{uniHMM}} objects or vector of files that contain such objects.
+# #' @param filename The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.
+# #' @param what A character vector specifying what will be exported. Supported are \code{c('peaks', 'counts')}.
+# #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
+# #' @param separate.files A logical indicating whether or not to produce separate files for each hmm in \code{hmm.list}.
+# #' @param trackname Name that will be used in the "track name" field of the file.
+# #' @return \code{NULL}
+# #' @seealso \code{\link{exportBinnedData}}, \code{\link{exportMultivariate}}
+# #' @examples
+# #'## Get an example BAM file
+# #'file <- system.file("extdata", "euratrans",
+# #'                       "lv-H3K27me3-BN-male-bio2-tech1.bam",
+# #'                        package="chromstaRData")
+# #'## Bin the file into bin size 1000bp
+# #'data(rn4_chrominfo)
+# #'binned <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
+# #'                   chromosomes='chr12')
+# #'## Fit the univariate Hidden Markov Model
+# #'hmm <- callPeaksUnivariate(binned, max.time=60, eps=1)
+# #'## Export
+# #'exportUnivariates(list(hmm), filename=tempfile(), what=c('peaks','counts'))
+# #'
 exportUnivariates <- function(hmm.list, filename, what=c('peaks', 'counts'), header=TRUE, separate.files=TRUE, trackname=NULL) {
     if ('peaks' %in% what) {
         exportUnivariatePeaks(hmm.list, filename=paste0(filename, '_peaks'), header=header, separate.files=separate.files, trackname=trackname)
@@ -304,31 +304,31 @@ exportUnivariateCounts <- function(hmm.list, filename, header=TRUE, separate.fil
 #=====================================================
 # Export multivariate HMMs
 #=====================================================
-#' Export genome browser viewable files
-#'
-#' Export multivariate calls and read counts (RPKM) as genome browser viewable file
-#'
-#' Export \code{\link{uniHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states and peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format as RPKM (.wig.gz).
-#'
-#' @author Aaron Taudt
-#' @param hmm A \code{\link{multiHMM}} object or file that contains such an object.
-#' @param filename The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for combinatorial states and peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.
-#' @param what A character vector specifying what will be exported. Supported are \code{c('combinations', 'peaks', 'counts')}.
-#' @param exclude.states A character vector with combinatorial states that will be excluded from export.
-#' @param include.states A character vector with combinatorial states that will be exported. If specified, \code{exclude.states} is ignored.
-#' @param trackname Name that will be used in the "track name" field of the BED file.
-#' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
-#' @param separate.files A logical indicating whether or not to produce separate files for peaks if \code{what} contains 'peaks' or 'counts'.
-#' @return \code{NULL}
-#' @seealso \code{\link{exportUnivariates}}, \code{\link{exportBinnedData}}
-#' @examples
-#'## Get an example multiHMM
-#'file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
-#'                     package="chromstaR")
-#'model <- get(load(file))
-#'## Export peak calls and combinatorial states
-#'exportMultivariate(model, filename=tempfile(), what=c('peaks','combinations'))
-#'
+# #' Export genome browser viewable files
+# #'
+# #' Export multivariate calls and read counts (RPKM) as genome browser viewable file
+# #'
+# #' Export \code{\link{uniHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states and peak-calls are exported in BED format (.bed.gz) and read counts are exported in WIGGLE format as RPKM (.wig.gz).
+# #'
+# #' @author Aaron Taudt
+# #' @param hmm A \code{\link{multiHMM}} object or file that contains such an object.
+# #' @param filename The name of the file that will be written. The appropriate ending will be appended, either ".bed.gz" for combinatorial states and peak-calls or ".wig.gz" for read counts. Any existing file will be overwritten.
+# #' @param what A character vector specifying what will be exported. Supported are \code{c('combinations', 'peaks', 'counts')}.
+# #' @param exclude.states A character vector with combinatorial states that will be excluded from export.
+# #' @param include.states A character vector with combinatorial states that will be exported. If specified, \code{exclude.states} is ignored.
+# #' @param trackname Name that will be used in the "track name" field of the BED file.
+# #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
+# #' @param separate.files A logical indicating whether or not to produce separate files for peaks if \code{what} contains 'peaks' or 'counts'.
+# #' @return \code{NULL}
+# #' @seealso \code{\link{exportUnivariates}}, \code{\link{exportBinnedData}}
+# #' @examples
+# #'## Get an example multiHMM
+# #'file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
+# #'                     package="chromstaR")
+# #'model <- get(load(file))
+# #'## Export peak calls and combinatorial states
+# #'exportMultivariate(model, filename=tempfile(), what=c('peaks','combinations'))
+# #'
 exportMultivariate <- function(hmm, filename, what=c('combinations', 'peaks', 'counts'), exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=TRUE) {
     if ('combinations' %in% what) {
         exportMultivariateCombinations(hmm, filename=paste0(filename, '_combinations'), exclude.states=exclude.states, include.states=include.states, trackname=trackname, header=header)
@@ -556,30 +556,30 @@ exportMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=
 #=====================================================
 # Export combined multivariate HMMs
 #=====================================================
-#' Export genome browser viewable files
-#'
-#' Export multivariate calls as genome browser viewable file
-#'
-#' Export \code{\link{combinedMultiHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states are exported in BED format (.bed.gz). Read counts are exported in WIGGLE format as RPKM (.wig.gz).
-#'
-#' @author Aaron Taudt
-#' @param hmm A \code{\link{combinedMultiHMM}} object or file that contains such an object.
-#' @param filename The name of the file that will be written. The ending ".bed.gz" for combinatorial states will be appended. Any existing file will be overwritten.
-#' @param what A character vector specifying what will be exported. Supported are \code{c('combinations','peaks','counts')}.
-#' @param exclude.states A vector of combinatorial states that will be excluded from export.
-#' @param include.states A vector of combinatorial states that will be exported. If specified, \code{exclude.states} is ignored.
-#' @param trackname Name that will be used in the "track name" field of the BED file.
-#' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
-#' @param separate.files A logical indicating whether or not to produce separate files for each condition.
-#' @return \code{NULL}
-#' @examples
-#'## Get an example multiHMM
-#'file <- system.file("data","combined_mode-differential.RData",
-#'                     package="chromstaR")
-#'model <- get(load(file))
-#'## Export peak calls and combinatorial states
-#'exportCombinedMultivariate(model, filename=tempfile(), what=c('peaks','combinations'))
-#'
+# #' Export genome browser viewable files
+# #'
+# #' Export multivariate calls as genome browser viewable file
+# #'
+# #' Export \code{\link{combinedMultiHMM}} objects as files which can be uploaded into a genome browser. Combinatorial states are exported in BED format (.bed.gz). Read counts are exported in WIGGLE format as RPKM (.wig.gz).
+# #'
+# #' @author Aaron Taudt
+# #' @param hmm A \code{\link{combinedMultiHMM}} object or file that contains such an object.
+# #' @param filename The name of the file that will be written. The ending ".bed.gz" for combinatorial states will be appended. Any existing file will be overwritten.
+# #' @param what A character vector specifying what will be exported. Supported are \code{c('combinations','peaks','counts')}.
+# #' @param exclude.states A vector of combinatorial states that will be excluded from export.
+# #' @param include.states A vector of combinatorial states that will be exported. If specified, \code{exclude.states} is ignored.
+# #' @param trackname Name that will be used in the "track name" field of the BED file.
+# #' @param header A logical indicating whether the output file will have a heading track line (\code{TRUE}) or not (\code{FALSE}).
+# #' @param separate.files A logical indicating whether or not to produce separate files for each condition.
+# #' @return \code{NULL}
+# #' @examples
+# #'## Get an example multiHMM
+# #'file <- system.file("data","combined_mode-differential.RData",
+# #'                     package="chromstaR")
+# #'model <- get(load(file))
+# #'## Export peak calls and combinatorial states
+# #'exportCombinedMultivariate(model, filename=tempfile(), what=c('peaks','combinations'))
+# #'
 exportCombinedMultivariate <- function(hmm, filename, what=c('combinations','peaks'), exclude.states='[]', include.states=NULL, trackname=NULL, header=TRUE, separate.files=TRUE) {
     if ('combinations' %in% what) {
         exportCombinedMultivariateCombinations(hmm, filename=paste0(filename, '_combinations'), exclude.states=exclude.states, include.states=include.states, trackname=trackname, header=header, separate.files=separate.files)
@@ -683,9 +683,9 @@ exportCombinedMultivariateCombinations <- function(hmm, filename, exclude.states
     }
 
     ## Export the combinatorial states from individual segments
-    conditions <- names(hmm$segments.separate)
+    conditions <- names(hmm$segments.per.condition)
     for (cond in conditions) {
-        segments <- hmm$segments.separate[[cond]]
+        segments <- hmm$segments.per.condition[[cond]]
 
         # Exclude and include states
         combstates <- levels(segments$combination)

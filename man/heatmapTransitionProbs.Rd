@@ -15,6 +15,15 @@ A \code{\link[ggplot2]{ggplot}} object.
 \description{
 Plot a heatmap of transition probabilities for a \code{\link{multiHMM}} model.
 }
+\examples{
+## Get an example multiHMM ##
+file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
+                    package="chromstaR")
+model <- get(load(file))
+## Plot transition probabilites as heatmap
+heatmapTransitionProbs(model)
+
+}
 \seealso{
 \code{\link{plotting}}
 }

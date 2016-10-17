@@ -85,6 +85,14 @@ plotHistograms <- function(model, ...) {
 #' @importFrom reshape2 melt
 #' @seealso \code{\link{plotting}}
 #' @export
+#' @examples 
+#'## Get an example multiHMM ##
+#'file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
+#'                     package="chromstaR")
+#'model <- get(load(file))
+#'## Plot count correlations as heatmap
+#'heatmapCountCorrelation(model)
+#'
 heatmapCountCorrelation <- function(model, cluster=TRUE) {
 
     model <- suppressMessages( loadHmmsFromFiles(model, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]] )
@@ -109,6 +117,14 @@ heatmapCountCorrelation <- function(model, cluster=TRUE) {
 #' @importFrom reshape2 melt
 #' @seealso \code{\link{plotting}}
 #' @export
+#' @examples 
+#'## Get an example multiHMM ##
+#'file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
+#'                     package="chromstaR")
+#'model <- get(load(file))
+#'## Plot transition probabilites as heatmap
+#'heatmapTransitionProbs(model)
+#'
 heatmapTransitionProbs <- function(model) {
 
     model <- suppressMessages( loadHmmsFromFiles(model, check.class=class.multivariate.hmm)[[1]] )
@@ -190,6 +206,23 @@ heatmapCombinations <- function(model=NULL, marks=NULL, emissionProbs=NULL) {
 #' @importFrom reshape2 melt
 #' @seealso \code{\link{plotting}}
 #' @export
+#' @examples
+#'## Get an example BAM file with ChIP-seq reads
+#'file <- system.file("extdata", "euratrans",
+#'                       "lv-H3K27me3-BN-male-bio2-tech1.bam",
+#'                        package="chromstaRData")
+#'## Bin the BED file into bin size 1000bp
+#'data(rn4_chrominfo)
+#'data(experiment_table)
+#'binned <- binReads(file, experiment.table=experiment_table,
+#'                   assembly=rn4_chrominfo, binsizes=1000,
+#'                   chromosomes='chr12')
+#'plotHistogram(binned)
+#'## Fit the univariate Hidden Markov Model
+#'hmm <- callPeaksUnivariate(binned, max.time=60, eps=1)
+#'## Check if the fit is ok
+#'plotHistogram(hmm)
+#'
 plotHistogram <- function(model, state=NULL, chromosomes=NULL, start=NULL, end=NULL, linewidth=1) {
 
     model <- suppressMessages( loadHmmsFromFiles(model, check.class=c('GRanges', class.univariate.hmm))[[1]] )

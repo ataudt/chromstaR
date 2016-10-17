@@ -17,6 +17,15 @@ A \code{\link[ggplot2]{ggplot}} object.
 \description{
 Heatmap of read count correlations (see \code{\link[stats]{cor}}).
 }
+\examples{
+## Get an example multiHMM ##
+file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
+                    package="chromstaR")
+model <- get(load(file))
+## Plot count correlations as heatmap
+heatmapCountCorrelation(model)
+
+}
 \seealso{
 \code{\link{plotting}}
 }

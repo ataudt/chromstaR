@@ -4,12 +4,14 @@
 \alias{changeFDR}
 \title{Change the false discovery rate of a Hidden Markov Model}
 \usage{
-changeFDR(model, fdr = 0.01)
+changeFDR(model, fdr = 0.01, invert = FALSE)
 }
 \arguments{
 \item{model}{A \code{\link{uniHMM}} or \code{\link{multiHMM}} object with posteriors.}
 
 \item{fdr}{A vector of values between 0 and 1 for each column in \code{model$bins$peakScores}. If only one value is given, it will be reused for all columns. Values close to 0 will yield more stringent peak calls with lower false positive but higher false negative rate.}
+
+\item{invert}{Select peaks below (\code{FDR}) or above (\code{TRUE}) the given \code{fdr}. This is useful to select low confidence peaks.}
 }
 \value{
 The input object is returned with adjusted peak calls.

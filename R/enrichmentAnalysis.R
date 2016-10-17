@@ -400,6 +400,7 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
             } else if (statistic == 'fraction') {
                 ggplt <- ggplt + ylab('fraction')
             }
+            ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$combination))))
         } else if (what == 'peaks') {
             ggplt <- ggplot(df) + geom_line(aes_string(x='position', y='value', col='mark'), size=2)
             if (statistic == 'fold') {
@@ -408,8 +409,10 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
             } else if (statistic == 'fraction') {
                 ggplt <- ggplt + ylab('fraction')
             }
+            ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$mark))))
         } else if (what == 'counts') {
             ggplt <- ggplot(df) + geom_line(aes_string(x='position', y='value', col='track'), size=2) + ylab('RPKM')
+            ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$track))))
         }
         ggplt <- ggplt + theme_bw() + xlab('distance from annotation in [bp]')
         if (length(region)>=2 & 'inside' %in% region) {

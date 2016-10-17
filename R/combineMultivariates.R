@@ -295,7 +295,7 @@ combineMultivariates <- function(hmms, mode) {
     
     ### Redo the segmentation for each condition separately
     ptm <- startTimedMessage("Redoing segmentation for each condition separately ...")
-    segments.separate <- list()
+    segments.per.condition <- list()
     for (cond in names(combs)) {
         bins.cond <- bins
         mcols(bins.cond) <- mcols(bins)[paste0('combination.',cond)]
@@ -305,7 +305,7 @@ combineMultivariates <- function(hmms, mode) {
         segments.cond <- methods::as(segments.cond, 'GRanges')
         names(mcols(segments.cond)) <- 'combination'
         seqlengths(segments.cond) <- seqlengths(bins)[seqlevels(segments.cond)]
-        segments.separate[[cond]] <- segments.cond
+        segments.per.condition[[cond]] <- segments.cond
     }
     stopTimedMessage(ptm)
     
@@ -319,7 +319,7 @@ combineMultivariates <- function(hmms, mode) {
     rownames(hmm$info) <- NULL
     hmm$bins <- bins
     hmm$segments <- segments
-    hmm$segments.separate <- segments.separate
+    hmm$segments.per.condition <- segments.per.condition
     hmm$peaks <- peaks
     hmm$frequencies <- freqs$table
     return(hmm)
