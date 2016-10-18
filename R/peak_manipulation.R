@@ -1,6 +1,7 @@
 getPeakScores <- function(bins) {
     
     binstates <- dec2bin(bins$state, colnames = colnames(bins$posteriors))
+    rownames(binstates) <- NULL
     peakScores <- matrix(NA, nrow=nrow(binstates), ncol=ncol(binstates), dimnames=list(NULL, colnames(binstates)))
     for (icol in 1:ncol(binstates)) {
         r.bin <- rle(binstates[,icol])
@@ -9,6 +10,9 @@ getPeakScores <- function(bins) {
         r$values[r$values == FALSE] <- NA
         peakNumbers <- inverse.rle(r)
         df <- aggregate(bins$posteriors[,icol], by=list(peakNumber=peakNumbers), FUN=max)
+        if (class(df$x) == 'list') {
+            class(df$x) <- 'numeric'
+        }
         r <- r.bin
         r$values[r$values == TRUE] <- df$x
         r$values[r$values == FALSE] <- 0
