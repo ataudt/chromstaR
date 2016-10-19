@@ -19,7 +19,7 @@ Installation
 ------------
 
 ### Stable release version from Bioconductor
-To install the *current stable* version from Bioconductor, please visit http://bioconductor.org/packages/chromstaR/ and follow the provided instructions.
+To install the *current stable* version from Bioconductor, please visit http://bioconductor.org/packages/devel/chromstaR/ and follow the provided instructions. We advise to use the development version at this point, since chromstaR is still actively developed and the latest features are only available in the development version.
 
 ### Development version from Github
 To install the *development* version from Github, follow the steps given below. The installation has only been tested on Ubuntu so far, if you need to install on Windows or Mac additional steps might be necessary (e.g. installation of Rtools from https://cran.r-project.org/bin/windows/Rtools/)
