@@ -2,7 +2,7 @@
 #'
 #' Various scores used in \code{\link{chromstaR}}.
 #'
-#' @param mat A matrix with posterior probabilities or read counts. Column names must correspond to the ID entries in \code{info}.
+#' @param mat A matrix with posterior probabilities, read counts or any other matrix with these dimensions. Column names must correspond to the ID entries in \code{info}.
 #' @param info An \code{\link{experiment.table}} with additional column 'ID'.
 #' @param FUN A function to compute the score with.
 #' @name scores

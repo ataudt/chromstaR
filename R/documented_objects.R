@@ -41,6 +41,19 @@ NULL
 NULL
 
 
+#' Gene coordinates for rn4
+#'
+#' A data.frame containing gene coordinates and biotypes of the rn4 assembly.
+#'
+#' @docType data
+#' @name genes_rn4
+#' @format A data.frame.
+#' @examples
+#'data(genes_rn4)
+#'head(genes_rn4)
+NULL
+
+
 #' chromstaR objects
 #'
 #' @description
@@ -136,7 +149,7 @@ NULL
 #' A \code{list()} with the following entries:
 #' \item{bins}{A \code{\link[GenomicRanges]{GRanges}} object containing genomic bin coordinates and human readable combinations for the combined \code{\link{multiHMM}} objects.}
 #' \item{segments}{Same as \code{bins}, but consecutive bins with the same state are collapsed into segments.}
-#' \item{segments.separate}{A \code{list} with segments for each condition separately.}
+#' \item{segments.per.condition}{A \code{list} with segments for each condition separately.}
 #' @seealso \code{\link{combineMultivariates}}, \code{\link{uniHMM}}, \code{\link{multiHMM}}
 #' @name combinedMultiHMM
 #' @aliases combinedHMM

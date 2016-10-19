@@ -14,11 +14,12 @@ ChromstaR is a versatile ChIP-seq analysis suite with the following features:
 ChromstaR is a powerful tool for any type of ChIP-seq analysis. For instance, you can use it to find bivalent promoters, poised enhancers etc. between two or more experimental conditions. It implements high-quality peak calling for broad and narrow marks and enables combinatorial and differential chromatin state analysis. It provides ready-to-use functions for any type of enrichment analysis and results can easily be assessed in a genome browser. The method is described [here](http://biorxiv.org/content/early/2016/02/04/038612) and a tutorial is available [here](https://github.com/ataudt/chromstaR/blob/master/vignettes/chromstaR.pdf).
 
 Please visit also the website at https://chromstar.org/.
+
 Installation
 ------------
 
 ### Stable release version from Bioconductor
-To install the *current stable* version from Bioconductor, please visit http://bioconductor.org/packages/chromstaR/ and follow the provided instructions.
+To install the *current stable* version from Bioconductor, please visit http://bioconductor.org/packages/devel/chromstaR/ and follow the provided instructions. We advise to use the development version at this point, since chromstaR is still actively developed and the latest features are only available in the development version.
 
 ### Development version from Github
 To install the *development* version from Github, follow the steps given below. The installation has only been tested on Ubuntu so far, if you need to install on Windows or Mac additional steps might be necessary (e.g. installation of Rtools from https://cran.r-project.org/bin/windows/Rtools/)

@@ -54,8 +54,7 @@ print(binned.data)
 
 <<univariate_narrow_peak_calling, results='markup', eval=TRUE, message=FALSE>>=
 ## === Step 2: Peak calling ===
-# We keep the posterior probabilities to be able to change the cutoff later in step 4)
-model <- callPeaksUnivariate(binned.data, verbosity=0, keep.posteriors=TRUE)
+model <- callPeaksUnivariate(binned.data, verbosity=0)
 @
 
 <<univariate_narrow_plotting, fig.width=6, fig.height=4, out.width='0.5\\textwidth'>>=
@@ -68,21 +67,18 @@ plotHistogram(model) + ggtitle('H3K4me3')
 <<univariate_narrow_posterior, results='markup', message=FALSE, eval=TRUE>>=
 ## === Step 4: Working with peaks ===
 # Get the number and average size of peaks
-segments <- model$segments
-peaks <- segments[segments$state == 'modified']
-length(peaks); mean(width(peaks))
+length(model$peaks); mean(width(model$peaks))
 
-# Change the posterior cutoff and get number of peaks
-model <- changePostCutoff(model, post.cutoff=0.999)
-segments <- model$segments
-peaks <- segments[segments$state == 'modified']
-length(peaks); mean(width(peaks))
+# Change the false discovery rate and get number of peaks
+model <- changeFDR(model, fdr=1e-4)
+length(model$peaks); mean(width(model$peaks))
 @
 
 <<univariate_narrow_export, results='hide', message=FALSE, eval=TRUE>>=
 ## === Step 5: Export to genome browser ===
 # We can export peak calls and binned read counts with
-exportUnivariates(list(model), filename=tempfile(), what=c('peaks','counts'))
+exportPeaks(model, filename=tempfile())
+exportCounts(model, filename=tempfile())
 @
 \end{scriptsize}
 
@@ -111,8 +107,7 @@ binned.data <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
 
 <<univariate_broad_peak_calling, results='markup', eval=TRUE, message=FALSE>>=
 ## === Step 2: Peak calling ===
-# We keep the posterior probabilities to be able to change the cutoff later in step 4)
-model <- callPeaksUnivariate(binned.data, verbosity=0, keep.posteriors=TRUE)
+model <- callPeaksUnivariate(binned.data, verbosity=0)
 @
 
 <<univariate_broad_plotting, fig.width=6, fig.height=4, out.width='0.5\\textwidth'>>=
@@ -124,24 +119,20 @@ plotHistogram(model) + ggtitle('H3K27me3')
 
 <<univariate_broad_posterior, results='markup', message=FALSE, eval=TRUE>>=
 ## === Step 4: Working with peaks ===
-# Get the number and average size of peaks
-segments <- model$segments
-peaks <- segments[segments$state == 'modified']
+peaks <- model$peaks
 length(peaks); mean(width(peaks))
 
-# Change the posterior cutoff and get number of peaks
-# !! Note that for broad peaks, setting a posterior cutoff
-# will split the peaks into smaller, better defined peaks !!
-model <- changePostCutoff(model, post.cutoff=0.999)
-segments <- model$segments
-peaks <- segments[segments$state == 'modified']
+# Change the false discovery rate and get number of peaks
+model <- changeFDR(model, fdr=1e-4)
+peaks <- model$peaks
 length(peaks); mean(width(peaks))
 @
 
 <<univariate_broad_export, results='hide', message=FALSE, eval=TRUE>>=
 ## === Step 5: Export to genome browser ===
 # We can export peak calls and binned read counts with
-exportUnivariates(list(model), filename=tempfile(), what=c('peaks','counts'))
+exportPeaks(model, filename=tempfile())
+exportCounts(model, filename=tempfile())
 @
 
 <<univariate_broad_H4K20me1, echo=TRUE, results='hide', message=FALSE, fig.width=6, fig.height=4, out.width='0.5\\textwidth'>>=
@@ -222,7 +213,8 @@ multi.model <- callPeaksReplicates(models[1:3], force.equal=TRUE, max.time=60)
 <<multivariate_replicate_export, results='hide', message=FALSE, eval=TRUE>>=
 ## === Step 5: Export to genome browser ===
 # Finally, we can export the results as BED file
-exportMultivariate(multi.model, filename=tempfile(), what=c('peaks','counts'))
+exportPeaks(multi.model, filename=tempfile())
+exportCounts(multi.model, filename=tempfile())
 @
 \end{scriptsize}
 
@@ -279,9 +271,9 @@ print(common.states)
 <<multivariate_differential_export, results='hide', message=FALSE, eval=TRUE>>=
 ## === Step 5: Export to genome browser ===
 # Export only differential states
-exportMultivariate(model, filename=tempfile(),
-                   what=c('peaks','counts','combinations'),
-                   include.states=diff.states)
+exportPeaks(model, filename=tempfile())
+exportCounts(model, filename=tempfile())
+exportCombinations(model, filename=tempfile(), include.states=diff.states)
 @
 \end{scriptsize}
 
@@ -354,23 +346,24 @@ print(genes)
 <<multivariate_combinatorial_enrichment_plot1, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.8\\textwidth', fig.align='center'>>=
 # We expect promoter [H3K4me3] and bivalent-promoter signatures [H3K4me3+H3K27me3]
 # to be enriched at transcription start sites.
-plotFoldEnrichment(hmm = model, annotation = genes, bp.around.annotation = 15000) +
+plotEnrichment(hmm = model, annotation = genes, bp.around.annotation = 15000) +
   ggtitle('Fold enrichment around genes') +
   xlab('distance from gene body')
 # Plot enrichment only at TSS. We make use of the fact that TSS is the start of a gene.
-plotFoldEnrichment(model, genes, region = 'start') +
+plotEnrichment(model, genes, region = 'start') +
   ggtitle('Fold enrichment around TSS') +
   xlab('distance from TSS in [bp]')
 # Note: If you want to facet the plot because you have many combinatorial states you
 # can do that with
-plotFoldEnrichment(model, genes, region = 'start') +
+plotEnrichment(model, genes, region = 'start') +
   facet_wrap(~ combination) + ggtitle('Fold enrichment around TSS')
 @
 <<multivariate_combinatorial_enrichment_plot2, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.8\\textwidth', fig.align='center'>>=
 # Another form of visualization that shows every TSS in a heatmap
 tss <- resize(genes, width = 3, fix = 'start')
-plotEnrichCountHeatmap(model, tss) +
+plotEnrichCountHeatmap(model, tss, bp.around.annotation = 15000) +
   theme(strip.text.x = element_text(size=6)) +
+  scale_x_continuous(breaks=c(-10000,0,10000)) +
   ggtitle('Read count around TSS')
 @
 <<multivariate_combinatorial_enrichment_plot3, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.8\\textwidth', fig.align='center'>>=
@@ -504,11 +497,11 @@ print(genes)
 <<combined_enrichment_plot1, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.8\\textwidth', fig.align='center'>>=
 # We expect promoter [H3K4me3] and bivalent-promoter signatures [H3K4me3+H3K27me3]
 # to be enriched at transcription start sites.
-plots <- plotFoldEnrichment(hmm=model, annotation=genes, region='start')
+plots <- plotEnrichment(hmm=model, annotation=genes, region='start')
 plots[['BN']] + facet_wrap(~ combination) +
   ggtitle('Fold enrichment around TSS') +
   xlab('distance from TSS')
-plots <- plotFoldEnrichment(hmm=model, annotation=genes, region='start', what='peaks')
+plots <- plotEnrichment(hmm=model, annotation=genes, region='start', what='peaks')
 plots[['BN']] + facet_wrap(~ mark) +
   ggtitle('Fold enrichment around TSS') +
   xlab('distance from TSS')
@@ -522,7 +515,6 @@ tss <- resize(genes, width = 3, fix = 'start')
 biotypes <- split(tss, tss$biotype)
 plots <- plotFoldEnrichHeatmap(model, annotations=biotypes)
 plots[['BN']] + coord_flip() + 
-  scale_fill_gradient(low='white', high='blue', limits=c(0,100)) + 
   ggtitle('Fold enrichment with different biotypes')
 @
 \end{scriptsize}
@@ -553,29 +545,29 @@ plots[['BN']] + coord_flip() +
 
 \subsection{\label{sec:FAQ_peaks}The peak calls are too lenient. Can I adjust the strictness of the peak calling?}
 
-The strictness of the peak calling can be controlled with a posterior cutoff. The Hidden Markov Model gives posterior probabilities for each peak, and based on these probabilites the model decides if a peak is present or not by picking the state with the highest probability. This way of peak calling leads to very lenient peak calls, and for some applications it may be desirable to obtain only very clear peaks. This can be achieved by setting a posterior cutoff. To follow the below example, please first run step 1 and 2 from section~\ref{sec:Task4}. !!Note that in general more peaks are obtained with a stricter cutoff, as this will lead to the split-up of previously broader peaks into several smaller, more well defined peaks.
+The strictness of the peak calling can be controlled with a false discovery rate. The Hidden Markov Model gives posterior probabilities for each peak, and based on these probabilites the model decides if a peak is present or not by picking the state with the highest probability. This way of peak calling leads to very lenient peak calls, and for some applications it may be desirable to obtain only very clear peaks. This can be achieved by setting a false discovery rate (which is a cutoff on the maximum posterior probability within each peak). To follow the below example, please first run step 1 and 2 from section~\ref{sec:Task4}.
 
 \begin{scriptsize}
 <<faq_postcutoff, results='markup', message=FALSE, eval=TRUE>>=
 model <- get(load(file.path(outputfolder,'combined',
                             'combined_mode-differential.RData')))
 # Set a strict cutoff close to 1
-model2 <- changePostCutoff(model, post.cutoff=0.999)
+model2 <- changeFDR(model, fdr=1e-4)
 ## Compare the number and width of peaks before and after cutoff adjustment
 length(model$segments); mean(width(model$segments))
 length(model2$segments); mean(width(model2$segments))
 @
 \end{scriptsize}
 
-It is even possible to adjust the posterior cutoff differently for the different marks or conditions.
+It is even possible to adjust the false discovery rate differently for the different marks or conditions.
 
 \begin{scriptsize}
 <<faq_postcutoff_single, results='markup', message=FALSE, eval=TRUE>>=
 # Set a stricter cutoff for H3K4me3 than for H3K27me3
-cutoffs <- c(0.8, 0.8, 0.8, 0.8, 0.999, 0.999, 0.999, 0.999)
-names(cutoffs) <- model$info$ID
-print(cutoffs)
-model2 <- changePostCutoff(model, post.cutoff=cutoffs)
+fdrs <- c(0.1, 0.1, 0.1, 0.1, 0.01, 0.01, 0.01, 0.01)
+names(fdrs) <- model$info$ID
+print(fdrs)
+model2 <- changeFDR(model, fdr=fdrs)
 ## Compare the number and width of peaks before and after cutoff adjustment
 length(model$segments); mean(width(model$segments))
 length(model2$segments); mean(width(model2$segments))
@@ -588,6 +580,7 @@ You were interested in combinatorial state differences as in section~\ref{sec:Ta
 \begin{enumerate}
 \item Run \Rfunction{Chromstar} in mode='differential' (instead of mode='combinatorial') and see if the results improve.
 \item You can play with the ``differential.score'' (see section~\ref{sec:Task4}, step 3) and export only differences with a high score. A differential score around 1 means that one modification is different, a score close to 2 means that two modifications are different etc. The score is calculated as the sum of differences in posterior probabilities between marks.
+\item Set a strict false discovery rate (previous example) to obtain only high confidence peaks.
 \item Check for bad replicates that are very different from the rest and exclude them prior to the analysis.
 \end{enumerate}
 

@@ -24,7 +24,7 @@
 #'
 loadHmmsFromFiles <- function(files, check.class=c('GRanges', 'uniHMM', 'multiHMM', 'combinedMultiHMM')) {
 
-    ptm <- startTimedMessage("Loading data from files ...")
+#     ptm <- startTimedMessage("Loading data from files ...")
     if (any(! check.class %in% c('GRanges', class.univariate.hmm, class.multivariate.hmm, class.combined.multivariate.hmm))) {
         stop("Argument 'check.class' must contain any combination of c('", paste0(c('GRanges', class.univariate.hmm, class.multivariate.hmm, class.combined.multivariate.hmm), collapse="', '"), "').")
     }
@@ -52,7 +52,7 @@ loadHmmsFromFiles <- function(files, check.class=c('GRanges', 'uniHMM', 'multiHM
     } else if (! class(files) %in% check.class) {
         stop("Input does not contain an object of class ", paste0(check.class, collapse=' or '), ".")
     }
-    stopTimedMessage(ptm)
+#     stopTimedMessage(ptm)
     return(modellist)
 
 }

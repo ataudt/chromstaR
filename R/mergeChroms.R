@@ -28,6 +28,7 @@ mergeChroms <- function(multi.hmm.list, filename=NULL) {
     message("Concatenating HMMs ...", appendLF=FALSE); ptm <- proc.time()
     bins <- list()    # do not use GRangesList() because it copies the whole list each time an element is added
     segments <- list()
+    peaks <- list()
     for (i1 in 1:num.models) {
         hmm <- multi.hmm.list[[1]]    # select always first because we remove it at the end of the loop
         if (!post.present) {
@@ -36,6 +37,7 @@ mergeChroms <- function(multi.hmm.list, filename=NULL) {
         }
         bins[[i1]] <- hmm$bins
         segments[[i1]] <- hmm$segments
+        peaks[[i1]] <- hmm$peaks
         # Remove current HMM to save memory
         if (i1 < num.models) remove(hmm)    # remove it because otherwise R will make a copy when we NULL the underlying reference (multi.hmm.list[[1]])
         multi.hmm.list[[1]] <- NULL
@@ -46,12 +48,21 @@ mergeChroms <- function(multi.hmm.list, filename=NULL) {
     ptm <- startTimedMessage("Merging ...")
     bins <- do.call('c', bins)    # this can be too memory intensive if posteriors are present
     segments <- do.call('c', segments)
+    if (length(peaks) == 1) { # only one chromosome
+        peaks.merged <- peaks[[1]]
+    } else if (length(peaks) > 1) {
+        peaks.merged <- list()
+        for (i1 in 1:length(peaks[[1]])) {
+            peaks.merged[[names(peaks[[1]])[i1]]] <- do.call('c', lapply(peaks, '[[', i1))
+        }
+    }
     stopTimedMessage(ptm)
 
     ## Reassign
     multi.hmm <- hmm
     multi.hmm$bins <- bins
     multi.hmm$segments <- segments
+    multi.hmm$peaks <- peaks.merged
 
     ## Weights
     ptm <- startTimedMessage("Calculating weights ...")

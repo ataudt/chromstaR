@@ -20,101 +20,6 @@ getStateColors <- function(labels=NULL) {
     return(state.colors[labels])
 }
  
-# # =================================================================
-# # Define plotting methods for the generic
-# # =================================================================
-# #' Plotting function for saved \pkg{\link{chromstaR}} objects
-# #'
-# #' Convenience function that loads and plots a \pkg{\link{chromstaR}} object in one step.
-# #'
-# #' @param x A filename that contains either \code{\link{binned.data}}, a \code{\link{uniHMM}} or a \code{\link{multiHMM}}.
-# #' @param ... Additional arguments.
-# #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
-# #' @method plot character
-# #' @importFrom graphics plot
-# #' @export
-# plot.character <- function(x, ...) {
-#     x <- get(load(x))
-#     graphics::plot(x, ...)
-# }
-# 
-# #' Plotting function for binned read counts
-# #'
-# #' Make plots for binned read counts from \code{\link{binned.data}}
-# #'
-# #' @param x A \code{\link{GRanges}} object with binned read counts.
-# #' @inheritParams plotBinnedDataHistogram
-# #' @param ... Additional arguments not implemented.
-# #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
-# #' @method plot GRanges
-# #' @export
-# plot.GRanges <- function(x, chromosomes=NULL, start=NULL, end=NULL, ...) {
-#     plotBinnedDataHistogram(x, chromosomes=NULL, start=NULL, end=NULL, ...)
-# }
-# 
-# #' Plotting function for \code{\link{uniHMM}} objects
-# #'
-# #' Make different types of plots for \code{\link{uniHMM}} objects.
-# #'
-# #' @param x A \code{\link{uniHMM}} object.
-# #' @param type Type of the plot, one of \code{c('histogram', 'karyogram', 'boxplot', 'normalTransformation')}. You can also specify the type with an integer number.
-# #' \describe{
-# #'   \item{\code{histogram}}{A histogram of binned read counts with fitted mixture distribution.}
-# #'   \item{\code{karyogram}}{A karyogram with binned read counts and peak calls. This uses the \pkg{\link[ggbio]{ggbio}} package and is very slow!}
-# #'   \item{\code{boxplot}}{A boxplot of read counts for the different states.}
-# #'   \item{\code{normalTransformation}}{A histogram of transformed read counts.}
-# #' }
-# #' @param ... Additional arguments for the different plot types.
-# #' \describe{
-# #'   \item{\code{state}}{Plot the \code{histogram}, \code{boxplot} or \code{normalTransformation} only for the specified state. One of \code{c('unmodified','modified')}.}
-# #'   \item{\code{chromosomes,start,end}}{Plot the \code{histogram} only for the specified chromosomes, start and end position.}
-# #' }
-# #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
-# #' @method plot uniHMM
-# #' @export
-# plot.uniHMM <- function(x, type='histogram', ...) {
-#     
-#     if (type == 'histogram' | type==1) {
-#         plotHistogram(x, ...)
-#     } else if (type == 'karyogram' | type==2) {
-#         plotKaryogram(x)
-#     } else if (type == 'boxplot' | type==3) {
-#         plotBoxplot(x, ...)
-#     } else if (type == 'normalTransformation' | type==4) {
-#         plotNormalTransformation(x, ...)
-#     }
-# 
-# }
-# 
-# #' Plotting function for \code{\link{multiHMM}} objects
-# #'
-# #' Make different types of plots for \code{\link{multiHMM}} objects.
-# #'
-# #' @param x A \code{\link{multiHMM}} object.
-# #' @param type Type of the plot, one of \code{c('transitionMatrix','histograms','correlation')}. You can also specify the type with an integer number.
-# #' \describe{
-# #'   \item{\code{transitionMatrix}}{A heatmap with entries of the transition matrix.}
-# #'   \item{\code{histograms}}{Fitted histograms of all underlying univariate distributions.}
-# #'   \item{\code{correlation}}{Correlation between read counts of the different experiments.}
-# #' }
-# #' @param ... Additional arguments for the different plot types.
-# #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
-# #' @method plot multiHMM
-# #' @export
-# plot.multiHMM <- function(x, type='transitionMatrix', ...) {
-# 
-#     if (type == 'transitionMatrix' | type==1) {
-#         heatmapTransitionProbs(x, ...)
-#     } else if (type == 'histograms' | type==2) {
-#         plotHistograms(x, ...)
-#     } else if (type == 'correlation' | type==3) {
-#         heatmapCountCorrelation(x, ...)
-#     } else if (type == 'enrichment' | type==4) {
-#         plotFoldEnrichment(x, ...)
-#     }
-# 
-# }
-
 # ============================================================
 # Helper functions
 # ============================================================
@@ -180,6 +85,14 @@ plotHistograms <- function(model, ...) {
 #' @importFrom reshape2 melt
 #' @seealso \code{\link{plotting}}
 #' @export
+#' @examples 
+#'## Get an example multiHMM ##
+#'file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
+#'                     package="chromstaR")
+#'model <- get(load(file))
+#'## Plot count correlations as heatmap
+#'heatmapCountCorrelation(model)
+#'
 heatmapCountCorrelation <- function(model, cluster=TRUE) {
 
     model <- suppressMessages( loadHmmsFromFiles(model, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]] )
@@ -190,7 +103,7 @@ heatmapCountCorrelation <- function(model, cluster=TRUE) {
         df$Var1 <- factor(df$Var1, levels=levels(df$Var1)[hc$order])
         df$Var2 <- factor(df$Var2, levels=levels(df$Var2)[hc$order])
     }
-    ggplt <- ggplot(df) + geom_tile(aes_string(x='Var1', y='Var2', fill='correlation')) + xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1)) + scale_fill_gradient(low='red', high='yellow')
+    ggplt <- ggplot(df) + geom_tile(aes_string(x='Var1', y='Var2', fill='correlation')) + xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=0.5)) + scale_fill_gradient(low='red', high='yellow')
     return(ggplt)
 
 }
@@ -204,13 +117,21 @@ heatmapCountCorrelation <- function(model, cluster=TRUE) {
 #' @importFrom reshape2 melt
 #' @seealso \code{\link{plotting}}
 #' @export
+#' @examples 
+#'## Get an example multiHMM ##
+#'file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
+#'                     package="chromstaR")
+#'model <- get(load(file))
+#'## Plot transition probabilites as heatmap
+#'heatmapTransitionProbs(model)
+#'
 heatmapTransitionProbs <- function(model) {
 
     model <- suppressMessages( loadHmmsFromFiles(model, check.class=class.multivariate.hmm)[[1]] )
     A <- reshape2::melt(model$transitionProbs, varnames=c('from','to'), value.name='prob')
     A$from <- factor(A$from, levels=stateorderByTransition(model))
     A$to <- factor(A$to, levels=stateorderByTransition(model))
-    ggplt <- ggplot(data=A) + geom_tile(aes_string(x='to', y='from', fill='prob')) + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + scale_fill_gradient(low="white", high="blue")
+    ggplt <- ggplot(data=A) + geom_tile(aes_string(x='to', y='from', fill='prob')) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5)) + scale_fill_gradient(low="white", high="blue")
 
     return(ggplt)
 
@@ -258,7 +179,7 @@ heatmapCombinations <- function(model=NULL, marks=NULL, emissionProbs=NULL) {
         df$emission <- as.numeric(df$emission)
     }
 
-    ggplt <- ggplot(df) + geom_tile(aes_string(x='combination', y='mark', fill='emission')) + theme_bw() + theme(axis.text.x=element_text(angle=45,hjust=1))
+    ggplt <- ggplot(df) + geom_tile(aes_string(x='combination', y='mark', fill='emission')) + theme_bw() + theme(axis.text.x=element_text(angle=45, hjust=1))
     if (!is.null(emissionProbs)) {
         ggplt <- ggplt + scale_fill_gradient(low='white', high='blue', limits=c(0,1))
     } else {
@@ -285,6 +206,23 @@ heatmapCombinations <- function(model=NULL, marks=NULL, emissionProbs=NULL) {
 #' @importFrom reshape2 melt
 #' @seealso \code{\link{plotting}}
 #' @export
+#' @examples
+#'## Get an example BAM file with ChIP-seq reads
+#'file <- system.file("extdata", "euratrans",
+#'                       "lv-H3K27me3-BN-male-bio2-tech1.bam",
+#'                        package="chromstaRData")
+#'## Bin the BED file into bin size 1000bp
+#'data(rn4_chrominfo)
+#'data(experiment_table)
+#'binned <- binReads(file, experiment.table=experiment_table,
+#'                   assembly=rn4_chrominfo, binsizes=1000,
+#'                   chromosomes='chr12')
+#'plotHistogram(binned)
+#'## Fit the univariate Hidden Markov Model
+#'hmm <- callPeaksUnivariate(binned, max.time=60, eps=1)
+#'## Check if the fit is ok
+#'plotHistogram(hmm)
+#'
 plotHistogram <- function(model, state=NULL, chromosomes=NULL, start=NULL, end=NULL, linewidth=1) {
 
     model <- suppressMessages( loadHmmsFromFiles(model, check.class=c('GRanges', class.univariate.hmm))[[1]] )

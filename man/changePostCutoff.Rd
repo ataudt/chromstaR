@@ -2,7 +2,7 @@
 % Please edit documentation in R/changePostCutoff.R
 \name{changePostCutoff}
 \alias{changePostCutoff}
-\title{Change the false discovery rate of a Hidden Markov Model}
+\title{Change the posterior cutoff of a Hidden Markov Model}
 \usage{
 changePostCutoff(model, post.cutoff = 0.5)
 }
@@ -19,25 +19,6 @@ Adjusts the peak calls of a \code{\link{uniHMM}} or \code{\link{multiHMM}} objec
 }
 \details{
 Posterior probabilities are between 0 and 1. Peaks are called if the posteriors for a state (univariate) or sample (multivariate) are >= \code{post.cutoff}.
-}
-\examples{
-## Get an example BAM file
-file <- system.file("extdata", "euratrans",
-                      "lv-H3K27me3-BN-male-bio2-tech1.bam",
-                       package="chromstaRData")
-## Bin the file into bin size 1000bp
-data(rn4_chrominfo)
-binned <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
-                  chromosomes='chr12')
-## Fit the univariate Hidden Markov Model
-# !Keep posteriors to change the post.cutoff later!
-hmm <- callPeaksUnivariate(binned, max.time=60, eps=1,
-                          keep.posteriors=TRUE)
-## Compare fits with different post.cutoffs
-plotHistogram(changePostCutoff(hmm, post.cutoff=0.01)) + ylim(0,0.25)
-plotHistogram(hmm) + ylim(0,0.25)
-plotHistogram(changePostCutoff(hmm, post.cutoff=0.99)) + ylim(0,0.25)
-
 }
 \author{
 Aaron Taudt

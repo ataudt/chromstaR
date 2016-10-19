@@ -420,7 +420,6 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
                                                         ranges=ranges(binned.data),
                                                         counts=hmm$counts,
                                                         state=states) 
-        result$bins$score <- apply(hmm$posteriors, 1, max)
         result$bins$posteriors <- hmm$posteriors
         if (!control) {
             result$bins$posterior.modified <- hmm$posteriors[,'modified']
@@ -430,17 +429,22 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
         }
         seqlengths(result$bins) <- seqlengths(binned.data)
         stopTimedMessage(ptm)
+    ## Peak score as maximum posterior in that peak
+        result$bins$peakScores <- getPeakScore.univariate(result$bins)
     ## Segmentation
         ptm <- startTimedMessage("Making segmentation ...")
         df <- as.data.frame(result$bins)
-        red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2getMax=c('score'), columns2drop=c('width',grep('posterior', names(df), value=TRUE), 'counts')))
-        red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], score=red.df[,'max.score'])
-        result$segments <- red.gr
+        red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2drop=c('width',grep('posterior', names(df), value=TRUE), 'counts')))
+        result$segments <- methods::as(red.df, 'GRanges')
         seqlengths(result$segments) <- seqlengths(binned.data)[seqlevels(result$segments)]
         if (!keep.posteriors) {
             result$bins$posteriors <- NULL
         }
         stopTimedMessage(ptm)
+    ## Peaks
+        result$peaks <- result$segments[result$segments$state == 'modified']
+        result$peaks$state <- NULL
+        result$segments <- NULL
     ## Parameters
         # Weights
         result$weights <- hmm$weights

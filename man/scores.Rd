@@ -11,7 +11,7 @@ differentialScoreMax(mat, info, FUN = "-")
 differentialScoreSum(mat, info, FUN = "-")
 }
 \arguments{
-\item{mat}{A matrix with posterior probabilities or read counts. Column names must correspond to the ID entries in \code{info}.}
+\item{mat}{A matrix with posterior probabilities, read counts or any other matrix with these dimensions. Column names must correspond to the ID entries in \code{info}.}
 
 \item{info}{An \code{\link{experiment.table}} with additional column 'ID'.}
 

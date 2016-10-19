@@ -22,6 +22,24 @@ A \code{\link[ggplot2:ggplot]{ggplot}} object.
 \description{
 Plot a histogram of binned read counts with fitted mixture distributions from a \code{\link{uniHMM}} object.
 }
+\examples{
+## Get an example BAM file with ChIP-seq reads
+file <- system.file("extdata", "euratrans",
+                      "lv-H3K27me3-BN-male-bio2-tech1.bam",
+                       package="chromstaRData")
+## Bin the BED file into bin size 1000bp
+data(rn4_chrominfo)
+data(experiment_table)
+binned <- binReads(file, experiment.table=experiment_table,
+                  assembly=rn4_chrominfo, binsizes=1000,
+                  chromosomes='chr12')
+plotHistogram(binned)
+## Fit the univariate Hidden Markov Model
+hmm <- callPeaksUnivariate(binned, max.time=60, eps=1)
+## Check if the fit is ok
+plotHistogram(hmm)
+
+}
 \seealso{
 \code{\link{plotting}}
 }
