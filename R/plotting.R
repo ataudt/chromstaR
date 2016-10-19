@@ -103,7 +103,7 @@ heatmapCountCorrelation <- function(model, cluster=TRUE) {
         df$Var1 <- factor(df$Var1, levels=levels(df$Var1)[hc$order])
         df$Var2 <- factor(df$Var2, levels=levels(df$Var2)[hc$order])
     }
-    ggplt <- ggplot(df) + geom_tile(aes_string(x='Var1', y='Var2', fill='correlation')) + xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1)) + scale_fill_gradient(low='red', high='yellow')
+    ggplt <- ggplot(df) + geom_tile(aes_string(x='Var1', y='Var2', fill='correlation')) + xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=0.5)) + scale_fill_gradient(low='red', high='yellow')
     return(ggplt)
 
 }
@@ -131,7 +131,7 @@ heatmapTransitionProbs <- function(model) {
     A <- reshape2::melt(model$transitionProbs, varnames=c('from','to'), value.name='prob')
     A$from <- factor(A$from, levels=stateorderByTransition(model))
     A$to <- factor(A$to, levels=stateorderByTransition(model))
-    ggplt <- ggplot(data=A) + geom_tile(aes_string(x='to', y='from', fill='prob')) + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + scale_fill_gradient(low="white", high="blue")
+    ggplt <- ggplot(data=A) + geom_tile(aes_string(x='to', y='from', fill='prob')) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5)) + scale_fill_gradient(low="white", high="blue")
 
     return(ggplt)
 
@@ -179,7 +179,7 @@ heatmapCombinations <- function(model=NULL, marks=NULL, emissionProbs=NULL) {
         df$emission <- as.numeric(df$emission)
     }
 
-    ggplt <- ggplot(df) + geom_tile(aes_string(x='combination', y='mark', fill='emission')) + theme_bw() + theme(axis.text.x=element_text(angle=45,hjust=1))
+    ggplt <- ggplot(df) + geom_tile(aes_string(x='combination', y='mark', fill='emission')) + theme_bw() + theme(axis.text.x=element_text(angle=45, hjust=1))
     if (!is.null(emissionProbs)) {
         ggplt <- ggplt + scale_fill_gradient(low='white', high='blue', limits=c(0,1))
     } else {

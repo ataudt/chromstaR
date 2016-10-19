@@ -82,7 +82,7 @@ plotExpression <- function(hmm, expression, combinations=NULL, return.marks=FALS
         names(df) <- c('expression', 'combination')
         ggplt <- ggplot(df) + geom_boxplot(aes_string(x='combination', y='expression'))
     }
-    ggplt <- ggplt + theme_bw() + theme(axis.text.x=element_text(angle=90, hjust=1))
+    ggplt <- ggplt + theme_bw() + theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
     return(ggplt)
 
 }

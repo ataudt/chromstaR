@@ -160,7 +160,7 @@ plotFoldEnrichHeatmap <- function(hmm, annotations, what="combinations", combina
             } else if (what == 'peaks') {
                 ggplt <- ggplot(df) + geom_tile(aes_string(x='mark', y='annotation', fill='foldEnrichment'))
             }
-            ggplt <- ggplt + theme(axis.text.x = element_text(angle=90, hjust=1))
+            ggplt <- ggplt + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=0.5))
             ggplts[[condition]] <- ggplt
         } else {
             folds[[condition]] <- fold
