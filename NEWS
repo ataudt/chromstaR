@@ -1,0 +1,26 @@
+CHANGES IN VERSION 1.1.1
+------------------------
+
+NEW FEATURES
+
+    o Selection of peaks can be done with 'changeFDR'.
+
+    o Peak calls are available in each chromstaR-object as list entry '$peaks'.
+
+SIGNIFICANT USER-LEVEL CHANGES
+
+    o 'plotFoldEnrichment' renamed to 'plotEnrichment'.
+
+    o 'exportBinnedData', 'exportUnivariates', 'exportMultivariates', 'exportCombinedMultivariates' replaced by 'exportCounts', 'exportPeaks', 'exportCombinations'.
+
+BUG FIXES
+
+    o Proper computation of fold enrichments, with < 1 indicating depletion and > 1 indicating enrichment.
+
+DEPRECATED AND DEFUNCT
+
+    o 'changePostCutoff'.
+
+    o 'plotFoldEnrichment'.
+
+    o 'exportBinnedData', 'exportUnivariates', 'exportMultivariates', 'exportCombinedMultivariates'.

@@ -361,8 +361,9 @@ plotEnrichment(model, genes, region = 'start') +
 <<multivariate_combinatorial_enrichment_plot2, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.8\\textwidth', fig.align='center'>>=
 # Another form of visualization that shows every TSS in a heatmap
 tss <- resize(genes, width = 3, fix = 'start')
-plotEnrichCountHeatmap(model, tss) +
+plotEnrichCountHeatmap(model, tss, bp.around.annotation = 15000) +
   theme(strip.text.x = element_text(size=6)) +
+  scale_x_continuous(breaks=c(-10000,0,10000)) +
   ggtitle('Read count around TSS')
 @
 <<multivariate_combinatorial_enrichment_plot3, results='markup', message=FALSE, eval=TRUE, fig.width=8, fig.height=4, out.width='0.8\\textwidth', fig.align='center'>>=

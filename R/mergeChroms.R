@@ -48,9 +48,13 @@ mergeChroms <- function(multi.hmm.list, filename=NULL) {
     ptm <- startTimedMessage("Merging ...")
     bins <- do.call('c', bins)    # this can be too memory intensive if posteriors are present
     segments <- do.call('c', segments)
-    peaks.merged <- list()
-    for (i1 in 1:length(peaks[[1]])) {
-        peaks.merged[[names(peaks[[1]])[i1]]] <- do.call('c', lapply(peaks, '[[', i1))
+    if (length(peaks) == 1) { # only one chromosome
+        peaks.merged <- peaks[[1]]
+    } else if (length(peaks) > 1) {
+        peaks.merged <- list()
+        for (i1 in 1:length(peaks[[1]])) {
+            peaks.merged[[names(peaks[[1]])[i1]]] <- do.call('c', lapply(peaks, '[[', i1))
+        }
     }
     stopTimedMessage(ptm)
 
