@@ -25,7 +25,7 @@ plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
 
 \item{what}{One of \code{c('combinations','peaks','counts')} specifying which statistic to calculate.}
 
-\item{combinations}{A vector with combinations for which the fold enrichment will be calculated. If \code{NULL} all combinations will be considered.}
+\item{combinations}{A vector with combinations for which the enrichment will be calculated. If \code{NULL} all combinations will be considered.}
 
 \item{marks}{A vector with marks for which the enrichment is plotted. If \code{NULL} all marks will be considered.}
 

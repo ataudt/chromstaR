@@ -3,7 +3,7 @@
 #' Plotting functions for enrichment analysis of \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} objects with any annotation of interest, specified as a \code{\link[GenomicRanges]{GRanges}} object.
 #' 
 #' @name enrichment_analysis
-#' @param combinations A vector with combinations for which the fold enrichment will be calculated. If \code{NULL} all combinations will be considered.
+#' @param combinations A vector with combinations for which the enrichment will be calculated. If \code{NULL} all combinations will be considered.
 #' @param marks A vector with marks for which the enrichment is plotted. If \code{NULL} all marks will be considered.
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot or a list() with \code{\link[ggplot2:ggplot]{ggplot}} objects if several plots are returned. For \code{plotFoldEnrichHeatmap} a named array with fold enrichments if \code{plot=FALSE}.
 #' @author Aaron Taudt
@@ -203,12 +203,12 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
         conditions <- sub('combination.', '', grep('combination', names(mcols(bins)), value=TRUE))
         comb.levels <- levels(mcols(bins)[,paste0('combination.', conditions[1])])
         ## Create new column combination with all conditions combined
-        combinations <- list()
+        combs <- list()
         for (condition in conditions) {
-            combinations[[condition]] <- paste0(condition, ":", mcols(bins)[,paste0('combination.', condition)])
+            combs[[condition]] <- paste0(condition, ":", mcols(bins)[,paste0('combination.', condition)])
         }
-        combinations$sep <- ', '
-        bins$combination <- factor(do.call(paste, combinations))
+        combs$sep <- ', '
+        bins$combination <- factor(do.call(paste, combs))
     } else if (class(hmm) == class.multivariate.hmm) {
         comb.levels <- levels(bins$combination)
     }
@@ -257,7 +257,8 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
     ## Go through combinations and then tracks to get the read counts
     ptm <- startTimedMessage("Getting read counts")
     counts <- list()
-    for (combination in levels(bins$combination)) {
+    combinations <- names(sort(table(bins$combination[index]), decreasing = TRUE))
+    for (combination in combinations) {
         counts[[combination]] <- list()
         index.combination <- which(bins$combination[index]==combination)
         ext.index.combination <- ext.index[index.combination,]
