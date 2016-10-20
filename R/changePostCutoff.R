@@ -8,24 +8,25 @@
 #' @param model A \code{\link{uniHMM}} or \code{\link{multiHMM}} object with posteriors.
 #' @param post.cutoff A vector of posterior cutoff values between 0 and 1 the same length as \code{ncol(model$bins$posteriors)}. If only one value is given, it will be reused for all columns. Values close to 1 will yield more stringent peak calls with lower false positive but higher false negative rate.
 #' @return The input object is returned with adjusted peak calls.
-# #' @examples
-# #'## Get an example BAM file
-# #'file <- system.file("extdata", "euratrans",
-# #'                       "lv-H3K27me3-BN-male-bio2-tech1.bam",
-# #'                        package="chromstaRData")
-# #'## Bin the file into bin size 1000bp
-# #'data(rn4_chrominfo)
-# #'binned <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
-# #'                   chromosomes='chr12')
-# #'## Fit the univariate Hidden Markov Model
-# #'# !Keep posteriors to change the post.cutoff later!
-# #'hmm <- callPeaksUnivariate(binned, max.time=60, eps=1,
-# #'                           keep.posteriors=TRUE)
-# #'## Compare fits with different post.cutoffs
-# #'plotHistogram(changePostCutoff(hmm, post.cutoff=0.01)) + ylim(0,0.25)
-# #'plotHistogram(hmm) + ylim(0,0.25)
-# #'plotHistogram(changePostCutoff(hmm, post.cutoff=0.99)) + ylim(0,0.25)
-# #'
+#' @export
+#' @examples
+#'## Get an example BAM file
+#'file <- system.file("extdata", "euratrans",
+#'                       "lv-H3K27me3-BN-male-bio2-tech1.bam",
+#'                        package="chromstaRData")
+#'## Bin the file into bin size 1000bp
+#'data(rn4_chrominfo)
+#'binned <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
+#'                   chromosomes='chr12')
+#'## Fit the univariate Hidden Markov Model
+#'# !Keep posteriors to change the post.cutoff later!
+#'hmm <- callPeaksUnivariate(binned, max.time=60, eps=1,
+#'                           keep.posteriors=TRUE)
+#'## Compare fits with different post.cutoffs
+#'plotHistogram(changePostCutoff(hmm, post.cutoff=0.01)) + ylim(0,0.25)
+#'plotHistogram(hmm) + ylim(0,0.25)
+#'plotHistogram(changePostCutoff(hmm, post.cutoff=0.99)) + ylim(0,0.25)
+#'
 changePostCutoff <- function(model, post.cutoff=0.5) {
 
     if (!is.numeric(post.cutoff)) {
@@ -108,10 +109,27 @@ changePostCutoff.multivariate <- function(model, post.cutoff) {
         multiHMM$bins$state <- factor(states)
         multiHMM$bins$posteriors <- post
         multiHMM$mapping <- mapping
+        multiHMM$peaks <- model$peaks
         model <- combineMultivariates(list(multiHMM), mode='full')
     } else {
         stop("Supply either a uniHMM, multiHMM or combinedMultiHMM object.")
     }
+    
+    ## Redo peaks
+    ptm <- startTimedMessage("Recalculating peaks ...")
+    binstates <- dec2bin(model$segments$state, colnames=colnames(post))
+    segments <- model$segments
+    mcols(segments) <- NULL
+    for (icol in 1:ncol(binstates)) {
+        segments$peakScores <- model$segments$peakScores[,icol]
+        segments$state <- binstates[,icol]
+        red.df <- suppressMessages( collapseBins(as.data.frame(segments), column2collapseBy = 'state') )
+        red.df <- red.df[red.df$state == 1,]
+        red.df$state <- NULL
+        model$peaks[[icol]] <- methods::as(red.df, 'GRanges')
+    }
+    stopTimedMessage(ptm)
+    
     ## Return model
     model$post.cutoff <- threshold
     return(model)
@@ -150,10 +168,11 @@ changePostCutoff.univariate <- function(model, post.cutoff) {
     ptm <- startTimedMessage("Making segmentation ...")
     gr <- model$bins
     df <- as.data.frame(gr)
-    red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c('score'), columns2drop=c('width',grep('posteriors', names(df), value=TRUE), 'counts')))
-    red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], score=red.df[,'mean.score'])
-    model$segments <- red.gr
-    seqlengths(model$segments) <- seqlengths(model$bins)[seqlevels(model$segments)]
+    red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2drop=c('width', 'posterior.modified', grep('posteriors', names(df), value=TRUE), 'counts')))
+    segments <- methods::as(red.df, 'GRanges')
+    model$peaks <- segments[segments$state == 'modified']
+    model$peaks$state <- NULL
+    seqlengths(model$peaks) <- seqlengths(model$bins)[seqlevels(model$peaks)]
     stopTimedMessage(ptm)
 
     ## Return model
