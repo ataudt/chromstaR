@@ -144,12 +144,22 @@ combineMultivariates <- function(hmms, mode) {
             stopTimedMessage(ptm)
         }
         ptm <- startTimedMessage("Concatenating HMMs ...")
-        counts <- do.call(cbind, counts)
-        posteriors <- do.call(cbind, posteriors)
-        peakScores <- do.call(cbind, peakScores)
+        # Slightly more complicated selection procedure for conditions in case one mark is missing
+        conds.help <- lapply(infos, function(x) { unique(x$condition) })
+        conditions <- conds.help[[which.max(sapply(conds.help, length))]]
         infos <- do.call(rbind, infos)
-        conditions <- unique(infos$condition)
+        infos$condition <- factor(infos$condition, levels=conditions)
+        infos <- infos[order(infos$condition, infos$mark, infos$replicate),]
+        infos$condition <- as.character(infos$condition)
+        # Reorder everything according to conditions
+        counts <- do.call(cbind, counts)
+        counts <- counts[,infos$ID]
+        posteriors <- do.call(cbind, posteriors)
+        posteriors <- posteriors[,infos$ID]
+        peakScores <- do.call(cbind, peakScores)
+        peakScores <- peakScores[,infos$ID]
         binstates <- do.call(cbind, binstates)
+        binstates <- binstates[,infos$ID]
         states <- factor(bin2dec(binstates))
         names(states) <- NULL
         stopTimedMessage(ptm)
