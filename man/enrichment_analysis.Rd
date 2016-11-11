@@ -23,7 +23,7 @@ plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
 
 \item{annotations}{A \code{list()} with \code{\link{GRanges}} objects containing coordinates of multiple annotations The names of the list entries will be used to name the return values.}
 
-\item{what}{One of \code{c('combinations','peaks','counts')} specifying which statistic to calculate.}
+\item{what}{One of \code{c('combinations','peaks','counts','transitions')} specifying which statistic to calculate.}
 
 \item{combinations}{A vector with combinations for which the enrichment will be calculated. If \code{NULL} all combinations will be considered.}
 
@@ -103,6 +103,7 @@ print(genes)
 # Fold enrichment with different biotypes, showing that protein coding genes are
 # enriched with (bivalent) promoter combinations [H3K4me3] and [H3K4me3+H3K27me3],
 # while rRNA is enriched with the empty [] and repressive combinations [H3K27me3].
+   tss <- resize(genes, width = 3, fix = 'start')
    biotypes <- split(tss, tss$biotype)
    plotFoldEnrichHeatmap(model, annotations=biotypes) + coord_flip()
 

@@ -140,6 +140,13 @@ transitionFrequencies <- function(multi.hmms=NULL, combined.hmm=NULL, zero.state
     # Cumulative frequencies
     freqtrans$cumulative.frequency <- cumsum(freqtrans$frequency)
     stopTimedMessage(ptm)
+    
+    ### Number of domains ###
+    ptm <- startTimedMessage("Number of domains ...")
+    rle.gentrans <- rle(as.character(gentrans))
+    ndomains <- table(rle.gentrans$values)
+    freqtrans$domains <- ndomains[freqtrans$transition]
+    stopTimedMessage(ptm)
 
     ### Assigning groups for frequency table ###
     ptm <- startTimedMessage("Assigning groups ...")
@@ -156,6 +163,9 @@ transitionFrequencies <- function(multi.hmms=NULL, combined.hmm=NULL, zero.state
 
     ## Remove unneeded column
     freqtrans$transition <- NULL
+    
+    ## Reorder columns
+    freqtrans <- freqtrans[, c(grep('combination', names(freqtrans), value=TRUE), 'domains', 'frequency', 'cumulative.frequency', 'group')]
     
     ## Return value ##
     return(list(table=freqtrans, per.bin=gentrans))
