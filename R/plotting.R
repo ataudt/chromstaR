@@ -54,7 +54,7 @@ plotHistograms <- function(model, ...) {
 
     model <- suppressMessages( loadHmmsFromFiles(model, check.class=class.multivariate.hmm)[[1]] )
     ## Make fake uni.hmm and plot
-    binmapping <- dec2bin(names(model$mapping))
+    binmapping <- dec2bin(levels(model$bins$state), colnames=model$info$ID)
     ggplts <- list()
     for (i1 in 1:length(model$info$ID)) {
         uni.hmm <- list()
