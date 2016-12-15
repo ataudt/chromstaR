@@ -133,7 +133,7 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
     p <- prepareMultivariate(hmms, use.states=use.states, max.states=max.states, chromosomes=chromosomes)
 
     if (is.null(chromosomes)) {
-        chromosomes <- seqlevels(p$bins)
+        chromosomes <- intersect(seqlevels(p$bins), unique(seqnames(p$bins)))
     }
 
     ## Run multivariate per chromosome
@@ -507,7 +507,8 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
         }
         temp <- tryCatch({
             if (nrow(z.temp) > 100) {
-                correlationMatrix[,,istate] <- cor(z.temp)
+                correlationMatrix[,,istate] <- suppressWarnings( cor(z.temp) )
+                correlationMatrix[,,istate][is.na(correlationMatrix[,,istate])] <- 0
                 determinant[istate] <- det( correlationMatrix[,,istate] )
                 correlationMatrixInverse[,,istate] <- chol2inv(chol(correlationMatrix[,,istate]))
             } else {
@@ -516,12 +517,10 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
                 correlationMatrixInverse[,,istate] <- diag(nummod) # solve(diag(x)) == diag(x)
             }
             0
-        }, warning = function(war) {
-            1
         }, error = function(err) {
-            1
+            2
         })
-        if (temp!=0) {
+        if (temp==2) {
             correlationMatrix[,,istate] <- diag(nummod)
             determinant[istate] <- 1
             correlationMatrixInverse[,,istate] <- diag(nummod)
@@ -572,3 +571,13 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
     return(out)
 }
 
+
+### Get real transition probabilities ###
+transProbs <- function(model) {
+    bins <- model$bins
+    df <- data.frame(from = bins$combination[-length(bins)], to = bins$combination[-1])
+    t <- table(df)
+    t <- t[rownames(model$transitionProbs), colnames(model$transitionProbs)]
+    t <- sweep(t, MARGIN = 1, STATS = rowSums(t), FUN = '/')
+    return(t)
+}
