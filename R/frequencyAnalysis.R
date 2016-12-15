@@ -19,11 +19,15 @@ genomicFrequencies <- function(multi.hmm, combinations=NULL, per.mark=FALSE) {
 
     multi.hmm <- loadHmmsFromFiles(multi.hmm, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     bins <- multi.hmm$bins
+    segs <- multi.hmm$segments
+    peaks <- multi.hmm$peaks
     
     if (per.mark) {
-        binstates <- dec2bin(bins$state, colnames=multi.hmm$info$ID)
-        t <- colSums(binstates) / nrow(binstates)
-        return(t)
+        # binstates <- dec2bin(bins$state, colnames=multi.hmm$info$ID)
+        # t <- colSums(binstates) / nrow(binstates)
+        t <- sapply(peaks, function(peak) { sum(as.numeric(width(peak))) }) / sum(as.numeric(width(bins)))
+        s <- sapply(peaks, length)
+        return(list(frequency=t, domains=s))
     }
       
     if (class(multi.hmm)==class.multivariate.hmm) {
@@ -35,7 +39,9 @@ genomicFrequencies <- function(multi.hmm, combinations=NULL, per.mark=FALSE) {
         }
         t <- table(bins$combination) / length(bins)
         t <- t[names(t) %in% comb.levels]
-        return(t)
+        s <- table(segs$combination)
+        s <- s[names(s) %in% comb.levels]
+        return(list(frequency=t, domains=s))
       
     } else if (class(multi.hmm)==class.combined.multivariate.hmm) {
       
@@ -46,7 +52,9 @@ genomicFrequencies <- function(multi.hmm, combinations=NULL, per.mark=FALSE) {
         }
         t <- sapply(mcols(bins)[grepl('combination', names(mcols(bins)))], function(x) { table(x) / length(bins) })
         t <- t[rownames(t) %in% comb.levels,]
-        return(t)
+        s <- sapply(mcols(segs)[grepl('combination', names(mcols(segs)))], table)
+        s <- s[rownames(s) %in% comb.levels,]
+        return(list(frequency=t, domains=s))
       
     }
 }

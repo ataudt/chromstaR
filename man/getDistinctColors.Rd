@@ -5,14 +5,17 @@
 \title{Get distinct colors}
 \usage{
 getDistinctColors(n, start.color = "blue4", exclude.colors = c("white",
-  "black", "gray", "grey"), exclude.rgb.above = 210)
+  "black", "gray", "grey", "\\\\<yellow\\\\>", "yellow1", "lemonchiffon"),
+  exclude.brightness.above = 1, exclude.rgb.above = 210)
 }
 \arguments{
-\item{n}{Number of colors to select.}
+\item{n}{Number of colors to select. If \code{n} is a character vector, \code{length(n)} will be taken as the number of colors and the colors will be named by \code{n}.}
 
 \item{start.color}{Color to start the selection process from.}
 
 \item{exclude.colors}{Character vector with colors that should not be used.}
+
+\item{exclude.brightness.above}{Exclude colors where the 'brightness' value in HSV space is above. This is useful to obtain a matt palette.}
 
 \item{exclude.rgb.above}{Exclude colors where all RGB values are above. This is useful to exclude whitish colors.}
 }

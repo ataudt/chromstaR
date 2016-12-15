@@ -888,6 +888,10 @@ exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination
         gr$score <- 0
     } else {
         gr$score <- mcols(gr)[,scorecol]
+				# Check if scorecolumn follows the UCSC convention
+				if (min(gr$score) < 0 | max(gr$score) > 1000 | all(gr$score<=1.2) | !is.integer(gr$score)) {
+						warning("Column '", scorecol, "' should contain integer values between 0 and 1000 for compatibility with the UCSC convention.")
+				}
     }
     regions <- as.data.frame(gr)[c('chromosome','start','end','score','strand')]
     regions$strand <- sub("\\*", ".", regions$strand)
@@ -897,10 +901,6 @@ exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination
         regions$name <- mcols(gr)[,namecol]
     }
     regions <- regions[c('chromosome','start','end','name','score','strand')]
-    # Make score integer
-    if (min(regions$score) < 0 | max(regions$score) > 1000 | all(regions$score<=1.2) | !is.integer(regions$score)) {
-        warning("Column '", scorecol, "' should contain integer values between 0 and 1000 for compatibility with the UCSC convention.")
-    }
     df <- cbind(regions, thickStart=regions$start, thickEnd=regions$end)
     
     if (!is.null(colorcol)) {

@@ -56,7 +56,7 @@ plotHistograms <- function(model, ...) {
     ## Make fake uni.hmm and plot
     binmapping <- dec2bin(levels(model$bins$state), colnames=model$info$ID)
     ggplts <- list()
-    for (i1 in 1:length(model$info$ID)) {
+    for (i1 in 1:ncol(model$bins$counts)) {
         uni.hmm <- list()
         uni.hmm$info <- model$info[i1,]
         uni.hmm$bins <- model$bins

@@ -12,6 +12,8 @@ simulateUnivariate(bins, transition, emission, fragLen = 50)
 \item{transition}{A matrix with transition probabilities.}
 
 \item{emission}{A data.frame with emission distributions (see \code{\link{uniHMM}} entry 'distributions').}
+
+\item{fragLen}{Length of the simulated read fragments.}
 }
 \value{
 A \code{list} with entries $bins containing the simulated states and read count, $reads with simulated read coordinates and $transition and $emission.

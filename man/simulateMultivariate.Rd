@@ -18,12 +18,14 @@ simulateMultivariate(bins, transition, emissions, weights, correlationMatrices,
 
 \item{IDs}{A character vector with IDs.}
 
+\item{fragLen}{Length of the simulated read fragments.}
+
 \item{emission}{A list() with data.frames with emission distributions (see \code{\link{uniHMM}} entry 'distributions').}
 
 \item{A}{vector with combinatorial states.}
 }
 \value{
-A \code{list} with entries $bins containing the simulated states and read count, $reads with simulated read coordinates.
+A \code{list()} with entries $bins containing the simulated states and read count, $reads with simulated read coordinates.
 }
 \description{
 Simulate known states, read counts and read coordinates using a multivariate Hidden Markov Model.

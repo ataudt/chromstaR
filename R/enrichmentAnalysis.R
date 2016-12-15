@@ -5,6 +5,7 @@
 #' @name enrichment_analysis
 #' @param combinations A vector with combinations for which the enrichment will be calculated. If \code{NULL} all combinations will be considered.
 #' @param marks A vector with marks for which the enrichment is plotted. If \code{NULL} all marks will be considered.
+#' @param logscale Set to \code{TRUE} to plot fold enrichment on log-scale. Ignored if \code{statistic = 'fraction'}.
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot or a list() with \code{\link[ggplot2:ggplot]{ggplot}} objects if several plots are returned. For \code{plotFoldEnrichHeatmap} a named array with fold enrichments if \code{plot=FALSE}.
 #' @author Aaron Taudt
 #' @seealso \code{\link{plotting}}
@@ -69,7 +70,7 @@ NULL
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom reshape2 melt
 #' @export
-plotFoldEnrichHeatmap <- function(hmm, annotations, what="combinations", combinations=NULL, marks=NULL, plot=TRUE) {
+plotFoldEnrichHeatmap <- function(hmm, annotations, what="combinations", combinations=NULL, marks=NULL, plot=TRUE, logscale=TRUE) {
     
     hmm <- loadHmmsFromFiles(hmm, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     ## Variables
@@ -105,6 +106,7 @@ plotFoldEnrichHeatmap <- function(hmm, annotations, what="combinations", combina
     ggplts <- list()
     folds <- list()
     maxfolds <- list()
+    minfolds <- list()
     
     if (what == 'peaks') {
         binstates <- dec2bin(bins$state, colnames=hmm$info$ID)
@@ -132,7 +134,12 @@ plotFoldEnrichHeatmap <- function(hmm, annotations, what="combinations", combina
         }
         if (plot) {
             df <- reshape2::melt(fold, value.name='foldEnrichment')
-            maxfolds[[1]] <- max(df$foldEnrichment, na.rm=TRUE)
+            if (logscale) {
+                df$foldEnrichment <- log(df$foldEnrichment)
+            }
+            foldsnoinf <- setdiff(df$foldEnrichment, c(Inf, -Inf))
+            maxfolds[[1]] <- max(foldsnoinf, na.rm=TRUE)
+            minfolds[[1]] <- min(foldsnoinf, na.rm=TRUE)
             ggplt <- ggplot(df) + geom_tile(aes_string(x='combination', y='annotation', fill='foldEnrichment'))
             ggplt <- ggplt + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=0.5))
             ggplts[[1]] <- ggplt
@@ -196,7 +203,12 @@ plotFoldEnrichHeatmap <- function(hmm, annotations, what="combinations", combina
           
             if (plot) {
                 df <- reshape2::melt(fold, value.name='foldEnrichment')
-                maxfolds[[condition]] <- max(df$foldEnrichment, na.rm=TRUE)
+                if (logscale) {
+                    df$foldEnrichment <- log(df$foldEnrichment)
+                }
+                foldsnoinf <- setdiff(df$foldEnrichment, c(Inf, -Inf))
+                maxfolds[[condition]] <- max(foldsnoinf, na.rm=TRUE)
+                minfolds[[condition]] <- min(foldsnoinf, na.rm=TRUE)
                 if (what == 'combinations') {
                     ggplt <- ggplot(df) + geom_tile(aes_string(x='combination', y='annotation', fill='foldEnrichment'))
                 } else if (what == 'peaks') {
@@ -210,8 +222,14 @@ plotFoldEnrichHeatmap <- function(hmm, annotations, what="combinations", combina
         }
     }
     if (plot) {
-        maxfolds <- unlist(maxfolds)
-        ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_fill_gradientn(colors=grDevices::colorRampPalette(c("blue","white","red"))(20), values=c(seq(0,1,length.out=10), seq(1,max(maxfolds, na.rm=TRUE),length.out=10)), rescaler=function(x,...) {x}, oob=identity, limits=c(0,max(maxfolds, na.rm=TRUE))) })
+        maxfold <- max(unlist(maxfolds), na.rm=TRUE)
+        minfold <- min(unlist(minfolds), na.rm=TRUE)
+        limits <- max(abs(maxfold), abs(minfold))
+        if (logscale) {
+            ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_fill_gradientn(name='log(observed/expected)', colors=grDevices::colorRampPalette(c("blue","white","red"))(20), values=c(seq(-limits,0,length.out=10), seq(0,limits,length.out=10)), rescaler=function(x,...) {x}, oob=identity, limits=c(-limits, limits)) })
+        } else {
+            ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_fill_gradientn(name='observed/expected', colors=grDevices::colorRampPalette(c("blue","white","red"))(20), values=c(seq(0,1,length.out=10), seq(1,maxfold,length.out=10)), rescaler=function(x,...) {x}, oob=identity, limits=c(0,maxfold)) })
+        }
     }
 
     if (class(hmm) == class.multivariate.hmm | what == 'transitions') {
@@ -359,7 +377,7 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
 #' @inheritParams enrichmentAtAnnotation
 #' @importFrom reshape2 melt
 #' @export
-plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c("start","inside","end"), num.intervals=20, what='combinations', combinations=NULL, marks=NULL, statistic='fold') {
+plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c("start","inside","end"), num.intervals=20, what='combinations', combinations=NULL, marks=NULL, statistic='fold', logscale=TRUE) {
 
     ## Check user input
     if ((!what %in% c('combinations','peaks','counts')) | length(what) > 1) {
@@ -396,6 +414,8 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
     }
     ggplts <- list()
     maxfolds <- list()
+    minfolds <- list()
+    maxcols <- list()
     for (condition in conditions) {
         if (what == 'combinations') {
             ### Get fold enrichment
@@ -434,29 +454,50 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
                 df <- df[df$condition == condition, ]
             }
         }
+        if (logscale & !(statistic=='fraction')) {
+            df$value <- log(df$value)
+        }
 
         ### Plot
         if (what == 'combinations') {
             ggplt <- ggplot(df) + geom_line(aes_string(x='position', y='value', col='combination'), size=2)
             if (statistic == 'fold') {
-                ggplt <- ggplt + ylab('fold enrichment')
-                ggplt <- ggplt + geom_hline(yintercept=1, lty=2)
+                if (logscale) {
+                    ggplt <- ggplt + ylab('log(observed/expected)')
+                    ggplt <- ggplt + geom_hline(yintercept=0, lty=2)
+                } else {
+                    ggplt <- ggplt + ylab('observed/expected')
+                    ggplt <- ggplt + geom_hline(yintercept=1, lty=2)
+                }
             } else if (statistic == 'fraction') {
                 ggplt <- ggplt + ylab('fraction')
             }
-            ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$combination))))
+            # ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$combination))))
+            maxcols[[condition]] <- length(unique(df$combination))
         } else if (what == 'peaks') {
             ggplt <- ggplot(df) + geom_line(aes_string(x='position', y='value', col='mark'), size=2)
             if (statistic == 'fold') {
-                ggplt <- ggplt + ylab('fold enrichment')
-                ggplt <- ggplt + geom_hline(yintercept=1, lty=2)
+                if (logscale) {
+                    ggplt <- ggplt + ylab('log(observed/expected)')
+                    ggplt <- ggplt + geom_hline(yintercept=0, lty=2)
+                } else {
+                    ggplt <- ggplt + ylab('observed/expected')
+                    ggplt <- ggplt + geom_hline(yintercept=1, lty=2)
+                }
             } else if (statistic == 'fraction') {
                 ggplt <- ggplt + ylab('fraction')
             }
-            ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$mark))))
+            # ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$mark))))
+            maxcols[[condition]] <- length(unique(df$mark))
         } else if (what == 'counts') {
-            ggplt <- ggplot(df) + geom_line(aes_string(x='position', y='value', col='track'), size=2) + ylab('RPKM')
-            ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$track))))
+            ggplt <- ggplot(df) + geom_line(aes_string(x='position', y='value', col='track'), size=2)
+            if (logscale) {
+                ggplt <- ggplt + ylab('log(RPKM)')
+            } else {
+                ggplt <- ggplt + ylab('RPKM')
+            }
+            # ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$track))))
+            maxcols[[condition]] <- length(unique(df$track))
         }
         ggplt <- ggplt + theme_bw() + xlab('distance from annotation in [bp]')
         if (length(region)>=2 & 'inside' %in% region) {
@@ -465,14 +506,18 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
             ggplt <- ggplt + scale_x_continuous(breaks=breaks, labels=labels)
         }
         maxfolds[[condition]] <- max(df$value, na.rm=TRUE)
+        minfolds[[condition]] <- min(df$value, na.rm=TRUE)
         ggplts[[condition]] <- ggplt
     }
-    maxfolds <- unlist(maxfolds)
+    maxfold <- max(unlist(maxfolds), na.rm=TRUE)
+    minfold <- min(unlist(minfolds), na.rm=TRUE)
+    maxcol <- max(unlist(maxcols), na.rm=TRUE)
     if (statistic == 'fraction' & what %in% c('combinations','peaks')) {
         ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_y_continuous(limits=c(0,1)) })
     } else {
-        ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_y_continuous(limits=c(0,max(maxfolds, na.rm=TRUE)*1.1)) })
+        ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_y_continuous(limits=c(minfold*(1-sign(minfold)*0.1),maxfold*(1+sign(maxfold)*0.1))) })
     }
+    ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_color_manual(values=getDistinctColors(maxcol)) }) # Add color here like this because of weird bug
     if (class(hmm) == class.multivariate.hmm) {
         return(ggplts[[1]])
     } else if (class(hmm) == class.combined.multivariate.hmm) {

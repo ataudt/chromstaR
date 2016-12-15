@@ -5,7 +5,7 @@
 #' @param bins A \code{\link[GenomicRanges]{GRanges}} object for which reads will be simulated.
 #' @param transition A matrix with transition probabilities.
 #' @param emission A data.frame with emission distributions (see \code{\link{uniHMM}} entry 'distributions').
-#' @inheritParams simulateReads
+#' @inheritParams simulateReadsFromCounts
 #' @return A \code{list} with entries $bins containing the simulated states and read count, $reads with simulated read coordinates and $transition and $emission.
 #' @importFrom stats runif rnbinom aggregate
 simulateUnivariate <- function(bins, transition, emission, fragLen=50) {
@@ -118,8 +118,8 @@ simulateReadsFromCounts <- function(bins, fragLen=50) {
 #' @param correlationMatrices A list with correlation matrices.
 #' @param A vector with combinatorial states.
 #' @param IDs A character vector with IDs.
-#' @inheritParams simulateReads
-#' @return A \code{list} with entries $bins containing the simulated states and read count, $reads with simulated read coordinates.
+#' @inheritParams simulateReadsFromCounts
+#' @return A \code{list()} with entries $bins containing the simulated states and read count, $reads with simulated read coordinates.
 #' @importFrom mvtnorm rmvnorm
 # #' @examples 
 # #'#'### Get an example multiHMM ###
@@ -148,7 +148,7 @@ simulateMultivariate = function(bins, transition, emissions, weights, correlatio
     cumtransition <- cbind(rep(-1,numstates), t(apply(transition, 1, cumsum)))
     # Generate the state vector by going through each state
     ptm <- startTimedMessage("Generating states from transition matrix...")
-    states <- matrix(rep(NA,numstates*numbins), ncol=numstates)
+    states <- matrix(NA, ncol=numstates, nrow=numbins)
     for (irow in 1:numstates) {
         states[,irow] <- findInterval(rsample, cumtransition[irow,], rightmost.closed=TRUE)
     }

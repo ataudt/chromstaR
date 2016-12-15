@@ -8,7 +8,7 @@
 \title{Enrichment analysis}
 \usage{
 plotFoldEnrichHeatmap(hmm, annotations, what = "combinations",
-  combinations = NULL, marks = NULL, plot = TRUE)
+  combinations = NULL, marks = NULL, plot = TRUE, logscale = TRUE)
 
 plotEnrichCountHeatmap(hmm, annotation, bp.around.annotation = 10000,
   max.rows = 1000)
@@ -16,7 +16,7 @@ plotEnrichCountHeatmap(hmm, annotation, bp.around.annotation = 10000,
 plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
   region = c("start", "inside", "end"), num.intervals = 20,
   what = "combinations", combinations = NULL, marks = NULL,
-  statistic = "fold")
+  statistic = "fold", logscale = TRUE)
 }
 \arguments{
 \item{hmm}{A \code{\link{combinedMultiHMM}} or \code{\link{multiHMM}} object or a file that contains such an object.}
@@ -30,6 +30,8 @@ plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
 \item{marks}{A vector with marks for which the enrichment is plotted. If \code{NULL} all marks will be considered.}
 
 \item{plot}{A logical indicating whether the plot or an array with the fold enrichment values is returned.}
+
+\item{logscale}{Set to \code{TRUE} to plot fold enrichment on log-scale. Ignored if \code{statistic = 'fraction'}.}
 
 \item{annotation}{A \code{\link{GRanges}} object with the annotation of interest.}
 
