@@ -78,6 +78,11 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
         ### Make return object ###
             result <- list()
             result$info <- hmm$info
+            if (is.null(result$info)) {
+                n <- 1
+                result$info <- data.frame(file=rep(NA, n), mark=1:n, condition=1:n, replicate=1, pairedEndReads=rep(NA, n), controlFiles=rep(NA, n))
+                result$info$ID <- paste0(result$info$mark, '-', result$info$condition, '-rep', result$info$replicate)
+            }
         ## Bin coordinates, posteriors and states
             result$bins <- hmm$bins
             result$bins$score <- NULL
@@ -396,6 +401,11 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
     }
     info <- do.call(rbind, info)
     rownames(info) <- NULL
+    if (is.null(info)) {
+        n <- nummod
+        info <- data.frame(file=rep(NA, n), mark=1:n, condition=1:n, replicate=rep(1, n), pairedEndReads=rep(NA, n), controlFiles=rep(NA, n))
+        info$ID <- paste0(info$mark, '-', info$condition, '-rep', info$replicate)
+    }
     bins$counts <- counts
     colnames(bins$counts) <- info$ID
     maxcounts <- max(bins$counts)

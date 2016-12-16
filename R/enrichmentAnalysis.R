@@ -315,7 +315,7 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
     rownames(ext.index) <- 1:nrow(ext.index)
     stopTimedMessage(ptm)
     
-    ## Go through combinations and then tracks to get the read counts
+    ## Go through combinations and then IDs to get the read counts
     ptm <- startTimedMessage("Getting read counts")
     counts <- list()
     combinations <- names(sort(table(bins$combination[index]), decreasing = TRUE))
@@ -326,8 +326,8 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
         if (is.null(dim(ext.index.combination))) {
             ext.index.combination <- array(ext.index.combination, dim=c(1,dim(ext.index)[[2]]), dimnames=list(anno=rownames(ext.index)[index.combination], position=dimnames(ext.index)[[2]]))
         }
-        for (ntrack in colnames(bins$counts)) {
-            counts[[combination]][[ntrack]] <- array(bins$counts[ext.index.combination,ntrack], dim=dim(ext.index.combination), dimnames=dimnames(ext.index.combination))
+        for (nID in colnames(bins$counts)) {
+            counts[[combination]][[nID]] <- array(bins$counts[ext.index.combination,nID], dim=dim(ext.index.combination), dimnames=dimnames(ext.index.combination))
         }
     }
     stopTimedMessage(ptm)
@@ -349,16 +349,16 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
     comb2keep <- names(num.comb)[num.comb/sum(num.comb) > 0.005]
     counts <- counts[comb2keep]
     df <- reshape2::melt(counts)
-    names(df) <- c('id','position','RPKM','track','combination')
+    names(df) <- c('id','position','RPKM','ID','combination')
     df$id <- factor(df$id, levels=rev(unique(df$id)))
     df$combination <- factor(df$combination, levels=unique(df$combination))
-    df$track <- factor(df$track, levels=colnames(bins$counts))
+    df$ID <- factor(df$ID, levels=hmm$info$ID)
     
     ## Plot as heatmap
     ggplt <- ggplot(df) + geom_tile(aes_string(x='position', y='id', color='combination'))
     ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$combination))))
     ggplt <- ggplt + geom_tile(aes_string(x='position', y='id', fill='RPKM'), alpha=0.6)
-    ggplt <- ggplt + facet_wrap( ~ track, nrow=1) + custom_theme
+    ggplt <- ggplt + facet_wrap( ~ ID, nrow=1) + custom_theme
     ggplt <- ggplt + xlab('distance from annotation in [bp]') + ylab('')
     ggplt <- ggplt + scale_fill_continuous(trans='log1p', low='white', high='black')
     # Insert horizontal lines
@@ -388,13 +388,19 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
     }
   
     ## Variables
-    hmm <- loadHmmsFromFiles(hmm, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
-    hmm$bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
+    hmm <- loadHmmsFromFiles(hmm, check.class=c(class.univariate.hmm, class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     bins <- hmm$bins
-    if (class(hmm) == class.combined.multivariate.hmm) {
+    if (class(hmm) == class.univariate.hmm) {
+        bins$counts <- rpkm.vector(hmm$bins$counts, binsize=mean(width(hmm$bins)))
+        mcols(bins)['combination.'] <- bins$state
+        bins$state <- c('zero-inflation' = 0, 'unmodified' = 0, 'modified' = 1)[bins$state]
+        hmm$info <- data.frame(file=NA, mark=1, condition=1, replicate=1, pairedEndReads=NA, controlFiles=NA, ID='1-1-rep1')
+    } else if (class(hmm) == class.combined.multivariate.hmm) {
+        bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
     } else if (class(hmm) == class.multivariate.hmm) {
+        bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
         # Rename 'combination' to 'combination.' for coherence with combinedMultiHMM
-        names(mcols(bins))[grep('combination', names(mcols(bins)))] <- paste0('combination.', unique(hmm$info$condition))
+        names(mcols(bins))[grep('combination', names(mcols(bins)))] <- 'combination.'
     }
     conditions <- sub('combination.', '', grep('combination', names(mcols(bins)), value=TRUE))
     if (is.null(combinations)) {
@@ -410,7 +416,7 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
 
     if (what %in% c('peaks','counts')) {
         ### Get fold enrichment
-        enrich <- enrichmentAtAnnotation(hmm$bins, hmm$info, annotation, bp.around.annotation=bp.around.annotation, region=region, what=what, num.intervals=num.intervals, statistic=statistic)
+        enrich <- enrichmentAtAnnotation(bins, hmm$info, annotation, bp.around.annotation=bp.around.annotation, region=region, what=what, num.intervals=num.intervals, statistic=statistic)
     }
     ggplts <- list()
     maxfolds <- list()
@@ -446,10 +452,11 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
         df$position[df$L1 == 'inside'] <- df$position[df$L1 == 'inside'] * bp.around.annotation
         if (what == 'combinations') {
             df <- df[df$combination %in% comb.levels,]
+            df$combination <- factor(df$combination, levels=comb.levels)
         } else if (what %in% c('peaks','counts')) {
-            df$mark <- sub("-.*", "", df$track)
+            df$mark <- sub("-.*", "", df$ID)
             df <- df[df$mark %in% mark.levels, ]
-            df$condition <- sapply(strsplit(as.character(df$track), '-'), '[[', 2)
+            df$condition <- sapply(strsplit(as.character(df$ID), '-'), '[[', 2)
             if (condition != "") {
                 df <- df[df$condition == condition, ]
             }
@@ -490,14 +497,14 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
             # ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$mark))))
             maxcols[[condition]] <- length(unique(df$mark))
         } else if (what == 'counts') {
-            ggplt <- ggplot(df) + geom_line(aes_string(x='position', y='value', col='track'), size=2)
+            ggplt <- ggplot(df) + geom_line(aes_string(x='position', y='value', col='ID'), size=2)
             if (logscale) {
                 ggplt <- ggplt + ylab('log(RPKM)')
             } else {
                 ggplt <- ggplt + ylab('RPKM')
             }
-            # ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$track))))
-            maxcols[[condition]] <- length(unique(df$track))
+            # ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$ID))))
+            maxcols[[condition]] <- length(unique(df$ID))
         }
         ggplt <- ggplt + theme_bw() + xlab('distance from annotation in [bp]')
         if (length(region)>=2 & 'inside' %in% region) {
@@ -505,8 +512,9 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
             labels <- c(-bp.around.annotation, -bp.around.annotation/2, '0%', '50%', '100%', bp.around.annotation/2, bp.around.annotation)
             ggplt <- ggplt + scale_x_continuous(breaks=breaks, labels=labels)
         }
-        maxfolds[[condition]] <- max(df$value, na.rm=TRUE)
-        minfolds[[condition]] <- min(df$value, na.rm=TRUE)
+        foldsnoinf <- setdiff(df$value, c(Inf, -Inf))
+        maxfolds[[condition]] <- max(foldsnoinf, na.rm=TRUE)
+        minfolds[[condition]] <- min(foldsnoinf, na.rm=TRUE)
         ggplts[[condition]] <- ggplt
     }
     maxfold <- max(unlist(maxfolds), na.rm=TRUE)
@@ -518,7 +526,9 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
         ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_y_continuous(limits=c(minfold*(1-sign(minfold)*0.1),maxfold*(1+sign(maxfold)*0.1))) })
     }
     ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_color_manual(values=getDistinctColors(maxcol)) }) # Add color here like this because of weird bug
-    if (class(hmm) == class.multivariate.hmm) {
+    if (class(hmm) == class.univariate.hmm) {
+        return(ggplts[[1]])
+    } else if (class(hmm) == class.multivariate.hmm) {
         return(ggplts[[1]])
     } else if (class(hmm) == class.combined.multivariate.hmm) {
         return(ggplts)
@@ -564,7 +574,11 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
     if ('peaks' %in% what) {
         binstates <- dec2bin(bins$state, colnames=info$ID)
         # Remove replicates
-        binstates <- binstates[ ,info.dedup$ID]
+        if (ncol(binstates) > 1) {
+            binstates <- binstates[ ,info.dedup$ID]
+        } else {
+            binstates <- matrix(binstates[ ,info.dedup$ID], ncol=1)
+        }
         colsums.binstates <- colSums(binstates)
     }
     if ('counts' %in% what) {
@@ -579,9 +593,9 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
         widths.annotation <- width(annotation) - 1
         annotation.1bp <- resize(annotation, 1, fix='start')
         # Initialize arrays
-        if ('peaks' %in% what) binstates.inside <- array(dim=c(num.intervals+1, length(info.dedup$ID)), dimnames=list(interval=intervals, track=info.dedup$ID))
+        if ('peaks' %in% what) binstates.inside <- array(dim=c(num.intervals+1, length(info.dedup$ID)), dimnames=list(interval=intervals, ID=info.dedup$ID))
         if ('combinations' %in% what) combinations.inside <- array(dim=c(num.intervals+1, length(levels(bins$combination))), dimnames=list(interval=intervals, combination=levels(bins$combination)))
-        if ('counts' %in% what) counts.inside <- array(dim=c(num.intervals+1, length(info$ID)), dimnames=list(interval=intervals, track=info$ID))
+        if ('counts' %in% what) counts.inside <- array(dim=c(num.intervals+1, length(info$ID)), dimnames=list(interval=intervals, ID=info$ID))
 
         for (interval in intervals) {
             shift <- widths.annotation * interval * c(1,-1,1)[as.integer(strand(annotation))]
@@ -595,10 +609,15 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
             index <- c(index.inside.plus, index.inside.minus)
             index <- index[index>0 & index<=length(bins)] # index could cross chromosome boundaries, but we risk it
             if ('peaks' %in% what) {
+                if (ncol(binstates) > 1) {
+                    binstates.index <- binstates[index,]
+                } else {
+                    binstates.index <- matrix(binstates[index,], ncol=1)
+                }
                 if (statistic == 'fraction') {
-                    binstates.inside[as.character(interval),] <- colSums(binstates[index,]) / length(index) # or colMeans
+                    binstates.inside[as.character(interval),] <- colSums(binstates.index) / length(index) # or colMeans
                 } else if (statistic == 'fold') {
-                    binstates.inside[as.character(interval),] <- colSums(binstates[index,]) / length(index) / colsums.binstates * length(bins)
+                    binstates.inside[as.character(interval),] <- colSums(binstates.index) / length(index) / colsums.binstates * length(bins)
                 }
             }
             if ('combinations' %in% what) {
@@ -635,17 +654,22 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
         index.start.plus <- index.start.plus[!is.na(index.start.plus)]
         index.start.minus <- index.start.minus[!is.na(index.start.minus)]
         # Occurrences at every bin position relative to feature
-        if ('peaks' %in% what) binstates.start <- array(dim=c(length(-lag:lag), length(info.dedup$ID)), dimnames=list(lag=-lag:lag, track=info.dedup$ID))
+        if ('peaks' %in% what) binstates.start <- array(dim=c(length(-lag:lag), length(info.dedup$ID)), dimnames=list(lag=-lag:lag, ID=info.dedup$ID))
         if ('combinations' %in% what) combinations.start <- array(dim=c(length(-lag:lag), length(levels(bins$combination))), dimnames=list(lag=-lag:lag, combination=levels(bins$combination)))
-        if ('counts' %in% what) counts.start <- array(dim=c(length(-lag:lag), length(info$ID)), dimnames=list(lag=-lag:lag, track=info$ID))
+        if ('counts' %in% what) counts.start <- array(dim=c(length(-lag:lag), length(info$ID)), dimnames=list(lag=-lag:lag, ID=info$ID))
         for (ilag in -lag:lag) {
             index <- c(index.start.plus+ilag, index.start.minus-ilag)
             index <- index[index>0 & index<=length(bins)]
             if ('peaks' %in% what) {
+                if (ncol(binstates) > 1) {
+                    binstates.index <- binstates[index,]
+                } else {
+                    binstates.index <- matrix(binstates[index,], ncol=1)
+                }
                 if (statistic == 'fraction') {
-                    binstates.start[as.character(ilag),] <- colSums(binstates[index,]) / length(index)
+                    binstates.start[as.character(ilag),] <- colSums(binstates.index) / length(index)
                 } else if (statistic == 'fold') {
-                    binstates.start[as.character(ilag),] <- colSums(binstates[index,]) / length(index) / colsums.binstates * length(bins)
+                    binstates.start[as.character(ilag),] <- colSums(binstates.index) / length(index) / colsums.binstates * length(bins)
                 }
             }
             if ('combinations' %in% what) {
@@ -685,17 +709,22 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
         index.end.plus <- index.end.plus[!is.na(index.end.plus)]
         index.end.minus <- index.end.minus[!is.na(index.end.minus)]
         # Occurrences at every bin position relative to feature
-        if ('peaks' %in% what) binstates.end <- array(dim=c(length(-lag:lag), length(info.dedup$ID)), dimnames=list(lag=-lag:lag, track=info.dedup$ID))
+        if ('peaks' %in% what) binstates.end <- array(dim=c(length(-lag:lag), length(info.dedup$ID)), dimnames=list(lag=-lag:lag, ID=info.dedup$ID))
         if ('combinations' %in% what) combinations.end <- array(dim=c(length(-lag:lag), length(levels(bins$combination))), dimnames=list(lag=-lag:lag, combination=levels(bins$combination)))
-        if ('counts' %in% what) counts.end <- array(dim=c(length(-lag:lag), length(info$ID)), dimnames=list(lag=-lag:lag, track=info$ID))
+        if ('counts' %in% what) counts.end <- array(dim=c(length(-lag:lag), length(info$ID)), dimnames=list(lag=-lag:lag, ID=info$ID))
         for (ilag in -lag:lag) {
             index <- c(index.end.plus+ilag, index.end.minus-ilag)
             index <- index[index>0 & index<=length(bins)]
             if ('peaks' %in% what) {
+                if (ncol(binstates) > 1) {
+                    binstates.index <- binstates[index,]
+                } else {
+                    binstates.index <- matrix(binstates[index,], ncol=1)
+                }
                 if (statistic == 'fraction') {
-                    binstates.end[as.character(ilag),] <- colSums(binstates[index,]) / length(index)
+                    binstates.end[as.character(ilag),] <- colSums(binstates.index) / length(index)
                 } else if (statistic == 'fold') {
-                    binstates.end[as.character(ilag),] <- colSums(binstates[index,]) / length(index) / colsums.binstates * length(bins)
+                    binstates.end[as.character(ilag),] <- colSums(binstates.index) / length(index) / colsums.binstates * length(bins)
                 }
             }
             if ('combinations' %in% what) {
