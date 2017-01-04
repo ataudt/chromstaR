@@ -371,3 +371,44 @@ plotBoxplot <- function(model) {
 }
 
 
+#' Plot a genome browser view
+#' 
+#' Plot a simple genome browser view. This is useful for scripted genome browser snapshots.
+#' 
+#' @param counts A \code{\link[GenomicRanges]{GRanges}} object with meta-data column 'counts'.
+#' @param peaklist A named list() of \code{\link[GenomicRanges]{GRanges}} objects containing peak coordinates.
+#' @param chr,start,end Chromosome, start and end coordinates for the plot.
+#' @param countcol A character giving the color for the counts.
+#' @param peakcols A character vector with colors for the peaks in \code{peaklist}.
+#' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
+plotGenomeBrowser <- function(counts, peaklist, chr, start, end, countcol='black', peakcols=getDistinctColors(length(peaklist))) {
+  
+    ## Select ranges to plot
+    ranges2plot <- reduce(counts[counts@seqnames == chr & start(counts) >= start & start(counts) <= end])
+    
+    ## Counts
+    counts <- subsetByOverlaps(counts, ranges2plot)
+    df.start <- data.frame(x=start(counts), counts=counts$counts)
+    # Plot rectancles for bins
+    # df.end <- data.frame(x=end(counts), counts=counts$counts)
+    # df <- rbind(df.start, df.end)
+    # df <- df[order(df$x),]
+    df <- data.frame(x=(start(counts)+end(counts))/2, counts=counts$counts) # plot triangles centered at middle of the bin
+    ggplt <- ggplot(df) + geom_area(aes_string(x='x', y='counts')) + theme(panel.grid = element_blank(), panel.background = element_blank(), axis.text.x = element_blank(), axis.title = element_blank(), axis.ticks.x = element_blank(), axis.line = element_blank())
+    
+    ## Peaks
+    for (i1 in 1:length(peaklist)) {
+        peaks <- subsetByOverlaps(peaklist[[i1]], ranges2plot)
+        df <- data.frame(start=start(peaks), end=end(peaks), ymin=-3*i1, ymax=-3*i1+2)
+        ggplt <- ggplt + geom_rect(data=df, mapping=aes_string(xmin='start', xmax='end', ymin='ymin', ymax='ymax'), col=peakcols[i1], fill=peakcols[i1])
+        
+        trackname <- names(peaklist)[i1]
+        df <- data.frame(x=start(counts)[1], y=-3*i1+1, label=trackname)
+        ggplt <- ggplt + geom_text(data=df, mapping=aes_string(x='x', y='y', label='label'), vjust=0.5, hjust=0.5, col=peakcols[i1])
+    }
+    # gt <- ggplot_gtable(ggplot_build(ggplt))
+    # gt$layout$clip[gt$layout$name == "panel"] <- "off"
+    # grid::grid.draw(gt)
+    
+    return(ggplt)
+}

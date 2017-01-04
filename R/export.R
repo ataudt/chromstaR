@@ -874,9 +874,9 @@ exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination
 
     # Write first line to file
     if (append) {
-        message('appending to file ',filename)
+        ptm <- startTimedMessage('Appending to file ',filename, ' ...')
     } else {
-        message('Writing to file ',filename)
+        ptm <- startTimedMessage('Writing to file ',filename, ' ...')
         cat("", file=filename.gz)
     }
     
@@ -901,9 +901,15 @@ exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination
         regions$name <- mcols(gr)[,namecol]
     }
     regions <- regions[c('chromosome','start','end','name','score','strand')]
-    df <- cbind(regions, thickStart=regions$start, thickEnd=regions$end)
+    df <- regions
+    # Convert from 1-based closed to 0-based half open
+    df$start <- df$start - 1
+    
     
     if (!is.null(colorcol)) {
+        df <- cbind(regions, thickStart=regions$start, thickEnd=regions$end)
+        # Convert from 1-based closed to 0-based half open
+        df$thickStart <- df$thickStart - 1
         # Generate the colors for each element in 'namecol'
         if (colorcol %in% names(mcols(gr))) {
             if (is.null(colors)) {
@@ -921,9 +927,6 @@ exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination
         }
     }
     
-    # Convert from 1-based closed to 0-based half open
-    df$start <- df$start - 1
-    df$thickStart <- df$thickStart - 1
     if (nrow(df) == 0) {
         warning('No regions in input')
     } else {
@@ -931,5 +934,6 @@ exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination
     }
 
     close(filename.gz)
+    stopTimedMessage(ptm)
 
 }

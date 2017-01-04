@@ -156,13 +156,15 @@ Peak calling for ATAC-seq and DNase-seq is similar to the peak calling of a narr
 
 \Rpackage{chromstaR} can be used to call peaks with multiple replicates, without the need of prior merging. The underlying statistical model integrates information from all replicates to identify common peaks. It is, however, important to note that replicates with poor quality can affect the joint peak calling negatively. It is therefore recommended to first check the replicate quality and discard poor-quality replicates. The necessary steps for peak calling for an example ChIP-seq experiment with 4 replicates are detailed below.
 
+Please note that also the other tasks in this section (Task \ref{sec:Task2}, \ref{sec:Task3} and \ref{sec:Task4}) can handle multiple replicates via specification of the \Rfunction{experiment.table} parameter. The following example demonstrates how to explicitly use multiple replicates for peak calling and their correlation as a basic quality control.
+
 \begin{scriptsize}
-<<univariate_replicate_library, results='hide', message=FALSE, eval=TRUE>>=
+<<multivariate_replicate_library, results='hide', message=FALSE, eval=TRUE>>=
 library(chromstaR)
 @
 
 <<multivariate_replicate_binning, results='markup', message=FALSE, eval=TRUE>>=
-## === Step 1: Binning ===
+#=== Step 1: Preparation ===
 # Let's get some example data with 3 replicates in spontaneous hypertensive rat (SHR)
 file.path <- system.file("extdata","euratrans", package='chromstaRData')
 files.good <- list.files(file.path, pattern="H3K27me3.*SHR.*bam$", full.names=TRUE)[1:3]
@@ -176,6 +178,16 @@ head(rn4_chrominfo)
 # Define experiment structure
 exp <- data.frame(file=files, mark='H3K27me3', condition='SHR', replicate=1:4,
                   pairedEndReads=FALSE, controlFiles=NA)
+
+# Peaks could now be called with
+# Chromstar(inputfolder=file.path, experiment.table=exp, outputfolder=tempdir(),
+#           mode = 'separate')
+# However, to get more information on the replicates we will choose
+# a more detailed workflow.
+@
+
+<<multivariate_replicate_binning, results='hide', message=FALSE, eval=TRUE>>=
+## === Step 2: Binning ===
 # We use bin size 1000bp and chromosome 12 to keep the example quick
 binned.data <- list()
 for (file in files) {
@@ -186,7 +198,7 @@ for (file in files) {
 @
 
 <<multivariate_replicate_univariate, results='hide', message=FALSE, eval=TRUE>>=
-## === Step 2: Univariate peak calling ===
+## === Step 3: Univariate peak calling ===
 # The univariate fit is obtained for each replicate
 models <- list()
 for (i1 in 1:length(binned.data)) {
@@ -195,7 +207,7 @@ for (i1 in 1:length(binned.data)) {
 @
 
 <<multivariate_replicate_peak_calling, results='markup', message=FALSE, eval=TRUE>>=
-## === Step 3: Check replicate correlation ===
+## === Step 4: Check replicate correlation ===
 # We run a multivariate peak calling on all 4 replicates
 # A warning is issued because replicate 4 is very different from the others
 multi.model <- callPeaksReplicates(models, max.time=60, eps=1)
@@ -204,21 +216,21 @@ print(multi.model$replicateInfo$correlation)
 @
 
 <<multivariate_replicate_peak_calling2, results='hide', message=FALSE, eval=TRUE>>=
-## === Step 4: Peak calling with replicates ===
+## === Step 5: Peak calling with replicates ===
 # We redo the previous step without the "bad" replicate
 # Also, we force all replicates to agree in their peak calls
 multi.model <- callPeaksReplicates(models[1:3], force.equal=TRUE, max.time=60)
 @
 
 <<multivariate_replicate_export, results='hide', message=FALSE, eval=TRUE>>=
-## === Step 5: Export to genome browser ===
+## === Step 6: Export to genome browser ===
 # Finally, we can export the results as BED file
 exportPeaks(multi.model, filename=tempfile())
 exportCounts(multi.model, filename=tempfile())
 @
 \end{scriptsize}
 
-\subsection{Task 2: Detecting differentially modified regions}
+\subsection{\label{sec:Task2}Task 2: Detecting differentially modified regions}
 
 \Rpackage{chromstaR} is extremely powerful in detecting differentially modified regions in two or more samples. The following example illustrates this on ChIP-seq data for H4K20me1 in brown norway (BN) and spontaneous hypertensive rat (SHR) in left-ventricle (lv) heart tissue. The mode of analysis is called \emph{differential}.
 
@@ -277,7 +289,7 @@ exportCombinations(model, filename=tempfile(), include.states=diff.states)
 @
 \end{scriptsize}
 
-\subsection{Task 3: Finding combinatorial chromatin states}
+\subsection{\label{sec:Task3}Task 3: Finding combinatorial chromatin states}
 
 Most experimental studies that probe several histone modifications are interested in combinatorial chromatin states. An example of a simple combinatorial state would be [H3K4me3+H3K27me3], which is also frequently called ``bivalent promoter'', due to the simultaneous occurrence of the promoter marking H3K4me3 and the repressive H3K27me3. Finding combinatorial states with \Rpackage{chromstaR} is equivalent to a multivariate peak calling. The following code chunks demonstrate how to find bivalent promoters and do some simple analysis. The mode of analysis is called \emph{combinatorial}.
 

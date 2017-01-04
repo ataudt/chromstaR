@@ -57,7 +57,7 @@ callPeaksUnivariate <- function(binned.data, input.data=NULL, prefit.on.chr=NULL
     }
     if (!is.null(input.data)) {
         if (class(input.data) == 'character') { 
-            message("Loading input file ",input.data)
+            message("Loading input file(s) ", paste0(input.data, collapse=', '))
             input.datas <- loadHmmsFromFiles(input.data)
             input.data <- input.datas[[1]]
             if (length(input.datas) > 1) {

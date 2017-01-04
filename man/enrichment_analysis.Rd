@@ -23,7 +23,7 @@ plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
 
 \item{annotations}{A \code{list()} with \code{\link{GRanges}} objects containing coordinates of multiple annotations The names of the list entries will be used to name the return values.}
 
-\item{what}{One of \code{c('combinations','peaks','counts','transitions')} specifying which statistic to calculate.}
+\item{what}{One of \code{c('combinations','peaks','counts','transitions')} specifying on which feature the statistic is calculated.}
 
 \item{combinations}{A vector with combinations for which the enrichment will be calculated. If \code{NULL} all combinations will be considered.}
 

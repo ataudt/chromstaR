@@ -66,6 +66,7 @@ NULL
 #' @param hmm A \code{\link{combinedMultiHMM}} or \code{\link{multiHMM}} object or a file that contains such an object.
 #' @param annotations A \code{list()} with \code{\link{GRanges}} objects containing coordinates of multiple annotations The names of the list entries will be used to name the return values.
 #' @param plot A logical indicating whether the plot or an array with the fold enrichment values is returned.
+#' @param what One of \code{c('combinations','peaks','counts','transitions')} specifying on which feature the statistic is calculated.
 #' @importFrom S4Vectors subjectHits queryHits
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom reshape2 melt
@@ -547,12 +548,12 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
 #' @param annotation A \code{\link{GRanges}} object with the annotation of interest.
 #' @param bp.around.annotation An integer specifying the number of basepairs up- and downstream of the annotation for which the enrichment will be calculated.
 #' @param region A combination of \code{c('start','inside','end')} specifying the region of the annotation for which the enrichment will be calculated. Select \code{'start'} if you have a point-sized annotation like transcription start sites. Select \code{c('start','inside','end')} if you have long annotations like genes.
-#' @param what One of \code{c('combinations','peaks','counts','transitions')} specifying which statistic to calculate.
+#' @param what One of \code{c('combinations','peaks','counts')} specifying on which feature the statistic is calculated.
 #' @param num.intervals Number of intervals for enrichment 'inside' of annotation.
 #' @param statistic The statistic to calculate. Either 'fold' for fold enrichments or 'fraction' for fraction of bins falling into the annotation.
 #' @return A \code{list()} containing \code{data.frame()}s for enrichment of combinatorial states and binary states at the start, end and inside of the annotation.
 #' @importFrom S4Vectors as.factor subjectHits queryHits
-enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=10000, region=c('start','inside','end'), what=c('combinations','peaks','counts'), num.intervals=21, statistic='fold') {
+enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=10000, region=c('start','inside','end'), what='combinations', num.intervals=21, statistic='fold') {
 
     ## Check user input
     if ((!what %in% c('combinations','peaks','counts')) | length(what) > 1) {

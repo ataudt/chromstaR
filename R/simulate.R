@@ -95,7 +95,11 @@ simulateReadsFromCounts <- function(bins, fragLen=50) {
             offsets <- round(runif(total.reads, min=0, max=binsize))
             strand <- c('+','-')[round(runif(total.reads, min=1, max=2))]
             ## Make read coordinates
-            reads[[chrom]] <- sort(GRanges(seqnames=chrom, ranges=IRanges(start=starts+offsets, end=starts+offsets+fragLen)))
+            if (length(starts) > 0) {
+                reads[[chrom]] <- sort(GRanges(seqnames=chrom, ranges=IRanges(start=starts+offsets, end=starts+offsets+fragLen)))
+            } else {
+                reads[[chrom]] <- GRanges()
+            }
             strand(reads[[chrom]]) <- strand
         }
     }

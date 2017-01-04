@@ -7,7 +7,7 @@
 #' Convert aligned reads from .bam or .bed(.gz) files into read counts in equidistant windows (bins). This function uses \code{\link[GenomicRanges]{countOverlaps}} to calculate the read counts, or alternatively \code{\link[bamsignals]{bamProfile}} if option \code{use.bamsignals} is set (only effective for .bam files).
 #'
 #' @aliases binning
-#' @param file A file with aligned reads. Alternatively a \code{\link{GRanges}} with aligned reads if format is set to 'GRanges'.
+#' @param file A file with aligned reads. Alternatively a \code{\link{GRanges}} with aligned reads.
 #' @param experiment.table An \code{\link{experiment.table}} containing the supplied \code{file}. This is necessary to uniquely identify the file in later steps of the workflow. Set to \code{NULL} if you don't have it (not recommended).
 #' @inheritParams readBamFileAsGRanges
 #' @inheritParams readBedFileAsGRanges
@@ -17,6 +17,7 @@
 #' @param variable.width.reference A BAM file that is used as reference to produce variable width bins. See \code{\link{variableWidthBins}} for details.
 #' @param chromosomes If only a subset of the chromosomes should be binned, specify them here.
 #' @param use.bamsignals If \code{TRUE} the \pkg{\link[bamsignals]{bamsignals}} package is used for parsing of BAM files. This gives tremendous speed advantage for only one binsize but linearly increases for multiple binsizes, while \code{use.bamsignals=FALSE} has a binsize dependent runtime and might be faster if many binsizes are calculated.
+#' @param format One of \code{c('bed','bam','GRanges')} or \code{NULL} if the format is to be determined automatically.
 #' @return If only one bin size was specified for option \code{binsizes}, the function returns a single \code{\link{GRanges}} object with meta data column 'counts' that contains the read count. If multiple \code{binsizes} were specified , the function returns a named \code{list()} of \link{GRanges} objects.
 #' @importFrom Rsamtools BamFile indexBam
 #' @importFrom bamsignals bamCount
@@ -35,14 +36,21 @@
 #'                   chromosomes='chr12')
 #'print(binned)
 #'
-binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chromosomes=NULL, pairedEndReads=FALSE, min.mapq=10, remove.duplicate.reads=TRUE, max.fragment.width=1000, blacklist=NULL, binsizes=1000, reads.per.bin=NULL, bins=NULL, variable.width.reference=NULL, use.bamsignals=TRUE) {
+binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chromosomes=NULL, pairedEndReads=FALSE, min.mapq=10, remove.duplicate.reads=TRUE, max.fragment.width=1000, blacklist=NULL, binsizes=1000, reads.per.bin=NULL, bins=NULL, variable.width.reference=NULL, use.bamsignals=TRUE, format=NULL) {
 
     ## Determine format
-    if (is.character(file)) {
-        file.clean <- sub('\\.gz$','', file)
-        format <- rev(strsplit(file.clean, '\\.')[[1]])[1]
-    } else if (class(file)=='GRanges') {
-        format <- 'GRanges'
+    if (is.null(format)) {
+        if (is.character(file)) {
+            file.clean <- sub('\\.gz$','', file)
+            format <- rev(strsplit(file.clean, '\\.')[[1]])[1]
+        } else if (class(file)=='GRanges') {
+            format <- 'GRanges'
+        } else {
+            stop("Could not determine format automatically. Please specify it via the 'format' parameter.")
+        }
+    }
+    if (! format %in% c('bed','bam','GRanges')) {
+        stop("Unknown format. Needs to be one of 'bed', 'bam' or 'GRanges'.")
     }
 
     if (format=='bed') {
@@ -111,6 +119,8 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
         ## GRanges (1-based)
         data <- file
         chrom.lengths <- seqlengths(data)
+    } else {
+        stop("Unknown file format.")
     }
 
     ## Select chromosomes to bin

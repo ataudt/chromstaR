@@ -22,6 +22,17 @@ removeCondition <- function(model, conditions) {
   
     model <- loadHmmsFromFiles(model, check.class=class.combined.multivariate.hmm)[[1]]
     
+    ### Check input ###
+    cond.setdiff <- setdiff(conditions, model$info$condition)
+    if (length(cond.setdiff) == length(conditions)) {
+        warning("Conditions ", paste0(cond.setdiff, collapse=', '), " could not be found. Doing nothing.")
+        return(model)
+    }
+    if (length(cond.setdiff) > 0) {
+        warning("Conditions ", paste0(cond.setdiff, collapse=', '), " could not be found.")
+    }
+    conditions <- setdiff(conditions, cond.setdiff)
+    
     ### Info ###
     info <- model$info
     mask <- !info$condition %in% conditions
