@@ -35,10 +35,12 @@ readCustomBedFile <- function(bedfile, col.names=c('chromosome','start','end','n
     } else {
         data$strand <- '*'
     }
-    # Adjust chromosome format
-    data$chromosome <- sub('^chr', '', data$chromosome)
-    if (chromosome.format=='UCSC') {
-        data$chromosome <- paste0('chr', data$chromosome)
+    if (nrow(data) > 0) {
+        # Adjust chromosome format
+        data$chromosome <- sub('^chr', '', data$chromosome)
+        if (chromosome.format=='UCSC') {
+            data$chromosome <- paste0('chr', data$chromosome)
+        }
     }
     # Convert to GRanges object
     gr <- methods::as(data, 'GRanges')

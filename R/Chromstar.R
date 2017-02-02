@@ -1,4 +1,4 @@
-#' Wrapper function for the \code{\link{chromstaR}} package
+#' Wrapper function for the \pkg{\link{chromstaR}} package
 #' 
 #' This function performs \code{\link[chromstaR:binReads]{binning}}, \code{\link[chromstaR:callPeaksUnivariate]{univariate peak calling}} and \code{\link[chromstaR:callPeaksMultivariate]{multivariate peak calling}} from a list of input files.
 #' 

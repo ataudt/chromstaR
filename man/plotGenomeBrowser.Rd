@@ -5,7 +5,8 @@
 \title{Plot a genome browser view}
 \usage{
 plotGenomeBrowser(counts, peaklist, chr, start, end, countcol = "black",
-  peakcols = getDistinctColors(length(peaklist)))
+  peakcols = getDistinctColors(length(peaklist)), style = "peaks",
+  peakTrackHeight = 3)
 }
 \arguments{
 \item{counts}{A \code{\link[GenomicRanges]{GRanges}} object with meta-data column 'counts'.}
@@ -17,6 +18,10 @@ plotGenomeBrowser(counts, peaklist, chr, start, end, countcol = "black",
 \item{countcol}{A character giving the color for the counts.}
 
 \item{peakcols}{A character vector with colors for the peaks in \code{peaklist}.}
+
+\item{style}{One of \code{c('peaks', 'density')}.}
+
+\item{peakTrackHeight}{Relative height of the tracks given in \code{peaklist} compared to the \code{counts}.}
 }
 \value{
 A \code{\link[ggplot2:ggplot]{ggplot}} object.
