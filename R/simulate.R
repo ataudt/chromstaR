@@ -117,10 +117,10 @@ simulateReadsFromCounts <- function(bins, fragLen=50) {
 #' 
 #' @param bins A \code{\link[GenomicRanges]{GRanges}} object for which reads will be simulated.
 #' @param transition A matrix with transition probabilities.
-#' @param emission A list() with data.frames with emission distributions (see \code{\link{uniHMM}} entry 'distributions').
+#' @param emissions A list() with data.frames with emission distributions (see \code{\link{uniHMM}} entry 'distributions').
 #' @param weights A list() with weights for the three univariate states.
 #' @param correlationMatrices A list with correlation matrices.
-#' @param A vector with combinatorial states.
+#' @param combstates A vector with combinatorial states.
 #' @param IDs A character vector with IDs.
 #' @inheritParams simulateReadsFromCounts
 #' @return A \code{list()} with entries $bins containing the simulated states and read count, $reads with simulated read coordinates.

@@ -9,7 +9,7 @@ removeCondition(model, conditions)
 \arguments{
 \item{model}{A \code{\link{combinedMultiHMM}} object or file which contains such an object.}
 
-\item{condition}{A character vector with the condition(s) to be removed.}
+\item{conditions}{A character vector with the condition(s) to be removed.}
 }
 \value{
 The input \code{\link{combinedMultiHMM}} object with specified conditions removed.

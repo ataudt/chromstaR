@@ -12,17 +12,17 @@ simulateMultivariate(bins, transition, emissions, weights, correlationMatrices,
 
 \item{transition}{A matrix with transition probabilities.}
 
+\item{emissions}{A list() with data.frames with emission distributions (see \code{\link{uniHMM}} entry 'distributions').}
+
 \item{weights}{A list() with weights for the three univariate states.}
 
 \item{correlationMatrices}{A list with correlation matrices.}
 
+\item{combstates}{A vector with combinatorial states.}
+
 \item{IDs}{A character vector with IDs.}
 
 \item{fragLen}{Length of the simulated read fragments.}
-
-\item{emission}{A list() with data.frames with emission distributions (see \code{\link{uniHMM}} entry 'distributions').}
-
-\item{A}{vector with combinatorial states.}
 }
 \value{
 A \code{list()} with entries $bins containing the simulated states and read count, $reads with simulated read coordinates.

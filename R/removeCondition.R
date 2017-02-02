@@ -3,7 +3,7 @@
 #' Remove a condition from a \code{\link{combinedMultiHMM}} object.
 #' 
 #' @param model A \code{\link{combinedMultiHMM}} object or file which contains such an object.
-#' @param condition A character vector with the condition(s) to be removed.
+#' @param conditions A character vector with the condition(s) to be removed.
 #' @return The input \code{\link{combinedMultiHMM}} object with specified conditions removed.
 #' @export
 #' @examples 
