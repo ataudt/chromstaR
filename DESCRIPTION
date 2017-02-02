@@ -25,7 +25,8 @@ Imports:
     reshape2,
     Rsamtools,
     GenomicAlignments,
-    bamsignals
+    bamsignals,
+    mvtnorm
 Suggests:
     knitr,
     BiocStyle,
