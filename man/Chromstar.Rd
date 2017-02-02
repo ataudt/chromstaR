@@ -2,7 +2,7 @@
 % Please edit documentation in R/Chromstar.R
 \name{Chromstar}
 \alias{Chromstar}
-\title{Wrapper function for the \code{\link{chromstaR}} package}
+\title{Wrapper function for the \pkg{\link{chromstaR}} package}
 \usage{
 Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
   numCPU = 1, binsize = 1000, assembly = NULL, chromosomes = NULL,

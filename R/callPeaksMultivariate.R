@@ -172,7 +172,7 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
             for (chrom in chromosomes) {
                 ptm <- startTimedMessage("Chromosome = ", chrom, "\n")
                 bins <- p$bins[seqnames(p$bins)==chrom]
-                model <- suppressMessages( runMultivariate(bins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, correlationMatrix=p$correlationMatrix, correlationMatrixInverse=p$correlationMatrixInverse, determinant=p$determinant, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity) )
+                model <- runMultivariate(bins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, correlationMatrix=p$correlationMatrix, correlationMatrixInverse=p$correlationMatrixInverse, determinant=p$determinant, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
                 message("Time spent for chromosome = ", chrom, ":", appendLF=FALSE)
                 stopTimedMessage(ptm)
                 models[[chrom]] <- model

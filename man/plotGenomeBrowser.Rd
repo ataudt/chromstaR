@@ -4,9 +4,9 @@
 \alias{plotGenomeBrowser}
 \title{Plot a genome browser view}
 \usage{
-plotGenomeBrowser(counts, peaklist, chr, start, end, countcol = "black",
-  peakcols = getDistinctColors(length(peaklist)), style = "peaks",
-  peakTrackHeight = 3)
+plotGenomeBrowser(counts, peaklist = NULL, chr, start, end,
+  countcol = "black", peakcols = NULL, style = "peaks",
+  peakTrackHeight = 5)
 }
 \arguments{
 \item{counts}{A \code{\link[GenomicRanges]{GRanges}} object with meta-data column 'counts'.}

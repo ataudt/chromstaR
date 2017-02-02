@@ -163,7 +163,7 @@ Please note that also the other tasks in this section (Task \ref{sec:Task2}, \re
 library(chromstaR)
 @
 
-<<multivariate_replicate_binning, results='markup', message=FALSE, eval=TRUE>>=
+<<multivariate_replicate_preparation, results='markup', message=FALSE, eval=TRUE>>=
 #=== Step 1: Preparation ===
 # Let's get some example data with 3 replicates in spontaneous hypertensive rat (SHR)
 file.path <- system.file("extdata","euratrans", package='chromstaRData')
