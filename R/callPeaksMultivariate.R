@@ -277,26 +277,18 @@ runMultivariate <- function(bins, info, comb.states, use.states, distributions, 
         result$bins$state <- factor(hmm$states, levels=state.levels)
         if (get.posteriors) {
             ptm <- startTimedMessage("Transforming posteriors to `per sample` representation ...")
-print(result$bins)
-print(result$info)
-print(use.states)
-print(hmm$max.states)
-print(hmm$comb.states)
+            print(result$bins)
             hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$max.states)
-print("colnames(posteriors)")
             colnames(hmm$posteriors) <- hmm$comb.states
-print("dec2bin")
             binstates <- dec2bin(hmm$comb.states, ndigits=hmm$num.modifications)
-print(binstates)
             post.per.track <- hmm$posteriors %*% binstates
-print("colnames(post.per.track)")
             colnames(post.per.track) <- result$info$ID
-print("post.per.track")
             result$bins$posteriors <- post.per.track
-print("peakScores")
+            print(result$bins)
             result$bins$peakScores <- getPeakScores(result$bins)
-print("differentialScore")
+            print(result$bins)
             result$bins$differential.score <- differentialScoreSum(result$bins$peakScores, result$info)
+            print(result$bins)
             stopTimedMessage(ptm)
         }
         ptm <- startTimedMessage("Calculating states from posteriors ...")

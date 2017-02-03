@@ -41,14 +41,20 @@ differentialScores <- function(mat, info, FUN='-') {
         return(NULL)
     }
     info.rep <- split(info, paste0(info$mark, '-', info$condition))
+    print(info.rep)
     for (i1 in 1:length(info.rep)) {
         info.rep[[i1]]$replicate <- as.integer(as.factor(as.character(info.rep[[i1]]$replicate)))
     }
     info.rep <- do.call(rbind, info.rep)
     info.rep <- split(info.rep, as.character(info.rep$replicate))[[1]]
+    print(info.rep)
     info.mark <- split(info.rep, as.character(info.rep$mark))
+    print(info.mark)
     differential.scores <- list()
+    print(names(info.mark))
     for (mark in names(info.mark)) {
+      print('nrow')
+      print(nrow(info.mark[[mark]]))
         if (nrow(info.mark[[mark]]) > 1) {
             min.post <- do.call(pmin, as.list(as.data.frame(mat[,info.mark[[mark]]$ID])))
             max.post <- do.call(pmax, as.list(as.data.frame(mat[,info.mark[[mark]]$ID])))
