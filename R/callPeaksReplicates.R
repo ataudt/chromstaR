@@ -64,8 +64,8 @@ callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=
 
         ## Univariate replicateInfo
         ids <- sapply(hmms, function(x) { x$info$ID })
-        weight.univariate <- unlist(lapply(hmms, function(x) { x$weights['modified'] }))
-        total.count <- unlist(lapply(hmms, function(x) { sum(x$bins$counts) }))
+        weight.univariate <- sapply(hmms, function(x) { x$weights['modified'] })
+        total.count <- sapply(hmms, function(x) { sum(x$bins$counts) })
         info.df <- data.frame(total.count=total.count, weight.univariate=weight.univariate)
         if (!is.null(unlist(ids))) {
             rownames(info.df) <- ids
