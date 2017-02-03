@@ -28,8 +28,14 @@ Make fixed-width bins based on given bin size.
 }
 \examples{
 ## Make fixed-width bins of size 500kb and 1Mb
-bins <- fixedWidthBins(assembly='mm10', chromosome.format='NCBI', binsizes=c(5e5,1e6))
+data(rn4_chrominfo)
+chrom.lengths <- rn4_chrominfo$length
+names(chrom.lengths) <- rn4_chrominfo$chromosome
+bins <- fixedWidthBins(chrom.lengths=chrom.lengths, binsizes=c(5e5,1e6))
 bins
+
+## Make bins using NCBI server (requires internet connection)
+# bins <- fixedWidthBins(assembly='mm10', chromosome.format='NCBI', binsizes=c(5e5,1e6))
 
 }
 \author{

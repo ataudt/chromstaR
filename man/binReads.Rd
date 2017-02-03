@@ -9,10 +9,10 @@ binReads(file, experiment.table = NULL, assembly, bamindex = file,
   chromosomes = NULL, pairedEndReads = FALSE, min.mapq = 10,
   remove.duplicate.reads = TRUE, max.fragment.width = 1000,
   blacklist = NULL, binsizes = 1000, reads.per.bin = NULL, bins = NULL,
-  variable.width.reference = NULL, use.bamsignals = TRUE)
+  variable.width.reference = NULL, use.bamsignals = TRUE, format = NULL)
 }
 \arguments{
-\item{file}{A file with aligned reads. Alternatively a \code{\link{GRanges}} with aligned reads if format is set to 'GRanges'.}
+\item{file}{A file with aligned reads. Alternatively a \code{\link{GRanges}} with aligned reads.}
 
 \item{experiment.table}{An \code{\link{experiment.table}} containing the supplied \code{file}. This is necessary to uniquely identify the file in later steps of the workflow. Set to \code{NULL} if you don't have it (not recommended).}
 
@@ -41,6 +41,8 @@ binReads(file, experiment.table = NULL, assembly, bamindex = file,
 \item{variable.width.reference}{A BAM file that is used as reference to produce variable width bins. See \code{\link{variableWidthBins}} for details.}
 
 \item{use.bamsignals}{If \code{TRUE} the \pkg{\link[bamsignals]{bamsignals}} package is used for parsing of BAM files. This gives tremendous speed advantage for only one binsize but linearly increases for multiple binsizes, while \code{use.bamsignals=FALSE} has a binsize dependent runtime and might be faster if many binsizes are calculated.}
+
+\item{format}{One of \code{c('bed','bam','GRanges')} or \code{NULL} if the format is to be determined automatically.}
 }
 \value{
 If only one bin size was specified for option \code{binsizes}, the function returns a single \code{\link{GRanges}} object with meta data column 'counts' that contains the read count. If multiple \code{binsizes} were specified , the function returns a named \code{list()} of \link{GRanges} objects.

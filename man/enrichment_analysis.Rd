@@ -8,7 +8,7 @@
 \title{Enrichment analysis}
 \usage{
 plotFoldEnrichHeatmap(hmm, annotations, what = "combinations",
-  combinations = NULL, marks = NULL, plot = TRUE)
+  combinations = NULL, marks = NULL, plot = TRUE, logscale = TRUE)
 
 plotEnrichCountHeatmap(hmm, annotation, bp.around.annotation = 10000,
   max.rows = 1000)
@@ -16,20 +16,22 @@ plotEnrichCountHeatmap(hmm, annotation, bp.around.annotation = 10000,
 plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
   region = c("start", "inside", "end"), num.intervals = 20,
   what = "combinations", combinations = NULL, marks = NULL,
-  statistic = "fold")
+  statistic = "fold", logscale = TRUE)
 }
 \arguments{
 \item{hmm}{A \code{\link{combinedMultiHMM}} or \code{\link{multiHMM}} object or a file that contains such an object.}
 
 \item{annotations}{A \code{list()} with \code{\link{GRanges}} objects containing coordinates of multiple annotations The names of the list entries will be used to name the return values.}
 
-\item{what}{One of \code{c('combinations','peaks','counts')} specifying which statistic to calculate.}
+\item{what}{One of \code{c('combinations','peaks','counts','transitions')} specifying on which feature the statistic is calculated.}
 
-\item{combinations}{A vector with combinations for which the fold enrichment will be calculated. If \code{NULL} all combinations will be considered.}
+\item{combinations}{A vector with combinations for which the enrichment will be calculated. If \code{NULL} all combinations will be considered.}
 
 \item{marks}{A vector with marks for which the enrichment is plotted. If \code{NULL} all marks will be considered.}
 
 \item{plot}{A logical indicating whether the plot or an array with the fold enrichment values is returned.}
+
+\item{logscale}{Set to \code{TRUE} to plot fold enrichment on log-scale. Ignored if \code{statistic = 'fraction'}.}
 
 \item{annotation}{A \code{\link{GRanges}} object with the annotation of interest.}
 
@@ -103,6 +105,7 @@ print(genes)
 # Fold enrichment with different biotypes, showing that protein coding genes are
 # enriched with (bivalent) promoter combinations [H3K4me3] and [H3K4me3+H3K27me3],
 # while rRNA is enriched with the empty [] and repressive combinations [H3K27me3].
+   tss <- resize(genes, width = 3, fix = 'start')
    biotypes <- split(tss, tss$biotype)
    plotFoldEnrichHeatmap(model, annotations=biotypes) + coord_flip()
 

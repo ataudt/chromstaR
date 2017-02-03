@@ -3,8 +3,9 @@
 #' Plotting functions for enrichment analysis of \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} objects with any annotation of interest, specified as a \code{\link[GenomicRanges]{GRanges}} object.
 #' 
 #' @name enrichment_analysis
-#' @param combinations A vector with combinations for which the fold enrichment will be calculated. If \code{NULL} all combinations will be considered.
+#' @param combinations A vector with combinations for which the enrichment will be calculated. If \code{NULL} all combinations will be considered.
 #' @param marks A vector with marks for which the enrichment is plotted. If \code{NULL} all marks will be considered.
+#' @param logscale Set to \code{TRUE} to plot fold enrichment on log-scale. Ignored if \code{statistic = 'fraction'}.
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot or a list() with \code{\link[ggplot2:ggplot]{ggplot}} objects if several plots are returned. For \code{plotFoldEnrichHeatmap} a named array with fold enrichments if \code{plot=FALSE}.
 #' @author Aaron Taudt
 #' @seealso \code{\link{plotting}}
@@ -54,6 +55,7 @@
 #'# Fold enrichment with different biotypes, showing that protein coding genes are
 #'# enriched with (bivalent) promoter combinations [H3K4me3] and [H3K4me3+H3K27me3],
 #'# while rRNA is enriched with the empty [] and repressive combinations [H3K27me3].
+#'    tss <- resize(genes, width = 3, fix = 'start')
 #'    biotypes <- split(tss, tss$biotype)
 #'    plotFoldEnrichHeatmap(model, annotations=biotypes) + coord_flip()
 #'
@@ -64,11 +66,12 @@ NULL
 #' @param hmm A \code{\link{combinedMultiHMM}} or \code{\link{multiHMM}} object or a file that contains such an object.
 #' @param annotations A \code{list()} with \code{\link{GRanges}} objects containing coordinates of multiple annotations The names of the list entries will be used to name the return values.
 #' @param plot A logical indicating whether the plot or an array with the fold enrichment values is returned.
+#' @param what One of \code{c('combinations','peaks','counts','transitions')} specifying on which feature the statistic is calculated.
 #' @importFrom S4Vectors subjectHits queryHits
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom reshape2 melt
 #' @export
-plotFoldEnrichHeatmap <- function(hmm, annotations, what="combinations", combinations=NULL, marks=NULL, plot=TRUE) {
+plotFoldEnrichHeatmap <- function(hmm, annotations, what="combinations", combinations=NULL, marks=NULL, plot=TRUE, logscale=TRUE) {
     
     hmm <- loadHmmsFromFiles(hmm, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     ## Variables
@@ -76,9 +79,17 @@ plotFoldEnrichHeatmap <- function(hmm, annotations, what="combinations", combina
     if (class(hmm) == class.combined.multivariate.hmm) {
     } else if (class(hmm) == class.multivariate.hmm) {
         # Rename 'combination' to 'combination.' for coherence with combinedMultiHMM
-        names(mcols(bins))[grep('combination', names(mcols(bins)))] <- 'combination.'
+        names(mcols(bins))[grep('combination', names(mcols(bins)))] <- paste0('combination.', unique(hmm$info$condition))
     }
     conditions <- sub('combination.', '', grep('combination', names(mcols(bins)), value=TRUE))
+    comb.levels <- levels(mcols(bins)[,paste0('combination.', conditions[1])])
+    ## Create new column combination with all conditions combined
+    combs <- list()
+    for (condition in conditions) {
+        combs[[condition]] <- paste0(condition, ":", mcols(bins)[,paste0('combination.', condition)])
+    }
+    combs$sep <- ', '
+    bins$transitions <- factor(do.call(paste, combs))
     if (is.null(combinations)) {
         comb.levels <- levels(mcols(bins)[,paste0('combination.', conditions[1])])
     } else {
@@ -93,85 +104,137 @@ plotFoldEnrichHeatmap <- function(hmm, annotations, what="combinations", combina
     annotationsAtBins <- lapply(annotations, function(x) { IRanges::subsetByOverlaps(x, bins) })
     feature.lengths <- lapply(annotationsAtBins, function(x) { sum(as.numeric(width(x))) })
     
-    if (what == 'peaks') {
-        binstates <- dec2bin(bins$state, colnames=hmm$info$ID)
-    }
-    
-    ## Fold enrichment
     ggplts <- list()
     folds <- list()
     maxfolds <- list()
-    for (condition in conditions) {
-        if (what == 'combinations') {
-            bins$combination <- mcols(bins)[,paste0('combination.', condition)]
-            fold <- array(NA, dim=c(length(annotationsAtBins), length(comb.levels)), dimnames=list(annotation=names(annotationsAtBins), combination=comb.levels))
-            for (icomb in 1:length(comb.levels)) {
-                mask <- bins$combination == comb.levels[icomb]
-                bins.mask <- bins[mask]
-                combstate.length <- sum(as.numeric(width(bins.mask)))
-                for (ifeat in 1:length(annotationsAtBins)) {
-                    feature <- annotationsAtBins[[ifeat]]
-                    ind <- findOverlaps(bins.mask, feature)
+    minfolds <- list()
     
-                    binsinfeature <- bins.mask[unique(S4Vectors::queryHits(ind))]
-                    sum.binsinfeature <- sum(as.numeric(width(binsinfeature)))
-    
-                    featuresinbins <- feature[unique(S4Vectors::subjectHits(ind))]
-                    sum.featuresinbins <- sum(as.numeric(width(featuresinbins)))
-    
-                    fold[ifeat,icomb] <- sum.binsinfeature / combstate.length / feature.lengths[[ifeat]] * genome
-                }
+    if (what == 'peaks') {
+        binstates <- dec2bin(bins$state, colnames=hmm$info$ID)
+    }
+    if (what == 'transitions') {
+        bins$combination <- bins$transitions
+        comb.levels <- names(sort(table(bins$combination), decreasing = TRUE))
+        fold <- array(NA, dim=c(length(annotationsAtBins), length(comb.levels)), dimnames=list(annotation=names(annotationsAtBins), combination=comb.levels))
+        for (icomb in 1:length(comb.levels)) {
+            mask <- bins$combination == comb.levels[icomb]
+            bins.mask <- bins[mask]
+            combstate.length <- sum(as.numeric(width(bins.mask)))
+            for (ifeat in 1:length(annotationsAtBins)) {
+                feature <- annotationsAtBins[[ifeat]]
+                ind <- findOverlaps(bins.mask, feature)
+
+                binsinfeature <- bins.mask[unique(S4Vectors::queryHits(ind))]
+                sum.binsinfeature <- sum(as.numeric(width(binsinfeature)))
+
+                featuresinbins <- feature[unique(S4Vectors::subjectHits(ind))]
+                sum.featuresinbins <- sum(as.numeric(width(featuresinbins)))
+
+                fold[ifeat,icomb] <- sum.binsinfeature / combstate.length / feature.lengths[[ifeat]] * genome
             }
-    
-        } else if (what == 'peaks') {
-            fold <- array(NA, dim=c(length(annotationsAtBins), length(mark.levels)), dimnames=list(annotation=names(annotationsAtBins), mark=mark.levels))
-            for (imark in 1:length(mark.levels)) {
-                mark <- mark.levels[imark]
-                colmask <- hmm$info$mark == mark
-                colmask <- colmask & (!duplicated(paste0(hmm$info$mark, hmm$info$condition))) # remove replicates
-                if (condition != "") {
-                    colmask <- colmask & (hmm$info$condition == condition)
-                }
-                binstates.cond <- binstates[,colmask]
-                mask <- binstates.cond
-                bins.mask <- bins[mask]
-                combstate.length <- sum(as.numeric(width(bins.mask)))
-                for (ifeat in 1:length(annotationsAtBins)) {
-                    feature <- annotationsAtBins[[ifeat]]
-                    ind <- findOverlaps(bins.mask, feature)
-    
-                    binsinfeature <- bins.mask[unique(S4Vectors::queryHits(ind))]
-                    sum.binsinfeature <- sum(as.numeric(width(binsinfeature)))
-    
-                    featuresinbins <- feature[unique(S4Vectors::subjectHits(ind))]
-                    sum.featuresinbins <- sum(as.numeric(width(featuresinbins)))
-    
-                    fold[ifeat,imark] <- sum.binsinfeature / combstate.length / feature.lengths[[ifeat]] * genome
-                }
-            }
-          
         }
-      
         if (plot) {
             df <- reshape2::melt(fold, value.name='foldEnrichment')
-            maxfolds[[condition]] <- max(df$foldEnrichment, na.rm=TRUE)
-            if (what == 'combinations') {
-                ggplt <- ggplot(df) + geom_tile(aes_string(x='combination', y='annotation', fill='foldEnrichment'))
-            } else if (what == 'peaks') {
-                ggplt <- ggplot(df) + geom_tile(aes_string(x='mark', y='annotation', fill='foldEnrichment'))
+            if (logscale) {
+                df$foldEnrichment <- log(df$foldEnrichment)
             }
+            foldsnoinf <- setdiff(df$foldEnrichment, c(Inf, -Inf))
+            maxfolds[[1]] <- max(foldsnoinf, na.rm=TRUE)
+            minfolds[[1]] <- min(foldsnoinf, na.rm=TRUE)
+            ggplt <- ggplot(df) + geom_tile(aes_string(x='combination', y='annotation', fill='foldEnrichment'))
             ggplt <- ggplt + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=0.5))
-            ggplts[[condition]] <- ggplt
+            ggplts[[1]] <- ggplt
         } else {
-            folds[[condition]] <- fold
+            folds[[1]] <- fold
+        }
+    }
+    
+    ## Fold enrichment
+    if (what %in% c('peaks', 'combinations')) {
+        for (condition in conditions) {
+            if (what == 'combinations') {
+                bins$combination <- mcols(bins)[,paste0('combination.', condition)]
+                fold <- array(NA, dim=c(length(annotationsAtBins), length(comb.levels)), dimnames=list(annotation=names(annotationsAtBins), combination=comb.levels))
+                for (icomb in 1:length(comb.levels)) {
+                    mask <- bins$combination == comb.levels[icomb]
+                    bins.mask <- bins[mask]
+                    combstate.length <- sum(as.numeric(width(bins.mask)))
+                    for (ifeat in 1:length(annotationsAtBins)) {
+                        feature <- annotationsAtBins[[ifeat]]
+                        ind <- findOverlaps(bins.mask, feature)
+        
+                        binsinfeature <- bins.mask[unique(S4Vectors::queryHits(ind))]
+                        sum.binsinfeature <- sum(as.numeric(width(binsinfeature)))
+        
+                        featuresinbins <- feature[unique(S4Vectors::subjectHits(ind))]
+                        sum.featuresinbins <- sum(as.numeric(width(featuresinbins)))
+        
+                        fold[ifeat,icomb] <- sum.binsinfeature / combstate.length / feature.lengths[[ifeat]] * genome
+                    }
+                }
+        
+            } else if (what == 'peaks') {
+                fold <- array(NA, dim=c(length(annotationsAtBins), length(mark.levels)), dimnames=list(annotation=names(annotationsAtBins), mark=mark.levels))
+                for (imark in 1:length(mark.levels)) {
+                    mark <- mark.levels[imark]
+                    colmask <- hmm$info$mark == mark
+                    colmask <- colmask & (!duplicated(paste0(hmm$info$mark, hmm$info$condition))) # remove replicates
+                    if (condition != "") {
+                        colmask <- colmask & (hmm$info$condition == condition)
+                    }
+                    binstates.cond <- binstates[,colmask]
+                    mask <- binstates.cond
+                    bins.mask <- bins[mask]
+                    combstate.length <- sum(as.numeric(width(bins.mask)))
+                    for (ifeat in 1:length(annotationsAtBins)) {
+                        feature <- annotationsAtBins[[ifeat]]
+                        ind <- findOverlaps(bins.mask, feature)
+        
+                        binsinfeature <- bins.mask[unique(S4Vectors::queryHits(ind))]
+                        sum.binsinfeature <- sum(as.numeric(width(binsinfeature)))
+        
+                        featuresinbins <- feature[unique(S4Vectors::subjectHits(ind))]
+                        sum.featuresinbins <- sum(as.numeric(width(featuresinbins)))
+        
+                        fold[ifeat,imark] <- sum.binsinfeature / combstate.length / feature.lengths[[ifeat]] * genome
+                    }
+                }
+              
+            }
+          
+            if (plot) {
+                df <- reshape2::melt(fold, value.name='foldEnrichment')
+                if (logscale) {
+                    df$foldEnrichment <- log(df$foldEnrichment)
+                }
+                foldsnoinf <- setdiff(df$foldEnrichment, c(Inf, -Inf))
+                maxfolds[[condition]] <- max(foldsnoinf, na.rm=TRUE)
+                minfolds[[condition]] <- min(foldsnoinf, na.rm=TRUE)
+                if (what == 'combinations') {
+                    ggplt <- ggplot(df) + geom_tile(aes_string(x='combination', y='annotation', fill='foldEnrichment'))
+                } else if (what == 'peaks') {
+                    ggplt <- ggplot(df) + geom_tile(aes_string(x='mark', y='annotation', fill='foldEnrichment'))
+                }
+                ggplt <- ggplt + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=0.5))
+                ggplts[[condition]] <- ggplt
+            } else {
+                folds[[condition]] <- fold
+            }
         }
     }
     if (plot) {
-        maxfolds <- unlist(maxfolds)
-        ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_fill_gradientn(colors=grDevices::colorRampPalette(c("blue","white","red"))(20), values=c(seq(0,1,length.out=10), seq(1,max(maxfolds, na.rm=TRUE),length.out=10)), rescaler=function(x,...) {x}, oob=identity, limits=c(0,max(maxfolds, na.rm=TRUE))) })
+        maxfold <- max(unlist(maxfolds), na.rm=TRUE)
+        minfold <- min(unlist(minfolds), na.rm=TRUE)
+        limits <- max(abs(maxfold), abs(minfold))
+        if (logscale) {
+            ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_fill_gradientn(name='log(observed/expected)', colors=grDevices::colorRampPalette(c("blue","white","red"))(20), values=c(seq(-limits,0,length.out=10), seq(0,limits,length.out=10)), rescaler=function(x,...) {x}, oob=identity, limits=c(-limits, limits)) })
+            ggplts <- lapply(ggplts, function(ggplt) { ggplt$data$foldEnrichment[ggplt$data$foldEnrichment == -Inf] <- -limits; ggplt })
+        } else {
+            ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_fill_gradientn(name='observed/expected', colors=grDevices::colorRampPalette(c("blue","white","red"))(20), values=c(seq(0,1,length.out=10), seq(1,maxfold,length.out=10)), rescaler=function(x,...) {x}, oob=identity, limits=c(0,maxfold)) })
+        }
     }
 
-    if (class(hmm) == class.multivariate.hmm) {
+    if (class(hmm) == class.multivariate.hmm | what == 'transitions') {
         if (plot) {
             return(ggplts[[1]])
         } else {
@@ -203,12 +266,12 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
         conditions <- sub('combination.', '', grep('combination', names(mcols(bins)), value=TRUE))
         comb.levels <- levels(mcols(bins)[,paste0('combination.', conditions[1])])
         ## Create new column combination with all conditions combined
-        combinations <- list()
+        combs <- list()
         for (condition in conditions) {
-            combinations[[condition]] <- paste0(condition, ":", mcols(bins)[,paste0('combination.', condition)])
+            combs[[condition]] <- paste0(condition, ":", mcols(bins)[,paste0('combination.', condition)])
         }
-        combinations$sep <- ', '
-        bins$combination <- factor(do.call(paste, combinations))
+        combs$sep <- ', '
+        bins$combination <- factor(do.call(paste, combs))
     } else if (class(hmm) == class.multivariate.hmm) {
         comb.levels <- levels(bins$combination)
     }
@@ -254,18 +317,19 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
     rownames(ext.index) <- 1:nrow(ext.index)
     stopTimedMessage(ptm)
     
-    ## Go through combinations and then tracks to get the read counts
+    ## Go through combinations and then IDs to get the read counts
     ptm <- startTimedMessage("Getting read counts")
     counts <- list()
-    for (combination in levels(bins$combination)) {
+    combinations <- names(sort(table(bins$combination[index]), decreasing = TRUE))
+    for (combination in combinations) {
         counts[[combination]] <- list()
         index.combination <- which(bins$combination[index]==combination)
         ext.index.combination <- ext.index[index.combination,]
         if (is.null(dim(ext.index.combination))) {
             ext.index.combination <- array(ext.index.combination, dim=c(1,dim(ext.index)[[2]]), dimnames=list(anno=rownames(ext.index)[index.combination], position=dimnames(ext.index)[[2]]))
         }
-        for (ntrack in colnames(bins$counts)) {
-            counts[[combination]][[ntrack]] <- array(bins$counts[ext.index.combination,ntrack], dim=dim(ext.index.combination), dimnames=dimnames(ext.index.combination))
+        for (nID in colnames(bins$counts)) {
+            counts[[combination]][[nID]] <- array(bins$counts[ext.index.combination,nID], dim=dim(ext.index.combination), dimnames=dimnames(ext.index.combination))
         }
     }
     stopTimedMessage(ptm)
@@ -287,16 +351,16 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
     comb2keep <- names(num.comb)[num.comb/sum(num.comb) > 0.005]
     counts <- counts[comb2keep]
     df <- reshape2::melt(counts)
-    names(df) <- c('id','position','RPKM','track','combination')
+    names(df) <- c('id','position','RPKM','ID','combination')
     df$id <- factor(df$id, levels=rev(unique(df$id)))
     df$combination <- factor(df$combination, levels=unique(df$combination))
-    df$track <- factor(df$track, levels=colnames(bins$counts))
+    df$ID <- factor(df$ID, levels=hmm$info$ID)
     
     ## Plot as heatmap
     ggplt <- ggplot(df) + geom_tile(aes_string(x='position', y='id', color='combination'))
     ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$combination))))
     ggplt <- ggplt + geom_tile(aes_string(x='position', y='id', fill='RPKM'), alpha=0.6)
-    ggplt <- ggplt + facet_wrap( ~ track, nrow=1) + custom_theme
+    ggplt <- ggplt + facet_wrap( ~ ID, nrow=1) + custom_theme
     ggplt <- ggplt + xlab('distance from annotation in [bp]') + ylab('')
     ggplt <- ggplt + scale_fill_continuous(trans='log1p', low='white', high='black')
     # Insert horizontal lines
@@ -315,7 +379,7 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
 #' @inheritParams enrichmentAtAnnotation
 #' @importFrom reshape2 melt
 #' @export
-plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c("start","inside","end"), num.intervals=20, what='combinations', combinations=NULL, marks=NULL, statistic='fold') {
+plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c("start","inside","end"), num.intervals=20, what='combinations', combinations=NULL, marks=NULL, statistic='fold', logscale=TRUE) {
 
     ## Check user input
     if ((!what %in% c('combinations','peaks','counts')) | length(what) > 1) {
@@ -326,11 +390,17 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
     }
   
     ## Variables
-    hmm <- loadHmmsFromFiles(hmm, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
-    hmm$bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
+    hmm <- loadHmmsFromFiles(hmm, check.class=c(class.univariate.hmm, class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     bins <- hmm$bins
-    if (class(hmm) == class.combined.multivariate.hmm) {
+    if (class(hmm) == class.univariate.hmm) {
+        bins$counts <- rpkm.vector(hmm$bins$counts, binsize=mean(width(hmm$bins)))
+        mcols(bins)['combination.'] <- bins$state
+        bins$state <- c('zero-inflation' = 0, 'unmodified' = 0, 'modified' = 1)[bins$state]
+        hmm$info <- data.frame(file=NA, mark=1, condition=1, replicate=1, pairedEndReads=NA, controlFiles=NA, ID='1-1-rep1')
+    } else if (class(hmm) == class.combined.multivariate.hmm) {
+        bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
     } else if (class(hmm) == class.multivariate.hmm) {
+        bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
         # Rename 'combination' to 'combination.' for coherence with combinedMultiHMM
         names(mcols(bins))[grep('combination', names(mcols(bins)))] <- 'combination.'
     }
@@ -348,10 +418,12 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
 
     if (what %in% c('peaks','counts')) {
         ### Get fold enrichment
-        enrich <- enrichmentAtAnnotation(hmm$bins, hmm$info, annotation, bp.around.annotation=bp.around.annotation, region=region, what=what, num.intervals=num.intervals, statistic=statistic)
+        enrich <- enrichmentAtAnnotation(bins, hmm$info, annotation, bp.around.annotation=bp.around.annotation, region=region, what=what, num.intervals=num.intervals, statistic=statistic)
     }
     ggplts <- list()
     maxfolds <- list()
+    minfolds <- list()
+    maxcols <- list()
     for (condition in conditions) {
         if (what == 'combinations') {
             ### Get fold enrichment
@@ -382,37 +454,59 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
         df$position[df$L1 == 'inside'] <- df$position[df$L1 == 'inside'] * bp.around.annotation
         if (what == 'combinations') {
             df <- df[df$combination %in% comb.levels,]
+            df$combination <- factor(df$combination, levels=comb.levels)
         } else if (what %in% c('peaks','counts')) {
-            df$mark <- sub("-.*", "", df$track)
+            df$mark <- sub("-.*", "", df$ID)
             df <- df[df$mark %in% mark.levels, ]
-            df$condition <- sapply(strsplit(as.character(df$track), '-'), '[[', 2)
+            df$condition <- sapply(strsplit(as.character(df$ID), '-'), '[[', 2)
             if (condition != "") {
                 df <- df[df$condition == condition, ]
             }
+        }
+        if (logscale & !(statistic=='fraction')) {
+            df$value <- log(df$value)
         }
 
         ### Plot
         if (what == 'combinations') {
             ggplt <- ggplot(df) + geom_line(aes_string(x='position', y='value', col='combination'), size=2)
             if (statistic == 'fold') {
-                ggplt <- ggplt + ylab('fold enrichment')
-                ggplt <- ggplt + geom_hline(yintercept=1, lty=2)
+                if (logscale) {
+                    ggplt <- ggplt + ylab('log(observed/expected)')
+                    ggplt <- ggplt + geom_hline(yintercept=0, lty=2)
+                } else {
+                    ggplt <- ggplt + ylab('observed/expected')
+                    ggplt <- ggplt + geom_hline(yintercept=1, lty=2)
+                }
             } else if (statistic == 'fraction') {
                 ggplt <- ggplt + ylab('fraction')
             }
-            ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$combination))))
+            # ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$combination))))
+            maxcols[[condition]] <- length(unique(df$combination))
         } else if (what == 'peaks') {
             ggplt <- ggplot(df) + geom_line(aes_string(x='position', y='value', col='mark'), size=2)
             if (statistic == 'fold') {
-                ggplt <- ggplt + ylab('fold enrichment')
-                ggplt <- ggplt + geom_hline(yintercept=1, lty=2)
+                if (logscale) {
+                    ggplt <- ggplt + ylab('log(observed/expected)')
+                    ggplt <- ggplt + geom_hline(yintercept=0, lty=2)
+                } else {
+                    ggplt <- ggplt + ylab('observed/expected')
+                    ggplt <- ggplt + geom_hline(yintercept=1, lty=2)
+                }
             } else if (statistic == 'fraction') {
                 ggplt <- ggplt + ylab('fraction')
             }
-            ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$mark))))
+            # ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$mark))))
+            maxcols[[condition]] <- length(unique(df$mark))
         } else if (what == 'counts') {
-            ggplt <- ggplot(df) + geom_line(aes_string(x='position', y='value', col='track'), size=2) + ylab('RPKM')
-            ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$track))))
+            ggplt <- ggplot(df) + geom_line(aes_string(x='position', y='value', col='ID'), size=2)
+            if (logscale) {
+                ggplt <- ggplt + ylab('log(RPKM)')
+            } else {
+                ggplt <- ggplt + ylab('RPKM')
+            }
+            # ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$ID))))
+            maxcols[[condition]] <- length(unique(df$ID))
         }
         ggplt <- ggplt + theme_bw() + xlab('distance from annotation in [bp]')
         if (length(region)>=2 & 'inside' %in% region) {
@@ -420,16 +514,23 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
             labels <- c(-bp.around.annotation, -bp.around.annotation/2, '0%', '50%', '100%', bp.around.annotation/2, bp.around.annotation)
             ggplt <- ggplt + scale_x_continuous(breaks=breaks, labels=labels)
         }
-        maxfolds[[condition]] <- max(df$value, na.rm=TRUE)
+        foldsnoinf <- setdiff(df$value, c(Inf, -Inf))
+        maxfolds[[condition]] <- max(foldsnoinf, na.rm=TRUE)
+        minfolds[[condition]] <- min(foldsnoinf, na.rm=TRUE)
         ggplts[[condition]] <- ggplt
     }
-    maxfolds <- unlist(maxfolds)
+    maxfold <- max(unlist(maxfolds), na.rm=TRUE)
+    minfold <- min(unlist(minfolds), na.rm=TRUE)
+    maxcol <- max(unlist(maxcols), na.rm=TRUE)
     if (statistic == 'fraction' & what %in% c('combinations','peaks')) {
         ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_y_continuous(limits=c(0,1)) })
     } else {
-        ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_y_continuous(limits=c(0,max(maxfolds, na.rm=TRUE)*1.1)) })
+        ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_y_continuous(limits=c(minfold*(1-sign(minfold)*0.1),maxfold*(1+sign(maxfold)*0.1))) })
     }
-    if (class(hmm) == class.multivariate.hmm) {
+    ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_color_manual(values=getDistinctColors(maxcol)) }) # Add color here like this because of weird bug
+    if (class(hmm) == class.univariate.hmm) {
+        return(ggplts[[1]])
+    } else if (class(hmm) == class.multivariate.hmm) {
         return(ggplts[[1]])
     } else if (class(hmm) == class.combined.multivariate.hmm) {
         return(ggplts)
@@ -448,12 +549,12 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
 #' @param annotation A \code{\link{GRanges}} object with the annotation of interest.
 #' @param bp.around.annotation An integer specifying the number of basepairs up- and downstream of the annotation for which the enrichment will be calculated.
 #' @param region A combination of \code{c('start','inside','end')} specifying the region of the annotation for which the enrichment will be calculated. Select \code{'start'} if you have a point-sized annotation like transcription start sites. Select \code{c('start','inside','end')} if you have long annotations like genes.
-#' @param what One of \code{c('combinations','peaks','counts')} specifying which statistic to calculate.
+#' @param what One of \code{c('combinations','peaks','counts')} specifying on which feature the statistic is calculated.
 #' @param num.intervals Number of intervals for enrichment 'inside' of annotation.
 #' @param statistic The statistic to calculate. Either 'fold' for fold enrichments or 'fraction' for fraction of bins falling into the annotation.
 #' @return A \code{list()} containing \code{data.frame()}s for enrichment of combinatorial states and binary states at the start, end and inside of the annotation.
 #' @importFrom S4Vectors as.factor subjectHits queryHits
-enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=10000, region=c('start','inside','end'), what=c('combinations','peaks','counts'), num.intervals=21, statistic='fold') {
+enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=10000, region=c('start','inside','end'), what='combinations', num.intervals=21, statistic='fold') {
 
     ## Check user input
     if ((!what %in% c('combinations','peaks','counts')) | length(what) > 1) {
@@ -475,7 +576,11 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
     if ('peaks' %in% what) {
         binstates <- dec2bin(bins$state, colnames=info$ID)
         # Remove replicates
-        binstates <- binstates[ ,info.dedup$ID]
+        if (ncol(binstates) > 1) {
+            binstates <- binstates[ ,info.dedup$ID]
+        } else {
+            binstates <- matrix(binstates[ ,info.dedup$ID], ncol=1)
+        }
         colsums.binstates <- colSums(binstates)
     }
     if ('counts' %in% what) {
@@ -490,9 +595,9 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
         widths.annotation <- width(annotation) - 1
         annotation.1bp <- resize(annotation, 1, fix='start')
         # Initialize arrays
-        if ('peaks' %in% what) binstates.inside <- array(dim=c(num.intervals+1, length(info.dedup$ID)), dimnames=list(interval=intervals, track=info.dedup$ID))
+        if ('peaks' %in% what) binstates.inside <- array(dim=c(num.intervals+1, length(info.dedup$ID)), dimnames=list(interval=intervals, ID=info.dedup$ID))
         if ('combinations' %in% what) combinations.inside <- array(dim=c(num.intervals+1, length(levels(bins$combination))), dimnames=list(interval=intervals, combination=levels(bins$combination)))
-        if ('counts' %in% what) counts.inside <- array(dim=c(num.intervals+1, length(info$ID)), dimnames=list(interval=intervals, track=info$ID))
+        if ('counts' %in% what) counts.inside <- array(dim=c(num.intervals+1, length(info$ID)), dimnames=list(interval=intervals, ID=info$ID))
 
         for (interval in intervals) {
             shift <- widths.annotation * interval * c(1,-1,1)[as.integer(strand(annotation))]
@@ -506,10 +611,15 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
             index <- c(index.inside.plus, index.inside.minus)
             index <- index[index>0 & index<=length(bins)] # index could cross chromosome boundaries, but we risk it
             if ('peaks' %in% what) {
+                if (ncol(binstates) > 1) {
+                    binstates.index <- binstates[index,]
+                } else {
+                    binstates.index <- matrix(binstates[index,], ncol=1)
+                }
                 if (statistic == 'fraction') {
-                    binstates.inside[as.character(interval),] <- colSums(binstates[index,]) / length(index) # or colMeans
+                    binstates.inside[as.character(interval),] <- colSums(binstates.index) / length(index) # or colMeans
                 } else if (statistic == 'fold') {
-                    binstates.inside[as.character(interval),] <- colSums(binstates[index,]) / length(index) / colsums.binstates * length(bins)
+                    binstates.inside[as.character(interval),] <- colSums(binstates.index) / length(index) / colsums.binstates * length(bins)
                 }
             }
             if ('combinations' %in% what) {
@@ -546,17 +656,22 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
         index.start.plus <- index.start.plus[!is.na(index.start.plus)]
         index.start.minus <- index.start.minus[!is.na(index.start.minus)]
         # Occurrences at every bin position relative to feature
-        if ('peaks' %in% what) binstates.start <- array(dim=c(length(-lag:lag), length(info.dedup$ID)), dimnames=list(lag=-lag:lag, track=info.dedup$ID))
+        if ('peaks' %in% what) binstates.start <- array(dim=c(length(-lag:lag), length(info.dedup$ID)), dimnames=list(lag=-lag:lag, ID=info.dedup$ID))
         if ('combinations' %in% what) combinations.start <- array(dim=c(length(-lag:lag), length(levels(bins$combination))), dimnames=list(lag=-lag:lag, combination=levels(bins$combination)))
-        if ('counts' %in% what) counts.start <- array(dim=c(length(-lag:lag), length(info$ID)), dimnames=list(lag=-lag:lag, track=info$ID))
+        if ('counts' %in% what) counts.start <- array(dim=c(length(-lag:lag), length(info$ID)), dimnames=list(lag=-lag:lag, ID=info$ID))
         for (ilag in -lag:lag) {
             index <- c(index.start.plus+ilag, index.start.minus-ilag)
             index <- index[index>0 & index<=length(bins)]
             if ('peaks' %in% what) {
+                if (ncol(binstates) > 1) {
+                    binstates.index <- binstates[index,]
+                } else {
+                    binstates.index <- matrix(binstates[index,], ncol=1)
+                }
                 if (statistic == 'fraction') {
-                    binstates.start[as.character(ilag),] <- colSums(binstates[index,]) / length(index)
+                    binstates.start[as.character(ilag),] <- colSums(binstates.index) / length(index)
                 } else if (statistic == 'fold') {
-                    binstates.start[as.character(ilag),] <- colSums(binstates[index,]) / length(index) / colsums.binstates * length(bins)
+                    binstates.start[as.character(ilag),] <- colSums(binstates.index) / length(index) / colsums.binstates * length(bins)
                 }
             }
             if ('combinations' %in% what) {
@@ -596,17 +711,22 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
         index.end.plus <- index.end.plus[!is.na(index.end.plus)]
         index.end.minus <- index.end.minus[!is.na(index.end.minus)]
         # Occurrences at every bin position relative to feature
-        if ('peaks' %in% what) binstates.end <- array(dim=c(length(-lag:lag), length(info.dedup$ID)), dimnames=list(lag=-lag:lag, track=info.dedup$ID))
+        if ('peaks' %in% what) binstates.end <- array(dim=c(length(-lag:lag), length(info.dedup$ID)), dimnames=list(lag=-lag:lag, ID=info.dedup$ID))
         if ('combinations' %in% what) combinations.end <- array(dim=c(length(-lag:lag), length(levels(bins$combination))), dimnames=list(lag=-lag:lag, combination=levels(bins$combination)))
-        if ('counts' %in% what) counts.end <- array(dim=c(length(-lag:lag), length(info$ID)), dimnames=list(lag=-lag:lag, track=info$ID))
+        if ('counts' %in% what) counts.end <- array(dim=c(length(-lag:lag), length(info$ID)), dimnames=list(lag=-lag:lag, ID=info$ID))
         for (ilag in -lag:lag) {
             index <- c(index.end.plus+ilag, index.end.minus-ilag)
             index <- index[index>0 & index<=length(bins)]
             if ('peaks' %in% what) {
+                if (ncol(binstates) > 1) {
+                    binstates.index <- binstates[index,]
+                } else {
+                    binstates.index <- matrix(binstates[index,], ncol=1)
+                }
                 if (statistic == 'fraction') {
-                    binstates.end[as.character(ilag),] <- colSums(binstates[index,]) / length(index)
+                    binstates.end[as.character(ilag),] <- colSums(binstates.index) / length(index)
                 } else if (statistic == 'fold') {
-                    binstates.end[as.character(ilag),] <- colSums(binstates[index,]) / length(index) / colsums.binstates * length(bins)
+                    binstates.end[as.character(ilag),] <- colSums(binstates.index) / length(index) / colsums.binstates * length(bins)
                 }
             }
             if ('combinations' %in% what) {

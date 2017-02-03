@@ -874,9 +874,9 @@ exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination
 
     # Write first line to file
     if (append) {
-        message('appending to file ',filename)
+        ptm <- startTimedMessage('Appending to file ',filename, ' ...')
     } else {
-        message('Writing to file ',filename)
+        ptm <- startTimedMessage('Writing to file ',filename, ' ...')
         cat("", file=filename.gz)
     }
     
@@ -888,6 +888,10 @@ exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination
         gr$score <- 0
     } else {
         gr$score <- mcols(gr)[,scorecol]
+				# Check if scorecolumn follows the UCSC convention
+				if (min(gr$score) < 0 | max(gr$score) > 1000 | all(gr$score<=1.2) | !is.integer(gr$score)) {
+						warning("Column '", scorecol, "' should contain integer values between 0 and 1000 for compatibility with the UCSC convention.")
+				}
     }
     regions <- as.data.frame(gr)[c('chromosome','start','end','score','strand')]
     regions$strand <- sub("\\*", ".", regions$strand)
@@ -897,13 +901,15 @@ exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination
         regions$name <- mcols(gr)[,namecol]
     }
     regions <- regions[c('chromosome','start','end','name','score','strand')]
-    # Make score integer
-    if (min(regions$score) < 0 | max(regions$score) > 1000 | all(regions$score<=1.2) | !is.integer(regions$score)) {
-        warning("Column '", scorecol, "' should contain integer values between 0 and 1000 for compatibility with the UCSC convention.")
-    }
-    df <- cbind(regions, thickStart=regions$start, thickEnd=regions$end)
+    df <- regions
+    # Convert from 1-based closed to 0-based half open
+    df$start <- df$start - 1
+    
     
     if (!is.null(colorcol)) {
+        df <- cbind(regions, thickStart=regions$start, thickEnd=regions$end)
+        # Convert from 1-based closed to 0-based half open
+        df$thickStart <- df$thickStart - 1
         # Generate the colors for each element in 'namecol'
         if (colorcol %in% names(mcols(gr))) {
             if (is.null(colors)) {
@@ -921,9 +927,6 @@ exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination
         }
     }
     
-    # Convert from 1-based closed to 0-based half open
-    df$start <- df$start - 1
-    df$thickStart <- df$thickStart - 1
     if (nrow(df) == 0) {
         warning('No regions in input')
     } else {
@@ -931,5 +934,6 @@ exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination
     }
 
     close(filename.gz)
+    stopTimedMessage(ptm)
 
 }

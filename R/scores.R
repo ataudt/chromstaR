@@ -29,7 +29,7 @@ differentialScoreSum <- function(mat, info, FUN='-') {
         return(NULL)
     }
     differential.scores <- differentialScores(mat, info, FUN)
-    differential.score <- rowSums(as.data.frame(differential.scores))
+    differential.score <- do.call(sum, differential.scores)
     return(differential.score)
 }
 

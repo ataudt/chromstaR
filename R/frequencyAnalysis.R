@@ -19,11 +19,15 @@ genomicFrequencies <- function(multi.hmm, combinations=NULL, per.mark=FALSE) {
 
     multi.hmm <- loadHmmsFromFiles(multi.hmm, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     bins <- multi.hmm$bins
+    segs <- multi.hmm$segments
+    peaks <- multi.hmm$peaks
     
     if (per.mark) {
-        binstates <- dec2bin(bins$state, colnames=multi.hmm$info$ID)
-        t <- colSums(binstates) / nrow(binstates)
-        return(t)
+        # binstates <- dec2bin(bins$state, colnames=multi.hmm$info$ID)
+        # t <- colSums(binstates) / nrow(binstates)
+        t <- sapply(peaks, function(peak) { sum(as.numeric(width(peak))) }) / sum(as.numeric(width(bins)))
+        s <- sapply(peaks, length)
+        return(list(frequency=t, domains=s))
     }
       
     if (class(multi.hmm)==class.multivariate.hmm) {
@@ -35,18 +39,22 @@ genomicFrequencies <- function(multi.hmm, combinations=NULL, per.mark=FALSE) {
         }
         t <- table(bins$combination) / length(bins)
         t <- t[names(t) %in% comb.levels]
-        return(t)
+        s <- table(segs$combination)
+        s <- s[names(s) %in% comb.levels]
+        return(list(frequency=t, domains=s))
       
     } else if (class(multi.hmm)==class.combined.multivariate.hmm) {
       
         if (is.null(combinations)) {
-            comb.levels <- unique(as.vector(sapply(mcols(bins)[grepl('combination', names(mcols(bins)))], levels)))
+            comb.levels <- unique(as.vector(sapply(getCombinations(bins), levels)))
         } else {
             comb.levels <- combinations
         }
         t <- sapply(mcols(bins)[grepl('combination', names(mcols(bins)))], function(x) { table(x) / length(bins) })
         t <- t[rownames(t) %in% comb.levels,]
-        return(t)
+        s <- sapply(mcols(segs)[grepl('combination', names(mcols(segs)))], table)
+        s <- s[rownames(s) %in% comb.levels,]
+        return(list(frequency=t, domains=s))
       
     }
 }
@@ -140,6 +148,13 @@ transitionFrequencies <- function(multi.hmms=NULL, combined.hmm=NULL, zero.state
     # Cumulative frequencies
     freqtrans$cumulative.frequency <- cumsum(freqtrans$frequency)
     stopTimedMessage(ptm)
+    
+    ### Number of domains ###
+    ptm <- startTimedMessage("Number of domains ...")
+    rle.gentrans <- rle(as.character(gentrans))
+    ndomains <- table(rle.gentrans$values)
+    freqtrans$domains <- ndomains[freqtrans$transition]
+    stopTimedMessage(ptm)
 
     ### Assigning groups for frequency table ###
     ptm <- startTimedMessage("Assigning groups ...")
@@ -156,6 +171,9 @@ transitionFrequencies <- function(multi.hmms=NULL, combined.hmm=NULL, zero.state
 
     ## Remove unneeded column
     freqtrans$transition <- NULL
+    
+    ## Reorder columns
+    freqtrans <- freqtrans[, c(grep('combination', names(freqtrans), value=TRUE), 'domains', 'frequency', 'cumulative.frequency', 'group')]
     
     ## Return value ##
     return(list(table=freqtrans, per.bin=gentrans))

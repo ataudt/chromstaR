@@ -4,10 +4,10 @@
 \alias{unis2pseudomulti}
 \title{Combine univariate HMMs to a multivariate HMM}
 \usage{
-unis2pseudomulti(uni.hmm.list)
+unis2pseudomulti(hmms)
 }
 \arguments{
-\item{uni.hmm.list}{A named list of \code{\link{uniHMM}} objects. Names will be used to generate the combinations.}
+\item{hmms}{A named list of \code{\link{uniHMM}} objects. Names will be used to generate the combinations.}
 }
 \value{
 A \code{\link{multiHMM}} object.

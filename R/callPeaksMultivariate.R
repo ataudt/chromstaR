@@ -78,6 +78,11 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
         ### Make return object ###
             result <- list()
             result$info <- hmm$info
+            if (is.null(result$info)) {
+                n <- 1
+                result$info <- data.frame(file=rep(NA, n), mark=1:n, condition=1:n, replicate=1, pairedEndReads=rep(NA, n), controlFiles=rep(NA, n))
+                result$info$ID <- paste0(result$info$mark, '-', result$info$condition, '-rep', result$info$replicate)
+            }
         ## Bin coordinates, posteriors and states
             result$bins <- hmm$bins
             result$bins$score <- NULL
@@ -133,7 +138,7 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
     p <- prepareMultivariate(hmms, use.states=use.states, max.states=max.states, chromosomes=chromosomes)
 
     if (is.null(chromosomes)) {
-        chromosomes <- seqlevels(p$bins)
+        chromosomes <- intersect(seqlevels(p$bins), unique(seqnames(p$bins)))
     }
 
     ## Run multivariate per chromosome
@@ -167,7 +172,7 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
             for (chrom in chromosomes) {
                 ptm <- startTimedMessage("Chromosome = ", chrom, "\n")
                 bins <- p$bins[seqnames(p$bins)==chrom]
-                model <- suppressMessages( runMultivariate(bins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, correlationMatrix=p$correlationMatrix, correlationMatrixInverse=p$correlationMatrixInverse, determinant=p$determinant, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity) )
+                model <- runMultivariate(bins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, correlationMatrix=p$correlationMatrix, correlationMatrixInverse=p$correlationMatrixInverse, determinant=p$determinant, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
                 message("Time spent for chromosome = ", chrom, ":", appendLF=FALSE)
                 stopTimedMessage(ptm)
                 models[[chrom]] <- model
@@ -396,6 +401,11 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
     }
     info <- do.call(rbind, info)
     rownames(info) <- NULL
+    if (is.null(info)) {
+        n <- nummod
+        info <- data.frame(file=rep(NA, n), mark=1:n, condition=1:n, replicate=rep(1, n), pairedEndReads=rep(NA, n), controlFiles=rep(NA, n))
+        info$ID <- paste0(info$mark, '-', info$condition, '-rep', info$replicate)
+    }
     bins$counts <- counts
     colnames(bins$counts) <- info$ID
     maxcounts <- max(bins$counts)
@@ -507,7 +517,8 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
         }
         temp <- tryCatch({
             if (nrow(z.temp) > 100) {
-                correlationMatrix[,,istate] <- cor(z.temp)
+                correlationMatrix[,,istate] <- suppressWarnings( cor(z.temp) )
+                correlationMatrix[,,istate][is.na(correlationMatrix[,,istate])] <- 0
                 determinant[istate] <- det( correlationMatrix[,,istate] )
                 correlationMatrixInverse[,,istate] <- chol2inv(chol(correlationMatrix[,,istate]))
             } else {
@@ -516,12 +527,10 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
                 correlationMatrixInverse[,,istate] <- diag(nummod) # solve(diag(x)) == diag(x)
             }
             0
-        }, warning = function(war) {
-            1
         }, error = function(err) {
-            1
+            2
         })
-        if (temp!=0) {
+        if (temp==2) {
             correlationMatrix[,,istate] <- diag(nummod)
             determinant[istate] <- 1
             correlationMatrixInverse[,,istate] <- diag(nummod)
@@ -572,3 +581,13 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
     return(out)
 }
 
+
+### Get real transition probabilities ###
+transProbs <- function(model) {
+    bins <- model$bins
+    df <- data.frame(from = bins$combination[-length(bins)], to = bins$combination[-1])
+    t <- table(df)
+    t <- t[rownames(model$transitionProbs), colnames(model$transitionProbs)]
+    t <- sweep(t, MARGIN = 1, STATS = rowSums(t), FUN = '/')
+    return(t)
+}

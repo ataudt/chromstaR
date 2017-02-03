@@ -5,7 +5,7 @@
 #' Use this function if you want to combine ChIP-seq samples without actually running a multivariate Hidden Markov Model. The resulting object will be of class \code{\link{multiHMM}} but will not be truly multivariate.
 #'
 #' @author Aaron Taudt
-#' @param uni.hmm.list A named list of \code{\link{uniHMM}} objects. Names will be used to generate the combinations.
+#' @param hmms A named list of \code{\link{uniHMM}} objects. Names will be used to generate the combinations.
 #' @return A \code{\link{multiHMM}} object.
 #' @export
 #' @examples
@@ -36,27 +36,27 @@
 #'genomicFrequencies(real.multi.HMM)
 #'genomicFrequencies(pseudo.multi.HMM)
 #'
-unis2pseudomulti <- function(uni.hmm.list) {
+unis2pseudomulti <- function(hmms) {
 
     # Load models
-    uni.hmm.list <- loadHmmsFromFiles(uni.hmm.list, check.class=class.univariate.hmm)
+    hmms <- loadHmmsFromFiles(hmms, check.class=class.univariate.hmm)
 
     # Extract coordinates and other stuff
-    nummod = length(uni.hmm.list)
-    bins <- uni.hmm.list[[1]]$bins
+    nummod = length(hmms)
+    bins <- hmms[[1]]$bins
     bins$counts <- NULL
     bins$state <- NULL
-    numbins = length(uni.hmm.list[[1]]$bins)
-    info <- do.call(rbind, lapply(uni.hmm.list, function(x) { x$info }))
-    distributions = lapply(uni.hmm.list,"[[","distributions")
-    weights = lapply(uni.hmm.list,"[[","weights")
+    numbins = length(hmms[[1]]$bins)
+    info <- do.call(rbind, lapply(hmms, function(x) { x$info }))
+    distributions = lapply(hmms,"[[","distributions")
+    weights = lapply(hmms,"[[","weights")
 
     # Extract the reads
-    ptm <- startTimedMessage("Extracting read counts from uni.hmm.list ...")
+    ptm <- startTimedMessage("Extracting read counts from hmms ...")
     reads = matrix(NA, ncol=nummod, nrow=numbins)
     colnames(reads) <- info$ID
     for (imod in 1:nummod) {
-        reads[,imod] = uni.hmm.list[[imod]]$bins$counts
+        reads[,imod] = hmms[[imod]]$bins$counts
     }
     maxreads = max(reads)
     bins$counts <- reads
@@ -64,12 +64,12 @@ unis2pseudomulti <- function(uni.hmm.list) {
 
     ## Get combinatorial states
     ptm <- startTimedMessage("Getting combinatorial states ...")
-    combstates.per.bin = combinatorialStates(uni.hmm.list)
+    combstates.per.bin = combinatorialStates(hmms)
     comb.states.table = table(combstates.per.bin)
     comb.states = as.numeric(names(sort(comb.states.table, decreasing=TRUE)))
     numstates <- length(comb.states)
     bins$state <- factor(combstates.per.bin, levels=comb.states)
-    binary.comb.states <- dec2bin(comb.states, colnames=names(uni.hmm.list))
+    binary.comb.states <- dec2bin(comb.states, colnames=names(hmms))
     binary.comb.states.list <- list()
     for (icol in 1:ncol(binary.comb.states)) {
         binary.comb.states.list[[colnames(binary.comb.states)[icol]]] <- c('',colnames(binary.comb.states)[icol])[binary.comb.states[,icol]+1]
@@ -86,17 +86,12 @@ unis2pseudomulti <- function(uni.hmm.list) {
     
     ## Calculate transition matrix
     ptm <- startTimedMessage("Estimating transition matrix ...")
-    A.estimated = matrix(0, ncol=2^nummod, nrow=2^nummod)
-    colnames(A.estimated) = 1:2^nummod-1
-    rownames(A.estimated) = 1:2^nummod-1
-    for (i1 in 1:(length(combstates.per.bin)-1)) {
-        from = combstates.per.bin[i1] + 1
-        to = combstates.per.bin[i1+1] + 1
-        A.estimated[from,to] = A.estimated[from,to] + 1
-    }
-    A.estimated = sweep(A.estimated, 1, rowSums(A.estimated), "/")
+    df <- data.frame(from = combstates.per.bin[-length(combstates.per.bin)], to = combstates.per.bin[-1])
+    t <- table(df)
+    t <- sweep(t, 1, rowSums(t), "/")
     # Select only states that are in data
-    A.estimated = A.estimated[as.character(comb.states),as.character(comb.states)]
+    t <- t[as.character(comb.states),as.character(comb.states)]
+    t.estimated <- t
     stopTimedMessage(ptm)
 
     ## Return multi.hmm
@@ -119,7 +114,7 @@ unis2pseudomulti <- function(uni.hmm.list) {
         tstates <- table(combstates.per.bin)
         result$weights <- sort(tstates/sum(tstates), decreasing=TRUE)
         # Transition matrices
-        result$transitionProbs <- A.estimated
+        result$transitionProbs <- t.estimated
         # Distributions
         result$distributions <- distributions
         names(result$distributions) <- info$ID

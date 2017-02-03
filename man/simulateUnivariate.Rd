@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulate.R
 \name{simulateUnivariate}
 \alias{simulateUnivariate}
-\title{Simulate data}
+\title{Simulate univariate data}
 \usage{
 simulateUnivariate(bins, transition, emission, fragLen = 50)
 }

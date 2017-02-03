@@ -1,7 +1,7 @@
 Package: chromstaR
 Type: Package
 Title: Combinatorial and Differential Chromatin State Analysis for ChIP-Seq Data
-Version: 1.1.1
+Version: 1.1.2
 Date: 2016-10-19
 Author: Aaron Taudt, Maria Colome Tatche, Matthias Heinig, Minh Anh Nguyen
 Maintainer: Aaron Taudt <aaron.taudt@gmail.com>
@@ -25,7 +25,8 @@ Imports:
     reshape2,
     Rsamtools,
     GenomicAlignments,
-    bamsignals
+    bamsignals,
+    mvtnorm
 Suggests:
     knitr,
     BiocStyle,
@@ -36,5 +37,5 @@ License: Artistic-2.0
 LazyLoad: yes
 VignetteBuilder: knitr
 Packaged: 2014-05-03 00:00:00 CET+1; Taudt
-biocViews: Software, DifferentialPeakCalling, HiddenMarkovModel, ChIPSeq, MultipleComparison
+biocViews: Software, DifferentialPeakCalling, HiddenMarkovModel, ChIPSeq, HistoneModification, MultipleComparison
 RoxygenNote: 5.0.1
