@@ -15,8 +15,14 @@
 #'
 #'@examples
 #'## Make fixed-width bins of size 500kb and 1Mb
-#'bins <- fixedWidthBins(assembly='mm10', chromosome.format='NCBI', binsizes=c(5e5,1e6))
+#'data(rn4_chrominfo)
+#'chrom.lengths <- rn4_chrominfo$length
+#'names(chrom.lengths) <- rn4_chrominfo$chromosome
+#'bins <- fixedWidthBins(chrom.lengths=chrom.lengths, binsizes=c(5e5,1e6))
 #'bins
+#'
+#'## Make bins using NCBI server (requires internet connection)
+#'# bins <- fixedWidthBins(assembly='mm10', chromosome.format='NCBI', binsizes=c(5e5,1e6))
 #'
 fixedWidthBins <- function(bamfile=NULL, assembly=NULL, chrom.lengths=NULL, chromosome.format, binsizes=1e6, chromosomes=NULL) {
 
@@ -78,11 +84,16 @@ fixedWidthBins <- function(bamfile=NULL, assembly=NULL, chrom.lengths=NULL, chro
       
         ptm <- startTimedMessage("Making fixed-width bins for bin size ", binsize, " ...")
         chrom.lengths.floor <- floor(chrom.lengths / binsize) * binsize
-        bins <- unlist(GenomicRanges::tileGenome(chrom.lengths.floor[chroms2use], tilewidth=binsize), use.names=FALSE)
+        clfloor2use <- chrom.lengths.floor[chroms2use]
+        clfloor2use <- clfloor2use[clfloor2use >= binsize]
+        if (length(clfloor2use) == 0) {
+            stop("All selected chromosomes are smaller than binsize ", binsize)
+        }
+        bins <- unlist(GenomicRanges::tileGenome(clfloor2use, tilewidth=binsize), use.names=FALSE)
         if (any(width(bins)!=binsize)) {
             stop("tileGenome failed")
         }
-        seqlengths(bins) <- chrom.lengths[chroms2use]
+        seqlengths(bins) <- chrom.lengths[seqlevels(bins)]
         bins.list[[as.character(binsize)]] <- bins
 
         skipped.chroms <- setdiff(seqlevels(bins), as.character(unique(seqnames(bins))))
