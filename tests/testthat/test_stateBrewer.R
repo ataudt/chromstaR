@@ -1,5 +1,4 @@
-message("===========")
-message("state.brewer")
+messageU("state.brewer")
 
 ### Test first case without replicates ###
 message("First test case")

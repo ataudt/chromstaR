@@ -1,5 +1,4 @@
-message("==========")
-message("State swap")
+messageU("State swap")
 
 ### Test all binned data in folder stateswap for correct convergence ###
 files <- list.files('stateswap', full.names=TRUE)
