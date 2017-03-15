@@ -170,6 +170,19 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     ## Write the experiment table to file
     utils::write.table(exp.table, file=file.path(outputfolder, 'experiment_table.tsv'), col.names=TRUE, quote=FALSE, row.names=FALSE, sep='\t')
     
+    ## Parallelization ##
+    if (numcpu > 1) {
+        ptm <- startTimedMessage("Setting up parallel execution with ", numcpu, " threads ...")
+        cl <- parallel::makeCluster(numcpu)
+        doParallel::registerDoParallel(cl)
+        on.exit(
+            if (conf[['numCPU']] > 1) {
+                parallel::stopCluster(cl)
+            }
+        )
+        stopTimedMessage(ptm)
+    }
+  
   
     #==============
     ### Binning ###
@@ -285,19 +298,6 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     ### Univariate peak calling ###
     #==============================
     messageU("Calling univariate peaks")
-    ## Parallelization ##
-    if (numcpu > 1) {
-        ptm <- startTimedMessage("Setting up parallel execution with ", numcpu, " threads ...")
-        cl <- parallel::makeCluster(numcpu)
-        doParallel::registerDoParallel(cl)
-        on.exit(
-            if (conf[['numCPU']] > 1) {
-                parallel::stopCluster(cl)
-            }
-        )
-        stopTimedMessage(ptm)
-    }
-  
     if (!file.exists(unipath)) { dir.create(unipath) }
     if (!file.exists(uniplotpath)) { dir.create(uniplotpath) }
     files <- file.path(binpath, filenames)
