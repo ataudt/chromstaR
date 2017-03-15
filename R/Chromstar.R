@@ -250,11 +250,35 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
             })
         }
     }
-    for (file in datafiles) {
-        parallel.helper(file, input=FALSE)
+    ## Unparallelized
+#     for (file in datafiles) {
+#         parallel.helper(file, input=FALSE)
+#     }
+#     for (file in inputfiles) {
+#         parallel.helper(file, input=TRUE)
+#     }
+    ## Parallelized
+    if (numcpu > 1) {
+        ptm <- startTimedMessage("Binning data ...")
+        temp <- foreach (file = datafiles, .packages=c("chromstaR")) %dopar% {
+            parallel.helper(file, input=FALSE)
+        }
+        stopTimedMessage(ptm)
+    } else {
+        for (file in datafiles) {
+            parallel.helper(file, input=FALSE)
+        }
     }
-    for (file in inputfiles) {
-        parallel.helper(file, input=TRUE)
+    if (numcpu > 1) {
+        ptm <- startTimedMessage("Binning input ...")
+        temp <- foreach (file = inputfiles, .packages=c("chromstaR")) %dopar% {
+            parallel.helper(file, input=TRUE)
+        }
+        stopTimedMessage(ptm)
+    } else {
+        for (file in inputfiles) {
+            parallel.helper(file, input=TRUE)
+        }
     }
     
     #==============================
