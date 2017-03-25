@@ -901,9 +901,9 @@ exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination
         regions$name <- mcols(gr)[,namecol]
     }
     regions <- regions[c('chromosome','start','end','name','score','strand')]
-    df <- regions
     # Convert from 1-based closed to 0-based half open
-    df$start <- df$start - 1
+    regions$start <- regions$start - 1
+    df <- regions
     
     
     if (!is.null(colorcol)) {
