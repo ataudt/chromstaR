@@ -905,11 +905,8 @@ exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination
     regions$start <- regions$start - 1
     df <- regions
     
-    
     if (!is.null(colorcol)) {
         df <- cbind(regions, thickStart=regions$start, thickEnd=regions$end)
-        # Convert from 1-based closed to 0-based half open
-        df$thickStart <- df$thickStart - 1
         # Generate the colors for each element in 'namecol'
         if (colorcol %in% names(mcols(gr))) {
             if (is.null(colors)) {
