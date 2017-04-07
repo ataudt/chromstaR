@@ -34,7 +34,7 @@
 #'data(experiment_table)
 #'binned <- binReads(file, experiment.table=experiment_table,
 #'                   assembly=rn4_chrominfo, binsizes=1000,
-#'                   chromosomes='chr12')
+#'                   stepsizes=500, chromosomes='chr12')
 #'print(binned)
 #'
 binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chromosomes=NULL, pairedEndReads=FALSE, min.mapq=10, remove.duplicate.reads=TRUE, max.fragment.width=1000, blacklist=NULL, binsizes=1000, stepsizes=1/5 * binsizes, reads.per.bin=NULL, bins=NULL, variable.width.reference=NULL, use.bamsignals=TRUE, format=NULL) {

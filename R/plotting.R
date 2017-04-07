@@ -216,7 +216,7 @@ heatmapCombinations <- function(model=NULL, marks=NULL, emissionProbs=NULL) {
 #'data(experiment_table)
 #'binned <- binReads(file, experiment.table=experiment_table,
 #'                   assembly=rn4_chrominfo, binsizes=1000,
-#'                   chromosomes='chr12')
+#'                   stepsizes=500, chromosomes='chr12')
 #'plotHistogram(binned)
 #'## Fit the univariate Hidden Markov Model
 #'hmm <- callPeaksUnivariate(binned, max.time=60, eps=1)

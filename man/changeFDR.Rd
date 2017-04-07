@@ -30,7 +30,7 @@ file <- system.file("extdata", "euratrans",
 ## Bin the file into bin size 1000bp
 data(rn4_chrominfo)
 binned <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
-                  chromosomes='chr12')
+                  stepsizes=500, chromosomes='chr12')
 ## Fit the univariate Hidden Markov Model
 hmm <- callPeaksUnivariate(binned, max.time=60, eps=1)
 ## Compare fits with different fdrs

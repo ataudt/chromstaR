@@ -35,8 +35,9 @@
 #'data(rn4_chrominfo)
 #'binned.data <- list()
 #'for (file in files) {
-#'  binned.data[[basename(file)]] <- binReads(file, binsizes=1000, experiment.table=exp,
-#'                                               assembly=rn4_chrominfo, chromosomes='chr12')
+#'  binned.data[[basename(file)]] <- binReads(file, binsizes=1000, stepsizes=500,
+#'                                            experiment.table=exp,
+#'                                            assembly=rn4_chrominfo, chromosomes='chr12')
 #'}
 #'# Obtain the univariate fits
 #'models <- list()

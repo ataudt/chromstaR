@@ -38,7 +38,7 @@ insertchr <- function(gr) {
 # #'## Bin the file into bin size 1000bp
 # #'data(rn4_chrominfo)
 # #'binned <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
-# #'                   chromosomes='chr12')
+# #'                   stepsizes=500, chromosomes='chr12')
 # #'## Export the binned read counts
 # #'exportBinnedData(list(binned), filename=tempfile())
 # #'
@@ -127,7 +127,7 @@ exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.f
 # #'## Bin the file into bin size 1000bp
 # #'data(rn4_chrominfo)
 # #'binned <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
-# #'                   chromosomes='chr12')
+# #'                   stepsizes=500, chromosomes='chr12')
 # #'## Fit the univariate Hidden Markov Model
 # #'hmm <- callPeaksUnivariate(binned, max.time=60, eps=1)
 # #'## Export
@@ -848,10 +848,10 @@ exportCombinedMultivariateCounts <- function(hmm, filename, header=TRUE, separat
 #'# Bin the file into bin size 1000bp
 #'data(rn4_chrominfo)
 #'binned <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
-#'                   chromosomes='chr12')
+#'                   stepsizes=500, chromosomes='chr12')
 #'plotHistogram(binned)
 #'# Export regions with read count above 20
-#'exportGRangesAsBedFile(binned[binned$counts > 20], filename=tempfile(),
+#'exportGRangesAsBedFile(binned[binned$counts[,1] > 20], filename=tempfile(),
 #'              trackname='read counts above 20')
 #'
 exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination', scorecol='score', colorcol=NULL, colors=NULL, header=TRUE, append=FALSE) {

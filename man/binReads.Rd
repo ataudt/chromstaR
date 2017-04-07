@@ -66,7 +66,7 @@ data(rn4_chrominfo)
 data(experiment_table)
 binned <- binReads(file, experiment.table=experiment_table,
                   assembly=rn4_chrominfo, binsizes=1000,
-                  chromosomes='chr12')
+                  stepsizes=500, chromosomes='chr12')
 print(binned)
 
 }

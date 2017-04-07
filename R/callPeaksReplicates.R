@@ -30,8 +30,9 @@
 #'# We use bin size 1000bp and chromosome 12 to keep the example quick
 #'binned.data <- list()
 #'for (file in files) {
-#'  binned.data[[basename(file)]] <- binReads(file, binsizes=1000, experiment.table=exp,
-#'                                               assembly=rn4_chrominfo, chromosomes='chr12')
+#'  binned.data[[basename(file)]] <- binReads(file, binsizes=1000, stepsizes=500,
+#'                                            experiment.table=exp,
+#'                                            assembly=rn4_chrominfo, chromosomes='chr12')
 #'}
 #'# The univariate fit is obtained for each replicate
 #'models <- list()
