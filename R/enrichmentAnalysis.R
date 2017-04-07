@@ -279,8 +279,7 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
     around <- round(bp.around.annotation/binsize)
     
     ## Get RPKM values
-    bins$counts <- sweep(bins$counts, MARGIN = 2, STATS = colSums(bins$counts), FUN = '/')
-    bins$counts <- bins$counts * 1e6 * 1000/mean(width(bins))
+    # bins$counts <- rpkm.matrix(bins$counts, binsize = binsize)
 
     # Subsampling for plotting of huge data.frames
     annotation <- IRanges::subsetByOverlaps(annotation, bins)
@@ -328,8 +327,8 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
         if (is.null(dim(ext.index.combination))) {
             ext.index.combination <- array(ext.index.combination, dim=c(1,dim(ext.index)[[2]]), dimnames=list(anno=rownames(ext.index)[index.combination], position=dimnames(ext.index)[[2]]))
         }
-        for (nID in colnames(bins$counts)) {
-            counts[[combination]][[nID]] <- array(bins$counts[ext.index.combination,nID], dim=dim(ext.index.combination), dimnames=dimnames(ext.index.combination))
+        for (nID in colnames(bins$counts.rpkm)) {
+            counts[[combination]][[nID]] <- array(bins$counts.rpkm[ext.index.combination,nID], dim=dim(ext.index.combination), dimnames=dimnames(ext.index.combination))
         }
     }
     stopTimedMessage(ptm)
@@ -393,14 +392,14 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
     hmm <- loadHmmsFromFiles(hmm, check.class=c(class.univariate.hmm, class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     bins <- hmm$bins
     if (class(hmm) == class.univariate.hmm) {
-        bins$counts <- rpkm.vector(hmm$bins$counts, binsize=mean(width(hmm$bins)))
+        # bins$counts <- rpkm.vector(hmm$bins$counts, binsize=mean(width(hmm$bins)))
         mcols(bins)['combination.'] <- bins$state
         bins$state <- c('zero-inflation' = 0, 'unmodified' = 0, 'modified' = 1)[bins$state]
         hmm$info <- data.frame(file=NA, mark=1, condition=1, replicate=1, pairedEndReads=NA, controlFiles=NA, ID='1-1-rep1')
     } else if (class(hmm) == class.combined.multivariate.hmm) {
-        bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
+        # bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
     } else if (class(hmm) == class.multivariate.hmm) {
-        bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
+        # bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
         # Rename 'combination' to 'combination.' for coherence with combinedMultiHMM
         names(mcols(bins))[grep('combination', names(mcols(bins)))] <- 'combination.'
     }
@@ -584,7 +583,7 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
         colsums.binstates <- colSums(binstates)
     }
     if ('counts' %in% what) {
-        counts <- bins$counts
+        counts <- bins$counts.rpkm
     }
 
     ### Calculating enrichment inside of annotation ###

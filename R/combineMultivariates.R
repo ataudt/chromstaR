@@ -87,7 +87,7 @@ combineMultivariates <- function(hmms, mode) {
         combs <- list()
         combs[[1]] <- hmm$bins$combination
         counts <- list()
-        counts[[1]] <- hmm$bins$counts
+        counts[[1]] <- hmm$bins$counts.rpkm
         posteriors <- list()
         posteriors[[1]] <- hmm$bins$posteriors
         peakScores <- list()
@@ -104,7 +104,7 @@ combineMultivariates <- function(hmms, mode) {
                 hmm <- suppressMessages( loadHmmsFromFiles(hmms[[i1]], check.class=class.multivariate.hmm)[[1]] )
                 infos[[i1]] <- hmm$info
                 combs[[i1]] <- hmm$bins$combination
-                counts[[i1]] <- hmm$bins$counts
+                counts[[i1]] <- hmm$bins$counts.rpkm
                 posteriors[[i1]] <- hmm$bins$posteriors
                 peakScores[[i1]] <- hmm$bins$peakScores
                 peaks[[i1]] <- hmm$peaks
@@ -113,13 +113,13 @@ combineMultivariates <- function(hmms, mode) {
             }
         }
         ptm <- startTimedMessage("Concatenating conditions ...")
-        counts <- do.call(cbind, counts)
         posteriors <- do.call(cbind, posteriors)
         peakScores <- do.call(cbind, peakScores)
         infos <- do.call(rbind, infos)
         conditions <- unique(infos$condition)
         states <- factor(bin2dec(do.call(cbind, binstates)))
         names(states) <- NULL
+        counts <- do.call(cbind, counts)
         names(combs) <- conditions
         combs.df <- methods::as(combs,'DataFrame')
         stopTimedMessage(ptm)
@@ -136,7 +136,7 @@ combineMultivariates <- function(hmms, mode) {
             ptm <- startTimedMessage("Processing HMM ",i1," ...")
             hmm <- suppressMessages( loadHmmsFromFiles(hmms[[i1]], check.class=class.multivariate.hmm)[[1]] )
             infos[[i1]] <- hmm$info
-            counts[[i1]] <- hmm$bins$counts
+            counts[[i1]] <- hmm$bins$counts.rpkm
             posteriors[[i1]] <- hmm$bins$posteriors
             peakScores[[i1]] <- hmm$bins$peakScores
             peaks[[i1]] <- hmm$peaks
@@ -195,7 +195,7 @@ combineMultivariates <- function(hmms, mode) {
         mcols(bins) <- NULL
         infos <- hmm$info
         conditions <- unique(infos$condition)
-        counts <- hmm$bins$counts
+        counts <- hmm$bins$counts.rpkm
         posteriors <- hmm$bins$posteriors
         peakScores <- hmm$bins$peakScores
         peaks <- hmm$peaks
@@ -222,7 +222,7 @@ combineMultivariates <- function(hmms, mode) {
         infos <- list()
         infos[[1]] <- hmm$info
         counts <- list()
-        counts[[1]] <- hmm$bins$counts
+        counts[[1]] <- hmm$bins$counts.rpkm
         posteriors <- list()
         posteriors[[1]] <- hmm$bins$posteriors
         peakScores <- list()
@@ -238,7 +238,7 @@ combineMultivariates <- function(hmms, mode) {
                 ptm <- startTimedMessage("Processing mark-condition ",i1," ...")
                 hmm <- suppressMessages( loadHmmsFromFiles(hmms[[i1]], check.class=class.multivariate.hmm)[[1]] )
                 infos[[i1]] <- hmm$info
-                counts[[i1]] <- hmm$bins$counts
+                counts[[i1]] <- hmm$bins$counts.rpkm
                 posteriors[[i1]] <- hmm$bins$posteriors
                 peakScores[[i1]] <- hmm$bins$peakScores
                 peaks[[i1]] <- hmm$peaks
@@ -290,7 +290,7 @@ combineMultivariates <- function(hmms, mode) {
     mcols(bins)[names(combs.df)] <- combs.df
     
     ## Transferring counts and posteriors
-    bins$counts <- counts
+    bins$counts.rpkm <- counts
     bins$posteriors <- posteriors
     bins$peakScores <- peakScores
 
@@ -300,7 +300,7 @@ combineMultivariates <- function(hmms, mode) {
     ### Redo the segmentation for all conditions combined
     ptm <- startTimedMessage("Redoing segmentation for all conditions combined ...")
     segments <- suppressMessages( multivariateSegmentation(bins, column2collapseBy='state') )
-    names(mcols(segments)) <- setdiff(names(mcols(bins)), c('posteriors','counts'))
+    names(mcols(segments)) <- setdiff(names(mcols(bins)), c('posteriors','counts.rpkm'))
     stopTimedMessage(ptm)
     
     ### Redo the segmentation for each condition separately

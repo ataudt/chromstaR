@@ -25,10 +25,10 @@
 #' @examples
 #'# Get example BAM files for 2 different marks in hypertensive rat
 #'file.path <- system.file("extdata","euratrans", package='chromstaRData')
-#'files <- list.files(file.path, full.names=TRUE, pattern='SHR.*bam$')[c(1:2,6:7)]
+#'files <- list.files(file.path, full.names=TRUE, pattern='SHR.*bam$')[c(1:2,6)]
 #'# Construct experiment structure
-#'exp <- data.frame(file=files, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
-#'                  condition=rep("SHR",4), replicate=c(1:2,1:2), pairedEndReads=FALSE,
+#'exp <- data.frame(file=files, mark=c("H3K27me3","H3K27me3","H3K4me3"),
+#'                  condition=rep("SHR",3), replicate=c(1:2,1), pairedEndReads=FALSE,
 #'                  controlFiles=NA)
 #'states <- stateBrewer(exp, mode='combinatorial')
 #'# Bin the data
@@ -83,11 +83,15 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
                 result$info <- data.frame(file=rep(NA, n), mark=1:n, condition=1:n, replicate=1, pairedEndReads=rep(NA, n), controlFiles=rep(NA, n))
                 result$info$ID <- paste0(result$info$mark, '-', result$info$condition, '-rep', result$info$replicate)
             }
+        ## Counts
+            result$bincounts <- hmm$bincounts
+            result$bincounts$counts <- array(NA, dim = c(length(hmm$bincounts), 1, dim(hmm$bincounts$counts)[2]), dimnames = list(bin=NULL, track=result$info$ID, offset=dimnames(hmm$bincounts$counts)[[2]]))
+            result$bincounts$counts[,1,] <- hmm$bincounts$counts
         ## Bin coordinates, posteriors and states
             result$bins <- hmm$bins
             result$bins$score <- NULL
             result$bins$posterior.modified <- NULL
-            result$bins$counts <- matrix(hmm$bins$counts, ncol=1)
+            result$bins$counts.rpkm <- matrix(hmm$bins$counts.rpkm, ncol=1)
             result$bins$state <- factor(c(0,0,1))[hmm$bins$state]
             result$bins$posteriors <- matrix(hmm$bins$posterior.modified, ncol=1, dimnames=list(NULL, result$info$ID))
             result$bins$differential.score <- 0
@@ -202,7 +206,8 @@ runMultivariate <- function(bins, info, comb.states, use.states, distributions, 
     message("")
 
     ### Define cleanup behaviour ###
-    on.exit(.C("C_multivariate_cleanup", as.integer(ncol(bins$counts))))
+    nummod <- dim(bins$counts)[2]
+    on.exit(.C("C_multivariate_cleanup", as.integer(nummod)))
 
     # Prepare input for C function
     rs <- unlist(lapply(distributions,"[",2:3,'size'))
@@ -223,81 +228,184 @@ runMultivariate <- function(bins, info, comb.states, use.states, distributions, 
         startProbs.initial <- rep(1/length(comb.states), length(comb.states))
     }
 
-    # Call the C function
-    hmm <- .C("C_multivariate_hmm",
-        counts = as.integer(as.vector(bins$counts)), # int* multiO
-        num.bins = as.integer(length(bins)), # int* T
-        max.states = as.integer(length(comb.states)), # int* N
-        num.modifications = as.integer(ncol(bins$counts)), # int* Nmod
-        comb.states = as.numeric(comb.states), # double* comb_states
-        size = as.double(rs), # double* size
-        prob = as.double(ps), # double* prob
-        w = as.double(ws), # double* w
-        correlation.matrix.inverse = as.double(correlationMatrixInverse), # double* cor_matrix_inv
-        determinant = as.double(determinant), # double* det
-        num.iterations = as.integer(max.iter), # int* maxiter
-        time.sec = as.integer(max.time), # double* maxtime
-        loglik.delta = as.double(eps), # double* eps
-        posteriors = double(length=lenPosteriors), # double* posteriors
-        get.posteriors = as.logical(get.posteriors), # bool* keep_posteriors
-        densities = double(length=lenDensities), # double* densities
-        keep.densities = as.logical(keep.densities), # bool* keep_densities
-        states = integer(length=length(bins)), # int* states
-        A = double(length=length(comb.states)*length(comb.states)), # double* A
-        proba = double(length=length(comb.states)), # double* proba
-        loglik = double(length=1), # double* loglik
-        A.initial = as.double(transitionProbs.initial), # double* initial A
-        proba.initial = as.double(startProbs.initial), # double* initial proba
-        use.initial.params = as.logical(TRUE), # bool* use_initial_params
-        num.threads = as.integer(num.threads), # int* num_threads
-        error = as.integer(0), # error handling
-        verbosity = as.integer(verbosity) # int* verbosity
-        )
+    offsets <- dimnames(bins$counts)[[3]]
+    states.list <- list()
+    aposteriors <- array(NA, dim = c(length(bins), length(comb.states), length(offsets)), dimnames = list(bin=NULL, state=comb.states, offset=offsets))
+    for (ioffset in 1:length(offsets)) {
+      
+        offset <- offsets[ioffset]
+        if (ioffset > 1) {
+            messageU("Obtaining states for step size = ", offset, overline = '-', underline = NULL)
+            ## Run only one iteration (no updating) if we are already over ioffset=1
+            max.iter <- 1
+            transitionProbs.initial <- hmm$A
+            startProbs.initial <- hmm$proba
+            verbosity <- 0
+        }
+      
+        # Call the C function
+        hmm <- .C("C_multivariate_hmm",
+            counts = as.integer(as.vector(bins$counts[,, offset])), # int* multiO
+            num.bins = as.integer(length(bins)), # int* T
+            max.states = as.integer(length(comb.states)), # int* N
+            num.modifications = as.integer(nummod), # int* Nmod
+            comb.states = as.numeric(comb.states), # double* comb_states
+            size = as.double(rs), # double* size
+            prob = as.double(ps), # double* prob
+            w = as.double(ws), # double* w
+            correlation.matrix.inverse = as.double(correlationMatrixInverse), # double* cor_matrix_inv
+            determinant = as.double(determinant), # double* det
+            num.iterations = as.integer(max.iter), # int* maxiter
+            time.sec = as.integer(max.time), # double* maxtime
+            loglik.delta = as.double(eps), # double* eps
+            posteriors = double(length=lenPosteriors), # double* posteriors
+            get.posteriors = as.logical(get.posteriors), # bool* keep_posteriors
+            densities = double(length=lenDensities), # double* densities
+            keep.densities = as.logical(keep.densities), # bool* keep_densities
+            states = integer(length=length(bins)), # int* states
+            A = double(length=length(comb.states)*length(comb.states)), # double* A
+            proba = double(length=length(comb.states)), # double* proba
+            loglik = double(length=1), # double* loglik
+            A.initial = as.double(transitionProbs.initial), # double* initial A
+            proba.initial = as.double(startProbs.initial), # double* initial proba
+            use.initial.params = as.logical(TRUE), # bool* use_initial_params
+            num.threads = as.integer(num.threads), # int* num_threads
+            error = as.integer(0), # error handling
+            verbosity = as.integer(verbosity) # int* verbosity
+            )
+                
+        ### Check convergence ###
+        if (hmm$error == 1) {
+            stop("A nan occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
+        } else if (hmm$error == 2) {
+            stop("An error occurred during the Baum-Welch! Parameter estimation terminated prematurely.")
+        }
+        
+        if (ioffset == 1) {
+            ### Make return object ###
+                result <- list()
+                result$info <- info
+            ## Parameters
+                if (!is.null(use.states)) {
+                    mapping <- use.states$combination
+                    names(mapping) <- use.states$state
+                } else {
+                    mapping <- NULL
+                }
+                result$mapping <- mapping
+                combinations <- mapping[as.character(comb.states)]
+                # Weights
+                tstates <- table(hmm$states)
+                result$weights <- sort(tstates/sum(tstates), decreasing=TRUE)
+                result$weights.univariate <- weights
+                names(result$weights.univariate) <- result$info$ID
+                # Transition matrices
+                result$transitionProbs <- matrix(hmm$A, ncol=length(comb.states), byrow=TRUE)
+                colnames(result$transitionProbs) <- combinations
+                rownames(result$transitionProbs) <- combinations
+                result$transitionProbs.initial <- matrix(hmm$A.initial, ncol=length(comb.states), byrow=TRUE)
+                colnames(result$transitionProbs.initial) <- combinations
+                rownames(result$transitionProbs.initial) <- combinations
+                # Initial probs
+                result$startProbs <- hmm$proba
+                names(result$startProbs) <- combinations
+                result$startProbs.initial <- hmm$proba.initial
+                names(result$startProbs.initial) <- combinations
+                # Distributions
+                result$distributions <- distributions
+                names(result$distributions) <- result$info$ID
+            ## Convergence info
+                convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec)
+                result$convergenceInfo <- convergenceInfo
+            ## Correlation matrices
+                result$correlation.matrix <- correlationMatrix
+            ## Add class
+                class(result) <- class.multivariate.hmm
             
-    ### Check convergence ###
-    if (hmm$error == 1) {
-        stop("A nan occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
-    } else if (hmm$error == 2) {
-        stop("An error occurred during the Baum-Welch! Parameter estimation terminated prematurely.")
+            ## Check convergence
+            if (result$convergenceInfo$loglik.delta > result$convergenceInfo$eps) {
+                war <- warning("HMM did not converge!\n")
+            }
+        }
+        ## Store states and posteriors in list
+        states.list[[offset]] <- hmm$states
+        aposteriors[,, offset] <- hmm$posteriors
+        
+        message("Time spent in multivariate HMM: ", appendLF=FALSE)
+        stopTimedMessage(ptm)
+    
+    } # loop over offsets
+
+    ### Find maximum posterior for each bin between offsets
+    ptm <- startTimedMessage("Finding maximum posterior between offsets ...")
+    ## Make bins with offset
+    if (length(offsets) > 1) {
+        stepbins <- suppressMessages( fixedWidthBins(chrom.lengths = seqlengths(bins), binsizes = as.numeric(offsets[2]))[[1]] )
+    } else {
+        stepbins <- bins
+        mcols(stepbins) <- NULL
     }
-
-    message("Time spent in multivariate HMM: ", appendLF=FALSE)
+    aposteriors.step <- array(0, dim = c(length(stepbins), length(comb.states), length(offsets)), dimnames = list(bin=NULL, state=comb.states, offset=offsets))
+    acounts.step <- array(0, dim = c(length(stepbins), nummod, length(offsets)), dimnames = list(bin=NULL, track=result$info$ID, offset=offsets))
+    astates.step <- array(0, dim = c(length(stepbins), length(offsets)), dimnames = list(bin=NULL, offset=offsets))
+    ## Inflate posteriors to new offset
+    sbins <- bins
+    mcols(sbins) <- NULL
+    for (offset in offsets) {
+        bins.shift <- suppressWarnings( shift(sbins, shift = as.numeric(offset)) )
+        ind <- findOverlaps(stepbins, bins.shift)
+        aposteriors.step[ind@from, , offset] <- aposteriors[ind@to, , offset, drop=FALSE]
+        acounts.step[ind@from, , offset] <- bins$counts[ind@to, , offset, drop=FALSE]
+        astates.step[ind@from, offset] <- states.list[[offset]][ind@to]
+    }
+    rm(aposteriors)
+    # Average and normalize counts to RPKM
+    counts.step <- apply(X = acounts.step, MARGIN = c(1,2), FUN = mean, na.rm=TRUE)
+    counts.step <- rpkm.matrix(counts.step, binsize = width(bins)[1])
+    rm(acounts.step)
+    
+    ## Find offset that maximizes the posteriors for each bin
+    ind <- apply(aposteriors.step, 1, which.max)
+    numstates <- length(comb.states)
+    ind <- ceiling(ind / numstates)
+    posteriors.step <- array(0, dim = c(length(stepbins), numstates), dimnames = list(bin=NULL, state=comb.states))
+    states.step <- numeric(length=length(stepbins))
+    for (i1 in 1:length(offsets)) {
+        mask <- ind == i1
+        posteriors.step[mask,] <- aposteriors.step[mask,,i1, drop=FALSE]
+        states.step[mask] <- astates.step[mask, i1, drop=FALSE]
+    }
+    stepbins$posteriors <- posteriors.step
     stopTimedMessage(ptm)
-
-    ### Make return object ###
-        result <- list()
-        result$info <- info
+    
+    ## Counts
+        result$bincounts <- bins
+        result$bincounts$state <- NULL
     ## Bin coordinates, posteriors and states
-        result$bins <- bins
+        result$bins <- GRanges(seqnames=seqnames(stepbins), ranges=ranges(stepbins))
+        result$bins$counts.rpkm <- counts.step
         if (!is.null(use.states$state)) {
             state.levels <- levels(use.states$state)
         } else {
             state.levels <- hmm$comb.states
         }
-        result$bins$state <- factor(hmm$states, levels=state.levels)
+        result$bins$state <- factor(states.step, levels=state.levels)
         if (get.posteriors) {
             ptm <- startTimedMessage("Transforming posteriors to `per sample` representation ...")
-            hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$max.states)
-            colnames(hmm$posteriors) <- hmm$comb.states
             binstates <- dec2bin(hmm$comb.states, ndigits=hmm$num.modifications)
-            post.per.track <- hmm$posteriors %*% binstates
+            post.per.track <- stepbins$posteriors %*% binstates
             colnames(post.per.track) <- result$info$ID
             result$bins$posteriors <- post.per.track
             result$bins$peakScores <- getPeakScores(result$bins)
             result$bins$differential.score <- differentialScoreSum(result$bins$peakScores, result$info)
             stopTimedMessage(ptm)
         }
-        ptm <- startTimedMessage("Calculating states from posteriors ...")
-        stopTimedMessage(ptm)
         if (keep.densities) {
             result$bins$densities <- matrix(hmm$densities, ncol=hmm$max.states)
             colnames(result$bins$densities) <- hmm$comb.states
         }
     ## Add combinations
-        mapping <- NULL
         if (!is.null(use.states)) {
-            mapping <- use.states$combination
-            names(mapping) <- use.states$state
             result$bins$combination <- factor(mapping[as.character(result$bins$state)], levels=levels(use.states$combination))
         } else {
             result$bins$combination <- result$bins$state
@@ -317,41 +425,7 @@ runMultivariate <- function(bins, info, comb.states, use.states, distributions, 
             result$peaks[[i1]] <- peaks
         }
         names(result$peaks) <- colnames(result$segments$peakScores)
-    ## Parameters
-        result$mapping <- mapping
-        combinations <- mapping[as.character(comb.states)]
-        # Weights
-        tstates <- table(hmm$states)
-        result$weights <- sort(tstates/sum(tstates), decreasing=TRUE)
-        result$weights.univariate <- weights
-        names(result$weights.univariate) <- result$info$ID
-        # Transition matrices
-        result$transitionProbs <- matrix(hmm$A, ncol=length(comb.states), byrow=TRUE)
-        colnames(result$transitionProbs) <- combinations
-        rownames(result$transitionProbs) <- combinations
-        result$transitionProbs.initial <- matrix(hmm$A.initial, ncol=length(comb.states), byrow=TRUE)
-        colnames(result$transitionProbs.initial) <- combinations
-        rownames(result$transitionProbs.initial) <- combinations
-        # Initial probs
-        result$startProbs <- hmm$proba
-        names(result$startProbs) <- combinations
-        result$startProbs.initial <- hmm$proba.initial
-        names(result$startProbs.initial) <- combinations
-        # Distributions
-        result$distributions <- distributions
-        names(result$distributions) <- result$info$ID
-    ## Convergence info
-        convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec)
-        result$convergenceInfo <- convergenceInfo
-    ## Correlation matrices
-        result$correlation.matrix <- correlationMatrix
-    ## Add class
-        class(result) <- class.multivariate.hmm
-    
-    ## Check convergence
-    if (result$convergenceInfo$loglik.delta > result$convergenceInfo$eps) {
-        war <- warning("HMM did not converge!\n")
-    }
+        
     return(result)
 
 }
@@ -368,7 +442,7 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
     ## Load first HMM for coordinates
     ptm <- startTimedMessage("Getting coordinates ...")
     hmm <- suppressMessages( loadHmmsFromFiles(hmms[[1]], check.class=class.univariate.hmm)[[1]] )
-    bins <- hmm$bins
+    bins <- hmm$bincounts
     mcols(bins) <- NULL
     stopTimedMessage(ptm)
 
@@ -387,17 +461,19 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
     info <- list(hmm$info)
     distributions <- list(hmm$distributions)
     weights <- list(hmm$weights)
-    counts <- matrix(NA, ncol=nummod, nrow=length(bins))
-    counts[,1] <- hmm$bins$counts
+    offsets <- dimnames(hmm$bincounts$counts)[[2]]
+    counts <- array(NA, dim = c(length(bins), nummod, length(offsets)), dimnames = list(bin=NULL, track=NULL, offset=offsets))
+    counts[,1,] <- hmm$bincounts$counts
     binary_statesmatrix <- matrix(NA, ncol=nummod, nrow=length(bins))
-    binary_statesmatrix[,1] <- c(FALSE,FALSE,TRUE)[hmm$bins$state]
+    bins.state <- hmm$bins$state[seq(from=1, to=length(hmm$bins), length.out = length(bins))]
+    binary_statesmatrix[,1] <- c(FALSE,FALSE,TRUE)[bins.state]
     for (i1 in 2:nummod) {
         hmm <- suppressMessages( loadHmmsFromFiles(hmms[[i1]], check.class=class.univariate.hmm)[[1]] )
         info[[i1]] <- hmm$info
         distributions[[i1]] <- hmm$distributions
         weights[[i1]] <- hmm$weights
-        counts[,i1] <- hmm$bins$counts
-        binary_statesmatrix[,i1] <- c(FALSE,FALSE,TRUE)[hmm$bins$state] # F,F,T corresponds to levels 'zero-inflation','unmodified','modified'
+        counts[,i1,] <- hmm$bincounts$counts
+        binary_statesmatrix[,i1] <- c(FALSE,FALSE,TRUE)[bins.state] # F,F,T corresponds to levels 'zero-inflation','unmodified','modified'
     }
     info <- do.call(rbind, info)
     rownames(info) <- NULL
@@ -477,7 +553,7 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
     z.per.bin = array(NA, dim=c(length(bins), nummod, 2), dimnames=list(bin=1:length(bins), track=info$ID, state.labels[2:3]))
     for (imod in 1:nummod) {
         for (i1 in 1:2) {
-            z.per.bin[ , imod, i1] <- z.per.read[bins$counts[,imod]+1, imod, i1]
+            z.per.bin[ , imod, i1] <- z.per.read[bins$counts[,imod,'0']+1, imod, i1]
         }
     }
 
@@ -556,11 +632,11 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
 #             if (rownames(distributions[[imod]])[ind.modstate] == 'unmodified') {
 #                 size <- distributions[[imod]][ind.modstate,'size']
 #                 prob <- distributions[[imod]][ind.modstate,'prob']
-#                 product <- product * dzinbinom(bins$counts[,imod], w=weights[[imod]]['zero-inflation'], size, prob)
+#                 product <- product * dzinbinom(bins$counts[,imod,'0'], w=weights[[imod]]['zero-inflation'], size, prob)
 #             } else if (rownames(distributions[[imod]])[ind.modstate] == 'modified') {
 #                 size <- distributions[[imod]][ind.modstate,'size']
 #                 prob <- distributions[[imod]][ind.modstate,'prob']
-#                 product <- product * stats::dnbinom(bins$counts[,imod], size, prob)
+#                 product <- product * stats::dnbinom(bins$counts[,imod,'0'], size, prob)
 #             }
 #         }
 #         exponent <- -0.5 * apply( ( z.temp %*% (correlationMatrixInverse[ , , istate] - diag(nummod)) ) * z.temp, 1, sum)

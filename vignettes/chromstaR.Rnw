@@ -48,7 +48,7 @@ data(rn4_chrominfo)
 head(rn4_chrominfo)
 # We use bin size 1000bp and chromosome 12 to keep the example quick
 binned.data <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
-                        chromosomes='chr12')
+                        stepsizes=500, chromosomes='chr12')
 print(binned.data)
 @
 
@@ -102,7 +102,7 @@ data(rn4_chrominfo)
 head(rn4_chrominfo)
 # We use bin size 1000bp and chromosome 12 to keep the example quick
 binned.data <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
-                        chromosomes='chr12')
+                        stepsizes=500, chromosomes='chr12')
 @
 
 <<univariate_broad_peak_calling, results='markup', eval=TRUE, message=FALSE>>=
@@ -141,7 +141,7 @@ file <- system.file("extdata","euratrans","lv-H4K20me1-BN-male-bio1-tech1.bam",
                        package="chromstaRData")
 data(rn4_chrominfo)
 binned.data <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
-                        chromosomes='chr12')
+                        stepsizes=500, chromosomes='chr12')
 model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
 plotHistogram(model) + ggtitle('H4K20me1')
 @
@@ -191,7 +191,7 @@ exp <- data.frame(file=files, mark='H3K27me3', condition='SHR', replicate=1:4,
 # We use bin size 1000bp and chromosome 12 to keep the example quick
 binned.data <- list()
 for (file in files) {
-  binned.data[[basename(file)]] <- binReads(file, binsize=1000,
+  binned.data[[basename(file)]] <- binReads(file, binsize=1000, stepsizes=500, 
                                          assembly=rn4_chrominfo, chromosomes='chr12',
                                          experiment.table=exp)
 }
@@ -260,8 +260,9 @@ head(rn4_chrominfo)
 #=== Step 2: Run Chromstar ===
 ## Run ChromstaR
 Chromstar(inputfolder, experiment.table=experiment_table_H4K20me1,
-          outputfolder=outputfolder, numCPU=4, binsize=1000, assembly=rn4_chrominfo,
-          prefit.on.chr='chr12', chromosomes='chr12', mode='differential')
+          outputfolder=outputfolder, numCPU=4, binsize=1000, stepsize=500, 
+          assembly=rn4_chrominfo, prefit.on.chr='chr12', chromosomes='chr12',
+          mode='differential')
 @
 <<multivariate_differential_listfiles, results='markup', message=FALSE, eval=TRUE>>=
 ## Results are stored in 'outputfolder' and can be loaded for further processing
@@ -320,8 +321,9 @@ head(rn4_chrominfo)
 #=== Step 2: Run Chromstar ===
 ## Run ChromstaR
 Chromstar(inputfolder, experiment.table=experiment_table_SHR,
-          outputfolder=outputfolder, numCPU=4, binsize=1000, assembly=rn4_chrominfo,
-          prefit.on.chr='chr12', chromosomes='chr12', mode='combinatorial')
+          outputfolder=outputfolder, numCPU=4, binsize=1000, stepsize=500,
+          assembly=rn4_chrominfo, prefit.on.chr='chr12', chromosomes='chr12',
+          mode='combinatorial')
 @
 
 <<multivariate_combinatorial_listfiles, results='markup', message=FALSE, eval=TRUE, fig.width=4, fig.height=3, out.width='0.5\\textwidth'>>=
@@ -459,8 +461,9 @@ head(rn4_chrominfo)
 #=== Step 2: Run Chromstar ===
 ## Run ChromstaR
 Chromstar(inputfolder, experiment.table=experiment_table,
-          outputfolder=outputfolder, numCPU=4, binsize=1000, assembly=rn4_chrominfo,
-          prefit.on.chr='chr12', chromosomes='chr12', mode='differential')
+          outputfolder=outputfolder, numCPU=4, binsize=1000, stepsize=500,
+          assembly=rn4_chrominfo, prefit.on.chr='chr12', chromosomes='chr12',
+          mode='differential')
 @
 <<combined_listfiles, results='markup', message=FALSE, eval=TRUE>>=
 ## Results are stored in 'outputfolder' and can be loaded for further processing

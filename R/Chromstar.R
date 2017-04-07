@@ -8,6 +8,7 @@
 #' @param configfile A file specifying the parameters of this function (without \code{inputfolder}, \code{outputfolder} and \code{configfile}). Having the parameters in a file can be handy if many samples with the same parameter settings are to be run. If a \code{configfile} is specified, it will take priority over the command line parameters.
 #' @param numCPU Number of threads to use for the analysis. Beware that more CPUs also means more memory is needed. If you experience crashes of R with higher numbers of this parameter, leave it at \code{numCPU=1}.
 #' @param binsize An integer specifying the bin size that is used for the analysis.
+#' @param stepsize An integer specifying the step size for analysis.
 #' @param assembly A \code{data.frame} or tab-separated file with columns 'chromosome' and 'length'. Alternatively a character specifying the assembly, see \code{\link[GenomeInfoDb]{fetchExtendedChromInfoFromUCSC}} for available assemblies. Specifying an assembly is only necessary when importing BED files. BAM files are handled automatically.
 #' @inheritParams readBedFileAsGRanges
 #' @inheritParams callPeaksUnivariate
@@ -45,7 +46,7 @@
 #'          prefit.on.chr='chr12', chromosomes='chr12', mode='combinatorial', eps.univariate=1,
 #'          eps.multivariate=1)
 #'
-Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps.univariate=0.1, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=TRUE, mode='differential', max.states=128, per.chrom=TRUE, eps.multivariate=0.01, exclusive.table=NULL) {
+Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, stepsize=binsize/5, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps.univariate=0.1, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=TRUE, mode='differential', max.states=128, per.chrom=TRUE, eps.multivariate=0.01, exclusive.table=NULL) {
   
     #========================
     ### General variables ###
@@ -66,12 +67,14 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     total.time <- proc.time()
   
     ## Put options into list and merge with conf
-    params <- list(numCPU=numCPU, binsize=binsize, assembly=assembly, chromosomes=chromosomes, remove.duplicate.reads=remove.duplicate.reads, min.mapq=min.mapq, prefit.on.chr=prefit.on.chr, eps.univariate=eps.univariate, max.time=max.time, max.iter=max.iter, read.cutoff.absolute=read.cutoff.absolute, keep.posteriors=keep.posteriors, mode=mode, max.states=max.states, per.chrom=per.chrom, eps.multivariate=eps.multivariate, exclusive.table=exclusive.table)
+    params <- list(numCPU=numCPU, binsize=binsize, stepsize=stepsize, assembly=assembly, chromosomes=chromosomes, remove.duplicate.reads=remove.duplicate.reads, min.mapq=min.mapq, prefit.on.chr=prefit.on.chr, eps.univariate=eps.univariate, max.time=max.time, max.iter=max.iter, read.cutoff.absolute=read.cutoff.absolute, keep.posteriors=keep.posteriors, mode=mode, max.states=max.states, per.chrom=per.chrom, eps.multivariate=eps.multivariate, exclusive.table=exclusive.table)
     conf <- c(conf, params[setdiff(names(params),names(conf))])
     
     ## Helpers
     binsize <- conf[['binsize']]
+    stepsize <- conf[['stepsize']]
     binsize.string <- format(binsize, scientific=FALSE, trim=TRUE)
+    stepsize.string <- format(stepsize, scientific=FALSE, trim=TRUE)
     numcpu <- conf[['numCPU']]
     mode <- conf[['mode']]
   
@@ -89,13 +92,13 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     names(datafiles) <- basename(datafiles)
     names(IDs) <- basename(datafiles)
     rownames(exp.table) <- basename(datafiles)
-    filenames <- paste0(IDs, '_binsize', binsize.string, '.RData')
+    filenames <- paste0(IDs, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData')
     names(filenames) <- basename(datafiles)
     ## Inputfiles
     inputfiles <- unique(unlist(strsplit(as.character(exp.table$controlFiles), '\\|')))
     inputfiles <- inputfiles[!is.na(inputfiles)]
     inputfiles <- file.path(inputfolder, basename(as.character(inputfiles)))
-    inputfilenames <- paste0(basename(inputfiles), '_binsize', binsize.string, '.RData')
+    inputfilenames <- paste0(basename(inputfiles), '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData')
     names(inputfilenames) <- basename(inputfiles)
     
     ## Check usage of modes
@@ -254,7 +257,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 if (!input) {
                     exp.table.input <- exp.table
                 }
-                bins <- binReads(file=file, experiment.table=exp.table.input, assembly=chrom.lengths.df, pairedEndReads=pairedEndReads, binsizes=NULL, reads.per.bin=NULL, bins=pre.bins, chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']])
+                bins <- binReads(file=file, experiment.table=exp.table.input, assembly=chrom.lengths.df, pairedEndReads=pairedEndReads, binsizes=NULL, reads.per.bin=NULL, bins=pre.bins, stepsizes=stepsize, chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']])
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(bins, file=savename)
                 stopTimedMessage(ptm)
@@ -362,7 +365,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         names(files) <- paste0(exp.table$mark, '-', exp.table$condition)
         markconditions <- unique(names(files))
         for (markcond in markconditions) {
-            savename <- file.path(reppath, paste0(markcond, '_binsize', binsize.string, '.RData'))
+            savename <- file.path(reppath, paste0(markcond, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData'))
             if (!file.exists(savename)) {
                 mask <- names(files) == markcond
                 repfiles <- files[mask]
@@ -378,7 +381,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         
         message("Combining replicate HMMs")
         modename <- 'separate'
-        repfiles <- list.files(reppath, full.names=TRUE, pattern=paste0('binsize', binsize.string))
+        repfiles <- list.files(reppath, full.names=TRUE, pattern=paste0('binsize', binsize.string, '_stepsize', stepsize.string))
         ## Get the order correct
         names(repfiles) <- gsub('_binsize.*', '', basename(repfiles))
         ordering <- unique(gsub('-rep.*', '', IDs))

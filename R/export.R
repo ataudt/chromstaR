@@ -284,10 +284,10 @@ exportUnivariateCounts <- function(hmm.list, filename, header=TRUE, separate.fil
             cat(paste0('track type=wiggle_0 name="',trackname.string,'" description="',trackname.string,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
         }
         # Write read data
-        hmm.gr$counts <- rpkm.vector(hmm.gr$counts, binsize=mean(width(hmm.gr))) # RPKM normalization
+        # hmm.gr$counts <- rpkm.vector(hmm.gr$counts, binsize=mean(width(hmm.gr))) # RPKM normalization
         for (chrom in unique(hmm.gr$chromosome)) {
             cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-            utils::write.table(hmm.gr[hmm.gr$chromosome==chrom]$counts, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
+            utils::write.table(hmm.gr[hmm.gr$chromosome==chrom]$counts.rpkm, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
         }
         if (separate.files) {
             close(filename.gz)
@@ -495,7 +495,7 @@ exportMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=
     hmm <- loadHmmsFromFiles(hmm, check.class=class.multivariate.hmm)[[1]]
 
     ## RPKM normalization
-    hmm$bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
+    # hmm$bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
     
     ## Variables
     filename <- paste0(filename,".wig.gz")
@@ -540,7 +540,7 @@ exportMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=
                 chromr <- chrom
             }
             cat(paste0("fixedStep chrom=",chromr," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-            utils::write.table(hmm$bins[seqnames(hmm$bins)==chrom]$counts[,imod], file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
+            utils::write.table(hmm$bins[seqnames(hmm$bins)==chrom]$counts.rpkm[,imod], file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
         }
         if (separate.files) {
             close(filename.gz)
@@ -762,7 +762,7 @@ exportCombinedMultivariateCounts <- function(hmm, filename, header=TRUE, separat
     hmm <- loadHmmsFromFiles(hmm, check.class=class.combined.multivariate.hmm)[[1]]
 
     ## RPKM normalization
-    hmm$bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
+    # hmm$bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
     
     
     ## Variables
@@ -803,7 +803,7 @@ exportCombinedMultivariateCounts <- function(hmm, filename, header=TRUE, separat
                 chromr <- chrom
             }
             cat(paste0("fixedStep chrom=",chromr," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-            utils::write.table(hmm$bins[seqnames(hmm$bins)==chrom]$counts[,imod], file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
+            utils::write.table(hmm$bins[seqnames(hmm$bins)==chrom]$counts.rpkm[,imod], file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
         }
         if (separate.files) {
             close(filename.gz)

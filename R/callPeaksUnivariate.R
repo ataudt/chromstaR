@@ -60,9 +60,13 @@ callPeaksUnivariate <- function(binned.data, input.data=NULL, prefit.on.chr=NULL
             message("Loading input file(s) ", paste0(input.data, collapse=', '))
             input.datas <- loadHmmsFromFiles(input.data)
             input.data <- input.datas[[1]]
+            offsets <- dimnames(input.data$counts)[[2]]
             if (length(input.datas) > 1) {
                 for (i1 in 2:length(input.datas)) {
-                    input.data$counts <- input.data$counts + input.datas[[i1]]$counts
+                    for (ioffset in 1:length(offsets)) {
+                        offset <- offsets[ioffset]
+                        input.data$counts[,offset] <- input.data$counts[,offset, drop=FALSE] + input.datas[[i1]]$counts[,offset, drop=FALSE]
+                    }
                 }
             }
         }
@@ -192,234 +196,305 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
 
     ## Assign more variables ##
     numbins <- length(binned.data)
-    counts <- mcols(binned.data)$counts
+    binsize <- width(binned.data)[1]
     if (keep.densities) { lenDensities <- numbins * numstates } else { lenDensities <- 1 }
-
-    ### Input correction ###
-    if (!is.null(input.data)) {
-        ptm <- startTimedMessage("Correcting read counts for input ...")
-        if (is.character(input.data)) {
-            input.data <- loadHmmsFromFiles(input.data)[[1]]
+    
+    offsets <- dimnames(binned.data$counts)[[2]]
+    counts.list <- list()
+    aposteriors <- array(NA, dim = c(numbins, numstates, length(offsets)), dimnames = list(bin=NULL, state=state.labels, offset=offsets))
+    for (ioffset in 1:length(offsets)) {
+        offset <- offsets[ioffset]
+        counts <- binned.data$counts[,offset, drop=FALSE]
+        if (ioffset > 1) {
+            messageU("Obtaining states for step size = ", offset, overline = '-', underline = NULL)
+            ## Run only one iteration (no updating) if we are already over ioffset=1
+            hmm <- result
+            A.initial <- hmm$transitionProbs
+            proba.initial <- hmm$startProbs
+            size.initial <- hmm$distributions$size
+            prob.initial <- hmm$distributions$prob
+            continue.from.univariate.hmm <- TRUE
+            max.iter <- 1
+            verbosity <- 0
         }
-        # Artifacts with super high read count
-        index <- which(input.data$counts >= quantile(input.data$counts[input.data$counts>0], 0.999))
-        index <- c(index, index-1, index+1) # one neighboring bin to each side
-        index <- index[index>0 & index<=length(input.data)] # if we hit chromosome boundaries, bad luck
-        counts[index] <- 0
-        input.data$counts[index] <- 0
-        # Correction factor
-        inputf <- S4Vectors::Rle(1, length=length(input.data))
-        mean.input.counts <- mean(input.data$counts[input.data$counts>0])
-        mask.0 <- input.data$counts > 0
-        inputf[mask.0] <- mean.input.counts / as.numeric(S4Vectors::runmean(S4Vectors::Rle(input.data$counts), k=15, endrule='constant'))[mask.0]
-        inputf[inputf > 1.5] <- 1
-        inputf <- as.numeric(inputf)
-        counts <- round(counts * inputf)
-        stopTimedMessage(ptm)
-    }
-
-    ### Check if there are counts in the data, otherwise HMM will blow up ###
-    if (!any(counts!=0)) {
-        stop("All counts in data are zero. No univariate HMM done.")
-    }
-
-    ### Filter high counts out, makes HMM faster ###
-    numfiltered <- 0
-    if (continue.from.univariate.hmm) {
-        mask <- counts > read.cutoff.absolute
-        counts[mask] <- read.cutoff.absolute
-        numfiltered <- length(which(mask))
-    } else {
-        if (read.cutoff) {
-            read.cutoff.by.quantile <- as.integer(quantile(counts, read.cutoff.quantile))
-            read.cutoff.absolute <- min(read.cutoff.by.quantile, read.cutoff.absolute)
+    
+        ### Input correction ###
+        if (!is.null(input.data)) {
+            ptm <- startTimedMessage("Correcting read counts for input ...")
+            if (is.character(input.data)) {
+                input.data <- loadHmmsFromFiles(input.data)[[1]]
+            }
+            inputcounts <- input.data$counts[,offset, drop=FALSE]
+            # Artifacts with super high read count
+            index <- which(inputcounts >= quantile(inputcounts[inputcounts>0], 0.999))
+            index <- c(index, index-1, index+1) # one neighboring bin to each side
+            index <- index[index>0 & index<=length(input.data)] # if we hit chromosome boundaries, bad luck
+            counts[index] <- 0
+            inputcounts[index] <- 0
+            # Correction factor
+            inputf <- S4Vectors::Rle(1, length=length(input.data))
+            mean.input.counts <- mean(inputcounts[inputcounts>0])
+            mask.0 <- inputcounts > 0
+            inputf[mask.0] <- mean.input.counts / as.numeric(S4Vectors::runmean(S4Vectors::Rle(inputcounts), k=15, endrule='constant'))[mask.0]
+            inputf[inputf > 1.5] <- 1
+            inputf <- as.numeric(inputf)
+            counts <- round(counts * inputf)
+            stopTimedMessage(ptm)
+        }
+    
+        ### Check if there are counts in the data, otherwise HMM will blow up ###
+        if (!any(counts!=0)) {
+            stop("All counts in data are zero. No univariate HMM done.")
+        }
+    
+        ### Filter high counts out, makes HMM faster ###
+        numfiltered <- 0
+        if (continue.from.univariate.hmm) {
             mask <- counts > read.cutoff.absolute
             counts[mask] <- read.cutoff.absolute
             numfiltered <- length(which(mask))
-        }
-    }
-    if (numfiltered > 0) {
-        message("Replaced read counts > ",read.cutoff.absolute, " by ",read.cutoff.absolute," in ",numfiltered," bins to enhance performance (option 'read.cutoff').")
-    }
-
-    ### Filter out low read counts that arise when the bin size is larger than optimal (should correct the result to near optimal again) ###
-    if (!is.infinite(max.mean)) {
-        hist <- graphics::hist(counts[counts>0], breaks=0:max(counts), right=FALSE, plot=FALSE)
-        maxhist <- which.max(hist$counts)
-        if (maxhist-1 > max.mean) {    # -1 to get from 1-based histogram indices to (0-based) read counts
-            # Two empirical rules to remove low counts
-            read.counts.to.remove.1 <- which(hist$counts[1:maxhist]<=hist$counts[2]) -1
-            minlow <- which.min(hist$counts[2:maxhist])
-            read.counts.to.remove <- max(c(read.counts.to.remove.1, 2*minlow))
-            index.filtered <- which(counts>0 & counts<=read.counts.to.remove)
-            counts[index.filtered] <- 0
-            if (length(index.filtered)>0) {
-                message(paste0("Replaced read counts <= ",read.counts.to.remove," by 0. This was done because the selected bin size is considered too big for this dataset: The mean of the read counts (zeros removed) is bigger than the specified max.mean = ",max.mean,". Check the fits!"))
+        } else {
+            if (read.cutoff) {
+                read.cutoff.by.quantile <- as.integer(quantile(counts, read.cutoff.quantile))
+                read.cutoff.absolute <- min(read.cutoff.by.quantile, read.cutoff.absolute)
+                mask <- counts > read.cutoff.absolute
+                counts[mask] <- read.cutoff.absolute
+                numfiltered <- length(which(mask))
             }
         }
-    }
+        if (numfiltered > 0) {
+            message("Replaced read counts > ",read.cutoff.absolute, " by ",read.cutoff.absolute," in ",numfiltered," bins to enhance performance (option 'read.cutoff').")
+        }
     
-#     ### Initialization of emission distributions ###
-#     reads.greater.0 <- counts[counts>0]
-#     mean.counts <- mean(reads.greater.0)
-#     var.reads <- var(reads.greater.0)
-#     imean <- vector()
-#     ivar <- vector()
-#     if (init=="standard") {
-#         imean['unmodified'] <- mean.counts
-#         imean['modified'] <- mean.counts + 1
-#         ivar['unmodified'] <- var.reads
-#         ivar['modified'] <- var.reads
-#         # Make sure variance is bigger than mean for negative binomial
-#         for (i1 in 1:length(imean)) {
-#             if (imean[i1]>=ivar[i1]) {
-#                 ivar[i1] <- imean[i1] + 1
-#             }
-#         }
-#     } else if (init=="random") {
-#         for (istate in c('unmodified','modified')) {
-#             imean[istate] <- stats::runif(1, min=0, max=10*mean.counts)
-#             ivar[istate] <- stats::runif(1, min=imean[istate], max=20*mean.counts)
-#         }
-#     } else if (init=="empiric") {
-#         imean['unmodified'] <- mean.counts/2
-#         ivar['unmodified'] <- imean['unmodified']*2
-#         imean['modified'] <- mean.counts*2
-#         ivar['modified'] <- imean['modified']*2
-#     } else if (init %in% seqlevels(binned.data)) {
-#     } else if {
-#         stop("Unknown initialization procedure: ",init)
-#     }
-
-
-    ## Call univariate in a for loop to enable multiple trials
-    if (verbosity==0) {
-        ptm <- startTimedMessage("Fitting Hidden Markov Model ...")
-    }
-    modellist <- list()
-    for (i_try in 1:num.trials) {
-        if (verbosity>=1) message("------------------------------------ Try ",i_try," of ",num.trials," -------------------------------------")
-        hmm <- .C("C_univariate_hmm",
-            counts = as.integer(counts), # double* O
-            num.bins = as.integer(numbins), # int* T
-            num.states = as.integer(numstates), # int* N
-            size = double(length=numstates), # double* size
-            prob = double(length=numstates), # double* prob
-            num.iterations = as.integer(max.iter), #  int* maxiter
-            time.sec = as.integer(max.time), # double* maxtime
-            loglik.delta = as.double(eps.try), # double* eps
-            posteriors = double(length=numbins * numstates), # double* posteriors
-            densities = double(length=lenDensities), # double* densities
-            keep.densities = as.logical(keep.densities), # bool* keep_densities
-            A = double(length=numstates*numstates), # double* A
-            proba = double(length=numstates), # double* proba
-            loglik = double(length=1), # double* loglik
-            weights = double(length=numstates), # double* weights
-            ini.proc = as.integer(iniproc), # int* iniproc
-            size.initial = as.double(size.initial), # double* initial_size
-            prob.initial = as.double(prob.initial), # double* initial_prob
-            A.initial = as.double(A.initial), # double* initial_A
-            proba.initial = as.double(proba.initial), # double* initial_proba
-            use.initial.params = as.logical(continue.from.univariate.hmm), # bool* use_initial_params
-            num.threads = as.integer(num.threads), # int* num_threads
-            error = as.integer(0), # int* error (error handling)
-            read.cutoff = as.integer(max(counts)), # int* read_cutoff
-            verbosity = as.integer(verbosity) # int* verbosity
-        )
-
-        hmm$eps <- eps.try
-        if (hmm$loglik.delta > hmm$eps) {
-            warning("HMM did not converge in trial run ",i_try,"!")
+        ### Filter out low read counts that arise when the bin size is larger than optimal (should correct the result to near optimal again) ###
+        if (!is.infinite(max.mean)) {
+            hist <- graphics::hist(counts[counts>0], breaks=0:max(counts), right=FALSE, plot=FALSE)
+            maxhist <- which.max(hist$counts)
+            if (maxhist-1 > max.mean) {    # -1 to get from 1-based histogram indices to (0-based) read counts
+                # Two empirical rules to remove low counts
+                read.counts.to.remove.1 <- which(hist$counts[1:maxhist]<=hist$counts[2]) -1
+                minlow <- which.min(hist$counts[2:maxhist])
+                read.counts.to.remove <- max(c(read.counts.to.remove.1, 2*minlow))
+                index.filtered <- which(counts>0 & counts<=read.counts.to.remove)
+                counts[index.filtered] <- 0
+                if (length(index.filtered)>0) {
+                    message(paste0("Replaced read counts <= ",read.counts.to.remove," by 0. This was done because the selected bin size is considered too big for this dataset: The mean of the read counts (zeros removed) is bigger than the specified max.mean = ",max.mean,". Check the fits!"))
+                }
+            }
         }
-        # Store model in list
-        modellist[[i_try]] <- hmm
-
-        # Set init procedure to random
-        iniproc <- which('random'==c("standard","random","empiric")) # transform to int
-    }
-    if (verbosity==0) {
-        stopTimedMessage(ptm)
-    }
-
-    if (num.trials > 1) {
-        # Select fit with best loglikelihood
-        indexmax <- which.max(unlist(lapply(modellist,"[[","loglik")))
-        hmm <- modellist[[indexmax]]
-        message("Selecting try ", indexmax, " of ", length(modellist), " with best loglikelihood.")
-    }
-
-    if (eps != eps.try) {
+        
+        ## Call univariate in a for loop to enable multiple trials
         if (verbosity==0) {
-            ptm <- startTimedMessage("Refining Hidden Markov Model ...")
+            ptm <- startTimedMessage("Fitting Hidden Markov Model ...")
         }
-        # Rerun the HMM with different epsilon and initial parameters from trial run
-        if (verbosity>=1) message("------------------------- Rerunning try ",indexmax," with eps = ",eps," -------------------------")
-        hmm <- .C("C_univariate_hmm",
-            counts = as.integer(counts), # double* O
-            num.bins = as.integer(numbins), # int* T
-            num.states = as.integer(numstates), # int* N
-            size = double(length=numstates), # double* size
-            prob = double(length=numstates), # double* prob
-            num.iterations = as.integer(max.iter), #  int* maxiter
-            time.sec = as.integer(max.time), # double* maxtime
-            loglik.delta = as.double(eps), # double* eps
-            posteriors = double(length=numbins * numstates), # double* posteriors
-            densities = double(length=lenDensities), # double* densities
-            keep.densities = as.logical(keep.densities), # bool* keep_densities
-            A = double(length=numstates*numstates), # double* A
-            proba = double(length=numstates), # double* proba
-            loglik = double(length=1), # double* loglik
-            weights = double(length=numstates), # double* weights
-            ini.proc = as.integer(iniproc), # int* iniproc
-            size.initial = as.vector(hmm$size), # double* initial_size
-            prob.initial = as.vector(hmm$prob), # double* initial_prob
-            A.initial = as.vector(hmm$A), # double* initial_A
-            proba.initial = as.vector(hmm$proba), # double* initial_proba
-            use.initial.params = as.logical(1), # bool* use_initial_params
-            num.threads = as.integer(num.threads), # int* num_threads
-            error = as.integer(0), # int* error (error handling)
-            read.cutoff = as.integer(max(counts)), # int* read_cutoff
-            verbosity = as.integer(verbosity) # int* verbosity
-        )
+        modellist <- list()
+        for (i_try in 1:num.trials) {
+            if (verbosity>=1) message("------------------------------------ Try ",i_try," of ",num.trials," -------------------------------------")
+            hmm <- .C("C_univariate_hmm",
+                counts = as.integer(counts), # double* O
+                num.bins = as.integer(numbins), # int* T
+                num.states = as.integer(numstates), # int* N
+                size = double(length=numstates), # double* size
+                prob = double(length=numstates), # double* prob
+                num.iterations = as.integer(max.iter), #  int* maxiter
+                time.sec = as.integer(max.time), # double* maxtime
+                loglik.delta = as.double(eps.try), # double* eps
+                posteriors = double(length=numbins * numstates), # double* posteriors
+                densities = double(length=lenDensities), # double* densities
+                keep.densities = as.logical(keep.densities), # bool* keep_densities
+                A = double(length=numstates*numstates), # double* A
+                proba = double(length=numstates), # double* proba
+                loglik = double(length=1), # double* loglik
+                weights = double(length=numstates), # double* weights
+                ini.proc = as.integer(iniproc), # int* iniproc
+                size.initial = as.double(size.initial), # double* initial_size
+                prob.initial = as.double(prob.initial), # double* initial_prob
+                A.initial = as.double(A.initial), # double* initial_A
+                proba.initial = as.double(proba.initial), # double* initial_proba
+                use.initial.params = as.logical(continue.from.univariate.hmm), # bool* use_initial_params
+                num.threads = as.integer(num.threads), # int* num_threads
+                error = as.integer(0), # int* error (error handling)
+                read.cutoff = as.integer(max(counts)), # int* read_cutoff
+                verbosity = as.integer(verbosity) # int* verbosity
+            )
+    
+            hmm$eps <- eps.try
+            if (hmm$loglik.delta > hmm$eps & ioffset == 1) {
+                warning("HMM did not converge in trial run ",i_try,"!")
+            }
+            # Store model in list
+            modellist[[i_try]] <- hmm
+    
+            # Set init procedure to random
+            iniproc <- which('random'==c("standard","random","empiric")) # transform to int
+        }
         if (verbosity==0) {
             stopTimedMessage(ptm)
         }
+    
+        if (num.trials > 1) {
+            # Select fit with best loglikelihood
+            indexmax <- which.max(unlist(lapply(modellist,"[[","loglik")))
+            hmm <- modellist[[indexmax]]
+            message("Selecting try ", indexmax, " of ", length(modellist), " with best loglikelihood.")
+        }
+    
+        if (eps != eps.try) {
+            if (verbosity==0) {
+                ptm <- startTimedMessage("Refining Hidden Markov Model ...")
+            }
+            # Rerun the HMM with different epsilon and initial parameters from trial run
+            if (verbosity>=1) message("------------------------- Rerunning try ",indexmax," with eps = ",eps," -------------------------")
+            hmm <- .C("C_univariate_hmm",
+                counts = as.integer(counts), # double* O
+                num.bins = as.integer(numbins), # int* T
+                num.states = as.integer(numstates), # int* N
+                size = double(length=numstates), # double* size
+                prob = double(length=numstates), # double* prob
+                num.iterations = as.integer(max.iter), #  int* maxiter
+                time.sec = as.integer(max.time), # double* maxtime
+                loglik.delta = as.double(eps), # double* eps
+                posteriors = double(length=numbins * numstates), # double* posteriors
+                densities = double(length=lenDensities), # double* densities
+                keep.densities = as.logical(keep.densities), # bool* keep_densities
+                A = double(length=numstates*numstates), # double* A
+                proba = double(length=numstates), # double* proba
+                loglik = double(length=1), # double* loglik
+                weights = double(length=numstates), # double* weights
+                ini.proc = as.integer(iniproc), # int* iniproc
+                size.initial = as.vector(hmm$size), # double* initial_size
+                prob.initial = as.vector(hmm$prob), # double* initial_prob
+                A.initial = as.vector(hmm$A), # double* initial_A
+                proba.initial = as.vector(hmm$proba), # double* initial_proba
+                use.initial.params = as.logical(1), # bool* use_initial_params
+                num.threads = as.integer(num.threads), # int* num_threads
+                error = as.integer(0), # int* error (error handling)
+                read.cutoff = as.integer(max(counts)), # int* read_cutoff
+                verbosity = as.integer(verbosity) # int* verbosity
+            )
+            if (verbosity==0) {
+                stopTimedMessage(ptm)
+            }
+        }
+    
+        ### Issue warnings ###
+        hmm$eps <- eps
+        if (hmm$loglik.delta > hmm$eps & ioffset == 1) {
+            war <- warning("HMM did not converge!")
+        }
+        if (hmm$error == 1) {
+            stop("A nan occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
+        } else if (hmm$error == 2) {
+            stop("An error occurred during the Baum-Welch! Parameter estimation terminated prematurely.")
+        }
+    
+        if (ioffset == 1) {
+            ### Make return object ###
+                result <- list()
+                result$info <- attr(binned.data, 'info')
+            ## Parameters
+                # Weights
+                result$weights <- hmm$weights
+                names(result$weights) <- state.labels
+                # Transition matrices
+                transitionProbs <- matrix(hmm$A, ncol=hmm$num.states)
+                rownames(transitionProbs) <- state.labels
+                colnames(transitionProbs) <- state.labels
+                result$transitionProbs <- transitionProbs
+                transitionProbs.initial <- matrix(hmm$A.initial, ncol=hmm$num.states)
+                rownames(transitionProbs.initial) <- state.labels
+                colnames(transitionProbs.initial) <- state.labels
+                result$transitionProbs.initial <- transitionProbs.initial
+                # Initial probs
+                result$startProbs <- hmm$proba
+                names(result$startProbs) <- state.labels
+                result$startProbs.initial <- hmm$proba.initial
+                names(result$startProbs.initial) <-state.labels
+                # Distributions
+                distributions <- data.frame(type=state.distributions, size=hmm$size, prob=hmm$prob, mu=dnbinom.mean(hmm$size,hmm$prob), variance=dnbinom.variance(hmm$size,hmm$prob))
+                rownames(distributions) <- state.labels
+                result$distributions <- distributions
+                distributions.initial <- data.frame(type=state.distributions, size=hmm$size.initial, prob=hmm$prob.initial, mu=dnbinom.mean(hmm$size.initial,hmm$prob.initial), variance=dnbinom.variance(hmm$size.initial,hmm$prob.initial))
+                rownames(distributions.initial) <- state.labels
+                distributions.initial['zero-inflation',2:5] <- c(0,1,0,0)
+                result$distributions.initial <- distributions.initial
+                # post.cutoff
+                result$post.cutoff <- post.cutoff
+            ## Convergence info
+                convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec, max.mean=max.mean, read.cutoff=max(hmm$counts))
+                result$convergenceInfo <- convergenceInfo
+            ## Add class
+                class(result) <- class.univariate.hmm
+        }
+        ## Store counts and posteriors in list
+        counts.list[[offset]] <- hmm$counts
+        aposteriors[,, offset] <- hmm$posteriors
+        
+        
+    } # loop over offsets
+        
+    ### Find maximum posterior for each bin between offsets
+    ptm <- startTimedMessage("Finding maximum posterior between offsets ...")
+    ## Make bins with offset
+    if (length(offsets) > 1) {
+        stepbins <- suppressMessages( fixedWidthBins(chrom.lengths = seqlengths(binned.data), binsizes = as.numeric(offsets[2]))[[1]] )
+    } else {
+        stepbins <- binned.data
+        mcols(stepbins) <- NULL
     }
-
-    ### Issue warnings ###
-    hmm$eps <- eps
-    if (hmm$loglik.delta > hmm$eps) {
-        war <- warning("HMM did not converge!")
+    aposteriors.step <- array(0, dim = c(length(stepbins), numstates, length(offsets)), dimnames = list(bin=NULL, state=state.labels, offset=offsets))
+    acounts.step <- array(0, dim = c(length(stepbins), length(offsets)), dimnames = list(bin=NULL, offset=offsets))
+    ## Inflate posteriors to new offset
+    bins <- binned.data
+    mcols(bins) <- NULL
+    for (offset in offsets) {
+        bins.shift <- suppressWarnings( shift(bins, shift = as.numeric(offset)) )
+        ind <- findOverlaps(stepbins, bins.shift)
+        aposteriors.step[ind@from, , offset] <- aposteriors[ind@to, , offset, drop=FALSE]
+        acounts.step[ind@from, offset] <- counts.list[[offset]][ind@to]
     }
-    if (hmm$error == 1) {
-        stop("A nan occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
-    } else if (hmm$error == 2) {
-        stop("An error occurred during the Baum-Welch! Parameter estimation terminated prematurely.")
+    rm(aposteriors)
+    # Average and normalize counts to RPKM
+    counts.step <- apply(X = acounts.step, MARGIN = 1, FUN = mean, na.rm=TRUE, drop=FALSE)
+    counts.step <- rpkm.vector(counts.step, binsize = binsize)
+    rm(acounts.step)
+    
+    ## Find offset that maximizes the posteriors for each bin
+    ind <- apply(aposteriors.step, 1, which.max)
+    ind <- ceiling(ind / numstates)
+    posteriors.step <- array(0, dim = c(length(stepbins), numstates), dimnames = list(bin=NULL, state=state.labels))
+    for (i1 in 1:length(offsets)) {
+        mask <- ind == i1
+        posteriors.step[mask,] <- aposteriors.step[mask,,i1, drop=FALSE]
     }
-
-    ### Make return object ###
-        result <- list()
-        result$info <- attr(binned.data, 'info')
+    stepbins$posteriors <- posteriors.step
+    stopTimedMessage(ptm)
+    
     ## Get states
         ptm <- startTimedMessage("Calculating states from posteriors ...")
-        hmm$posteriors <- matrix(hmm$posteriors, ncol=hmm$num.states)
-        colnames(hmm$posteriors) <- state.labels
+        hmm$posteriors <- stepbins$posteriors
         threshold <- 1-post.cutoff
         if (control) {
-            states <- rep(1, hmm$num.bins)
+            states <- rep(1, ncol(hmm$posteriors))
             states[ hmm$posteriors[,2] >= hmm$posteriors[,1] ] <- 2
         } else {
-            states <- rep(NA, hmm$num.bins)
+            states <- rep(NA, ncol(hmm$posteriors))
             states[ hmm$posteriors[,3]<threshold & hmm$posteriors[,2]<=hmm$posteriors[,1] ] <- 1
             states[ hmm$posteriors[,3]<threshold & hmm$posteriors[,2]>hmm$posteriors[,1] ] <- 2
             states[ hmm$posteriors[,3]>=threshold ] <- 3
         }
         states <- state.labels[states]
+    ## Counts
+        result$bincounts <- binned.data
+        for (offset in offsets) {
+            result$bincounts$counts[, offset] <- counts.list[[offset]]
+        }
+        rm(counts.list)
+        seqlengths(result$bincounts) <- seqlengths(binned.data)
     ## Bin coordinates, posteriors and states
-        result$bins <- GRanges(seqnames=seqnames(binned.data),
-                                                        ranges=ranges(binned.data),
-                                                        counts=hmm$counts,
-                                                        state=states) 
+        result$bins <- GRanges(seqnames=seqnames(stepbins), ranges=ranges(stepbins))
+        result$bins$counts.rpkm <- counts.step
+        mcols(result$bins)[, 'state'] <- states
         result$bins$posteriors <- hmm$posteriors
         if (!control) {
             result$bins$posterior.modified <- hmm$posteriors[,'modified']
@@ -427,14 +502,14 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
         if (keep.densities) {
             result$bins$densities <- matrix(hmm$densities, ncol=hmm$num.states)
         }
-        seqlengths(result$bins) <- seqlengths(binned.data)
+        seqlengths(result$bins) <- seqlengths(stepbins)
         stopTimedMessage(ptm)
     ## Peak score as maximum posterior in that peak
         result$bins$peakScores <- getPeakScore.univariate(result$bins)
     ## Segmentation
         ptm <- startTimedMessage("Making segmentation ...")
         df <- as.data.frame(result$bins)
-        red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2drop=c('width',grep('posterior', names(df), value=TRUE), 'counts')))
+        red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2drop=c('width',grep('posterior', names(df), value=TRUE), 'counts.rpkm')))
         result$segments <- methods::as(red.df, 'GRanges')
         seqlengths(result$segments) <- seqlengths(binned.data)[seqlevels(result$segments)]
         if (!keep.posteriors) {
@@ -445,40 +520,8 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
         result$peaks <- result$segments[result$segments$state == 'modified']
         result$peaks$state <- NULL
         result$segments <- NULL
-    ## Parameters
-        # Weights
-        result$weights <- hmm$weights
-        names(result$weights) <- state.labels
-        # Transition matrices
-        transitionProbs <- matrix(hmm$A, ncol=hmm$num.states)
-        rownames(transitionProbs) <- state.labels
-        colnames(transitionProbs) <- state.labels
-        result$transitionProbs <- transitionProbs
-        transitionProbs.initial <- matrix(hmm$A.initial, ncol=hmm$num.states)
-        rownames(transitionProbs.initial) <- state.labels
-        colnames(transitionProbs.initial) <- state.labels
-        result$transitionProbs.initial <- transitionProbs.initial
-        # Initial probs
-        result$startProbs <- hmm$proba
-        names(result$startProbs) <- state.labels
-        result$startProbs.initial <- hmm$proba.initial
-        names(result$startProbs.initial) <-state.labels
-        # Distributions
-        distributions <- data.frame(type=state.distributions, size=hmm$size, prob=hmm$prob, mu=dnbinom.mean(hmm$size,hmm$prob), variance=dnbinom.variance(hmm$size,hmm$prob))
-        rownames(distributions) <- state.labels
-        result$distributions <- distributions
-        distributions.initial <- data.frame(type=state.distributions, size=hmm$size.initial, prob=hmm$prob.initial, mu=dnbinom.mean(hmm$size.initial,hmm$prob.initial), variance=dnbinom.variance(hmm$size.initial,hmm$prob.initial))
-        rownames(distributions.initial) <- state.labels
-        distributions.initial['zero-inflation',2:5] <- c(0,1,0,0)
-        result$distributions.initial <- distributions.initial
-        # post.cutoff
-        result$post.cutoff <- post.cutoff
-    ## Convergence info
-        convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec, max.mean=max.mean, read.cutoff=max(hmm$counts))
-        result$convergenceInfo <- convergenceInfo
-    ## Add class
-        class(result) <- class.univariate.hmm
         
+      
     # Return results
     return(result)
 }

@@ -46,10 +46,10 @@ Emission distributions from the univariate HMMs are used with a Gaussian copula 
 \examples{
 # Get example BAM files for 2 different marks in hypertensive rat
 file.path <- system.file("extdata","euratrans", package='chromstaRData')
-files <- list.files(file.path, full.names=TRUE, pattern='SHR.*bam$')[c(1:2,6:7)]
+files <- list.files(file.path, full.names=TRUE, pattern='SHR.*bam$')[c(1:2,6)]
 # Construct experiment structure
-exp <- data.frame(file=files, mark=c("H3K27me3","H3K27me3","H3K4me3","H3K4me3"),
-                 condition=rep("SHR",4), replicate=c(1:2,1:2), pairedEndReads=FALSE,
+exp <- data.frame(file=files, mark=c("H3K27me3","H3K27me3","H3K4me3"),
+                 condition=rep("SHR",3), replicate=c(1:2,1), pairedEndReads=FALSE,
                  controlFiles=NA)
 states <- stateBrewer(exp, mode='combinatorial')
 # Bin the data

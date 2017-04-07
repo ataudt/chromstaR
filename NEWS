@@ -1,9 +1,22 @@
+CHANGES IN VERSION 1.1.5
+------------------------
+
+NEW FEATURES
+
+    o New parameter 'stepsize' allows sliding bins. This improves localization of peaks.
+    
+SIGNIFICANT USER-LEVEL CHANGES
+
+    o New default value for Chromstar(..., stepsize = 1/5 * binsize).
+    
+    
 CHANGES IN VERSION 1.1.4
 ------------------------
 
 BUG FIXES
 
     o Fixed a mistake in the calculation of differential scores from version 1.1.2
+    
 
 CHANGES IN VERSION 1.1.2
 ------------------------

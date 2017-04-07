@@ -8,8 +8,9 @@
 binReads(file, experiment.table = NULL, assembly, bamindex = file,
   chromosomes = NULL, pairedEndReads = FALSE, min.mapq = 10,
   remove.duplicate.reads = TRUE, max.fragment.width = 1000,
-  blacklist = NULL, binsizes = 1000, reads.per.bin = NULL, bins = NULL,
-  variable.width.reference = NULL, use.bamsignals = TRUE, format = NULL)
+  blacklist = NULL, binsizes = 1000, stepsizes = 1/5 * binsizes,
+  reads.per.bin = NULL, bins = NULL, variable.width.reference = NULL,
+  use.bamsignals = TRUE, format = NULL)
 }
 \arguments{
 \item{file}{A file with aligned reads. Alternatively a \code{\link{GRanges}} with aligned reads.}
@@ -34,9 +35,11 @@ binReads(file, experiment.table = NULL, assembly, bamindex = file,
 
 \item{binsizes}{An integer vector specifying the bin sizes to use.}
 
+\item{stepsizes}{An integer vector specifying he step size. One number can be given for each element in \code{binsizes}, \code{reads.per.bin} and \code{bins} (in that order).}
+
 \item{reads.per.bin}{Approximate number of desired reads per bin. The bin size will be selected accordingly.}
 
-\item{bins}{A named \code{list} with \code{\link{GRanges}} containing precalculated bins produced by \code{\link{fixedWidthBins}} or \code{\link{variableWidthBins}}. Names must correspond to the binsize.}
+\item{bins}{A \code{\link{GRanges}} or a named \code{list()} with \code{\link{GRanges}} containing precalculated bins produced by \code{\link{fixedWidthBins}} or \code{\link{variableWidthBins}}. Names of the list must correspond to the binsize. If the list is unnamed, an attempt is made to automatically determine the binsize.}
 
 \item{variable.width.reference}{A BAM file that is used as reference to produce variable width bins. See \code{\link{variableWidthBins}} for details.}
 
