@@ -44,7 +44,7 @@ unis2pseudomulti <- function(hmms) {
     # Extract coordinates and other stuff
     nummod = length(hmms)
     bins <- hmms[[1]]$bins
-    bins$counts <- NULL
+    bins$counts.rpkm <- NULL
     bins$state <- NULL
     numbins = length(hmms[[1]]$bins)
     info <- do.call(rbind, lapply(hmms, function(x) { x$info }))
@@ -56,10 +56,9 @@ unis2pseudomulti <- function(hmms) {
     reads = matrix(NA, ncol=nummod, nrow=numbins)
     colnames(reads) <- info$ID
     for (imod in 1:nummod) {
-        reads[,imod] = hmms[[imod]]$bins$counts
+        reads[,imod] = hmms[[imod]]$bins$counts.rpkm
     }
-    maxreads = max(reads)
-    bins$counts <- reads
+    bins$counts.rpkm <- reads
     stopTimedMessage(ptm)
 
     ## Get combinatorial states
