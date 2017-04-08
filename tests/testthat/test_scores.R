@@ -11,7 +11,7 @@ bins <- bins0
 info <- info0
 mat <- bins$peakScores
 differential.score <- differentialScoreSum(mat = mat, info = info)
-expect_that(differential.score, equals(rep(54, 9)))
+expect_that(differential.score, equals(rep(90, 9)))
 
 ### Same mark, different conditions ###
 mask <- info0$mark == 'H3K27me3'
@@ -20,7 +20,7 @@ info <- info0[mask,]
 bins$peakScores <- bins$peakScores[,mask]
 mat <- bins$peakScores
 differential.score <- differentialScoreSum(mat = mat, info = info)
-expect_that(differential.score, equals(rep(27, 9)))
+expect_that(differential.score, equals(rep(45, 9)))
 
 ### Same condition, different marks ###
 mask <- info0$condition == 'BN'
@@ -36,7 +36,8 @@ bins <- bins0[1]
 info <- info0
 mat <- bins$peakScores
 differential.score <- differentialScoreSum(mat = mat, info = info)
-expect_that(differential.score, equals(54))
+# expect_that(differential.score, equals(54))
+expect_that(differential.score, equals(90))
 
 ### Same mark, different conditions with only 1 bin ###
 mask <- info0$mark == 'H3K27me3'
@@ -45,7 +46,7 @@ info <- info0[mask,]
 bins$peakScores <- bins$peakScores[,mask,drop=FALSE]
 mat <- bins$peakScores
 differential.score <- differentialScoreSum(mat = mat, info = info)
-expect_that(differential.score, equals(27))
+expect_that(differential.score, equals(45))
 
 ### Same condition, different marks with only 1 bin ###
 mask <- info0$condition == 'BN'

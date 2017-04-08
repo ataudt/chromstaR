@@ -57,14 +57,14 @@ removeCondition <- function(model, conditions) {
     mcols(model$bins)[removeconds] <- NULL
     # Counts
     if (!is.null(model$bins$counts)) {
-        counts <- model$bins$counts
+        counts <- model$bins$counts.rpkm
         removeconds <- paste0(paste0('-', conditions, '-'), collapse='|')
         keepconds <- grep(removeconds, colnames(counts), invert=TRUE, value=TRUE)
         counts <- counts[,keepconds]
         if (class(counts) != "matrix") {
             counts <- matrix(counts, ncol=1, dimnames=list(NULL, keepconds))
         }
-        model$bins$counts <- counts
+        model$bins$counts.rpkm <- counts
     }
     if (!is.null(model$bins$posteriors)) {
         posteriors <- model$bins$posteriors
@@ -106,7 +106,7 @@ removeCondition <- function(model, conditions) {
     ### Redo the segmentation for all conditions combined ###
     ptm <- startTimedMessage("Redoing segmentation for all conditions combined ...")
     segments <- suppressMessages( multivariateSegmentation(bins, column2collapseBy='state') )
-    names(mcols(segments)) <- setdiff(names(mcols(bins)), c('posteriors','counts'))
+    names(mcols(segments)) <- setdiff(names(mcols(bins)), c('posteriors','counts.rpkm'))
     model$segments <- segments
     stopTimedMessage(ptm)
     
