@@ -483,3 +483,69 @@ void multivariate_cleanup(int* Nmod)
 	FreeIntMatrix(multiO, *Nmod);
 }
 
+
+// =======================================================
+// C version of apply(array3D, 1, which.max)
+// =======================================================
+void array3D_which_max(double* array3D, int* dim, int* ind_max)
+{
+  // array3D is actually a vector, but is intended to originate from a 3D array in R
+	std::vector<double> value_per_i0(dim[1] * dim[2]);
+  for (int i0=0; i0<dim[0]; i0++)
+  {
+    for (int i1=0; i1<dim[1]; i1++)
+    {
+      for (int i2=0; i2<dim[2]; i2++)
+      {
+  			value_per_i0[i1*dim[2]+i2] = array3D[(i1*dim[2]+i2) * dim[0] + i0];
+        // Rprintf("i0=%d, i1=%d, i2=%d, value_per_i0[%d] = %g\n", i0, i1, i2, i1*dim[2]+i2, value_per_i0[i1*dim[2]+i2]);
+      }
+    }
+		ind_max[i0] = 1 + std::distance(value_per_i0.begin(), std::max_element(value_per_i0.begin(), value_per_i0.end()));
+  }
+	
+}
+
+
+// ====================================================================================
+// C version of apply(array2D, MARGIN = 1, FUN = mean)
+// ====================================================================================
+void array2D_mean(double* array2D, int* dim, double* mean)
+{
+  // array2D is actually a vector, but is intended to originate from a matrix in R
+  double sum=0;
+  for (int i0=0; i0<dim[0]; i0++)
+  {
+    sum = 0;
+    for (int i1=0; i1<dim[1]; i1++)
+    {
+      sum += array2D[i1*dim[0] + i0];
+    }
+    mean[i0] = sum / dim[1];
+  }
+	
+}
+
+
+// ====================================================================================
+// C version of apply(array3D, MARGIN = c(1,2), FUN = mean)
+// ====================================================================================
+void array3D_mean(double* array3D, int* dim, double* mean)
+{
+  // array3D is actually a vector, but is intended to originate from a 3D array in R
+  double sum=0;
+  for (int i0=0; i0<dim[0]; i0++)
+  {
+    for (int i1=0; i1<dim[1]; i1++)
+    {
+      sum = 0;
+      for (int i2=0; i2<dim[2]; i2++)
+      {
+        sum += array3D[(i2*dim[1] + i1)*dim[0] + i0];
+        // Rprintf("i0=%d, i1=%d, i2=%d, array3D[(i2*dim[1] + i1)*dim[0] + i0 = %d] = %g\n", i0, i1, i2, (i2*dim[1] + i1)*dim[0] + i0, array3D[(i2*dim[1] + i1)*dim[0] + i0]);
+      }
+      mean[i1*dim[0] + i0] = sum / dim[2];
+    }
+  }
+	
+}

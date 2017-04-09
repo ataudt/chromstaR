@@ -28,3 +28,11 @@ void univariate_cleanup();
 extern "C"
 void multivariate_cleanup(int* Nmod);
 
+extern "C"
+void array3D_which_max(double* array3D, int* dim, int* ind_max);
+
+extern "C"
+void array2D_mean(double* array2D, int* dim, double* mean);
+
+extern "C"
+void array3D_mean(double* array3D, int* dim, double* mean);

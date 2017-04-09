@@ -338,8 +338,8 @@ runMultivariate <- function(bins, info, comb.states, use.states, distributions, 
     } # loop over offsets
 
     ### Find maximum posterior for each bin between offsets
-    ptm <- startTimedMessage("Finding maximum posterior between offsets ...")
     ## Make bins with offset
+    ptm <- startTimedMessage("Making bins with offsets ...")
     if (length(offsets) > 1) {
         stepbins <- suppressMessages( fixedWidthBins(chrom.lengths = seqlengths(bins), binsizes = as.numeric(offsets[2]))[[1]] )
     } else {
@@ -360,13 +360,37 @@ runMultivariate <- function(bins, info, comb.states, use.states, distributions, 
         astates.step[ind@from, offset] <- states.list[[offset]][ind@to]
     }
     rm(aposteriors)
+    stopTimedMessage(ptm)
+    
     # Average and normalize counts to RPKM
-    counts.step <- apply(X = acounts.step, MARGIN = c(1,2), FUN = mean, na.rm=TRUE)
-    counts.step <- rpkm.matrix(counts.step, binsize = width(bins)[1])
-    rm(acounts.step)
+    ptm <- startTimedMessage("Averaging counts between offsets ...")
+    # Start stuff to call C code
+        dim_acounts.step <- dim(acounts.step)
+        dimnames_acounts.step <- dimnames(acounts.step)
+        dim(acounts.step) <- NULL
+        z <- .C("C_array3D_mean",
+                array3D = acounts.step,
+                dim = as.integer(dim_acounts.step),
+                mean = double(dim_acounts.step[1]*dim_acounts.step[2]))
+        # dim(acounts.step) <- dim_acounts.step
+        rm(acounts.step)
+        dim(z$mean) <- dim_acounts.step[1:2]
+        counts.step <- z$mean
+        counts.step <- rpkm.matrix(counts.step, binsize = width(bins)[1])
+    # End stuff to call C code
+    stopTimedMessage(ptm)
     
     ## Find offset that maximizes the posteriors for each bin
-    ind <- apply(aposteriors.step, 1, which.max)
+    ptm <- startTimedMessage("Finding maximum posterior between offsets ...")
+    dim_aposteriors.step <- dim(aposteriors.step)
+    dimnames_aposteriors.step <- dimnames(aposteriors.step)
+    dim(aposteriors.step) <- NULL
+    z <- .C("C_array3D_which_max",
+            array3D = aposteriors.step,
+            dim = as.integer(dim_aposteriors.step),
+            ind_max = integer(dim_aposteriors.step[1]))
+    ind <- z$ind_max
+    dim(aposteriors.step) <- dim_aposteriors.step
     numstates <- length(comb.states)
     ind <- ceiling(ind / numstates)
     posteriors.step <- array(0, dim = c(length(stepbins), numstates), dimnames = list(bin=NULL, state=comb.states))

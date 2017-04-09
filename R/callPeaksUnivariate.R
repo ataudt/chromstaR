@@ -346,7 +346,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
             # Rerun the HMM with different epsilon and initial parameters from trial run
             if (verbosity>=1) message("------------------------- Rerunning try ",indexmax," with eps = ",eps," -------------------------")
             hmm <- .C("C_univariate_hmm",
-                counts = as.integer(counts), # double* O
+                counts = as.integer(counts), # int* O
                 num.bins = as.integer(numbins), # int* T
                 num.states = as.integer(numstates), # int* N
                 size = double(length=numstates), # double* size
@@ -434,8 +434,8 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     } # loop over offsets
         
     ### Find maximum posterior for each bin between offsets
-    ptm <- startTimedMessage("Finding maximum posterior between offsets ...")
     ## Make bins with offset
+    ptm <- startTimedMessage("Making bins with offsets ...")
     if (length(offsets) > 1) {
         stepbins <- suppressMessages( fixedWidthBins(chrom.lengths = seqlengths(binned.data), binsizes = as.numeric(offsets[2]))[[1]] )
     } else {
@@ -454,19 +454,45 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
         acounts.step[ind@from, offset] <- counts.list[[offset]][ind@to]
     }
     rm(aposteriors)
+    stopTimedMessage(ptm)
+    
     # Average and normalize counts to RPKM
-    counts.step <- apply(X = acounts.step, MARGIN = 1, FUN = mean, na.rm=TRUE, drop=FALSE)
-    counts.step <- rpkm.vector(counts.step, binsize = binsize)
-    rm(acounts.step)
+    ptm <- startTimedMessage("Averaging counts between offsets ...")
+    # Start stuff to call C code
+        dim_acounts.step <- dim(acounts.step)
+        dimnames_acounts.step <- dimnames(acounts.step)
+        dim(acounts.step) <- NULL
+        z <- .C("C_array2D_mean",
+                array2D = acounts.step,
+                dim = as.integer(dim_acounts.step),
+                mean = double(dim_acounts.step[1]))
+        # dim(acounts.step) <- dim_acounts.step
+        rm(acounts.step)
+        counts.step <- z$mean
+        counts.step <- rpkm.vector(counts.step, binsize = binsize)
+    # End stuff to call C code
+    stopTimedMessage(ptm)
     
     ## Find offset that maximizes the posteriors for each bin
-    ind <- apply(aposteriors.step, 1, which.max)
+    ptm <- startTimedMessage("Finding maximum posterior between offsets ...")
+    # Start stuff to call C code
+        dim_aposteriors.step <- dim(aposteriors.step)
+        dimnames_aposteriors.step <- dimnames(aposteriors.step)
+        dim(aposteriors.step) <- NULL
+        z <- .C("C_array3D_which_max",
+                array3D = aposteriors.step,
+                dim = as.integer(dim_aposteriors.step),
+                ind_max = integer(dim_aposteriors.step[1]))
+        dim(aposteriors.step) <- dim_aposteriors.step
+        ind <- z$ind_max
+    # End stuff to call C code
     ind <- ceiling(ind / numstates)
     posteriors.step <- array(0, dim = c(length(stepbins), numstates), dimnames = list(bin=NULL, state=state.labels))
     for (i1 in 1:length(offsets)) {
         mask <- ind == i1
         posteriors.step[mask,] <- aposteriors.step[mask,,i1, drop=FALSE]
     }
+    rm(aposteriors.step)
     stepbins$posteriors <- posteriors.step
     stopTimedMessage(ptm)
     
