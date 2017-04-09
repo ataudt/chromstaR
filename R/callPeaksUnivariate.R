@@ -459,6 +459,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     # Average and normalize counts to RPKM
     ptm <- startTimedMessage("Averaging counts between offsets ...")
     # Start stuff to call C code
+        # Work with changing dimensions to avoid copies being made
         dim_acounts.step <- dim(acounts.step)
         dimnames_acounts.step <- dimnames(acounts.step)
         dim(acounts.step) <- NULL
@@ -476,6 +477,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     ## Find offset that maximizes the posteriors for each bin
     ptm <- startTimedMessage("Finding maximum posterior between offsets ...")
     # Start stuff to call C code
+        # Work with changing dimensions to avoid copies being made
         dim_aposteriors.step <- dim(aposteriors.step)
         dimnames_aposteriors.step <- dimnames(aposteriors.step)
         dim(aposteriors.step) <- NULL
