@@ -375,6 +375,7 @@ runMultivariate <- function(bins, info, comb.states, use.states, distributions, 
         # dim(acounts.step) <- dim_acounts.step
         rm(acounts.step)
         dim(z$mean) <- dim_acounts.step[1:2]
+        dimnames(z$mean) <- dimnames_acounts.step[1:2]
         counts.step <- z$mean
         counts.step <- rpkm.matrix(counts.step, binsize = width(bins)[1])
     # End stuff to call C code
