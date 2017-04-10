@@ -211,7 +211,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 ## Get first bed file
                 bedfile <- grep('bed$|bed.gz$', datafiles, value=TRUE)[1]
                 if (!is.na(bedfile)) {
-                    firstlines <- read.table(bedfile, nrows=10)
+                    firstlines <- read.table(bedfile, nrows=10, skip=1) # skip 1 line in case of trackname
                     if (grepl('^chr',firstlines[1,1])) {
                         df <- df.chroms[,c('UCSC_seqlevel','UCSC_seqlength')]
                     } else {
