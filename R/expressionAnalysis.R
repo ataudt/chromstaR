@@ -49,41 +49,52 @@
 #'
 plotExpression <- function(hmm, expression, combinations=NULL, return.marks=FALSE) {
     
-    hmm <- loadHmmsFromFiles(hmm, check.class=class.multivariate.hmm)[[1]]
+    hmm <- loadHmmsFromFiles(hmm, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     ## Variables
     bins <- hmm$bins
+    if (class(hmm) == class.combined.multivariate.hmm) {
+    } else if (class(hmm) == class.multivariate.hmm) {
+        # Rename 'combination' to 'combination.' for coherence with combinedMultiHMM
+        names(mcols(bins))[grep('combination', names(mcols(bins)))] <- paste0('combination.', unique(hmm$info$condition))
+    }
+    conditions <- sub('combination.', '', grep('combination', names(mcols(bins)), value=TRUE))
     if (is.null(combinations)) {
-        comb.levels <- levels(bins$combination)
+        comb.levels <- levels(mcols(bins)[,paste0('combination.', conditions[1])])
     } else {
         comb.levels <- combinations
     }
     marks <- unique(unlist(strsplit(gsub('\\]','',gsub('\\[','',comb.levels)),'\\+')))
     
-    exprlist <- list()
-    if (return.marks) {
-        for (mark in marks) {
-            mask <- grepl(paste0('\\<',mark,'\\>'),bins$combination)
-            expr.mark <- IRanges::subsetByOverlaps(expression, bins[mask])
-            exprlist[[mark]] <- expr.mark$expression
+    ggplts <- list()
+    for (condition in conditions) {
+        bins$combination <- mcols(bins)[,paste0('combination.', condition)]
+        exprlist <- list()
+        if (return.marks) {
+            for (mark in marks) {
+                mask <- grepl(paste0('\\<',mark,'\\>'),bins$combination)
+                expr.mark <- IRanges::subsetByOverlaps(expression, bins[mask])
+                exprlist[[mark]] <- expr.mark$expression
+            }
+        } else {
+            for (comb.level in comb.levels) {
+                mask <- bins$combination == comb.level
+                expr.combstate <- IRanges::subsetByOverlaps(expression, bins[mask])
+                exprlist[[comb.level]] <- expr.combstate$expression
+            }
         }
-    } else {
-        for (comb.level in comb.levels) {
-            mask <- bins$combination == comb.level
-            expr.combstate <- IRanges::subsetByOverlaps(expression, bins[mask])
-            exprlist[[comb.level]] <- expr.combstate$expression
+        
+        df <- reshape2::melt(exprlist)
+        if (return.marks) {
+            names(df) <- c('expression', 'mark')
+            ggplt <- ggplot(df) + geom_boxplot(aes_string(x='mark', y='expression'))
+        } else {
+            names(df) <- c('expression', 'combination')
+            ggplt <- ggplot(df) + geom_boxplot(aes_string(x='combination', y='expression'))
         }
+        ggplt <- ggplt + theme_bw() + theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
+        ggplts[[condition]] <- ggplt
     }
-    
-    df <- reshape2::melt(exprlist)
-    if (return.marks) {
-        names(df) <- c('expression', 'mark')
-        ggplt <- ggplot(df) + geom_boxplot(aes_string(x='mark', y='expression'))
-    } else {
-        names(df) <- c('expression', 'combination')
-        ggplt <- ggplot(df) + geom_boxplot(aes_string(x='combination', y='expression'))
-    }
-    ggplt <- ggplt + theme_bw() + theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
-    return(ggplt)
+    return(ggplts)
 
 }
 
