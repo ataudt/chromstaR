@@ -35,7 +35,7 @@ binReads(file, experiment.table = NULL, assembly, bamindex = file,
 
 \item{binsizes}{An integer vector specifying the bin sizes to use.}
 
-\item{stepsizes}{An integer vector specifying he step size. One number can be given for each element in \code{binsizes}, \code{reads.per.bin} and \code{bins} (in that order).}
+\item{stepsizes}{An integer vector specifying the step size. One number can be given for each element in \code{binsizes}, \code{reads.per.bin} and \code{bins} (in that order).}
 
 \item{reads.per.bin}{Approximate number of desired reads per bin. The bin size will be selected accordingly.}
 
