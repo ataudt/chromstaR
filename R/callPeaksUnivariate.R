@@ -291,7 +291,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
         for (i_try in 1:num.trials) {
             if (verbosity>=1) message("------------------------------------ Try ",i_try," of ",num.trials," -------------------------------------")
             hmm <- .C("C_univariate_hmm",
-                counts = as.integer(counts), # double* O
+                counts = as.integer(counts), # int* O
                 num.bins = as.integer(numbins), # int* T
                 num.states = as.integer(numstates), # int* N
                 size = double(length=numstates), # double* size

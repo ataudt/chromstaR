@@ -12,7 +12,7 @@
 #' @inheritParams readBamFileAsGRanges
 #' @inheritParams readBedFileAsGRanges
 #' @param binsizes An integer vector specifying the bin sizes to use.
-#' @param stepsizes An integer vector specifying he step size. One number can be given for each element in \code{binsizes}, \code{reads.per.bin} and \code{bins} (in that order).
+#' @param stepsizes An integer vector specifying the step size. One number can be given for each element in \code{binsizes}, \code{reads.per.bin} and \code{bins} (in that order).
 #' @param bins A \code{\link{GRanges}} or a named \code{list()} with \code{\link{GRanges}} containing precalculated bins produced by \code{\link{fixedWidthBins}} or \code{\link{variableWidthBins}}. Names of the list must correspond to the binsize. If the list is unnamed, an attempt is made to automatically determine the binsize.
 #' @param reads.per.bin Approximate number of desired reads per bin. The bin size will be selected accordingly.
 #' @param variable.width.reference A BAM file that is used as reference to produce variable width bins. See \code{\link{variableWidthBins}} for details.
@@ -230,31 +230,31 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
         acounts <- array(NA, dim = c(length(bins), numsteps), dimnames = list(bin=NULL, offset=offsets))
         for (ioffset in 1:numsteps) {
             offset <- offsets[ioffset]
-            bins <- suppressWarnings( shift(bins, shift = stepsize) )
+            bins.offset <- suppressWarnings( shift(bins, shift = offset) )
         
             if (format == 'bam' & use.bamsignals) {
                 ptm <- startTimedMessage("Counting overlaps for binsize ", binsize, " with offset ", offset, " ...")
-                bins$counts <- tryCatch({
-                    bins$counts <- bamsignals::bamCount(file, bins, mapqual=min.mapq, paired.end=paired.end, tlenFilter=c(0, max.fragment.width), verbose=FALSE)
+                bins.offset$counts <- tryCatch({
+                    bins.offset$counts <- bamsignals::bamCount(file, bins.offset, mapqual=min.mapq, paired.end=paired.end, tlenFilter=c(0, max.fragment.width), verbose=FALSE)
                 }, error = function(err) {
-                    bins$counts <<- bamsignals::bamCount(file, bins, mapqual=min.mapq, paired.end=paired.end, paired.end.max.frag.length=max.fragment.width, verbose=FALSE)
+                    bins.offset$counts <<- bamsignals::bamCount(file, bins.offset, mapqual=min.mapq, paired.end=paired.end, paired.end.max.frag.length=max.fragment.width, verbose=FALSE)
                 })
                 stopTimedMessage(ptm)
                 
             } else {
                 readsperbin <- round(length(data) / sum(as.numeric(seqlengths(data))) * binsize, 2)
                 ptm <- startTimedMessage("Counting overlaps for binsize ",binsize," with offset ", offset, ", with on average ",readsperbin," reads per bin ...")
-                scounts <- suppressWarnings( GenomicRanges::countOverlaps(bins, data.star) )
-                mcounts <- suppressWarnings( GenomicRanges::countOverlaps(bins, data.minus) )
-                pcounts <- suppressWarnings( GenomicRanges::countOverlaps(bins, data.plus) )
+                scounts <- suppressWarnings( GenomicRanges::countOverlaps(bins.offset, data.star) )
+                mcounts <- suppressWarnings( GenomicRanges::countOverlaps(bins.offset, data.minus) )
+                pcounts <- suppressWarnings( GenomicRanges::countOverlaps(bins.offset, data.plus) )
                 counts <- mcounts + pcounts + scounts
                 countmatrix <- matrix(c(counts,mcounts,pcounts), ncol=3)
                 colnames(countmatrix) <- c('counts','mcounts','pcounts')
-                bins$counts <- countmatrix[, 'counts']
+                bins.offset$counts <- countmatrix[, 'counts']
                 stopTimedMessage(ptm)
         
             }
-            acounts[, as.character(offset)] <- mcols(bins)[,'counts']
+            acounts[, as.character(offset)] <- mcols(bins.offset)[,'counts']
         
         }
         
