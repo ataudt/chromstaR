@@ -6,7 +6,7 @@
 #' @param expression A \code{\link{GRanges}} object with metadata column 'expression', containing the expression value for each range.
 #' @param combinations A vector with combinations for which the expression overlap will be calculated. If \code{NULL} all combinations will be considered.
 #' @param return.marks Set to \code{TRUE} if expression values for marks instead of combinations should be returned.
-#' @return A named list with expression values.
+#' @return A \code{\link{ggplot2}} object if a \code{\link{multiHMM}} was given or a named list with \code{\link{ggplot2}} objects if a \code{\link{combinedMultiHMM}} was given.
 #' @author Aaron Taudt
 #' @seealso \code{\link{plotting}}
 #' @importFrom IRanges subsetByOverlaps
@@ -94,7 +94,12 @@ plotExpression <- function(hmm, expression, combinations=NULL, return.marks=FALS
         ggplt <- ggplt + theme_bw() + theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
         ggplts[[condition]] <- ggplt
     }
-    return(ggplts)
+    
+    if (class(hmm) == class.multivariate.hmm) {
+        return(ggplts[[1]])
+    } else if (class(hmm) == class.combined.multivariate.hmm) {
+        return(ggplts)
+    }
 
 }
 

@@ -16,7 +16,7 @@ plotExpression(hmm, expression, combinations = NULL, return.marks = FALSE)
 \item{return.marks}{Set to \code{TRUE} if expression values for marks instead of combinations should be returned.}
 }
 \value{
-A named list with expression values.
+A \code{\link{ggplot2}} object if a \code{\link{multiHMM}} was given or a named list with \code{\link{ggplot2}} objects if a \code{\link{combinedMultiHMM}} was given.
 }
 \description{
 Get the expression values that overlap with each combinatorial state.

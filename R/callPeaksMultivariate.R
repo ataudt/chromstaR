@@ -334,6 +334,7 @@ runMultivariate <- function(bins, info, comb.states, use.states, distributions, 
         
         message("Time spent in multivariate HMM: ", appendLF=FALSE)
         stopTimedMessage(ptm)
+        ptm <- proc.time()
     
     } # loop over offsets
 
