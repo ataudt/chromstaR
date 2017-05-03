@@ -6,7 +6,7 @@ static int** multiO;
 // ===================================================================================================================================================
 // This function takes parameters from R, creates a univariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // ===================================================================================================================================================
-void univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* maxiter, int* maxtime, double* eps, double* posteriors, double* densities, bool* keep_densities, double* A, double* proba, double* loglik, double* weights, int* iniproc, double* initial_size, double* initial_prob, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* read_cutoff, int* verbosity)
+void univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* maxiter, int* maxtime, double* eps, double* posteriors, double* densities, bool* keep_densities, int* states, double* maxPosterior, double* A, double* proba, double* loglik, double* weights, int* iniproc, double* initial_size, double* initial_prob, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* read_cutoff, int* verbosity)
 {
 
 	// Define logging level
@@ -220,6 +220,21 @@ void univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* max
 		}
 	}
 
+	// Compute the states from posteriors
+	//FILE_LOG(logDEBUG1) << "Computing states from posteriors";
+	int ind_max;
+	std::vector<double> posterior_per_t(*N);
+	for (int t=0; t<*T; t++)
+	{
+		for (int iN=0; iN<*N; iN++)
+		{
+			posterior_per_t[iN] = hmm->get_posterior(iN, t);
+		}
+		ind_max = std::distance(posterior_per_t.begin(), std::max_element(posterior_per_t.begin(), posterior_per_t.end()));
+		states[t] = ind_max + 1;
+		maxPosterior[t] = posterior_per_t[ind_max];
+	}
+		
 	//FILE_LOG(logDEBUG1) << "Return parameters";
 	// also return the estimated transition matrix and the initial probs
 	for (int i=0; i<*N; i++)
@@ -258,7 +273,7 @@ void univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* max
 // =====================================================================================================================================================
 // This function takes parameters from R, creates a multivariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // =====================================================================================================================================================
-void multivariate_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, double* size, double* prob, double* w, double* cor_matrix_inv, double* det, int* maxiter, int* maxtime, double* eps, double* posteriors, bool* keep_posteriors, double* densities, bool* keep_densities, int* states, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* verbosity)
+void multivariate_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, double* size, double* prob, double* w, double* cor_matrix_inv, double* det, int* maxiter, int* maxtime, double* eps, double* posteriors, bool* keep_posteriors, double* densities, bool* keep_densities, int* states, double* maxPosterior, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* verbosity)
 {
 
 	// Define logging level {"ERROR", "WARNING", "INFO", "ITERATION", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4"}
@@ -432,6 +447,7 @@ void multivariate_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, do
 			}
 			ind_max = std::distance(posterior_per_t.begin(), std::max_element(posterior_per_t.begin(), posterior_per_t.end()));
 			states[t] = comb_states[ind_max];
+			maxPosterior[t] = posterior_per_t[ind_max];
 		}
 // 	}
 // 	else
@@ -506,46 +522,22 @@ void array3D_which_max(double* array3D, int* dim, int* ind_max)
 	
 }
 
-
-// ====================================================================================
-// C version of apply(array2D, MARGIN = 1, FUN = mean)
-// ====================================================================================
-void array2D_mean(double* array2D, int* dim, double* mean)
+// ====================================================================
+// C version of apply(array2D, 1, which.max) and apply(array2D, 1, max)
+// ====================================================================
+void array2D_which_max(double* array2D, int* dim, int* ind_max, double* value_max)
 {
-  // array2D is actually a vector, but is intended to originate from a matrix in R
-  double sum=0;
-  for (int i0=0; i0<dim[0]; i0++)
-  {
-    sum = 0;
-    for (int i1=0; i1<dim[1]; i1++)
-    {
-      sum += array2D[i1*dim[0] + i0];
-    }
-    mean[i0] = sum / dim[1];
-  }
-	
-}
-
-
-// ====================================================================================
-// C version of apply(array3D, MARGIN = c(1,2), FUN = mean)
-// ====================================================================================
-void array3D_mean(double* array3D, int* dim, double* mean)
-{
-  // array3D is actually a vector, but is intended to originate from a 3D array in R
-  double sum=0;
+  // array2D is actually a vector, but is intended to originate from a 2D array in R
+	std::vector<double> value_per_i0(dim[1]);
   for (int i0=0; i0<dim[0]; i0++)
   {
     for (int i1=0; i1<dim[1]; i1++)
     {
-      sum = 0;
-      for (int i2=0; i2<dim[2]; i2++)
-      {
-        sum += array3D[(i2*dim[1] + i1)*dim[0] + i0];
-        // Rprintf("i0=%d, i1=%d, i2=%d, array3D[(i2*dim[1] + i1)*dim[0] + i0 = %d] = %g\n", i0, i1, i2, (i2*dim[1] + i1)*dim[0] + i0, array3D[(i2*dim[1] + i1)*dim[0] + i0]);
-      }
-      mean[i1*dim[0] + i0] = sum / dim[2];
+			value_per_i0[i1] = array2D[i1 * dim[0] + i0];
+      // Rprintf("i0=%d, i1=%d, value_per_i0[%d] = %g\n", i0, i1, i1, value_per_i0[i1]);
     }
+		ind_max[i0] = 1 + std::distance(value_per_i0.begin(), std::max_element(value_per_i0.begin(), value_per_i0.end()));
+    value_max[i0] = *std::max_element(value_per_i0.begin(), value_per_i0.end());
   }
 	
 }

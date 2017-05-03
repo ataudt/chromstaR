@@ -170,6 +170,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     }
     numstates <- length(state.labels)
     iniproc <- which(init==c("standard","random","empiric")) # transform to int
+    offsets <- dimnames(binned.data$counts)[[2]]
 
     ### Assign initial parameters ###
     if (class(binned.data) == class.univariate.hmm) {
@@ -199,9 +200,23 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     binsize <- width(binned.data)[1]
     if (keep.densities) { lenDensities <- numbins * numstates } else { lenDensities <- 1 }
     
-    offsets <- dimnames(binned.data$counts)[[2]]
-    counts.list <- list()
-    aposteriors <- array(NA, dim = c(numbins, numstates, length(offsets)), dimnames = list(bin=NULL, state=state.labels, offset=offsets))
+    ### Arrays for finding maximum posterior for each bin between offsets
+    ## Make bins with offset
+    ptm <- startTimedMessage("Making bins with offsets ...")
+    if (length(offsets) > 1) {
+        stepbins <- suppressMessages( fixedWidthBins(chrom.lengths = seqlengths(binned.data), binsizes = as.numeric(offsets[2]))[[1]] )
+    } else {
+        stepbins <- binned.data
+        mcols(stepbins) <- NULL
+    }
+    bins <- binned.data
+    mcols(bins) <- NULL
+    aposteriors.step <- array(0, dim = c(length(stepbins), numstates, 2), dimnames = list(bin=NULL, state=state.labels, offset=c('previousOffsets', 'currentOffset')))
+    acounts.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset')))
+    amaxPosterior.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset')))
+    astates.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset')))
+    
+    ### Loop over offsets ###
     for (ioffset in 1:length(offsets)) {
         offset <- offsets[ioffset]
         counts <- binned.data$counts[,offset, drop=FALSE]
@@ -302,6 +317,8 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
                 posteriors = double(length=numbins * numstates), # double* posteriors
                 densities = double(length=lenDensities), # double* densities
                 keep.densities = as.logical(keep.densities), # bool* keep_densities
+                states = integer(length=numbins), # int* states
+                maxPosterior = double(length=numbins), # double* maxPosterior
                 A = double(length=numstates*numstates), # double* A
                 proba = double(length=numstates), # double* proba
                 loglik = double(length=1), # double* loglik
@@ -357,6 +374,8 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
                 posteriors = double(length=numbins * numstates), # double* posteriors
                 densities = double(length=lenDensities), # double* densities
                 keep.densities = as.logical(keep.densities), # bool* keep_densities
+                states = integer(length=numbins), # int* states
+                maxPosterior = double(length=numbins), # double* maxPosterior
                 A = double(length=numstates*numstates), # double* A
                 proba = double(length=numstates), # double* proba
                 loglik = double(length=1), # double* loglik
@@ -426,128 +445,114 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
             ## Add class
                 class(result) <- class.univariate.hmm
         }
+        
+        ptm <- startTimedMessage("Maximizing over offsets ...")
         ## Store counts and posteriors in list
-        counts.list[[offset]] <- hmm$counts
-        aposteriors[,, offset] <- hmm$posteriors
+        dim(hmm$posteriors) <- c(numbins, numstates)
+        dimnames(hmm$posteriors) <- list(bin=NULL, state=state.labels)
+        binned.data$counts[,offset] <- hmm$counts
+        if (keep.densities) {
+            densities <- hmm$densities
+        }
         
-        
-    } # loop over offsets
-        
-    ### Find maximum posterior for each bin between offsets
-    ## Make bins with offset
-    ptm <- startTimedMessage("Making bins with offsets ...")
-    if (length(offsets) > 1) {
-        stepbins <- suppressMessages( fixedWidthBins(chrom.lengths = seqlengths(binned.data), binsizes = as.numeric(offsets[2]))[[1]] )
-    } else {
-        stepbins <- binned.data
-        mcols(stepbins) <- NULL
-    }
-    aposteriors.step <- array(0, dim = c(length(stepbins), numstates, length(offsets)), dimnames = list(bin=NULL, state=state.labels, offset=offsets))
-    acounts.step <- array(0, dim = c(length(stepbins), length(offsets)), dimnames = list(bin=NULL, offset=offsets))
-    ## Inflate posteriors to new offset
-    bins <- binned.data
-    mcols(bins) <- NULL
-    for (offset in offsets) {
+        ## Inflate posteriors to new offset
         bins.shift <- suppressWarnings( shift(bins, shift = as.numeric(offset)) )
         ind <- findOverlaps(stepbins, bins.shift)
-        aposteriors.step[ind@from, , offset] <- aposteriors[ind@to, , offset, drop=FALSE]
-        acounts.step[ind@from, offset] <- counts.list[[offset]][ind@to]
-    }
-    rm(aposteriors)
-    stopTimedMessage(ptm)
-    
+        aposteriors.step[ind@from, , 'currentOffset'] <- hmm$posteriors[ind@to, , drop=FALSE]
+        acounts.step[ind@from, 'currentOffset'] <- hmm$counts[ind@to]
+        astates.step[ind@from, 'currentOffset'] <- hmm$states[ind@to]
+        amaxPosterior.step[ind@from, 'currentOffset'] <- hmm$maxPosterior[ind@to]
+        
+        ## Sum counts
+        acounts.step[, 'previousOffsets'] <- rowSums(acounts.step)
+        
+        ## Find offset that maximizes the posteriors for each bin
+        # Start stuff to call C code
+            # Work with changing dimensions to avoid copies being made
+            dim_amaxPosterior.step <- dim(amaxPosterior.step)
+            dimnames_amaxPosterior.step <- dimnames(amaxPosterior.step)
+            dim(amaxPosterior.step) <- NULL
+            z <- .C("C_array2D_which_max",
+                    array2D = amaxPosterior.step,
+                    dim = as.integer(dim_amaxPosterior.step),
+                    ind_max = integer(dim_amaxPosterior.step[1]),
+                    value_max = double(dim_amaxPosterior.step[1]))
+            dim(amaxPosterior.step) <- dim_amaxPosterior.step
+            dimnames(amaxPosterior.step) <- dimnames_amaxPosterior.step
+            ind <- z$ind_max
+        # End stuff to call C code
+        for (i1 in 1:2) {
+            mask <- ind == i1
+            aposteriors.step[mask, , 'previousOffsets'] <- aposteriors.step[mask,,i1, drop=FALSE]
+            astates.step[mask, 'previousOffsets'] <- astates.step[mask,i1, drop=FALSE]
+            amaxPosterior.step[mask, 'previousOffsets'] <- amaxPosterior.step[mask,i1, drop=FALSE]
+        }
+        stopTimedMessage(ptm)
+        
+        rm(hmm)
+    } # loop over offsets
+    rm(amaxPosterior.step, astates.step)
+        
     # Average and normalize counts to RPKM
-    ptm <- startTimedMessage("Averaging counts between offsets ...")
-    # Start stuff to call C code
-        # Work with changing dimensions to avoid copies being made
-        dim_acounts.step <- dim(acounts.step)
-        dimnames_acounts.step <- dimnames(acounts.step)
-        dim(acounts.step) <- NULL
-        z <- .C("C_array2D_mean",
-                array2D = acounts.step,
-                dim = as.integer(dim_acounts.step),
-                mean = double(dim_acounts.step[1]))
-        # dim(acounts.step) <- dim_acounts.step
-        rm(acounts.step)
-        counts.step <- z$mean
-        counts.step <- rpkm.vector(counts.step, binsize = binsize)
-    # End stuff to call C code
-    stopTimedMessage(ptm)
-    
-    ## Find offset that maximizes the posteriors for each bin
-    ptm <- startTimedMessage("Finding maximum posterior between offsets ...")
-    # Start stuff to call C code
-        # Work with changing dimensions to avoid copies being made
-        dim_aposteriors.step <- dim(aposteriors.step)
-        dimnames_aposteriors.step <- dimnames(aposteriors.step)
-        dim(aposteriors.step) <- NULL
-        z <- .C("C_array3D_which_max",
-                array3D = aposteriors.step,
-                dim = as.integer(dim_aposteriors.step),
-                ind_max = integer(dim_aposteriors.step[1]))
-        dim(aposteriors.step) <- dim_aposteriors.step
-        ind <- z$ind_max
-    # End stuff to call C code
-    ind <- ceiling(ind / numstates)
-    posteriors.step <- array(0, dim = c(length(stepbins), numstates), dimnames = list(bin=NULL, state=state.labels))
-    for (i1 in 1:length(offsets)) {
-        mask <- ind == i1
-        posteriors.step[mask,] <- aposteriors.step[mask,,i1, drop=FALSE]
-    }
+    ptm <- startTimedMessage("Collecting counts and posteriors over offsets ...")
+    counts.step <- acounts.step[, 'previousOffsets'] / ncol(acounts.step)
+    rm(acounts.step)
+    counts.step <- rpkm.vector(counts.step, binsize = binsize)
+    stepbins$posteriors <- aposteriors.step[,,'previousOffsets']
     rm(aposteriors.step)
-    stepbins$posteriors <- posteriors.step
     stopTimedMessage(ptm)
     
-    ## Get states
-        ptm <- startTimedMessage("Calculating states from posteriors ...")
-        hmm$posteriors <- stepbins$posteriors
-        threshold <- 1-post.cutoff
-        if (control) {
-            states <- rep(1, ncol(hmm$posteriors))
-            states[ hmm$posteriors[,2] >= hmm$posteriors[,1] ] <- 2
-        } else {
-            states <- rep(NA, ncol(hmm$posteriors))
-            states[ hmm$posteriors[,3]<threshold & hmm$posteriors[,2]<=hmm$posteriors[,1] ] <- 1
-            states[ hmm$posteriors[,3]<threshold & hmm$posteriors[,2]>hmm$posteriors[,1] ] <- 2
-            states[ hmm$posteriors[,3]>=threshold ] <- 3
-        }
-        states <- state.labels[states]
-    ## Counts
-        result$bincounts <- binned.data
-        for (offset in offsets) {
-            result$bincounts$counts[, offset] <- counts.list[[offset]]
-        }
-        rm(counts.list)
-        seqlengths(result$bincounts) <- seqlengths(binned.data)
-    ## Bin coordinates, posteriors and states
-        result$bins <- GRanges(seqnames=seqnames(stepbins), ranges=ranges(stepbins))
-        result$bins$counts.rpkm <- counts.step
-        mcols(result$bins)[, 'state'] <- states
-        result$bins$posteriors <- hmm$posteriors
-        if (!control) {
-            result$bins$posterior.modified <- hmm$posteriors[,'modified']
-        }
-        if (keep.densities) {
-            result$bins$densities <- matrix(hmm$densities, ncol=hmm$num.states)
-        }
-        seqlengths(result$bins) <- seqlengths(stepbins)
-        stopTimedMessage(ptm)
-    ## Peak score as maximum posterior in that peak
-        result$bins$peakScores <- getPeakScore.univariate(result$bins)
-    ## Segmentation
-        ptm <- startTimedMessage("Making segmentation ...")
-        df <- as.data.frame(result$bins)
-        red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2drop=c('width',grep('posterior', names(df), value=TRUE), 'counts.rpkm')))
-        result$segments <- methods::as(red.df, 'GRanges')
-        seqlengths(result$segments) <- seqlengths(binned.data)[seqlevels(result$segments)]
-        if (!keep.posteriors) {
-            result$bins$posteriors <- NULL
-        }
-        stopTimedMessage(ptm)
-    ## Peaks
-        result$peaks <- result$segments[result$segments$state == 'modified']
-        result$peaks$state <- NULL
-        result$segments <- NULL
+    ## Get states ##
+    ptm <- startTimedMessage("Calculating states from posteriors ...")
+    posteriors <- stepbins$posteriors
+    threshold <- 1-post.cutoff
+    if (control) {
+        states <- rep(1, ncol(posteriors))
+        states[ posteriors[,2] >= posteriors[,1] ] <- 2
+    } else {
+        states <- rep(NA, ncol(posteriors))
+        states[ posteriors[,3]<threshold & posteriors[,2]<=posteriors[,1] ] <- 1
+        states[ posteriors[,3]<threshold & posteriors[,2]>posteriors[,1] ] <- 2
+        states[ posteriors[,3]>=threshold ] <- 3
+    }
+    states <- state.labels[states]
+    
+    ## Counts ##
+    result$bincounts <- binned.data
+    
+    ## Bin coordinates, posteriors and states ##
+    result$bins <- GRanges(seqnames=seqnames(stepbins), ranges=ranges(stepbins))
+    result$bins$counts.rpkm <- counts.step
+    mcols(result$bins)[, 'state'] <- states
+    result$bins$posteriors <- posteriors
+    if (!control) {
+        result$bins$posterior.modified <- posteriors[,'modified']
+    }
+    if (keep.densities) {
+        result$bincounts$densities <- matrix(densities, ncol=numstates)
+        colnames(result$bincounts$densities) <- state.labels
+    }
+    seqlengths(result$bins) <- seqlengths(stepbins)
+    stopTimedMessage(ptm)
+    
+    ## Peak score as maximum posterior in that peak ##
+    result$bins$peakScores <- getPeakScore.univariate(result$bins)
+    
+    ## Segmentation ##
+    ptm <- startTimedMessage("Making segmentation ...")
+    df <- as.data.frame(result$bins)
+    red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2drop=c('width',grep('posterior', names(df), value=TRUE), 'counts.rpkm')))
+    result$segments <- methods::as(red.df, 'GRanges')
+    seqlengths(result$segments) <- seqlengths(binned.data)[seqlevels(result$segments)]
+    if (!keep.posteriors) {
+        result$bins$posteriors <- NULL
+    }
+    stopTimedMessage(ptm)
+    
+    ## Peaks ##
+    result$peaks <- result$segments[result$segments$state == 'modified']
+    result$peaks$state <- NULL
+    result$segments <- NULL
         
       
     # Return results
