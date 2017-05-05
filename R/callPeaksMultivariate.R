@@ -203,14 +203,14 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
 
 runMultivariate <- function(bins, info, comb.states, use.states, distributions, weights, correlationMatrix, correlationMatrixInverse, determinant, max.iter, max.time, eps, num.threads, keep.posteriors, keep.densities, transitionProbs.initial=NULL, startProbs.initial=NULL, verbosity=1) {
 
-    ptm <- startTimedMessage("Starting multivariate HMM with ", length(comb.states), " combinatorial states")
+    ptm.start <- startTimedMessage("Starting multivariate HMM with ", length(comb.states), " combinatorial states")
     message("")
 
-    ### Define cleanup behaviour ###
+    ### Variables ###
     nummod <- dim(bins$counts)[2]
     offsets <- dimnames(bins$counts)[[3]]
-    on.exit(.C("C_multivariate_cleanup", as.integer(nummod)))
-
+    binstates <- dec2bin(comb.states, ndigits=nummod)
+    
     # Prepare input for C function
     rs <- unlist(lapply(distributions,"[",2:3,'size'))
     ps <- unlist(lapply(distributions,"[",2:3,'prob'))
@@ -239,27 +239,35 @@ runMultivariate <- function(bins, info, comb.states, use.states, distributions, 
         stepbins <- bins
         mcols(stepbins) <- NULL
     }
+    ## Dummy bins without mcols for shifting
     sbins <- bins
     mcols(sbins) <- NULL
-    aposteriors.step <- array(0, dim = c(length(stepbins), length(comb.states), 2), dimnames = list(bin=NULL, state=comb.states, offset=c('previousOffsets', 'currentOffset')))
-    acounts.step <- array(0, dim = c(length(stepbins), nummod, 2), dimnames = list(bin=NULL, track=info$ID, offset=c('previousOffsets', 'currentOffset')))
-    amaxPosterior.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset')))
+    ## Initialize arrays
+    if (get.posteriors) {
+        aposteriors.step <- array(0, dim = c(length(stepbins), nummod, 2), dimnames = list(bin=NULL, track=info$ID, offset=c('previousOffsets', 'currentOffset'))) # to store posteriors-per-sample for current and max-of-previous offsets
+    }
+    acounts.step <- array(0, dim = c(length(stepbins), nummod, 2), dimnames = list(bin=NULL, track=info$ID, offset=c('previousOffsets', 'currentOffset'))) # to store counts for current and sum-of-previous offsets
+    amaxPosterior.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset'))) # to store maximum posterior for current and max-of-previous offsets
     astates.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset')))
+    stopTimedMessage(ptm) # to store states for current and max-of-previous offsets
     
     ### Loop over offsets ###
     for (ioffset in 1:length(offsets)) {
       
         offset <- offsets[ioffset]
         if (ioffset > 1) {
-            messageU("Obtaining states for step size = ", offset, overline = '-', underline = NULL)
+            ptm <- startTimedMessage("Obtaining states for offset = ", offset, " ...")
             ## Run only one iteration (no updating) if we are already over ioffset=1
             max.iter <- 1
             transitionProbs.initial <- hmm.A
             startProbs.initial <- hmm.proba
             verbosity <- 0
+        } else {
+            ptm <- messageU("Running Baum-Welch for offset = ", offset, overline="-", underline=NULL)
         }
       
         # Call the C function
+        on.exit(.C("C_multivariate_cleanup", as.integer(nummod)))
         hmm <- .C("C_multivariate_hmm",
             counts = as.integer(as.vector(bins$counts[,, offset])), # int* multiO
             num.bins = as.integer(length(bins)), # int* T
@@ -356,56 +364,68 @@ runMultivariate <- function(bins, info, comb.states, use.states, distributions, 
         hmm.A <- hmm$A
         hmm.proba <- hmm$proba
         
-        ## Inflate posteriors to new offset
+        ## Transform posteriors to 'per-sample' representation
+        if (get.posteriors) {
+            post.per.track <- hmm$posteriors %*% binstates
+            colnames(post.per.track) <- info$ID
+        }
+        
+        ## Inflate posteriors, states, counts to new offset
         bins.shift <- suppressWarnings( shift(sbins, shift = as.numeric(offset)) )
         ind <- findOverlaps(stepbins, bins.shift)
-        aposteriors.step[ind@from, , 'currentOffset'] <- hmm$posteriors[ind@to, , drop=FALSE]
+        if (get.posteriors) {
+            aposteriors.step[ind@from, , 'currentOffset'] <- post.per.track[ind@to, , drop=FALSE]
+        }
         acounts.step[ind@from, , 'currentOffset'] <- hmm$counts[ind@to, , drop=FALSE]
         astates.step[ind@from, 'currentOffset'] <- hmm$states[ind@to]
         amaxPosterior.step[ind@from, 'currentOffset'] <- hmm$maxPosterior[ind@to]
         
         ## Sum counts
-        for (i3 in 1:dim(acounts.step)[2]) {
-            acounts.step[, i3, 'previousOffsets'] <- acounts.step[, i3, 'previousOffsets'] + acounts.step[, i3, 'currentOffset']
-        }
+        acounts.step[, , 'previousOffsets'] <- acounts.step[, , 'previousOffsets', drop=FALSE] + acounts.step[, , 'currentOffset', drop=FALSE]
         
         ## Find offset that maximizes the posteriors for each bin
-        # Start stuff to call C code
-            # Work with changing dimensions to avoid copies being made
-            dim_amaxPosterior.step <- dim(amaxPosterior.step)
-            dimnames_amaxPosterior.step <- dimnames(amaxPosterior.step)
-            dim(amaxPosterior.step) <- NULL
-            z <- .C("C_array2D_which_max",
-                    array2D = amaxPosterior.step,
-                    dim = as.integer(dim_amaxPosterior.step),
-                    ind_max = integer(dim_amaxPosterior.step[1]),
-                    value_max = double(dim_amaxPosterior.step[1]))
-            dim(amaxPosterior.step) <- dim_amaxPosterior.step
-            dimnames(amaxPosterior.step) <- dimnames_amaxPosterior.step
-            ind <- z$ind_max
-        # End stuff to call C code
+        ##-- Start stuff to call C code
+        # Work with changing dimensions to avoid copies being made
+        dim_amaxPosterior.step <- dim(amaxPosterior.step)
+        dimnames_amaxPosterior.step <- dimnames(amaxPosterior.step)
+        dim(amaxPosterior.step) <- NULL
+        z <- .C("C_array2D_which_max",
+                array2D = amaxPosterior.step,
+                dim = as.integer(dim_amaxPosterior.step),
+                ind_max = integer(dim_amaxPosterior.step[1]),
+                value_max = double(dim_amaxPosterior.step[1]))
+        dim(amaxPosterior.step) <- dim_amaxPosterior.step
+        dimnames(amaxPosterior.step) <- dimnames_amaxPosterior.step
+        ind <- z$ind_max
+        ##-- End stuff to call C code
         for (i1 in 1:2) {
             mask <- ind == i1
-            aposteriors.step[mask, , 'previousOffsets'] <- aposteriors.step[mask,,i1, drop=FALSE]
+            if (get.posteriors) {
+                aposteriors.step[mask, , 'previousOffsets'] <- aposteriors.step[mask,,i1, drop=FALSE]
+            }
             astates.step[mask, 'previousOffsets'] <- astates.step[mask,i1, drop=FALSE]
             amaxPosterior.step[mask, 'previousOffsets'] <- amaxPosterior.step[mask,i1, drop=FALSE]
         }
         
-        message("Time spent in multivariate HMM: ", appendLF=FALSE)
+        if (ioffset == 1) {
+            message("Time spent in multivariate HMM: ", appendLF=FALSE)
+        }
         stopTimedMessage(ptm)
-        ptm <- proc.time()
     
-        rm(hmm)
+        rm(hmm, ind)
     } # loop over offsets
     states.step <- astates.step[, 'previousOffsets']
     rm(amaxPosterior.step, astates.step)
 
     # Average and normalize counts to RPKM
     ptm <- startTimedMessage("Collecting counts and posteriors over offsets ...")
-    counts.step <- acounts.step[,, 'previousOffsets'] / dim(acounts.step)[2]
+    counts.step <- acounts.step[, , 'previousOffsets'] / length(offsets)
     rm(acounts.step)
     counts.step <- rpkm.matrix(counts.step, binsize = width(bins)[1])
-    stepbins$posteriors <- aposteriors.step[,,'previousOffsets']
+    if (get.posteriors) {
+        stepbins$posteriors <- aposteriors.step[,,'previousOffsets']
+        rm(aposteriors.step)
+    }
     stopTimedMessage(ptm)
     
     ## Counts ##
@@ -422,14 +442,9 @@ runMultivariate <- function(bins, info, comb.states, use.states, distributions, 
     }
     result$bins$state <- factor(states.step, levels=state.levels)
     if (get.posteriors) {
-        ptm <- startTimedMessage("Transforming posteriors to `per sample` representation ...")
-        binstates <- dec2bin(comb.states, ndigits=nummod)
-        post.per.track <- stepbins$posteriors %*% binstates
-        colnames(post.per.track) <- result$info$ID
-        result$bins$posteriors <- post.per.track
+        result$bins$posteriors <- stepbins$posteriors
         result$bins$peakScores <- getPeakScores(result$bins)
         result$bins$differential.score <- differentialScoreSum(result$bins$peakScores, result$info)
-        stopTimedMessage(ptm)
     }
     if (keep.densities) {
         result$bincounts$densities <- matrix(densities, ncol=length(comb.states))

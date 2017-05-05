@@ -140,9 +140,6 @@ callPeaksUnivariate <- function(binned.data, input.data=NULL, prefit.on.chr=NULL
 #' @importFrom S4Vectors Rle runmean
 callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, post.cutoff=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
 
-    ### Define cleanup behaviour ###
-    on.exit(.C("C_univariate_cleanup"))
-
     ### Intercept user input ###
     if (check.positive(eps)!=0) stop("argument 'eps' expects a positive numeric")
     if (is.null(max.time)) { max.time <- -1 } else if (check.nonnegative.integer(max.time)!=0) { stop("argument 'max.time' expects a non-negative integer or NULL") }
@@ -211,10 +208,10 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     }
     bins <- binned.data
     mcols(bins) <- NULL
-    aposteriors.step <- array(0, dim = c(length(stepbins), numstates, 2), dimnames = list(bin=NULL, state=state.labels, offset=c('previousOffsets', 'currentOffset')))
-    acounts.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset')))
-    amaxPosterior.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset')))
-    astates.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset')))
+    aposteriors.step <- array(0, dim = c(length(stepbins), numstates, 2), dimnames = list(bin=NULL, state=state.labels, offset=c('previousOffsets', 'currentOffset'))) # to store posteriors for current and max-of-previous offsets
+    acounts.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset'))) # to store counts for current and max-of-previous offsets
+    amaxPosterior.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset'))) # to store maximum posterior for current and max-of-previous offsets
+    astates.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset'))) # to store states for current and max-of-previous offsets
     
     ### Loop over offsets ###
     for (ioffset in 1:length(offsets)) {
@@ -305,6 +302,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
         modellist <- list()
         for (i_try in 1:num.trials) {
             if (verbosity>=1) message("------------------------------------ Try ",i_try," of ",num.trials," -------------------------------------")
+            on.exit(.C("C_univariate_cleanup"))
             hmm <- .C("C_univariate_hmm",
                 counts = as.integer(counts), # int* O
                 num.bins = as.integer(numbins), # int* T
@@ -362,6 +360,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
             }
             # Rerun the HMM with different epsilon and initial parameters from trial run
             if (verbosity>=1) message("------------------------- Rerunning try ",indexmax," with eps = ",eps," -------------------------")
+            on.exit(.C("C_univariate_cleanup"))
             hmm <- .C("C_univariate_hmm",
                 counts = as.integer(counts), # int* O
                 num.bins = as.integer(numbins), # int* T
@@ -455,32 +454,32 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
             densities <- hmm$densities
         }
         
-        ## Inflate posteriors to new offset
+        ## Inflate posteriors, states, counts to new offset
         bins.shift <- suppressWarnings( shift(bins, shift = as.numeric(offset)) )
         ind <- findOverlaps(stepbins, bins.shift)
         aposteriors.step[ind@from, , 'currentOffset'] <- hmm$posteriors[ind@to, , drop=FALSE]
-        acounts.step[ind@from, 'currentOffset'] <- hmm$counts[ind@to]
+        acounts.step[ind@from, 'currentOffset'] <- hmm$counts[ind@to, drop=FALSE]
         astates.step[ind@from, 'currentOffset'] <- hmm$states[ind@to]
         amaxPosterior.step[ind@from, 'currentOffset'] <- hmm$maxPosterior[ind@to]
         
         ## Sum counts
-        acounts.step[, 'previousOffsets'] <- rowSums(acounts.step)
+        acounts.step[, 'previousOffsets'] <- acounts.step[, 'previousOffsets', drop=FALSE] + acounts.step[, 'currentOffset', drop=FALSE]
         
         ## Find offset that maximizes the posteriors for each bin
-        # Start stuff to call C code
-            # Work with changing dimensions to avoid copies being made
-            dim_amaxPosterior.step <- dim(amaxPosterior.step)
-            dimnames_amaxPosterior.step <- dimnames(amaxPosterior.step)
-            dim(amaxPosterior.step) <- NULL
-            z <- .C("C_array2D_which_max",
-                    array2D = amaxPosterior.step,
-                    dim = as.integer(dim_amaxPosterior.step),
-                    ind_max = integer(dim_amaxPosterior.step[1]),
-                    value_max = double(dim_amaxPosterior.step[1]))
-            dim(amaxPosterior.step) <- dim_amaxPosterior.step
-            dimnames(amaxPosterior.step) <- dimnames_amaxPosterior.step
-            ind <- z$ind_max
-        # End stuff to call C code
+        ##-- Start stuff to call C code
+        # Work with changing dimensions to avoid copies being made
+        dim_amaxPosterior.step <- dim(amaxPosterior.step)
+        dimnames_amaxPosterior.step <- dimnames(amaxPosterior.step)
+        dim(amaxPosterior.step) <- NULL
+        z <- .C("C_array2D_which_max",
+                array2D = amaxPosterior.step,
+                dim = as.integer(dim_amaxPosterior.step),
+                ind_max = integer(dim_amaxPosterior.step[1]),
+                value_max = double(dim_amaxPosterior.step[1]))
+        dim(amaxPosterior.step) <- dim_amaxPosterior.step
+        dimnames(amaxPosterior.step) <- dimnames_amaxPosterior.step
+        ind <- z$ind_max
+        ##-- End stuff to call C code
         for (i1 in 1:2) {
             mask <- ind == i1
             aposteriors.step[mask, , 'previousOffsets'] <- aposteriors.step[mask,,i1, drop=FALSE]
@@ -489,13 +488,13 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
         }
         stopTimedMessage(ptm)
         
-        rm(hmm)
+        rm(hmm, ind)
     } # loop over offsets
     rm(amaxPosterior.step, astates.step)
         
     # Average and normalize counts to RPKM
     ptm <- startTimedMessage("Collecting counts and posteriors over offsets ...")
-    counts.step <- acounts.step[, 'previousOffsets'] / ncol(acounts.step)
+    counts.step <- acounts.step[, 'previousOffsets'] / length(offsets)
     rm(acounts.step)
     counts.step <- rpkm.vector(counts.step, binsize = binsize)
     stepbins$posteriors <- aposteriors.step[,,'previousOffsets']
