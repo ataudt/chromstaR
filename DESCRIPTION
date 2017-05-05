@@ -1,8 +1,8 @@
 Package: chromstaR
 Type: Package
 Title: Combinatorial and Differential Chromatin State Analysis for ChIP-Seq Data
-Version: 1.1.5
-Date: 2016-10-19
+Version: 1.3.1
+Date: 2017-05
 Author: Aaron Taudt, Maria Colome Tatche, Matthias Heinig, Minh Anh Nguyen
 Maintainer: Aaron Taudt <aaron.taudt@gmail.com>
 Description: This package implements functions for combinatorial and differential analysis of ChIP-seq data. It includes uni- and multivariate peak-calling, export to genome browser viewable files, and functions for enrichment analyses.
