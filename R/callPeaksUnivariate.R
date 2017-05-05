@@ -52,7 +52,7 @@
 callPeaksUnivariate <- function(binned.data, input.data=NULL, prefit.on.chr=NULL, short=TRUE, eps=0.1, init="standard", max.time=NULL, max.iter=5000, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, post.cutoff=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
 
     if (class(binned.data) == 'character') { 
-        message("Loading file ",binned.data)
+        messageU("Loading file ",binned.data, overline="_", underline=NULL)
         binned.data <- loadHmmsFromFiles(binned.data)[[1]]
     }
     if (!is.null(input.data)) {
@@ -81,7 +81,7 @@ callPeaksUnivariate <- function(binned.data, input.data=NULL, prefit.on.chr=NULL
         model <- callPeaksUnivariateAllChr(binned.data=binned.data, input.data=input.data, eps=eps, init=init, max.time=max.time, max.iter=max.iter, num.trials=num.trials, eps.try=eps.try, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=keep.posteriors, keep.densities=FALSE, verbosity=verbosity)
     } else {
 
-        message("Fitting on chromosome ", prefit.on.chr)
+        messageU("Fitting on chromosome ", prefit.on.chr, ":", overline='-', underline=NULL)
         pre.binned.data <- binned.data[seqnames(binned.data)==prefit.on.chr]
         if (!is.null(input.data)) {
             pre.input.data <- input.data[seqnames(input.data)==prefit.on.chr]
@@ -95,6 +95,7 @@ callPeaksUnivariate <- function(binned.data, input.data=NULL, prefit.on.chr=NULL
         }
         model <- pre.model
         model$bins <- binned.data
+        messageU("Obtaining states for all chromosomes:", overline='-', underline=NULL)
         model <- suppressWarnings( callPeaksUnivariateAllChr(binned.data=model, input.data=input.data, eps=eps, max.time=max.time, max.iter=max.iter, num.threads=num.threads, read.cutoff=read.cutoff, read.cutoff.quantile=read.cutoff.quantile, read.cutoff.absolute=read.cutoff.absolute, max.mean=max.mean, post.cutoff=post.cutoff, control=control, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity) )
 
     }
@@ -229,8 +230,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
             continue.from.univariate.hmm <- TRUE
             max.iter <- 1
             verbosity <- 0
-        } else {
-            ptm.offset <- messageU("Fitting Hidden Markov Model for offset = ", offset, overline="-", underline=NULL)
+            num.trials <- 1
         }
     
         ### Input correction ###
@@ -300,7 +300,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
         
         ## Call univariate in a for loop to enable multiple trials
         if (verbosity==0 & ioffset == 1) {
-            ptm <- startTimedMessage("Running Baum-Welch ...")
+            ptm <- startTimedMessage("Running Baum-Welch for offset = ", offset, " ...")
         }
         modellist <- list()
         for (i_try in 1:num.trials) {
@@ -448,7 +448,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
                 class(result) <- class.univariate.hmm
         }
         
-        # ptm <- startTimedMessage("Maximizing over offsets ...")
+        if (ioffset == 1) { ptm <- startTimedMessage("Collecting counts and posteriors ...") }
         ## Store counts and posteriors in list
         dim(hmm$posteriors) <- c(numbins, numstates)
         dimnames(hmm$posteriors) <- list(bin=NULL, state=state.labels)
@@ -489,10 +489,11 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
             astates.step[mask, 'previousOffsets'] <- astates.step[mask,i1, drop=FALSE]
             amaxPosterior.step[mask, 'previousOffsets'] <- amaxPosterior.step[mask,i1, drop=FALSE]
         }
-        if (ioffset == 1) {
-            message("Time spent in multivariate HMM: ", appendLF=FALSE)
+        if (ioffset == 1) { stopTimedMessage(ptm) }
+        
+        if (ioffset > 1) {
+            stopTimedMessage(ptm.offset)
         }
-        stopTimedMessage(ptm.offset)
         
         rm(hmm, ind)
     } # loop over offsets

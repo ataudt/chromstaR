@@ -175,7 +175,7 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
         } else {
             models <- list()
             for (chrom in chromosomes) {
-                ptm <- startTimedMessage("Chromosome = ", chrom, "\n")
+                ptm <- messageU("Chromosome = ", chrom, overline="-", underline=NULL)
                 bins <- p$bins[seqnames(p$bins)==chrom]
                 model <- runMultivariate(bins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, correlationMatrix=p$correlationMatrix, correlationMatrixInverse=p$correlationMatrixInverse, determinant=p$determinant, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
                 message("Time spent for chromosome = ", chrom, ":", appendLF=FALSE)
@@ -263,7 +263,7 @@ runMultivariate <- function(bins, info, comb.states, use.states, distributions, 
             startProbs.initial <- hmm.proba
             verbosity <- 0
         } else {
-            ptm <- messageU("Fitting Hidden Markov Model for offset = ", offset, overline="-", underline=NULL)
+            ptm <- startTimedMessage("Fitting Hidden Markov Model for offset = ", offset, "\n")
         }
       
         # Call the C function
