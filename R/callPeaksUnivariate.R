@@ -167,7 +167,6 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     }
     numstates <- length(state.labels)
     iniproc <- which(init==c("standard","random","empiric")) # transform to int
-    offsets <- dimnames(binned.data$counts)[[2]]
 
     ### Assign initial parameters ###
     if (class(binned.data) == class.univariate.hmm) {
@@ -196,6 +195,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     numbins <- length(binned.data)
     binsize <- width(binned.data)[1]
     if (keep.densities) { lenDensities <- numbins * numstates } else { lenDensities <- 1 }
+    offsets <- dimnames(binned.data$counts)[[2]]
     
     ### Arrays for finding maximum posterior for each bin between offsets
     ## Make bins with offset
@@ -212,14 +212,15 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     acounts.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset'))) # to store counts for current and max-of-previous offsets
     amaxPosterior.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset'))) # to store maximum posterior for current and max-of-previous offsets
     astates.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset'))) # to store states for current and max-of-previous offsets
+    stopTimedMessage(ptm)
     
     ### Loop over offsets ###
     for (ioffset in 1:length(offsets)) {
         offset <- offsets[ioffset]
         counts <- binned.data$counts[,offset, drop=FALSE]
         if (ioffset > 1) {
-            messageU("Obtaining states for step size = ", offset, overline = '-', underline = NULL)
-            ## Run only one iteration (no updating) if we are already over ioffset=1
+            ptm.offset <- startTimedMessage("Obtaining states for offset = ", offset, " ...")
+            ## Run only one iteration (no updating) if we are already over ioffset==1
             hmm <- result
             A.initial <- hmm$transitionProbs
             proba.initial <- hmm$startProbs
@@ -228,11 +229,13 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
             continue.from.univariate.hmm <- TRUE
             max.iter <- 1
             verbosity <- 0
+        } else {
+            ptm.offset <- messageU("Fitting Hidden Markov Model for offset = ", offset, overline="-", underline=NULL)
         }
     
         ### Input correction ###
         if (!is.null(input.data)) {
-            ptm <- startTimedMessage("Correcting read counts for input ...")
+            if (ioffset == 1) { ptm <- startTimedMessage("Correcting read counts for input ...") }
             if (is.character(input.data)) {
                 input.data <- loadHmmsFromFiles(input.data)[[1]]
             }
@@ -246,12 +249,12 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
             # Correction factor
             inputf <- S4Vectors::Rle(1, length=length(input.data))
             mean.input.counts <- mean(inputcounts[inputcounts>0])
-            mask.0 <- inputcounts > 0
+            mask.0 <- as.vector(inputcounts > 0)
             inputf[mask.0] <- mean.input.counts / as.numeric(S4Vectors::runmean(S4Vectors::Rle(inputcounts), k=15, endrule='constant'))[mask.0]
             inputf[inputf > 1.5] <- 1
             inputf <- as.numeric(inputf)
             counts <- round(counts * inputf)
-            stopTimedMessage(ptm)
+            if (ioffset == 1) { stopTimedMessage(ptm) }
         }
     
         ### Check if there are counts in the data, otherwise HMM will blow up ###
@@ -274,7 +277,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
                 numfiltered <- length(which(mask))
             }
         }
-        if (numfiltered > 0) {
+        if (numfiltered > 0 & ioffset == 1) {
             message("Replaced read counts > ",read.cutoff.absolute, " by ",read.cutoff.absolute," in ",numfiltered," bins to enhance performance (option 'read.cutoff').")
         }
     
@@ -296,8 +299,8 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
         }
         
         ## Call univariate in a for loop to enable multiple trials
-        if (verbosity==0) {
-            ptm <- startTimedMessage("Fitting Hidden Markov Model ...")
+        if (verbosity==0 & ioffset == 1) {
+            ptm <- startTimedMessage("Running Baum-Welch ...")
         }
         modellist <- list()
         for (i_try in 1:num.trials) {
@@ -343,7 +346,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
             # Set init procedure to random
             iniproc <- which('random'==c("standard","random","empiric")) # transform to int
         }
-        if (verbosity==0) {
+        if (verbosity==0 & ioffset == 1) {
             stopTimedMessage(ptm)
         }
     
@@ -355,7 +358,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
         }
     
         if (eps != eps.try) {
-            if (verbosity==0) {
+            if (verbosity==0 & ioffset == 1) {
                 ptm <- startTimedMessage("Refining Hidden Markov Model ...")
             }
             # Rerun the HMM with different epsilon and initial parameters from trial run
@@ -390,7 +393,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
                 read.cutoff = as.integer(max(counts)), # int* read_cutoff
                 verbosity = as.integer(verbosity) # int* verbosity
             )
-            if (verbosity==0) {
+            if (verbosity==0 & ioffset == 1) {
                 stopTimedMessage(ptm)
             }
         }
@@ -445,7 +448,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
                 class(result) <- class.univariate.hmm
         }
         
-        ptm <- startTimedMessage("Maximizing over offsets ...")
+        # ptm <- startTimedMessage("Maximizing over offsets ...")
         ## Store counts and posteriors in list
         dim(hmm$posteriors) <- c(numbins, numstates)
         dimnames(hmm$posteriors) <- list(bin=NULL, state=state.labels)
@@ -486,20 +489,21 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
             astates.step[mask, 'previousOffsets'] <- astates.step[mask,i1, drop=FALSE]
             amaxPosterior.step[mask, 'previousOffsets'] <- amaxPosterior.step[mask,i1, drop=FALSE]
         }
-        stopTimedMessage(ptm)
+        if (ioffset == 1) {
+            message("Time spent in multivariate HMM: ", appendLF=FALSE)
+        }
+        stopTimedMessage(ptm.offset)
         
         rm(hmm, ind)
     } # loop over offsets
     rm(amaxPosterior.step, astates.step)
         
     # Average and normalize counts to RPKM
-    ptm <- startTimedMessage("Collecting counts and posteriors over offsets ...")
     counts.step <- acounts.step[, 'previousOffsets'] / length(offsets)
     rm(acounts.step)
     counts.step <- rpkm.vector(counts.step, binsize = binsize)
     stepbins$posteriors <- aposteriors.step[,,'previousOffsets']
     rm(aposteriors.step)
-    stopTimedMessage(ptm)
     
     ## Get states ##
     ptm <- startTimedMessage("Calculating states from posteriors ...")
@@ -553,7 +557,6 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     result$peaks$state <- NULL
     result$segments <- NULL
         
-      
     # Return results
     return(result)
 }

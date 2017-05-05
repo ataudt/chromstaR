@@ -248,8 +248,8 @@ runMultivariate <- function(bins, info, comb.states, use.states, distributions, 
     }
     acounts.step <- array(0, dim = c(length(stepbins), nummod, 2), dimnames = list(bin=NULL, track=info$ID, offset=c('previousOffsets', 'currentOffset'))) # to store counts for current and sum-of-previous offsets
     amaxPosterior.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset'))) # to store maximum posterior for current and max-of-previous offsets
-    astates.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset')))
-    stopTimedMessage(ptm) # to store states for current and max-of-previous offsets
+    astates.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset'))) # to store states for current and max-of-previous offsets
+    stopTimedMessage(ptm)
     
     ### Loop over offsets ###
     for (ioffset in 1:length(offsets)) {
@@ -263,7 +263,7 @@ runMultivariate <- function(bins, info, comb.states, use.states, distributions, 
             startProbs.initial <- hmm.proba
             verbosity <- 0
         } else {
-            ptm <- messageU("Running Baum-Welch for offset = ", offset, overline="-", underline=NULL)
+            ptm <- messageU("Fitting Hidden Markov Model for offset = ", offset, overline="-", underline=NULL)
         }
       
         # Call the C function
