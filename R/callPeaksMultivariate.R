@@ -243,7 +243,6 @@ runMultivariate <- function(binned.data, info, comb.states, use.states, distribu
     ## Make bins with offset
     ptm <- startTimedMessage("Making bins with offsets ...")
     if (length(offsets) > 1) {
-      stop()
         stepbins <- suppressMessages( fixedWidthBins(chrom.lengths = seqlengths(binned.data), binsizes = as.numeric(offsets[2]), chromosomes = unique(seqnames(binned.data)))[[1]] )
     } else {
         stepbins <- binned.data
@@ -370,7 +369,7 @@ runMultivariate <- function(binned.data, info, comb.states, use.states, distribu
         dimnames(hmm$counts) <- list(bin=NULL, track=info$ID)
         if (keep.densities) {
             densities <- hmm$densities
-            dim(densities) <- c(length(binned.data), length(combstates))
+            dim(densities) <- c(length(binned.data), length(comb.states))
             dimnames(densities) <- list(bin=NULL, state=comb.states)
         }
         hmm.A <- hmm$A
