@@ -202,7 +202,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     ## Make bins with offset
     ptm <- startTimedMessage("Making bins with offsets ...")
     if (length(offsets) > 1) {
-        stepbins <- suppressMessages( fixedWidthBins(chrom.lengths = seqlengths(binned.data), binsizes = as.numeric(offsets[2]))[[1]] )
+        stepbins <- suppressMessages( fixedWidthBins(chrom.lengths = seqlengths(binned.data), binsizes = as.numeric(offsets[2]), chromosomes = unique(seqnames(binned.data)))[[1]] )
     } else {
         stepbins <- binned.data
         mcols(stepbins) <- NULL

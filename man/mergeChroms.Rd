@@ -7,7 +7,7 @@
 mergeChroms(multi.hmm.list, filename = NULL)
 }
 \arguments{
-\item{multi.hmm.list}{A list of \code{\link{multiHMM}} objects.}
+\item{multi.hmm.list}{A list of \code{\link{multiHMM}} objects or a character vector of files that contain such objects.}
 
 \item{filename}{The file name where the merged object will be stored. If \code{filename} is not specified, a \code{\link{multiHMM}} is returned.}
 }
