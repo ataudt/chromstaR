@@ -194,7 +194,7 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
 
         # Merge chromosomes into one multiHMM
         ptm <- startTimedMessage("Merging chromosomes ...")
-        models <- as.character(models) # make sure 'models' is a character vector with filenames
+        models <- as.character(models) # make sure 'models' is a character vector with filenames and not a list()
         model <- suppressMessages( mergeChroms(models) )
         stopTimedMessage(ptm)
 
@@ -243,6 +243,7 @@ runMultivariate <- function(binned.data, info, comb.states, use.states, distribu
     ## Make bins with offset
     ptm <- startTimedMessage("Making bins with offsets ...")
     if (length(offsets) > 1) {
+      stop()
         stepbins <- suppressMessages( fixedWidthBins(chrom.lengths = seqlengths(binned.data), binsizes = as.numeric(offsets[2]), chromosomes = unique(seqnames(binned.data)))[[1]] )
     } else {
         stepbins <- binned.data
