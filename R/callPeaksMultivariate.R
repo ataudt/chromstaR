@@ -17,6 +17,7 @@
 #' @param max.iter The maximum number of iterations for the Baum-Welch algorithm. The default \code{NULL} is no limit.
 #' @param keep.densities If set to \code{TRUE} (default=\code{FALSE}), densities will be available in the output. This should only be needed debugging.
 #' @param verbosity Verbosity level for the fitting procedure. 0 - No output, 1 - Iterations are printed.
+#' @param temp.savedir A directory where to store intermediate results if \code{per.chrom=TRUE}.
 #' @return A \code{\link{multiHMM}} object.
 #' @seealso \code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksReplicates}}
 #' @import doParallel
@@ -50,7 +51,7 @@
 #'heatmapTransitionProbs(multimodel)
 #'heatmapCountCorrelation(multimodel)
 #'
-callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=TRUE, chromosomes=NULL, eps=0.01, keep.posteriors=FALSE, num.threads=1, max.time=NULL, max.iter=NULL, keep.densities=FALSE, verbosity=1) {
+callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=TRUE, chromosomes=NULL, eps=0.01, keep.posteriors=FALSE, num.threads=1, max.time=NULL, max.iter=NULL, keep.densities=FALSE, verbosity=1, temp.savedir=NULL) {
 
     ## Intercept user input
     if (!is.null(use.states)) {
@@ -145,6 +146,11 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
     if (is.null(chromosomes)) {
         chromosomes <- intersect(seqlevels(p$bincounts), unique(seqnames(p$bincounts)))
     }
+    if (!is.null(temp.savedir)) {
+        if (!file.exists(temp.savedir)) {
+            dir.create(temp.savedir)
+        }
+    }
 
     ## Run multivariate per chromosome
     if (per.chrom) {
@@ -169,10 +175,14 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
             models <- foreach (chrom = chromosomes, .packages='chromstaR') %dopar% {
                 bins <- p$bincounts[seqnames(p$bincounts)==chrom]
                 model <- runMultivariate(binned.data=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, correlationMatrix=p$correlationMatrix, correlationMatrixInverse=p$correlationMatrixInverse, determinant=p$determinant, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity, counts.rpkm=p$counts.rpkm)
-                tempsavename <- tempfile()
-                save(model, file=tempsavename)
-                rm(model); gc()
-                tempsavename
+                if (!is.null(temp.savedir)) {
+                    temp.savename <- file.path(temp.savedir, paste0('chromosome_', chrom, '.RData'))
+                    save(model, file=temp.savename)
+                    rm(model); gc()
+                    temp.savename
+                } else {
+                    model
+                }
             }
             stopTimedMessage(ptm)
         } else {
@@ -183,18 +193,24 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
                 model <- runMultivariate(binned.data=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, correlationMatrix=p$correlationMatrix, correlationMatrixInverse=p$correlationMatrixInverse, determinant=p$determinant, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity, counts.rpkm=p$counts.rpkm)
                 message("Time spent for chromosome = ", chrom, ":", appendLF=FALSE)
                 stopTimedMessage(ptm)
-                tempsavename <- tempfile()
-                ptm <- startTimedMessage("Saving chromosome ", chrom, " to temporary file ", tempsavename, " ...")
-                save(model, file=tempsavename)
-                rm(model); gc()
+                if (!is.null(temp.savedir)) {
+                    temp.savename <- file.path(temp.savedir, paste0('chromosome_', chrom, '.RData'))
+                    ptm <- startTimedMessage("Saving chromosome ", chrom, " to temporary file ", temp.savename, " ...")
+                    save(model, file=temp.savename)
+                    rm(model); gc()
+                    models[[as.character(chrom)]] <- temp.savename
+                } else {
+                    models[[as.character(chrom)]] <- model
+                }
                 stopTimedMessage(ptm)
-                models[[as.character(chrom)]] <- tempsavename
             }
         }
 
         # Merge chromosomes into one multiHMM
         ptm <- startTimedMessage("Merging chromosomes ...")
-        models <- as.character(models) # make sure 'models' is a character vector with filenames and not a list()
+        if (!is.null(temp.savedir)) {
+            models <- as.character(models) # make sure 'models' is a character vector with filenames and not a list()
+        }
         model <- suppressMessages( mergeChroms(models) )
         stopTimedMessage(ptm)
 
@@ -205,6 +221,11 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
 
     }
 
+    if (!is.null(temp.savedir)) {
+        if (file.exists(temp.savedir)) {
+            unlink(temp.savedir, recursive = TRUE)
+        }
+    }
     return(model)
 
 }

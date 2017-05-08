@@ -387,7 +387,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 mask <- names(files) == markcond
                 repfiles <- files[mask]
                 states <- stateBrewer(exp.table[mask,], mode='combinatorial')
-                repmodel <- callPeaksMultivariate(repfiles, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
+                repmodel <- callPeaksMultivariate(repfiles, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']], temp.savedir=file.path(reppath, paste0(markcond, '_binsize', binsize.string, '_stepsize', stepsize.string, '_tempfiles')))
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(repmodel, file=savename)
                 stopTimedMessage(ptm)
@@ -477,7 +477,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         if (!file.exists(multifile)) {
             files <- file.path(unipath, filenames)
             states <- stateBrewer(exp.table, mode=mode, exclusive.table=conf[['exclusive.table']])
-            multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
+            multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']], temp.savedir=file.path(multipath, paste0('multivariate_mode-', mode, '_tempfiles')))
             ptm <- startTimedMessage("Saving to file ", multifile, " ...")
             save(multimodel, file=multifile)
             stopTimedMessage(ptm)
@@ -498,7 +498,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 mask <- exp.table[,'condition'] == condition
                 files <- file.path(unipath, filenames)[mask]
                 states <- stateBrewer(exp.table[mask,], mode=mode, exclusive.table=conf[['exclusive.table']])
-                multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
+                multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']], temp.savedir=file.path(multipath, paste0('multivariate_mode-', mode, '_condition-', condition, '_tempfiles')))
                 ptm <- startTimedMessage("Saving to file ", multifile, " ...")
                 save(multimodel, file=multifile)
                 stopTimedMessage(ptm)
@@ -520,7 +520,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 mask <- exp.table[,'mark'] == mark
                 files <- file.path(unipath, filenames)[mask]
                 states <- stateBrewer(exp.table[mask,], mode=mode, exclusive.table=conf[['exclusive.table']])
-                multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']])
+                multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']], temp.savedir=file.path(multipath, paste0('multivariate_mode-', mode, '_mark-', mark, '_tempfiles')))
                 ptm <- startTimedMessage("Saving to file ", multifile, " ...")
                 save(multimodel, file=multifile)
                 stopTimedMessage(ptm)
