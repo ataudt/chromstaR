@@ -5,7 +5,7 @@
 \title{Wrapper function for the \pkg{\link{chromstaR}} package}
 \usage{
 Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
-  numCPU = 1, binsize = 1000, stepsize = binsize/5, assembly = NULL,
+  numCPU = 1, binsize = 1000, stepsize = binsize/2, assembly = NULL,
   chromosomes = NULL, remove.duplicate.reads = TRUE, min.mapq = 10,
   prefit.on.chr = NULL, eps.univariate = 0.1, max.time = NULL,
   max.iter = 5000, read.cutoff.absolute = 500, keep.posteriors = TRUE,

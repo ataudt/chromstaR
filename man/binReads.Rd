@@ -8,7 +8,7 @@
 binReads(file, experiment.table = NULL, assembly, bamindex = file,
   chromosomes = NULL, pairedEndReads = FALSE, min.mapq = 10,
   remove.duplicate.reads = TRUE, max.fragment.width = 1000,
-  blacklist = NULL, binsizes = 1000, stepsizes = 1/5 * binsizes,
+  blacklist = NULL, binsizes = 1000, stepsizes = binsizes/2,
   reads.per.bin = NULL, bins = NULL, variable.width.reference = NULL,
   use.bamsignals = TRUE, format = NULL)
 }
