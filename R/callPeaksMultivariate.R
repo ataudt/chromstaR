@@ -173,9 +173,8 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
         if (num.threads > 1) {
             ptm <- startTimedMessage("Running multivariate ...")
             models <- foreach (chrom = chromosomes, .packages='chromstaR') %dopar% {
-                ind <- which(seqnames(p$bincounts)==chrom)
-                bins <- p$bincounts[ind]
-                counts.rpkm <- p$counts.rpkm[ind, , drop=FALSE]
+                bins <- p$bincounts[seqnames(p$bincounts)==chrom]
+                counts.rpkm <- p$counts.rpkm[which(seqnames(p$bins)==chrom), , drop=FALSE]
                 model <- runMultivariate(binned.data=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, correlationMatrix=p$correlationMatrix, correlationMatrixInverse=p$correlationMatrixInverse, determinant=p$determinant, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity, counts.rpkm=counts.rpkm)
                 if (!is.null(temp.savedir)) {
                     temp.savename <- file.path(temp.savedir, paste0('chromosome_', chrom, '.RData'))
@@ -191,9 +190,8 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
             models <- list()
             for (chrom in chromosomes) {
                 ptm <- messageU("Chromosome = ", chrom, overline="-", underline=NULL)
-                ind <- which(seqnames(p$bincounts)==chrom)
-                bins <- p$bincounts[ind]
-                counts.rpkm <- p$counts.rpkm[ind, , drop=FALSE]
+                bins <- p$bincounts[seqnames(p$bincounts)==chrom]
+                counts.rpkm <- p$counts.rpkm[which(seqnames(p$bins)==chrom), , drop=FALSE]
                 model <- runMultivariate(binned.data=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, correlationMatrix=p$correlationMatrix, correlationMatrixInverse=p$correlationMatrixInverse, determinant=p$determinant, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity, counts.rpkm=counts.rpkm)
                 if (!is.null(temp.savedir)) {
                     temp.savename <- file.path(temp.savedir, paste0('chromosome_', chrom, '.RData'))
@@ -543,6 +541,8 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
     hmm <- suppressMessages( loadHmmsFromFiles(hmms[[1]], check.class=class.univariate.hmm)[[1]] )
     bincounts <- hmm$bincounts
     mcols(bincounts) <- NULL
+    bins <- hmm$bins
+    mcols(bins) <- NULL
     stopTimedMessage(ptm)
 
     if (!is.null(chromosomes)) {
@@ -749,6 +749,7 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
     # Return parameters
     out = list(info = info,
                 bincounts = bincounts,
+                bins = bins,
                 counts.rpkm = counts.rpkm,
                 comb.states = comb.states,
                 use.states = use.states,
