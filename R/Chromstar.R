@@ -46,7 +46,7 @@
 #'          prefit.on.chr='chr12', chromosomes='chr12', mode='combinatorial', eps.univariate=1,
 #'          eps.multivariate=1)
 #'
-Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, stepsize=binsize/5, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps.univariate=0.1, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=TRUE, mode='differential', max.states=128, per.chrom=TRUE, eps.multivariate=0.01, exclusive.table=NULL) {
+Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, stepsize=binsize/2, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps.univariate=0.1, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=TRUE, mode='differential', max.states=128, per.chrom=TRUE, eps.multivariate=0.01, exclusive.table=NULL) {
   
     #========================
     ### General variables ###
@@ -94,12 +94,16 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     rownames(exp.table) <- basename(datafiles)
     filenames <- paste0(IDs, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData')
     names(filenames) <- basename(datafiles)
+    filenames.stepsize <- paste0(IDs, '_binsize', stepsize.string, '_stepsize', stepsize.string, '.RData') # filenames for saving counts at stepsize
+    names(filenames.stepsize) <- basename(datafiles)
     ## Inputfiles
     inputfiles <- unique(unlist(strsplit(as.character(exp.table$controlFiles), '\\|')))
     inputfiles <- inputfiles[!is.na(inputfiles)]
     inputfiles <- file.path(inputfolder, basename(as.character(inputfiles)))
     inputfilenames <- paste0(basename(inputfiles), '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData')
     names(inputfilenames) <- basename(inputfiles)
+    inputfilenames.stepsize <- paste0(basename(inputfiles), '_binsize', stepsize.string, '_stepsize', stepsize.string, '.RData')
+    names(inputfilenames.stepsize) <- basename(inputfiles)
     
     ## Check usage of modes
     if (!mode %in% c('separate','combinatorial','differential','full')) {
@@ -236,15 +240,18 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     
     ### Make bins ###
     pre.bins <- fixedWidthBins(chrom.lengths=chrom.lengths, chromosomes=conf[['chromosomes']], binsizes=binsize)
+    pre.bins.stepsize <- fixedWidthBins(chrom.lengths=chrom.lengths, chromosomes=conf[['chromosomes']], binsizes=stepsize)
     
     ### Count reads in bins ###
     if (!file.exists(binpath)) { dir.create(binpath) }
     parallel.helper <- function(file, input) {
         if (!input) {
             savename <- file.path(binpath, filenames[basename(file)])
+            savename.stepsize <- file.path(binpath, filenames.stepsize[basename(file)])
             pairedEndReads <- exp.table[basename(file),'pairedEndReads']
         } else {
             savename <- file.path(binpath, inputfilenames[basename(file)])
+            savename.stepsize <- file.path(binpath, inputfilenames.stepsize[basename(file)])
             pairedEndReads <- exp.table[grep(basename(file), exp.table$controlFiles),'pairedEndReads']
             if (any(pairedEndReads != pairedEndReads[1])) {
                 stop("Multiple definitions of 'pairedEndReads' for file ", file, ".")
@@ -257,9 +264,14 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 if (!input) {
                     exp.table.input <- exp.table
                 }
-                bins <- binReads(file=file, experiment.table=exp.table.input, assembly=chrom.lengths.df, pairedEndReads=pairedEndReads, binsizes=NULL, reads.per.bin=NULL, bins=pre.bins, stepsizes=stepsize, chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']])
+                binlist <- binReads(file=file, experiment.table=exp.table.input, assembly=chrom.lengths.df, pairedEndReads=pairedEndReads, binsizes=NULL, reads.per.bin=NULL, bins=c(pre.bins, pre.bins.stepsize), stepsizes=c(stepsize, stepsize), chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']])
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
+                bins <- binlist[[1]]
                 save(bins, file=savename)
+                stopTimedMessage(ptm)
+                ptm <- startTimedMessage("Saving to file ", savename.stepsize, " ...")
+                bins <- binlist[[2]]
+                save(bins, file=savename.stepsize)
                 stopTimedMessage(ptm)
             }, error = function(err) {
                 stop(file,'\n',err)
@@ -305,6 +317,8 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     if (!file.exists(uniplotpath)) { dir.create(uniplotpath) }
     files <- file.path(binpath, filenames)
     names(files) <- names(filenames)
+    files.stepsize <- file.path(binpath, filenames.stepsize)
+    names(files.stepsize) <- names(filenames.stepsize)
     inputfiles.list <- lapply(strsplit(as.character(exp.table$controlFiles), '\\|'), function(x) { file.path(binpath, inputfilenames[x[!is.na(x)]]) })
     names(inputfiles.list) <- names(filenames)
     
@@ -320,6 +334,9 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                     input.files <- inputfiles
                 }
                 model <- callPeaksUnivariate(binned.data=file, input.data=input.files, eps=conf[['eps.univariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], read.cutoff.absolute=conf[['read.cutoff.absolute']], prefit.on.chr=conf[['prefit.on.chr']], keep.posteriors=FALSE, verbosity=0)
+                # Replace counts.rpkm column with the binsize=stepsize counts, instead of the averaged ones
+                binned.data.stepsize <- loadHmmsFromFiles(files = files.stepsize[names(file)], check.class = 'GRanges')[[1]]
+                model$bins$counts.rpkm <- rpkm.vector(binned.data.stepsize$counts, binsize=stepsize)
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(model, file=savename)
                 stopTimedMessage(ptm)

@@ -7,7 +7,7 @@ NEW FEATURES
     
 SIGNIFICANT USER-LEVEL CHANGES
 
-    o New default value for Chromstar(..., stepsize = 1/5 * binsize).
+    o New default value for Chromstar(..., stepsize = 1/2 * binsize).
     
     
 CHANGES IN VERSION 1.1.4
