@@ -68,15 +68,15 @@ exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.f
     for (imod in 1:nummod) {
         message('Writing track ',imod,' / ',nummod)
         b <- binned.data.list[[imod]]
+        priority <- 50 + 4*imod
+        binsize <- width(b[1])
+        name <- names(binned.data.list)[imod]
         if (separate.files) {
-            filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', imod, '.wig.gz')
+            filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', name, '.wig.gz')
             filename.gz <- gzfile(filename.sep, 'w')
             message('Writing to file ',filename.sep)
             cat("", file=filename.gz)
         }
-        priority <- 50 + 4*imod
-        binsize <- width(b[1])
-        name <- names(binned.data.list)[imod]
         if (header) {
             if (is.null(trackname)) {
                 trackname.string <- paste0("read count for ", name)
@@ -86,10 +86,10 @@ exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.f
             cat(paste0('track type=wiggle_0 name="',trackname.string,'" description="',trackname.string,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
         }
         # Write read data
-        b$counts <- rpkm.vector(b$counts, binsize=mean(width(b))) # RPKM normalization
+        b$counts.rpkm <- rpkm.vector(b$counts[,1], binsize=mean(width(b))) # RPKM normalization
         for (chrom in unique(b$chromosome)) {
             cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-            utils::write.table(b[b$chromosome==chrom]$counts, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
+            utils::write.table(b[b$chromosome==chrom]$counts.rpkm, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
         }
         if (separate.files) {
             close(filename.gz)
