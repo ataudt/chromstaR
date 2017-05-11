@@ -29,7 +29,8 @@ mergeChroms <- function(multi.hmm.list, filename=NULL) {
     bins <- list()    # do not use GRangesList() because it copies the whole list each time an element is added
     segments <- list()
     peaks <- list()
-    bincounts <- list()
+    bincounts.bins <- list()
+    bincounts.counts <- list()
     for (i1 in 1:num.models) {
         hmm <- multi.hmm.list[[1]]    # select always first because we remove it at the end of the loop
         if (!post.present) {
@@ -39,7 +40,9 @@ mergeChroms <- function(multi.hmm.list, filename=NULL) {
         bins[[i1]] <- hmm$bins
         segments[[i1]] <- hmm$segments
         peaks[[i1]] <- hmm$peaks
-        bincounts[[i1]] <- hmm$bincounts
+        bincounts.bins[[i1]] <- hmm$bincounts
+        mcols(bincounts.bins[[i1]]) <- NULL
+        bincounts.counts[[i1]] <- hmm$bincounts$counts
         # Remove current HMM to save memory
         if (i1 < num.models) remove(hmm)    # remove it because otherwise R will make a copy when we NULL the underlying reference (multi.hmm.list[[1]])
         multi.hmm.list[[1]] <- NULL
@@ -50,7 +53,16 @@ mergeChroms <- function(multi.hmm.list, filename=NULL) {
     ptm <- startTimedMessage("Merging ...")
     bins <- sort(do.call('c', bins))    # this can be too memory intensive if posteriors are present
     segments <- sort(do.call('c', segments))
-    bincounts <- sort(do.call('c', bincounts))
+    dim.1 <- sapply(bincounts.bins, function(x) { length(x) })
+    dim.1.cumsum <- c(0,cumsum(dim.1))
+    dims <- c(sum(dim.1), dim(bincounts.counts[[1]])[2:3])
+    dimnames <- dimnames(bincounts.counts[[1]])
+    counts <- array(NA, dim = dims, dimnames = dimnames)
+    for (i1 in 1:length(bincounts.counts)) {
+        counts[(dim.1.cumsum[i1]+1):dim.1.cumsum[i1+1],,] <- bincounts.counts[[i1]]
+    }
+    bincounts.bins <- sort(do.call('c', bincounts.bins))
+    bincounts.bins$counts <- counts
     if (length(peaks) == 1) { # only one chromosome
         peaks.merged <- peaks[[1]]
     } else if (length(peaks) > 1) {
@@ -67,7 +79,7 @@ mergeChroms <- function(multi.hmm.list, filename=NULL) {
     multi.hmm$bins <- bins
     multi.hmm$segments <- segments
     multi.hmm$peaks <- peaks.merged
-    multi.hmm$bincounts <- bincounts
+    multi.hmm$bincounts <- bincounts.bins
 
     ## Weights
     ptm <- startTimedMessage("Calculating weights ...")

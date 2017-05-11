@@ -551,6 +551,9 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
     ## Load first HMM for coordinates
     ptm <- startTimedMessage("Getting coordinates ...")
     hmm <- suppressMessages( loadHmmsFromFiles(hmms[[1]], check.class=class.univariate.hmm)[[1]] )
+  # hmm$bins$counts <- array(hmm$bins$counts, dim=c(length(hmm$bins), 1), dimnames=list(bin=NULL, offset='0'))
+  # hmm$bincounts <- hmm$bins
+  # hmm$bins$counts.rpkm <- rpkm.matrix(hmm$bins$counts, width(hmm$bins)[1])
     bincounts <- hmm$bincounts
     mcols(bincounts) <- NULL
     bins <- hmm$bins
@@ -582,11 +585,15 @@ prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosom
     binary_statesmatrix[,1] <- c(FALSE,FALSE,TRUE)[bins.state]
     for (i1 in 2:nummod) {
         hmm <- suppressMessages( loadHmmsFromFiles(hmms[[i1]], check.class=class.univariate.hmm)[[1]] )
+    # hmm$bins$counts <- array(hmm$bins$counts, dim=c(length(hmm$bins), 1), dimnames=list(bin=NULL, offset='0'))
+    # hmm$bincounts <- hmm$bins
+    # hmm$bins$counts.rpkm <- rpkm.matrix(hmm$bins$counts, width(hmm$bins)[1])
         info[[i1]] <- hmm$info
         distributions[[i1]] <- hmm$distributions
         weights[[i1]] <- hmm$weights
         counts[,i1,] <- hmm$bincounts$counts
         counts.rpkm[,i1] <- hmm$bins$counts.rpkm
+        bins.state <- hmm$bins$state[seq(from=1, to=length(hmm$bins), by=length(hmm$bins)/length(hmm$bincounts))]
         binary_statesmatrix[,i1] <- c(FALSE,FALSE,TRUE)[bins.state] # F,F,T corresponds to levels 'zero-inflation','unmodified','modified'
     }
     info <- do.call(rbind, info)
