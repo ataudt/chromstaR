@@ -34,7 +34,7 @@ To install the *development* version from Github, follow the steps given below. 
 	 library(devtools)  
 	 install_github("ataudt/chromstaRData")  
 	 install_github("ataudt/chromstaR")  
-	 # Or alternatively if the above line doesn't work:  
+	 #### Or alternatively if the above line doesn't work:  
 	 install_git("git://github.com/ataudt/chromstaRData.git", branch = "master")  
 	 install_git("git://github.com/ataudt/chromstaR.git", branch = "master")
 
