@@ -9,6 +9,7 @@
 #' @aliases binning
 #' @param file A file with aligned reads. Alternatively a \code{\link{GRanges}} with aligned reads.
 #' @param experiment.table An \code{\link{experiment.table}} containing the supplied \code{file}. This is necessary to uniquely identify the file in later steps of the workflow. Set to \code{NULL} if you don't have it (not recommended).
+#' @param ID Optional ID to select a row from the \code{experiment.table}. Only necessary if the experiment table contains the same file in multiple positions in column 'file'.
 #' @inheritParams readBamFileAsGRanges
 #' @inheritParams readBedFileAsGRanges
 #' @param binsizes An integer vector specifying the bin sizes to use.
@@ -37,7 +38,7 @@
 #'                   stepsizes=500, chromosomes='chr12')
 #'print(binned)
 #'
-binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chromosomes=NULL, pairedEndReads=FALSE, min.mapq=10, remove.duplicate.reads=TRUE, max.fragment.width=1000, blacklist=NULL, binsizes=1000, stepsizes=binsizes/2, reads.per.bin=NULL, bins=NULL, variable.width.reference=NULL, use.bamsignals=TRUE, format=NULL) {
+binReads <- function(file, experiment.table=NULL, ID=NULL, assembly, bamindex=file, chromosomes=NULL, pairedEndReads=FALSE, min.mapq=10, remove.duplicate.reads=TRUE, max.fragment.width=1000, blacklist=NULL, binsizes=1000, stepsizes=binsizes/2, reads.per.bin=NULL, bins=NULL, variable.width.reference=NULL, use.bamsignals=TRUE, format=NULL) {
 
     ## Determine format
     if (is.null(format)) {
@@ -78,6 +79,12 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
     if (!is.null(experiment.table)) {
         check.experiment.table(experiment.table)
         info <- experiment.table[basename(as.character(experiment.table$file))==basename(file),]
+        if (nrow(info) > 1) {
+            if (is.null(ID)) {
+                stop("Please specify argument 'ID' if multiple files in 'experiment.table' are identical.")
+            }
+            info <- info[ID, ]
+        }
         ID <- paste0(info$mark, '-', info$condition, '-rep', info$rep)
         info$ID <- ID
         if (pairedEndReads != info$pairedEndReads) {

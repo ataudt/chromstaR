@@ -331,7 +331,7 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
             get.posteriors = as.logical(get.posteriors), # bool* keep_posteriors
             densities = double(length=lenDensities), # double* densities
             keep.densities = as.logical(keep.densities), # bool* keep_densities
-            states = integer(length=length(binned.data)), # int* states
+            states = double(length=length(binned.data)), # double* states
             maxPosterior = double(length=length(binned.data)), # double* maxPosterior
             A = double(length=length(comb.states)*length(comb.states)), # double* A
             proba = double(length=length(comb.states)), # double* proba

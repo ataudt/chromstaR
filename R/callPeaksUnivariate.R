@@ -292,7 +292,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
                 read.counts.to.remove <- max(c(read.counts.to.remove.1, 2*minlow))
                 index.filtered <- which(counts>0 & counts<=read.counts.to.remove)
                 counts[index.filtered] <- 0
-                if (length(index.filtered)>0) {
+                if (length(index.filtered)>0 & ioffset == 1) {
                     message(paste0("Replaced read counts <= ",read.counts.to.remove," by 0. This was done because the selected bin size is considered too big for this dataset: The mean of the read counts (zeros removed) is bigger than the specified max.mean = ",max.mean,". Check the fits!"))
                 }
             }
@@ -412,6 +412,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
         if (ioffset == 1) {
             ### Make return object ###
                 result <- list()
+                class(result) <- class.univariate.hmm
                 result$info <- attr(binned.data, 'info')
             ## Parameters
                 # Weights
@@ -444,8 +445,6 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
             ## Convergence info
                 convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec, max.mean=max.mean, read.cutoff=max(hmm$counts))
                 result$convergenceInfo <- convergenceInfo
-            ## Add class
-                class(result) <- class.univariate.hmm
         }
         
         if (ioffset == 1) { ptm <- startTimedMessage("Collecting counts and posteriors ...") }

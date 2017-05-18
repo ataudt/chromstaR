@@ -273,7 +273,7 @@ void univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* max
 // =====================================================================================================================================================
 // This function takes parameters from R, creates a multivariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // =====================================================================================================================================================
-void multivariate_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, double* size, double* prob, double* w, double* cor_matrix_inv, double* det, int* maxiter, int* maxtime, double* eps, double* posteriors, bool* keep_posteriors, double* densities, bool* keep_densities, int* states, double* maxPosterior, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* verbosity)
+void multivariate_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, double* size, double* prob, double* w, double* cor_matrix_inv, double* det, int* maxiter, int* maxtime, double* eps, double* posteriors, bool* keep_posteriors, double* densities, bool* keep_densities, double* states, double* maxPosterior, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* verbosity)
 {
 
 	// Define logging level {"ERROR", "WARNING", "INFO", "ITERATION", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4"}

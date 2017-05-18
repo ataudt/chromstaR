@@ -46,4 +46,4 @@ Please refer to the [vignette](https://github.com/ataudt/chromstaR/blob/master/v
 Report Errors
 -------------
 
-If you encounter errors of any kind, please file an [issue here](https://github.com/ataudt/chromstaR/issues/new). I will try to react within one day.
+If you encounter errors of any kind, please file an [issue here](https://github.com/ataudt/chromstaR/issues/new). I will try to react within three working days.

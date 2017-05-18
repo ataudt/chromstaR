@@ -89,13 +89,12 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     ## Prepare IDs and filenames
     IDs <- paste0(exp.table$mark, '-', exp.table$condition, '-rep', exp.table$replicate)
     datafiles <- file.path(inputfolder, basename(as.character(exp.table$file)))
-    names(datafiles) <- basename(datafiles)
-    names(IDs) <- basename(datafiles)
-    rownames(exp.table) <- basename(datafiles)
-    filenames <- paste0(IDs, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData')
-    names(filenames) <- basename(datafiles)
-    filenames.stepsize <- paste0(IDs, '_binsize', stepsize.string, '_stepsize', stepsize.string, '.RData') # filenames for saving counts at stepsize
-    names(filenames.stepsize) <- basename(datafiles)
+    names(datafiles) <- IDs
+    rownames(exp.table) <- IDs
+    filenames <- paste0(IDs, '_', as.character(exp.table$file), '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData')
+    names(filenames) <- IDs
+    filenames.stepsize <- paste0(IDs, '_', as.character(exp.table$file), '_binsize', stepsize.string, '_stepsize', stepsize.string, '.RData') # filenames for saving counts at stepsize
+    names(filenames.stepsize) <- IDs
     ## Inputfiles
     inputfiles <- unique(unlist(strsplit(as.character(exp.table$controlFiles), '\\|')))
     inputfiles <- inputfiles[!is.na(inputfiles)]
@@ -245,19 +244,21 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     
     ### Count reads in bins ###
     if (!file.exists(binpath)) { dir.create(binpath) }
-    parallel.helper <- function(file, input) {
+    parallel.helper <- function(ID, input, inputfile=NULL) {
         if (!input) {
-            savename <- file.path(binpath, filenames[basename(file)])
-            savename.stepsize <- file.path(binpath, filenames.stepsize[basename(file)])
-            pairedEndReads <- exp.table[basename(file),'pairedEndReads']
+            savename <- file.path(binpath, filenames[ID])
+            savename.stepsize <- file.path(binpath, filenames.stepsize[ID])
+            pairedEndReads <- exp.table[ID,'pairedEndReads']
+            file <- datafiles[ID]
         } else {
-            savename <- file.path(binpath, inputfilenames[basename(file)])
-            savename.stepsize <- file.path(binpath, inputfilenames.stepsize[basename(file)])
-            pairedEndReads <- exp.table[grep(basename(file), exp.table$controlFiles),'pairedEndReads']
+            savename <- file.path(binpath, inputfilenames[basename(inputfile)])
+            savename.stepsize <- file.path(binpath, inputfilenames.stepsize[basename(inputfile)])
+            pairedEndReads <- exp.table[grep(basename(inputfile), exp.table$controlFiles),'pairedEndReads']
             if (any(pairedEndReads != pairedEndReads[1])) {
                 stop("Multiple definitions of 'pairedEndReads' for file ", file, ".")
             }
             pairedEndReads <- pairedEndReads[1]
+            file <- inputfile
         }
         if (!file.exists(savename)) {
             tC <- tryCatch({
@@ -265,7 +266,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 if (!input) {
                     exp.table.input <- exp.table
                 }
-                binlist <- binReads(file=file, experiment.table=exp.table.input, assembly=chrom.lengths.df, pairedEndReads=pairedEndReads, binsizes=NULL, reads.per.bin=NULL, bins=list(pre.bins, pre.bins.stepsize), stepsizes=c(stepsize, stepsize), chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']])
+                binlist <- binReads(file=file, experiment.table=exp.table.input, ID=ID, assembly=chrom.lengths.df, pairedEndReads=pairedEndReads, binsizes=NULL, reads.per.bin=NULL, bins=list(pre.bins, pre.bins.stepsize), stepsizes=c(stepsize, stepsize), chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']])
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 bins <- binlist[[1]]
                 save(bins, file=savename)
@@ -280,33 +281,33 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         }
     }
     ## Unparallelized
-#     for (file in datafiles) {
-#         parallel.helper(file, input=FALSE)
+#     for (ID in IDs) {
+#         parallel.helper(ID, input=FALSE)
 #     }
 #     for (file in inputfiles) {
-#         parallel.helper(file, input=TRUE)
+#         parallel.helper(ID=NULL, input=TRUE, inputfile=file)
 #     }
     ## Parallelized
     if (numcpu > 1) {
         ptm <- startTimedMessage("Binning data ...")
-        temp <- foreach (file = datafiles, .packages=c("chromstaR")) %dopar% {
-            parallel.helper(file, input=FALSE)
+        temp <- foreach (ID = IDs, .packages=c("chromstaR")) %dopar% {
+            parallel.helper(ID, input=FALSE)
         }
         stopTimedMessage(ptm)
     } else {
-        for (file in datafiles) {
-            parallel.helper(file, input=FALSE)
+        for (ID in IDs) {
+            parallel.helper(ID, input=FALSE)
         }
     }
     if (numcpu > 1) {
         ptm <- startTimedMessage("Binning input ...")
         temp <- foreach (file = inputfiles, .packages=c("chromstaR")) %dopar% {
-            parallel.helper(file, input=TRUE)
+            parallel.helper(ID=NULL, input=TRUE, inputfile=file)
         }
         stopTimedMessage(ptm)
     } else {
         for (file in inputfiles) {
-            parallel.helper(file, input=TRUE)
+            parallel.helper(ID=NULL, input=TRUE, inputfile=file)
         }
     }
     
@@ -328,8 +329,6 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         savename <- file.path(unipath, basename(file))
         if (!file.exists(savename)) {
             tC <- tryCatch({
-                mark <- strsplit(basename(file), '-')[[1]][1]
-                condition <- strsplit(basename(file), '-')[[1]][2]
                 input.files <- NULL
                 if (length(inputfiles)>0) {
                     input.files <- inputfiles
@@ -356,16 +355,16 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     }
     if (numcpu > 1) {
         ptm <- startTimedMessage("Univariate peak calling ...")
-        temp <- foreach (filename = names(files), .packages=c("chromstaR")) %dopar% {
-            file <- files[filename]
-            inputfiles <- inputfiles.list[[filename]]
+        temp <- foreach (ID = names(files), .packages=c("chromstaR")) %dopar% {
+            file <- files[ID]
+            inputfiles <- inputfiles.list[[ID]]
             parallel.helper(file, inputfiles)
         }
         stopTimedMessage(ptm)
     } else {
-        for (filename in names(files)) {
-            file <- files[filename]
-            inputfiles <- inputfiles.list[[filename]]
+        for (ID in names(files)) {
+            file <- files[ID]
+            inputfiles <- inputfiles.list[[ID]]
             parallel.helper(file, inputfiles)
         }
     }
