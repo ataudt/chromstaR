@@ -56,14 +56,16 @@ plotHistograms <- function(model, ...) {
     ## Make fake uni.hmm and plot
     binmapping <- dec2bin(levels(model$bins$state), colnames=model$info$ID)
     ggplts <- list()
-    for (i1 in 1:ncol(model$bins$counts)) {
+    for (i1 in 1:ncol(model$bins$counts.rpkm)) {
         uni.hmm <- list()
         uni.hmm$info <- model$info[i1,]
+        uni.hmm$bincounts <- model$bincounts
+        uni.hmm$bincounts$counts <- model$bincounts$counts[,i1,]
         uni.hmm$bins <- model$bins
         mapping <- c('unmodified','modified')[binmapping[,i1]+1]
         names(mapping) <- rownames(binmapping)
         uni.hmm$bins$state <- mapping[uni.hmm$bins$state]
-        uni.hmm$bins$counts <- model$bins$counts[,i1]
+        uni.hmm$bins$counts.rpkm <- model$bins$counts.rpkm[,i1]
         uni.hmm$weights <- model$weights.univariate[[i1]]
         uni.hmm$distributions <- model$distributions[[i1]]
         class(uni.hmm) <- class.univariate.hmm
