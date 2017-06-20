@@ -239,8 +239,8 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     
     ### Make bins ###
     pre.bins.list <- fixedWidthBins(chrom.lengths=chrom.lengths, chromosomes=conf[['chromosomes']], binsizes=c(binsize, stepsize))
-    pre.bins <- pre.bins.list[[1]]
-    pre.bins.stepsize <- pre.bins.list[[2]]
+    pre.bins <- pre.bins.list[[binsize.string]]
+    pre.bins.stepsize <- pre.bins.list[[stepsize.string]]
     
     ### Count reads in bins ###
     if (!file.exists(binpath)) { dir.create(binpath) }
