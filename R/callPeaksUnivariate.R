@@ -241,7 +241,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
             }
             inputcounts <- input.data$counts[,offset, drop=FALSE]
             # Artifacts with super high read count
-            index <- which(inputcounts >= quantile(inputcounts[inputcounts>0], 0.999))
+            index <- which(inputcounts >= quantile(inputcounts[inputcounts>0], 0.9999))
             index <- c(index, index-1, index+1) # one neighboring bin to each side
             index <- index[index>0 & index<=length(input.data)] # if we hit chromosome boundaries, bad luck
             counts[index] <- 0
