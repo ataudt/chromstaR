@@ -168,6 +168,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     }
     numstates <- length(state.labels)
     iniproc <- which(init==c("standard","random","empiric")) # transform to int
+    info <- attr(binned.data, 'info')
 
     ### Assign initial parameters ###
     if (class(binned.data) == class.univariate.hmm) {
@@ -197,6 +198,11 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     binsize <- width(binned.data)[1]
     if (keep.densities) { lenDensities <- numbins * numstates } else { lenDensities <- 1 }
     offsets <- dimnames(binned.data$counts)[[2]]
+    
+    ## Issue warning if mean is too high
+    if (mean(binned.data$counts) > 50) {
+        warning(info$ID, ": The average read count is very high. You might have to downsample your data.")
+    }
     
     ### Arrays for finding maximum posterior for each bin between offsets
     ## Make bins with offset
@@ -337,8 +343,8 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
             )
     
             hmm$eps <- eps.try
-            if (hmm$loglik.delta > hmm$eps & ioffset == 1) {
-                warning("HMM did not converge in trial run ",i_try,"!")
+            if (hmm$loglik.delta > hmm$eps & ioffset == 1 & num.trials > 1) {
+                warning(info$ID, ": HMM did not converge in trial run ",i_try,"!")
             }
             # Store model in list
             modellist[[i_try]] <- hmm
@@ -401,7 +407,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
         ### Issue warnings ###
         hmm$eps <- eps
         if (hmm$loglik.delta > hmm$eps & ioffset == 1) {
-            war <- warning("HMM did not converge!")
+            war <- warning(info$ID, ": HMM did not converge!")
         }
         if (hmm$error == 1) {
             stop("A nan occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
@@ -537,6 +543,9 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     }
     seqlengths(result$bins) <- seqlengths(stepbins)
     stopTimedMessage(ptm)
+    
+    ## Swap states if necessary
+    result <- stateswap(result)
     
     ## Peak score as maximum posterior in that peak ##
     result$bins$peakScores <- getPeakScore.univariate(result$bins)
