@@ -297,15 +297,15 @@ plotHistogram <- function(model, state=NULL, chromosomes=NULL, start=NULL, end=N
     ### Plot the distributions
     if (is.null(state)) {
         ggplt <- ggplt + geom_line(data=df, aes_string(x='x', y='y', col='state'), size=linewidth)
-        ggplt <- ggplt + scale_color_manual(name="components", values=getStateColors(c('unmodified','modified','total')), labels=legend) + theme(legend.justification=c(1,1), legend.position=c(1,1))
+        ggplt <- ggplt + scale_color_manual(name="components", values=getStateColors(c('unmodified','modified','total')), labels=legend) + theme(legend.justification=c(1,1), legend.position=c(0.99,0.99))
     } else {
         if (state=="unmodified") {
             ggplt <- ggplt + geom_line(data=df[df$state=='unmodified',], aes_string(x='x', y='y', col='state'), size=linewidth)
-            ggplt <- ggplt + scale_color_manual(name="components", values=getStateColors(c('unmodified')), labels=legend[1]) + theme(legend.justification=c(1,1), legend.position=c(1,1))
+            ggplt <- ggplt + scale_color_manual(name="components", values=getStateColors(c('unmodified')), labels=legend[1]) + theme(legend.justification=c(1,1), legend.position=c(0.99,0.99))
         }
         if (state=="modified") {
             ggplt <- ggplt + geom_line(data=df[df$state=='modified',], aes_string(x='x', y='y', col='state'), size=linewidth)
-            ggplt <- ggplt + scale_color_manual(name="components", values=getStateColors(c('modified')), labels=legend[2]) + theme(legend.justification=c(1,1), legend.position=c(1,1))
+            ggplt <- ggplt + scale_color_manual(name="components", values=getStateColors(c('modified')), labels=legend[2]) + theme(legend.justification=c(1,1), legend.position=c(0.99,0.99))
         }
     }
         
