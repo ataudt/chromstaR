@@ -96,6 +96,7 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
             result$bins$counts.rpkm <- matrix(hmm$bins$counts.rpkm, ncol=1)
             result$bins$state <- factor(c(0,0,1))[hmm$bins$state]
             result$bins$posteriors <- matrix(hmm$bins$posterior.modified, ncol=1, dimnames=list(NULL, result$info$ID))
+            result$bins$posteriorScores <- matrix(hmm$bins$posterior.modified.score, ncol=1, dimnames=list(NULL, result$info$ID))
             result$bins$differential.score <- 0
         ## Add combinations
             mapping <- NULL
@@ -111,6 +112,7 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
             mcols(result$segments)[2] <- NULL
             if (!keep.posteriors) {
                 result$bins$posteriors <- NULL
+                result$bins$posteriorScores <- NULL
             }
         ## Parameters
             result$mapping <- mapping
@@ -477,6 +479,7 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
     # }
     if (get.posteriors) {
         stepbins$posteriors <- aposteriors.step[,,'previousOffsets']
+        stepbins$posteriorScores <- apply(stepbins$posteriors, 2, function(x) { ecdf(x)(x)*1000 })
         rm(aposteriors.step); gc()
     }
     stopTimedMessage(ptm)
@@ -505,6 +508,7 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
     }
     if (!keep.posteriors) {
         result$bins$posteriors <- NULL
+        result$bins$posteriorScores <- NULL
     }
     if (keep.densities) {
         result$bincounts$densities <- densities

@@ -201,7 +201,7 @@ exportUnivariatePeaks <- function(hmm.list, filename, header=TRUE, separate.file
         df$strand <- sub('\\*', '.', df$strand)
         df <- df[,c('chromosome','start','end','peakNumber','peakScores','strand')]
         # Make score integer
-        df$peakScores <- round(df$peakScores*1000)
+        df$peakScores <- round(df$peakScores)
         numsegments <- nrow(df)
         df <- cbind(df, thickStart=df$start, thickEnd=df$end)
         # Convert from 1-based closed to 0-based half open
@@ -448,7 +448,7 @@ exportMultivariatePeaks <- function(hmm, filename, trackname=NULL, header=TRUE, 
         df$strand <- sub('\\*', '.', df$strand)
         
         # Make score integer
-        df$peakScores <- round(df$peakScores*1000)
+        df$peakScores <- round(df$peakScores)
         
         # Convert from 1-based closed to 0-based half open
         df$start <- df$start - 1
@@ -620,7 +620,7 @@ exportCombinedMultivariatePeaks <- function(hmm, filename, trackname=NULL, heade
         df$strand <- sub('\\*', '.', df$strand)
         
         # Make score integer
-        df$peakScores <- round(df$peakScores*1000)
+        df$peakScores <- round(df$peakScores)
         
         # Convert from 1-based closed to 0-based half open
         df$start <- df$start - 1

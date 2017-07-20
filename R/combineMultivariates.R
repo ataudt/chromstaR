@@ -92,6 +92,8 @@ combineMultivariates <- function(hmms, mode) {
         counts[[1]] <- hmm$bins$counts.rpkm
         posteriors <- list()
         posteriors[[1]] <- hmm$bins$posteriors
+        posteriorScores <- list()
+        posteriorScores[[1]] <- hmm$bins$posteriorScores
         peakScores <- list()
         peakScores[[1]] <- hmm$bins$peakScores
         peaks <- list()
@@ -108,6 +110,7 @@ combineMultivariates <- function(hmms, mode) {
                 combs[[i1]] <- hmm$bins$combination
                 counts[[i1]] <- hmm$bins$counts.rpkm
                 posteriors[[i1]] <- hmm$bins$posteriors
+                posteriorScores[[i1]] <- hmm$bins$posteriorScores
                 peakScores[[i1]] <- hmm$bins$peakScores
                 peaks[[i1]] <- hmm$peaks
                 binstates[[i1]] <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
@@ -116,6 +119,7 @@ combineMultivariates <- function(hmms, mode) {
         }
         ptm <- startTimedMessage("Concatenating conditions ...")
         posteriors <- do.call(cbind, posteriors)
+        posteriorScores <- do.call(cbind, posteriorScores)
         peakScores <- do.call(cbind, peakScores)
         infos <- do.call(rbind, infos)
         conditions <- unique(infos$condition)
@@ -131,6 +135,7 @@ combineMultivariates <- function(hmms, mode) {
         infos <- list()
         counts <- list()
         posteriors <- list()
+        posteriorScores <- list()
         peakScores <- list()
         peaks <- list()
         binstates <- list()
@@ -140,6 +145,7 @@ combineMultivariates <- function(hmms, mode) {
             infos[[i1]] <- hmm$info
             counts[[i1]] <- hmm$bins$counts.rpkm
             posteriors[[i1]] <- hmm$bins$posteriors
+            posteriorScores[[i1]] <- hmm$bins$posteriorScores
             peakScores[[i1]] <- hmm$bins$peakScores
             peaks[[i1]] <- hmm$peaks
             binstates[[i1]] <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
@@ -158,6 +164,8 @@ combineMultivariates <- function(hmms, mode) {
         counts <- counts[,infos$ID]
         posteriors <- do.call(cbind, posteriors)
         posteriors <- posteriors[,infos$ID]
+        posteriorScores <- do.call(cbind, posteriorScores)
+        posteriorScores <- posteriorScores[,infos$ID]
         peakScores <- do.call(cbind, peakScores)
         peakScores <- peakScores[,infos$ID]
         binstates <- do.call(cbind, binstates)
@@ -199,6 +207,7 @@ combineMultivariates <- function(hmms, mode) {
         conditions <- unique(infos$condition)
         counts <- hmm$bins$counts.rpkm
         posteriors <- hmm$bins$posteriors
+        posteriorScores <- hmm$bins$posteriorScores
         peakScores <- hmm$bins$peakScores
         peaks <- hmm$peaks
         states <- hmm$bins$state
@@ -227,6 +236,8 @@ combineMultivariates <- function(hmms, mode) {
         counts[[1]] <- hmm$bins$counts.rpkm
         posteriors <- list()
         posteriors[[1]] <- hmm$bins$posteriors
+        posteriorScores <- list()
+        posteriorScores[[1]] <- hmm$bins$posteriorScores
         peakScores <- list()
         peakScores[[1]] <- hmm$bins$peakScores
         peaks <- list()
@@ -242,6 +253,7 @@ combineMultivariates <- function(hmms, mode) {
                 infos[[i1]] <- hmm$info
                 counts[[i1]] <- hmm$bins$counts.rpkm
                 posteriors[[i1]] <- hmm$bins$posteriors
+                posteriorScores[[i1]] <- hmm$bins$posteriorScores
                 peakScores[[i1]] <- hmm$bins$peakScores
                 peaks[[i1]] <- hmm$peaks
                 binstates[[i1]] <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
@@ -251,6 +263,7 @@ combineMultivariates <- function(hmms, mode) {
         ptm <- startTimedMessage("Concatenating mark-conditions ...")
         counts <- do.call(cbind, counts)
         posteriors <- do.call(cbind, posteriors)
+        posteriorScores <- do.call(cbind, posteriorScores)
         peakScores <- do.call(cbind, peakScores)
         binstates <- do.call(cbind, binstates)
         infos <- do.call(rbind, infos)
@@ -294,6 +307,7 @@ combineMultivariates <- function(hmms, mode) {
     ## Transferring counts and posteriors
     bins$counts.rpkm <- counts
     bins$posteriors <- posteriors
+    bins$posteriorScores <- posteriorScores
     bins$peakScores <- peakScores
 
     ## Add differential score ##
@@ -302,7 +316,7 @@ combineMultivariates <- function(hmms, mode) {
     ### Redo the segmentation for all conditions combined
     ptm <- startTimedMessage("Redoing segmentation for all conditions combined ...")
     segments <- suppressMessages( multivariateSegmentation(bins, column2collapseBy='state') )
-    names(mcols(segments)) <- setdiff(names(mcols(bins)), c('posteriors','counts.rpkm'))
+    names(mcols(segments)) <- setdiff(names(mcols(bins)), c('posteriors','posteriorScores','counts.rpkm'))
     stopTimedMessage(ptm)
     
     ### Redo the segmentation for each condition separately
@@ -313,7 +327,7 @@ combineMultivariates <- function(hmms, mode) {
         mcols(bins.cond) <- mcols(bins)[paste0('combination.',cond)]
         df <- as.data.frame(bins.cond)
         names(df)[6] <- cond
-        segments.cond <- suppressMessages( collapseBins(df, column2collapseBy=cond, columns2drop=c('width', grep('posteriors', names(df), value=TRUE))) )
+        segments.cond <- suppressMessages( collapseBins(df, column2collapseBy=cond, columns2drop=c('width', grep('posteriors', names(df), value=TRUE), grep('posteriorScores', names(df), value=TRUE))) )
         segments.cond <- methods::as(segments.cond, 'GRanges')
         names(mcols(segments.cond)) <- 'combination'
         seqlengths(segments.cond) <- seqlengths(bins)[seqlevels(segments.cond)]

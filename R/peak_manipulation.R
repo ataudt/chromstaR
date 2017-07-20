@@ -1,6 +1,6 @@
 getPeakScores <- function(bins) {
     
-    binstates <- dec2bin(bins$state, colnames = colnames(bins$posteriors))
+    binstates <- dec2bin(bins$state, colnames = colnames(bins$posteriorScores))
     rownames(binstates) <- NULL
     peakScores <- matrix(NA, nrow=nrow(binstates), ncol=ncol(binstates), dimnames=list(NULL, colnames(binstates)))
     for (icol in 1:ncol(binstates)) {
@@ -9,7 +9,7 @@ getPeakScores <- function(bins) {
         r$values[r$values == TRUE] <- 1:length(which(r$values==TRUE))
         r$values[r$values == FALSE] <- NA
         peakNumbers <- inverse.rle(r)
-        df <- aggregate(bins$posteriors[,icol], by=list(peakNumber=peakNumbers), FUN=max)
+        df <- aggregate(bins$posteriorScores[,icol], by=list(peakNumber=peakNumbers), FUN=max)
         if (class(df$x) == 'list') {
             class(df$x) <- 'numeric'
         }
@@ -25,7 +25,7 @@ getPeakScores <- function(bins) {
 
 getPeakScore.univariate <- function(bins) {
     
-    p <- bins$posterior.modified
+    p <- bins$posterior.modified.score
     binstates <- bins$state == 'modified'
     r.bin <- rle(binstates)
     r <- r.bin

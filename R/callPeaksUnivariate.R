@@ -536,6 +536,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     result$bins$posteriors <- posteriors
     if (!control) {
         result$bins$posterior.modified <- posteriors[,'modified']
+        result$bins$posterior.modified.score <- ecdf(result$bins$posterior.modified)(result$bins$posterior.modified) * 1000
     }
     if (keep.densities) {
         result$bincounts$densities <- matrix(densities, ncol=numstates)
