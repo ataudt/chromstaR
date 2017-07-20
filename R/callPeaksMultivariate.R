@@ -240,7 +240,7 @@ callPeaksMultivariate <- function(hmms, use.states, max.states=NULL, per.chrom=T
 
 }
 
-
+#' @importFrom stats ecdf
 runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states, distributions, weights, correlationMatrix, correlationMatrixInverse, determinant, max.iter, max.time, eps, num.threads, keep.posteriors, keep.densities, transitionProbs.initial=NULL, startProbs.initial=NULL, verbosity=1) {
 
     ptm.start <- startTimedMessage("Starting multivariate HMM with ", length(comb.states), " combinatorial states")
@@ -479,7 +479,7 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
     # }
     if (get.posteriors) {
         stepbins$posteriors <- aposteriors.step[,,'previousOffsets']
-        stepbins$posteriorScores <- apply(stepbins$posteriors, 2, function(x) { ecdf(x)(x)*1000 })
+        stepbins$posteriorScores <- apply(stepbins$posteriors, 2, function(x) { stats::ecdf(x)(x)*1000 })
         rm(aposteriors.step); gc()
     }
     stopTimedMessage(ptm)

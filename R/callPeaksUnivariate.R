@@ -139,6 +139,7 @@ callPeaksUnivariate <- function(binned.data, input.data=NULL, prefit.on.chr=NULL
 #' @seealso \code{\link{uniHMM}}, \code{\link{callPeaksMultivariate}}
 #' @importFrom stats runif
 #' @importFrom S4Vectors Rle runmean
+#' @importFrom stats ecdf
 callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, init="standard", max.time=NULL, max.iter=NULL, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, post.cutoff=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
 
     ### Intercept user input ###
@@ -536,7 +537,7 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     result$bins$posteriors <- posteriors
     if (!control) {
         result$bins$posterior.modified <- posteriors[,'modified']
-        result$bins$posterior.modified.score <- ecdf(result$bins$posterior.modified)(result$bins$posterior.modified) * 1000
+        result$bins$posterior.modified.score <- stats::ecdf(result$bins$posterior.modified)(result$bins$posterior.modified) * 1000
     }
     if (keep.densities) {
         result$bincounts$densities <- matrix(densities, ncol=numstates)
