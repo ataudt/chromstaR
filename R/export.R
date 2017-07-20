@@ -38,7 +38,7 @@ insertchr <- function(gr) {
 # #'## Bin the file into bin size 1000bp
 # #'data(rn4_chrominfo)
 # #'binned <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
-# #'                   chromosomes='chr12')
+# #'                   stepsizes=500, chromosomes='chr12')
 # #'## Export the binned read counts
 # #'exportBinnedData(list(binned), filename=tempfile())
 # #'
@@ -68,15 +68,15 @@ exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.f
     for (imod in 1:nummod) {
         message('Writing track ',imod,' / ',nummod)
         b <- binned.data.list[[imod]]
+        priority <- 50 + 4*imod
+        binsize <- width(b[1])
+        name <- names(binned.data.list)[imod]
         if (separate.files) {
-            filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', imod, '.wig.gz')
+            filename.sep <- paste0(sub('.wig.gz$', '', filename), '_', name, '.wig.gz')
             filename.gz <- gzfile(filename.sep, 'w')
             message('Writing to file ',filename.sep)
             cat("", file=filename.gz)
         }
-        priority <- 50 + 4*imod
-        binsize <- width(b[1])
-        name <- names(binned.data.list)[imod]
         if (header) {
             if (is.null(trackname)) {
                 trackname.string <- paste0("read count for ", name)
@@ -86,10 +86,10 @@ exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.f
             cat(paste0('track type=wiggle_0 name="',trackname.string,'" description="',trackname.string,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
         }
         # Write read data
-        b$counts <- rpkm.vector(b$counts, binsize=mean(width(b))) # RPKM normalization
+        b$counts.rpkm <- rpkm.vector(b$counts[,1], binsize=mean(width(b))) # RPKM normalization
         for (chrom in unique(b$chromosome)) {
             cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-            utils::write.table(b[b$chromosome==chrom]$counts, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
+            utils::write.table(b[b$chromosome==chrom]$counts.rpkm, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
         }
         if (separate.files) {
             close(filename.gz)
@@ -127,7 +127,7 @@ exportBinnedData <- function(binned.data.list, filename, header=TRUE, separate.f
 # #'## Bin the file into bin size 1000bp
 # #'data(rn4_chrominfo)
 # #'binned <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
-# #'                   chromosomes='chr12')
+# #'                   stepsizes=500, chromosomes='chr12')
 # #'## Fit the univariate Hidden Markov Model
 # #'hmm <- callPeaksUnivariate(binned, max.time=60, eps=1)
 # #'## Export
@@ -284,10 +284,10 @@ exportUnivariateCounts <- function(hmm.list, filename, header=TRUE, separate.fil
             cat(paste0('track type=wiggle_0 name="',trackname.string,'" description="',trackname.string,'" visibility=full autoScale=on color=',readcol,' maxHeightPixels=100:50:20 graphType=bar priority=',priority,'\n'), file=filename.gz, append=TRUE)
         }
         # Write read data
-        hmm.gr$counts <- rpkm.vector(hmm.gr$counts, binsize=mean(width(hmm.gr))) # RPKM normalization
+        # hmm.gr$counts <- rpkm.vector(hmm.gr$counts, binsize=mean(width(hmm.gr))) # RPKM normalization
         for (chrom in unique(hmm.gr$chromosome)) {
             cat(paste0("fixedStep chrom=",chrom," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-            utils::write.table(hmm.gr[hmm.gr$chromosome==chrom]$counts, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
+            utils::write.table(hmm.gr[hmm.gr$chromosome==chrom]$counts.rpkm, file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
         }
         if (separate.files) {
             close(filename.gz)
@@ -495,7 +495,7 @@ exportMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=
     hmm <- loadHmmsFromFiles(hmm, check.class=class.multivariate.hmm)[[1]]
 
     ## RPKM normalization
-    hmm$bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
+    # hmm$bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
     
     ## Variables
     filename <- paste0(filename,".wig.gz")
@@ -540,7 +540,7 @@ exportMultivariateCounts <- function(hmm, filename, header=TRUE, separate.files=
                 chromr <- chrom
             }
             cat(paste0("fixedStep chrom=",chromr," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-            utils::write.table(hmm$bins[seqnames(hmm$bins)==chrom]$counts[,imod], file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
+            utils::write.table(hmm$bins[seqnames(hmm$bins)==chrom]$counts.rpkm[,imod], file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
         }
         if (separate.files) {
             close(filename.gz)
@@ -762,7 +762,7 @@ exportCombinedMultivariateCounts <- function(hmm, filename, header=TRUE, separat
     hmm <- loadHmmsFromFiles(hmm, check.class=class.combined.multivariate.hmm)[[1]]
 
     ## RPKM normalization
-    hmm$bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
+    # hmm$bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
     
     
     ## Variables
@@ -803,7 +803,7 @@ exportCombinedMultivariateCounts <- function(hmm, filename, header=TRUE, separat
                 chromr <- chrom
             }
             cat(paste0("fixedStep chrom=",chromr," start=1 step=",binsize," span=",binsize,"\n"), file=filename.gz, append=TRUE)
-            utils::write.table(hmm$bins[seqnames(hmm$bins)==chrom]$counts[,imod], file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
+            utils::write.table(hmm$bins[seqnames(hmm$bins)==chrom]$counts.rpkm[,imod], file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, sep='\t')
         }
         if (separate.files) {
             close(filename.gz)
@@ -848,10 +848,10 @@ exportCombinedMultivariateCounts <- function(hmm, filename, header=TRUE, separat
 #'# Bin the file into bin size 1000bp
 #'data(rn4_chrominfo)
 #'binned <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
-#'                   chromosomes='chr12')
+#'                   stepsizes=500, chromosomes='chr12')
 #'plotHistogram(binned)
 #'# Export regions with read count above 20
-#'exportGRangesAsBedFile(binned[binned$counts > 20], filename=tempfile(),
+#'exportGRangesAsBedFile(binned[binned$counts[,1] > 20], filename=tempfile(),
 #'              trackname='read counts above 20')
 #'
 exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination', scorecol='score', colorcol=NULL, colors=NULL, header=TRUE, append=FALSE) {
@@ -901,15 +901,12 @@ exportGRangesAsBedFile <- function(gr, trackname, filename, namecol='combination
         regions$name <- mcols(gr)[,namecol]
     }
     regions <- regions[c('chromosome','start','end','name','score','strand')]
-    df <- regions
     # Convert from 1-based closed to 0-based half open
-    df$start <- df$start - 1
-    
+    regions$start <- regions$start - 1
+    df <- regions
     
     if (!is.null(colorcol)) {
         df <- cbind(regions, thickStart=regions$start, thickEnd=regions$end)
-        # Convert from 1-based closed to 0-based half open
-        df$thickStart <- df$thickStart - 1
         # Generate the colors for each element in 'namecol'
         if (colorcol %in% names(mcols(gr))) {
             if (is.null(colors)) {

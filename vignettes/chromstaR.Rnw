@@ -48,7 +48,7 @@ data(rn4_chrominfo)
 head(rn4_chrominfo)
 # We use bin size 1000bp and chromosome 12 to keep the example quick
 binned.data <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
-                        chromosomes='chr12')
+                        stepsizes=500, chromosomes='chr12')
 print(binned.data)
 @
 
@@ -82,6 +82,8 @@ exportCounts(model, filename=tempfile())
 @
 \end{scriptsize}
 
+\textbf{!! It is important that the distributions are fitted correctly !!} Please check section \ref{sec:FAQ_example_histograms} for examples of how this plot should \emph{not} look like and what can be done to get a correct fit.
+
 \subsection{\label{sec:broad}Task 2: Peak calling for a broad histone modification}
 
 Examples of histone modifications with a broad profile are H3K9me3, H3K27me3, H3K36me3, H4K20me1 in most human tissues. These modifications usually cover broad domains of the genome, and the enrichment is best captured with a bin size between 500bp and 2000bp.
@@ -102,7 +104,7 @@ data(rn4_chrominfo)
 head(rn4_chrominfo)
 # We use bin size 1000bp and chromosome 12 to keep the example quick
 binned.data <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
-                        chromosomes='chr12')
+                        stepsizes=500, chromosomes='chr12')
 @
 
 <<univariate_broad_peak_calling, results='markup', eval=TRUE, message=FALSE>>=
@@ -141,11 +143,13 @@ file <- system.file("extdata","euratrans","lv-H4K20me1-BN-male-bio1-tech1.bam",
                        package="chromstaRData")
 data(rn4_chrominfo)
 binned.data <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
-                        chromosomes='chr12')
+                        stepsizes=500, chromosomes='chr12')
 model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
 plotHistogram(model) + ggtitle('H4K20me1')
 @
 \end{scriptsize}
+
+\textbf{!! It is important that the distributions are fitted correctly !!} Please check section \ref{sec:FAQ_example_histograms} for examples of how this plot should \emph{not} look like and what can be done to get a correct fit.
 
 \subsection{Task 3: Peak calling for ATAC-seq, DNase-seq, FAIRE-seq, ...}
 
@@ -191,7 +195,7 @@ exp <- data.frame(file=files, mark='H3K27me3', condition='SHR', replicate=1:4,
 # We use bin size 1000bp and chromosome 12 to keep the example quick
 binned.data <- list()
 for (file in files) {
-  binned.data[[basename(file)]] <- binReads(file, binsize=1000,
+  binned.data[[basename(file)]] <- binReads(file, binsize=1000, stepsizes=500,
                                          assembly=rn4_chrominfo, chromosomes='chr12',
                                          experiment.table=exp)
 }
@@ -203,8 +207,12 @@ for (file in files) {
 models <- list()
 for (i1 in 1:length(binned.data)) {
   models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], max.time=60)
+  plotHistogram(models[[i1]])
 }
 @
+
+\textbf{!! It is important that the distributions are fitted correctly !!} Please check section \ref{sec:FAQ_example_histograms} for examples of how this plot should \emph{not} look like and what can be done to get a correct fit.\\
+
 
 <<multivariate_replicate_peak_calling, results='markup', message=FALSE, eval=TRUE>>=
 ## === Step 4: Check replicate correlation ===
@@ -260,8 +268,9 @@ head(rn4_chrominfo)
 #=== Step 2: Run Chromstar ===
 ## Run ChromstaR
 Chromstar(inputfolder, experiment.table=experiment_table_H4K20me1,
-          outputfolder=outputfolder, numCPU=4, binsize=1000, assembly=rn4_chrominfo,
-          prefit.on.chr='chr12', chromosomes='chr12', mode='differential')
+          outputfolder=outputfolder, numCPU=4, binsize=1000, stepsize=500,
+          assembly=rn4_chrominfo, prefit.on.chr='chr12', chromosomes='chr12',
+          mode='differential')
 @
 <<multivariate_differential_listfiles, results='markup', message=FALSE, eval=TRUE>>=
 ## Results are stored in 'outputfolder' and can be loaded for further processing
@@ -269,6 +278,9 @@ list.files(outputfolder)
 model <- get(load(file.path(outputfolder,'multivariate',
                             'multivariate_mode-differential_mark-H4K20me1.RData')))
 @
+
+\textbf{!! It is important that the distributions in folder outputfolder/PLOTS/univariate-distributions are fitted correctly !!} Please check section \ref{sec:FAQ_example_histograms} for examples of how this plot should \emph{not} look like and what can be done to get a correct fit.\\
+
 
 <<multivariate_differential_stateBrewer, results='markup', message=TRUE, eval=TRUE>>=
 ## === Step 3: Construct differential and common states ===
@@ -320,9 +332,13 @@ head(rn4_chrominfo)
 #=== Step 2: Run Chromstar ===
 ## Run ChromstaR
 Chromstar(inputfolder, experiment.table=experiment_table_SHR,
-          outputfolder=outputfolder, numCPU=4, binsize=1000, assembly=rn4_chrominfo,
-          prefit.on.chr='chr12', chromosomes='chr12', mode='combinatorial')
+          outputfolder=outputfolder, numCPU=4, binsize=1000, stepsize=500,
+          assembly=rn4_chrominfo, prefit.on.chr='chr12', chromosomes='chr12',
+          mode='combinatorial')
 @
+
+\textbf{!! It is important that the distributions in folder outputfolder/PLOTS/univariate-distributions are fitted correctly !!} Please check section \ref{sec:FAQ_example_histograms} for examples of how this plot should \emph{not} look like and what can be done to get a correct fit.\\
+
 
 <<multivariate_combinatorial_listfiles, results='markup', message=FALSE, eval=TRUE, fig.width=4, fig.height=3, out.width='0.5\\textwidth'>>=
 ## Results are stored in 'outputfolder' and can be loaded for further processing
@@ -352,6 +368,7 @@ genes <- GRanges(seqnames=paste0('chr',genes$chromosome_name),
                  ranges=IRanges(start=genes$start, end=genes$end),
                  strand=genes$strand,
                  name=genes$external_gene_id, biotype=genes$gene_biotype)
+seqlevels(genes)[seqlevels(genes)=='chrMT'] <- 'chrM'
 print(genes)
 @
 
@@ -409,6 +426,7 @@ expression.SHR <- GRanges(seqnames=paste0('chr',expr$chromosome_name),
                           strand=expr$strand, name=expr$external_gene_id,
                           biotype=expr$gene_biotype,
                           expression=expr$expression_SHR)
+seqlevels(expression.SHR)[seqlevels(expression.SHR)=='chrMT'] <- 'chrM'
 # We apply an asinh transformation to reduce the effect of outliers
 expression.SHR$expression <- asinh(expression.SHR$expression)
 
@@ -459,8 +477,9 @@ head(rn4_chrominfo)
 #=== Step 2: Run Chromstar ===
 ## Run ChromstaR
 Chromstar(inputfolder, experiment.table=experiment_table,
-          outputfolder=outputfolder, numCPU=4, binsize=1000, assembly=rn4_chrominfo,
-          prefit.on.chr='chr12', chromosomes='chr12', mode='differential')
+          outputfolder=outputfolder, numCPU=4, binsize=1000, stepsize=500,
+          assembly=rn4_chrominfo, prefit.on.chr='chr12', chromosomes='chr12',
+          mode='differential')
 @
 <<combined_listfiles, results='markup', message=FALSE, eval=TRUE>>=
 ## Results are stored in 'outputfolder' and can be loaded for further processing
@@ -468,6 +487,9 @@ list.files(outputfolder)
 model <- get(load(file.path(outputfolder,'combined',
                             'combined_mode-differential.RData')))
 @
+
+\textbf{!! It is important that the distributions in folder outputfolder/PLOTS/univariate-distributions are fitted correctly !!} Please check section \ref{sec:FAQ_example_histograms} for examples of how this plot should \emph{not} look like and what can be done to get a correct fit.\\
+
 
 <<combined_analysis, results='markup', message=FALSE, eval=TRUE>>=
 #=== Step 3: Analysis and export ===
@@ -503,6 +525,7 @@ genes <- GRanges(seqnames=paste0('chr',genes$chromosome_name),
                  ranges=IRanges(start=genes$start, end=genes$end),
                  strand=genes$strand,
                  name=genes$external_gene_id, biotype=genes$gene_biotype)
+seqlevels(genes)[seqlevels(genes)=='chrMT'] <- 'chrM'
 print(genes)
 @
 
@@ -526,7 +549,7 @@ plots[['BN']] + facet_wrap(~ mark) +
 tss <- resize(genes, width = 3, fix = 'start')
 biotypes <- split(tss, tss$biotype)
 plots <- plotFoldEnrichHeatmap(model, annotations=biotypes)
-plots[['BN']] + coord_flip() + 
+plots[['BN']] + coord_flip() +
   ggtitle('Fold enrichment with different biotypes')
 @
 \end{scriptsize}
@@ -604,7 +627,20 @@ heatmapCombinations(marks=c('H3K4me3', 'H3K27me3', 'H3K36me3', 'H3K27Ac'))
 @
 \end{scriptsize}
 
+\subsection{\label{sec:FAQ_example_histograms}Examples of problematic distributions.}
 
+For the chromstaR peak calling to work correctly it is essential that the Baum-Welch algorithm correctly identifies unmodified (background) and modified (signal/peak) components in the data. Therefore, you should always check the plots in folder \textbf{PLOTS/univariate-distributions} for correct convergence. Here are some plots that indicate failed and succesful fitting procedures:
+
+% p1 <- ggdraw(p1) + draw_label("WRONG", angle = -45, size = 80, alpha = .2, colour = 'red')
+% p2 <- ggdraw(p2) + draw_label("CORRECT", angle = -45, size = 80, alpha = .2, colour = 'green')
+% cowplt <- plot_grid(p1, p2, labels = letters[1:2])
+% ggsave(cowplt, filename = '~/Bioconductor/chromstaR/vignettes/PLOTS/H3K27me3-Adult-rep2_binsize1000.pdf', width=42, height=15, units='cm')
+
+\includegraphics[width=\textwidth]{PLOTS/H3K27me3-Adult-rep2_binsize1000.pdf}
+The plot shows data for H3K27me3 at binsize 1000bp. (a) Incorrectly converged fit, where the \textbf{modified} component (red) has lower read counts than the \textbf{unmodified} component (gray). (b) Correctly converged fit. Even here, the fit could be improved by reducing the average number of reads per bin, either by selecting a smaller binsize or by downsampling the data before using chromstaR.
+
+\includegraphics[width=\textwidth]{PLOTS/H3K27me3-Adult-rep2_binsize150.pdf}
+The plot shows data for H3K27me3 at binsize 150bp. (a) Incorrectly converged fit, where the \textbf{modified} component (red) has a higher density at zero reads than the \textbf{unmodified} component (gray). (b) Correctly converged fit.
 
 \section{Session Info}
 \begin{scriptsize}

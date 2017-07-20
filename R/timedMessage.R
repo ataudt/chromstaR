@@ -8,6 +8,8 @@ messageU <- function(..., underline='=', overline='=') {
     if (!is.null(underline)) {
         message(rep(underline, nchar(x)))
     }
+    ptm <- proc.time()
+    return(ptm)
 
 }
 

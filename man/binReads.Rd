@@ -5,16 +5,19 @@
 \alias{binning}
 \title{Convert aligned reads from various file formats into read counts in equidistant bins}
 \usage{
-binReads(file, experiment.table = NULL, assembly, bamindex = file,
-  chromosomes = NULL, pairedEndReads = FALSE, min.mapq = 10,
-  remove.duplicate.reads = TRUE, max.fragment.width = 1000,
-  blacklist = NULL, binsizes = 1000, reads.per.bin = NULL, bins = NULL,
-  variable.width.reference = NULL, use.bamsignals = TRUE, format = NULL)
+binReads(file, experiment.table = NULL, ID = NULL, assembly,
+  bamindex = file, chromosomes = NULL, pairedEndReads = FALSE,
+  min.mapq = 10, remove.duplicate.reads = TRUE, max.fragment.width = 1000,
+  blacklist = NULL, binsizes = 1000, stepsizes = binsizes/2,
+  reads.per.bin = NULL, bins = NULL, variable.width.reference = NULL,
+  use.bamsignals = TRUE, format = NULL)
 }
 \arguments{
 \item{file}{A file with aligned reads. Alternatively a \code{\link{GRanges}} with aligned reads.}
 
 \item{experiment.table}{An \code{\link{experiment.table}} containing the supplied \code{file}. This is necessary to uniquely identify the file in later steps of the workflow. Set to \code{NULL} if you don't have it (not recommended).}
+
+\item{ID}{Optional ID to select a row from the \code{experiment.table}. Only necessary if the experiment table contains the same file in multiple positions in column 'file'.}
 
 \item{assembly}{Please see \code{\link[GenomeInfoDb]{fetchExtendedChromInfoFromUCSC}} for available assemblies. Only necessary when importing BED files. BAM files are handled automatically. Alternatively a data.frame with columns 'chromosome' and 'length'.}
 
@@ -34,9 +37,11 @@ binReads(file, experiment.table = NULL, assembly, bamindex = file,
 
 \item{binsizes}{An integer vector specifying the bin sizes to use.}
 
+\item{stepsizes}{An integer vector specifying the step size. One number can be given for each element in \code{binsizes}, \code{reads.per.bin} and \code{bins} (in that order).}
+
 \item{reads.per.bin}{Approximate number of desired reads per bin. The bin size will be selected accordingly.}
 
-\item{bins}{A named \code{list} with \code{\link{GRanges}} containing precalculated bins produced by \code{\link{fixedWidthBins}} or \code{\link{variableWidthBins}}. Names must correspond to the binsize.}
+\item{bins}{A \code{\link{GRanges}} or a named \code{list()} with \code{\link{GRanges}} containing precalculated bins produced by \code{\link{fixedWidthBins}} or \code{\link{variableWidthBins}}. Names of the list must correspond to the binsize. If the list is unnamed, an attempt is made to automatically determine the binsize.}
 
 \item{variable.width.reference}{A BAM file that is used as reference to produce variable width bins. See \code{\link{variableWidthBins}} for details.}
 
@@ -63,7 +68,7 @@ data(rn4_chrominfo)
 data(experiment_table)
 binned <- binReads(file, experiment.table=experiment_table,
                   assembly=rn4_chrominfo, binsizes=1000,
-                  chromosomes='chr12')
+                  stepsizes=500, chromosomes='chr12')
 print(binned)
 
 }

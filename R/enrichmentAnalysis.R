@@ -279,8 +279,7 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
     around <- round(bp.around.annotation/binsize)
     
     ## Get RPKM values
-    bins$counts <- sweep(bins$counts, MARGIN = 2, STATS = colSums(bins$counts), FUN = '/')
-    bins$counts <- bins$counts * 1e6 * 1000/mean(width(bins))
+    # bins$counts <- rpkm.matrix(bins$counts, binsize = binsize)
 
     # Subsampling for plotting of huge data.frames
     annotation <- IRanges::subsetByOverlaps(annotation, bins)
@@ -328,8 +327,8 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
         if (is.null(dim(ext.index.combination))) {
             ext.index.combination <- array(ext.index.combination, dim=c(1,dim(ext.index)[[2]]), dimnames=list(anno=rownames(ext.index)[index.combination], position=dimnames(ext.index)[[2]]))
         }
-        for (nID in colnames(bins$counts)) {
-            counts[[combination]][[nID]] <- array(bins$counts[ext.index.combination,nID], dim=dim(ext.index.combination), dimnames=dimnames(ext.index.combination))
+        for (nID in colnames(bins$counts.rpkm)) {
+            counts[[combination]][[nID]] <- array(bins$counts.rpkm[ext.index.combination,nID], dim=dim(ext.index.combination), dimnames=dimnames(ext.index.combination))
         }
     }
     stopTimedMessage(ptm)
@@ -393,14 +392,14 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
     hmm <- loadHmmsFromFiles(hmm, check.class=c(class.univariate.hmm, class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     bins <- hmm$bins
     if (class(hmm) == class.univariate.hmm) {
-        bins$counts <- rpkm.vector(hmm$bins$counts, binsize=mean(width(hmm$bins)))
+        # bins$counts <- rpkm.vector(hmm$bins$counts, binsize=mean(width(hmm$bins)))
         mcols(bins)['combination.'] <- bins$state
         bins$state <- c('zero-inflation' = 0, 'unmodified' = 0, 'modified' = 1)[bins$state]
         hmm$info <- data.frame(file=NA, mark=1, condition=1, replicate=1, pairedEndReads=NA, controlFiles=NA, ID='1-1-rep1')
     } else if (class(hmm) == class.combined.multivariate.hmm) {
-        bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
+        # bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
     } else if (class(hmm) == class.multivariate.hmm) {
-        bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
+        # bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
         # Rename 'combination' to 'combination.' for coherence with combinedMultiHMM
         names(mcols(bins))[grep('combination', names(mcols(bins)))] <- 'combination.'
     }
@@ -560,6 +559,11 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
     if ((!what %in% c('combinations','peaks','counts')) | length(what) > 1) {
         stop("argument 'what' must be one of c('combinations','peaks','counts')")
     }
+    seqlevels.only.in.bins <- setdiff(seqlevels(bins), seqlevels(annotation))
+    seqlevels.only.in.annotation <- setdiff(seqlevels(annotation), seqlevels(bins))
+    if (length(seqlevels.only.in.bins) > 0 | length(seqlevels.only.in.annotation) > 0) {
+        warning("Sequence levels in 'bins' but not in 'annotation': ", paste0(seqlevels.only.in.bins, collapse = ', '), "\n  Sequence levels in 'annotation' but not in 'bins': ", paste0(seqlevels.only.in.annotation, collapse = ''))
+    }
   
     ## Variables
     binsize <- width(bins)[1]
@@ -584,9 +588,9 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
         colsums.binstates <- colSums(binstates)
     }
     if ('counts' %in% what) {
-        counts <- bins$counts
+        counts <- bins$counts.rpkm
     }
-
+    
     ### Calculating enrichment inside of annotation ###
     if ('inside' %in% region) {
         ptm <- startTimedMessage("Enrichment inside of annotations ...")
@@ -604,8 +608,8 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
             shifted.starts <- start(annotation.1bp) + shift
             annotation.shifted <- GRanges(seqnames = seqnames(annotation.1bp), ranges = IRanges(start = shifted.starts, end = shifted.starts), strand = strand(annotation.1bp))
             # Get bins that overlap the shifted annotation
-            index.inside.plus <- findOverlaps(annotation.shifted[strand(annotation.shifted)=='+' | strand(annotation.shifted)=='*'], bins, select="first")
-            index.inside.minus <- findOverlaps(annotation.shifted[strand(annotation.shifted)=='-'], bins, select="last")
+            index.inside.plus <- suppressWarnings( findOverlaps(annotation.shifted[strand(annotation.shifted)=='+' | strand(annotation.shifted)=='*'], bins, select="first") )
+            index.inside.minus <- suppressWarnings( findOverlaps(annotation.shifted[strand(annotation.shifted)=='-'], bins, select="last") )
             index.inside.plus <- index.inside.plus[!is.na(index.inside.plus)]
             index.inside.minus <- index.inside.minus[!is.na(index.inside.minus)]
             index <- c(index.inside.plus, index.inside.minus)
@@ -651,8 +655,8 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
     if ('start' %in% region) {
         ptm <- startTimedMessage("Enrichment ",bp.around.annotation,"bp before annotations")
         # Get bins that overlap the start of annotation
-        index.start.plus <- findOverlaps(annotation[strand(annotation)=='+' | strand(annotation)=='*'], bins, select="first")
-        index.start.minus <- findOverlaps(annotation[strand(annotation)=='-'], bins, select="last")
+        index.start.plus <- suppressWarnings( findOverlaps(annotation[strand(annotation)=='+' | strand(annotation)=='*'], bins, select="first") )
+        index.start.minus <- suppressWarnings( findOverlaps(annotation[strand(annotation)=='-'], bins, select="last") )
         index.start.plus <- index.start.plus[!is.na(index.start.plus)]
         index.start.minus <- index.start.minus[!is.na(index.start.minus)]
         # Occurrences at every bin position relative to feature
@@ -706,8 +710,8 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
     if ('end' %in% region) {
         ptm <- startTimedMessage("Enrichment ",bp.around.annotation,"bp after annotations")
         # Get bins that overlap the end of annotation
-        index.end.plus <- findOverlaps(annotation[strand(annotation)=='+' | strand(annotation)=='*'], bins, select="last")
-        index.end.minus <- findOverlaps(annotation[strand(annotation)=='-'], bins, select="first")
+        index.end.plus <- suppressWarnings( findOverlaps(annotation[strand(annotation)=='+' | strand(annotation)=='*'], bins, select="last") )
+        index.end.minus <- suppressWarnings( findOverlaps(annotation[strand(annotation)=='-'], bins, select="first") )
         index.end.plus <- index.end.plus[!is.na(index.end.plus)]
         index.end.minus <- index.end.minus[!is.na(index.end.minus)]
         # Occurrences at every bin position relative to feature

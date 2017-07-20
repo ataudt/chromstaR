@@ -9,10 +9,12 @@
 #' @aliases binning
 #' @param file A file with aligned reads. Alternatively a \code{\link{GRanges}} with aligned reads.
 #' @param experiment.table An \code{\link{experiment.table}} containing the supplied \code{file}. This is necessary to uniquely identify the file in later steps of the workflow. Set to \code{NULL} if you don't have it (not recommended).
+#' @param ID Optional ID to select a row from the \code{experiment.table}. Only necessary if the experiment table contains the same file in multiple positions in column 'file'.
 #' @inheritParams readBamFileAsGRanges
 #' @inheritParams readBedFileAsGRanges
 #' @param binsizes An integer vector specifying the bin sizes to use.
-#' @param bins A named \code{list} with \code{\link{GRanges}} containing precalculated bins produced by \code{\link{fixedWidthBins}} or \code{\link{variableWidthBins}}. Names must correspond to the binsize.
+#' @param stepsizes An integer vector specifying the step size. One number can be given for each element in \code{binsizes}, \code{reads.per.bin} and \code{bins} (in that order).
+#' @param bins A \code{\link{GRanges}} or a named \code{list()} with \code{\link{GRanges}} containing precalculated bins produced by \code{\link{fixedWidthBins}} or \code{\link{variableWidthBins}}. Names of the list must correspond to the binsize. If the list is unnamed, an attempt is made to automatically determine the binsize.
 #' @param reads.per.bin Approximate number of desired reads per bin. The bin size will be selected accordingly.
 #' @param variable.width.reference A BAM file that is used as reference to produce variable width bins. See \code{\link{variableWidthBins}} for details.
 #' @param chromosomes If only a subset of the chromosomes should be binned, specify them here.
@@ -33,10 +35,10 @@
 #'data(experiment_table)
 #'binned <- binReads(file, experiment.table=experiment_table,
 #'                   assembly=rn4_chrominfo, binsizes=1000,
-#'                   chromosomes='chr12')
+#'                   stepsizes=500, chromosomes='chr12')
 #'print(binned)
 #'
-binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chromosomes=NULL, pairedEndReads=FALSE, min.mapq=10, remove.duplicate.reads=TRUE, max.fragment.width=1000, blacklist=NULL, binsizes=1000, reads.per.bin=NULL, bins=NULL, variable.width.reference=NULL, use.bamsignals=TRUE, format=NULL) {
+binReads <- function(file, experiment.table=NULL, ID=NULL, assembly, bamindex=file, chromosomes=NULL, pairedEndReads=FALSE, min.mapq=10, remove.duplicate.reads=TRUE, max.fragment.width=1000, blacklist=NULL, binsizes=1000, stepsizes=binsizes/2, reads.per.bin=NULL, bins=NULL, variable.width.reference=NULL, use.bamsignals=TRUE, format=NULL) {
 
     ## Determine format
     if (is.null(format)) {
@@ -53,8 +55,18 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
         stop("Unknown format. Needs to be one of 'bed', 'bam' or 'GRanges'.")
     }
 
+    ## Sanity checks
     if (format=='bed') {
         temp <- assembly # trigger error if not defined
+    }
+    if (class(bins) == 'GRanges') {
+        bins <- list(bins)
+        names(bins) <- width(bins[[1]])[1]
+    }
+    if (class(bins) == 'list') {
+        if (is.null(names(bins))) {
+            names(bins) <- sapply(bins, function(x) { width(x)[1] })
+        }
     }
 
     ## Variables for bamsignals
@@ -67,6 +79,12 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
     if (!is.null(experiment.table)) {
         check.experiment.table(experiment.table)
         info <- experiment.table[basename(as.character(experiment.table$file))==basename(file),]
+        if (nrow(info) > 1) {
+            if (is.null(ID)) {
+                stop("Please specify argument 'ID' if multiple files in 'experiment.table' are identical.")
+            }
+            info <- info[ID, ]
+        }
         ID <- paste0(info$mark, '-', info$condition, '-rep', info$rep)
         info$ID <- ID
         if (pairedEndReads != info$pairedEndReads) {
@@ -197,7 +215,10 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
     }
     
     ### Combine in bins.list ###
-    bins.list <- c(bins, bins.binsize, bins.rpb)
+    bins.list <- c(bins.binsize, bins.rpb, bins)
+    if (length(stepsizes) != length(bins.list)) {
+        stop("Need one step size for each binsize. Make sure that length(stepsizes) == length(binsizes) + length(reads.per.bin) + length(bins).")
+    }
  
     ### Loop over all binsizes ###
     if (!use.bamsignals | format=='bed' | format=='GRanges') {
@@ -210,31 +231,45 @@ binReads <- function(file, experiment.table=NULL, assembly, bamindex=file, chrom
     for (ibinsize in 1:length(bins.list)) {
         binsize <- as.numeric(names(bins.list)[ibinsize])
         bins <- bins.list[[ibinsize]]
-        if (format == 'bam' & use.bamsignals) {
-            ptm <- startTimedMessage("Counting overlaps for binsize ", binsize, " ...")
-            bins$counts <- tryCatch({
-                bins$counts <- bamsignals::bamCount(file, bins, mapqual=min.mapq, paired.end=paired.end, tlenFilter=c(0, max.fragment.width), verbose=FALSE)
-            }, error = function(err) {
-                bins$counts <<- bamsignals::bamCount(file, bins, mapqual=min.mapq, paired.end=paired.end, paired.end.max.frag.length=max.fragment.width, verbose=FALSE)
-            })
-            stopTimedMessage(ptm)
-            
-        } else {
-            readsperbin <- round(length(data) / sum(as.numeric(seqlengths(data))) * binsize, 2)
-            ptm <- startTimedMessage("Counting overlaps for binsize ",binsize," with on average ",readsperbin," reads per bin ...")
-            scounts <- suppressWarnings( GenomicRanges::countOverlaps(bins, data.star) )
-            mcounts <- suppressWarnings( GenomicRanges::countOverlaps(bins, data.minus) )
-            pcounts <- suppressWarnings( GenomicRanges::countOverlaps(bins, data.plus) )
-            counts <- mcounts + pcounts + scounts
-            countmatrix <- matrix(c(counts,mcounts,pcounts), ncol=3)
-            colnames(countmatrix) <- c('counts','mcounts','pcounts')
-            mcols(bins)$counts <- countmatrix[,'counts']
-            stopTimedMessage(ptm)
-    
+        stepsize <- stepsizes[ibinsize]
+        numsteps <- ceiling(binsize / stepsize)
+        offsets <- stepsize * ((1:numsteps) - 1)
+        acounts <- array(NA, dim = c(length(bins), numsteps), dimnames = list(bin=NULL, offset=offsets))
+        for (ioffset in 1:numsteps) {
+            offset <- offsets[ioffset]
+            bins.offset <- suppressWarnings( shift(bins, shift = offset) )
+        
+            if (format == 'bam' & use.bamsignals) {
+                ptm <- startTimedMessage("Counting overlaps for binsize ", binsize, " with offset ", offset, " ...")
+                bins.offset$counts <- tryCatch({
+                    bins.offset$counts <- bamsignals::bamCount(file, bins.offset, mapqual=min.mapq, paired.end=paired.end, tlenFilter=c(0, max.fragment.width), verbose=FALSE)
+                }, error = function(err) {
+                    bins.offset$counts <<- bamsignals::bamCount(file, bins.offset, mapqual=min.mapq, paired.end=paired.end, paired.end.max.frag.length=max.fragment.width, verbose=FALSE)
+                })
+                stopTimedMessage(ptm)
+                
+            } else {
+                readsperbin <- round(length(data) / sum(as.numeric(seqlengths(data))) * binsize, 2)
+                ptm <- startTimedMessage("Counting overlaps for binsize ",binsize," with offset ", offset, ", with on average ",readsperbin," reads per bin ...")
+                scounts <- suppressWarnings( GenomicRanges::countOverlaps(bins.offset, data.star) )
+                mcounts <- suppressWarnings( GenomicRanges::countOverlaps(bins.offset, data.minus) )
+                pcounts <- suppressWarnings( GenomicRanges::countOverlaps(bins.offset, data.plus) )
+                counts <- mcounts + pcounts + scounts
+                countmatrix <- matrix(c(counts,mcounts,pcounts), ncol=3)
+                colnames(countmatrix) <- c('counts','mcounts','pcounts')
+                bins.offset$counts <- countmatrix[, 'counts']
+                stopTimedMessage(ptm)
+        
+            }
+            acounts[, as.character(offset)] <- mcols(bins.offset)[,'counts']
+        
         }
-        attr(bins, 'info') <- info
-        attr(bins, 'min.mapq') <- min.mapq
+        
+        bins <- bins.list[[ibinsize]]
+        bins$counts <- acounts
         bins.list[[ibinsize]] <- bins
+        attr(bins.list[[ibinsize]], 'info') <- info
+        attr(bins.list[[ibinsize]], 'min.mapq') <- min.mapq
             
     } ### end loop binsizes ###
 

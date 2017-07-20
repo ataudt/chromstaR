@@ -36,11 +36,13 @@ dnbinom.variance <- function(size, prob) {
 
 rpkm.vector <- function(counts, binsize) {
     rpkm <- counts / sum(as.numeric(counts)) * 1e6 * 1000 / binsize
+    rpkm[is.nan(rpkm)] <- 0
     return(rpkm)
 }
 
 rpkm.matrix <- function(counts, binsize) {
     rpkm <- sweep(counts, MARGIN = 2, STATS = colSums(counts), FUN = '/')
+    rpkm[is.nan(rpkm)] <- 0
     rpkm <- rpkm * 1e6 * 1000 / binsize
     return(rpkm)
 }

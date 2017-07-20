@@ -295,12 +295,14 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 				//FILE_LOG(logINFO) << "Maximum number of iterations reached!";
 				if (this->verbosity>=1) Rprintf("HMM: Maximum number of iterations reached!\n");
 				if (this->xvariate == UNIVARIATE) this->check_for_state_swap();
+				break;
 			}
 			else if ((this->baumWelchTime_real >= *maxtime) and (*maxtime >= 0))
 			{
 				//FILE_LOG(logINFO) << "Exceeded maximum time!";
 				if (this->verbosity>=1) Rprintf("HMM: Exceeded maximum time!\n");
 				if (this->xvariate == UNIVARIATE) this->check_for_state_swap();
+				break;
 			}
 			logPold = logPnew;
 		}

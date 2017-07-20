@@ -195,7 +195,14 @@ readBedFileAsGRanges <- function(bedfile, assembly, chromosomes=NULL, remove.dup
     # File with reads, specify classes for faster import (0-based)
     ptm <- startTimedMessage("Reading file ",basename(bedfile)," ...")
     classes <- c('character','numeric','numeric','NULL','integer','character')
-    data.raw <- utils::read.table(bedfile, colClasses=classes)
+    # Determine if data has trackline
+    firstline <- utils::read.table(bedfile, nrows = 1)
+    if (grepl('^track', firstline[1,1])) {
+        skip <- 1
+    } else {
+        skip <- 0
+    }
+    data.raw <- utils::read.table(bedfile, colClasses=classes, skip=skip)
     # Convert to GRanges object
     data <- GenomicRanges::GRanges(seqnames=data.raw[,1], ranges=IRanges(start=data.raw[,2]+1, end=data.raw[,3]), strand=data.raw[,5])    # start+1 to go from [0,x) -> [1,x]
     mcols(data)$mapq <- data.raw[,4]
