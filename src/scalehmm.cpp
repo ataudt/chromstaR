@@ -242,8 +242,8 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 		this->calc_sumxi();
 		R_CheckUserInterrupt();
 
-		//FILE_LOG(logDEBUG1) << "Calling calc_sumgamma() from baumWelch()";
-		this->calc_sumgamma();
+		//FILE_LOG(logDEBUG1) << "Calling calc_gamma() from baumWelch()";
+		this->calc_gamma();
 		R_CheckUserInterrupt();
 
 		if (this->xvariate == UNIVARIATE)
@@ -324,6 +324,11 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 		{
 			this->proba[iN] = this->gamma[iN][0];
 			//FILE_LOG(logDEBUG4) << "sumgamma["<<iN<<"] = " << sumgamma[iN];
+			this->sumgamma[iN] = 0;
+			for (int jN=0; jN<this->N; jN++)
+			{
+				this->sumgamma[iN] += this->sumxi[iN][jN];
+			}
 			if (this->sumgamma[iN] == 0)
 			{
 				//FILE_LOG(logINFO) << "Not reestimating A["<<iN<<"][x] because sumgamma["<<iN<<"] = 0";
@@ -510,8 +515,8 @@ void ScaleHMM::check_for_state_swap()
 			//FILE_LOG(logDEBUG1) << "Calling calc_sumxi() from check_for_state_swap()";
 			this->calc_sumxi();
 			R_CheckUserInterrupt();
-			//FILE_LOG(logDEBUG1) << "Calling calc_sumgamma() from check_for_state_swap()";
-			this->calc_sumgamma();
+			//FILE_LOG(logDEBUG1) << "Calling calc_gamma() from check_for_state_swap()";
+			this->calc_gamma();
 			R_CheckUserInterrupt();
 			
 			// recalculate weight, maxdens and logdens at cutoff
@@ -857,16 +862,10 @@ void ScaleHMM::backward()
 // 	//FILE_LOG(logDEBUG) << "backward(): " << dtime << " clicks";
 }
 
-void ScaleHMM::calc_sumgamma()
+void ScaleHMM::calc_gamma()
 {
 	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
 // 	clock_t time = clock(), dtime;
-
-	// Initialize the sumgamma
-	for (int iN=0; iN<this->N; iN++)
-	{
-		this->sumgamma[iN] = 0.0;
-	}
 
 	// Compute the gammas (posteriors) and sumgamma
 	#pragma omp parallel for
@@ -875,17 +874,11 @@ void ScaleHMM::calc_sumgamma()
 		for (int t=0; t<this->T; t++)
 		{
 			this->gamma[iN][t] = this->scalealpha[t][iN] * this->scalebeta[t][iN] * this->scalefactoralpha[t];
-			this->sumgamma[iN] += this->gamma[iN][t];
 		}
-	}
-	// Subtract the last value because sumgamma goes only until T-1 and we computed until T to get also loggamma at T
-	for (int iN=0; iN<this->N; iN++)
-	{
-		this->sumgamma[iN] -= this->gamma[iN][T-1];
 	}
 
 // 	dtime = clock() - time;
-// 	//FILE_LOG(logDEBUG) << "calc_sumgamma(): " << dtime << " clicks";
+// 	//FILE_LOG(logDEBUG) << "calc_gamma(): " << dtime << " clicks";
 }
 
 void ScaleHMM::calc_sumxi()
