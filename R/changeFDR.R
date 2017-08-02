@@ -69,6 +69,7 @@ changeFDR.multivariate <- function(model, fdr, invert=FALSE) {
     
     ## fdr threshold
     threshold <- 1-fdr
+    threshold <- threshold * 1000
 
     ### Multivariate HMM ###
     if (is(model, class.multivariate.hmm)) {
@@ -164,6 +165,7 @@ changeFDR.univariate <- function(model, fdr, invert=FALSE) {
 
     ## fdr threshold
     threshold <- 1-fdr
+    threshold <- threshold * 1000
 
     if (is.null(model$bins$peakScores)) stop("Cannot recalculate states because column 'peakScores' is missing.")
     ## Calculate states
