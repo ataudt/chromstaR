@@ -488,7 +488,8 @@ void multivariate_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, do
 // This function takes parameters from R, creates a multivariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // =====================================================================================================================================================
 
-void influence_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, double* size, double* prob, double* w,  int* maxiter, int* maxtime, double* eps, double* posteriors, bool* keep_posteriors, double* densities, bool* keep_densities, double* states, double* maxPosterior, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* verbosity)
+//HOLA
+void influence_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, double* size, double* prob, double* w,  int* maxiter, int* maxtime, double* eps, double* posteriors, bool* keep_posteriors, double* densities, bool* keep_densities, double* states, double* maxPosterior, double* A, double* proba, double* tiestrength, double* loglik, double* initial_A, double* initial_proba, double* initial_tiestrength, bool* use_initial_params, int* num_threads, int* error, int* verbosity)
 {
 
 	// Define logging level {"ERROR", "WARNING", "INFO", "ITERATION", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4"}
@@ -551,7 +552,8 @@ void influence_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, doubl
  	// Initialize the transition probabilities and proba
  	hmm_influence->initialize_transition_probs(initial_A, *use_initial_params);
  	hmm_influence->initialize_proba(initial_proba, *use_initial_params);
-
+  hmm_influence->initialize_tiestrength(initial_tiestrength, *use_initial_params);
+	hmm_influence->initialize_influence();
  	// Print logproba and A
 // 	for (int iN=0; iN<*N; iN++)
 // 	{
@@ -575,49 +577,48 @@ void influence_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, doubl
 			res = (res - (double)binary_states[iN][imod]) / 2.0;
 		}
 	}
-//
-// 	/* initialize the distributions */
-// 	//FILE_LOG(logDEBUG1) << "Initializing the distributions";
-//
-// 	for (int iN=0; iN<*N; iN++) //for each combinatorial state
-// 	{
-// 		std::vector <Density*> tempMarginals;
-// 		for (int imod=0; imod < *Nmod; imod++) //for each modification
-// 		{
-// 			Density *d;
-// 			if (binary_states[iN][imod]) //construct the marginal density function for modification imod being enriched
-// 			{
-// 				d = new NegativeBinomial(multiO[imod], *T, size[2*imod+1], prob[2*imod+1]); // delete is done inside ~MVCopulaApproximation()
-// 			}
-// 			else //construct the density function for modification imod being non-enriched
-// 			{
-// 				d = new ZiNB(multiO[imod], *T, size[2*imod], prob[2*imod], w[imod]); // delete is done inside ~MVCopulaApproximation()
-// 			}
-// 			tempMarginals.push_back(d);
-// 		}
-// 		//MVCopulaApproximation *tempMVdens = new MVCopulaApproximation(O, tempMarginals, &(cor_matrix_inv[iN*Nmod*Nmod]), det[iN]);
-// 		//FILE_LOG(logDEBUG1) << "Calling MVCopulaApproximation for state " << iN;
-// 		// LUISA
-// 		//MVCopulaApproximation *tempMVdens = new MVCopulaApproximation(multiO, *T, tempMarginals, &(cor_matrix_inv[iN**Nmod**Nmod]), det[iN]); // delete is done inside ~ScaleHMM()
-// 		//hmm_influence->densityFunctions.push_back(tempMVdens);
-// 	}
-// 	FreeBoolMatrix(binary_states, *N);
-//
-// 	// Estimate the parameters
-// 	//FILE_LOG(logDEBUG1) << "Starting Baum-Welch estimation";
-// 	try
-// 	{
-// 		hmm_influence->baumWelch(maxiter, maxtime, eps);
-// 	}
-// 	catch (std::exception& e)
-// 	{
-// 		//FILE_LOG(logERROR) << "Error in Baum-Welch: " << e.what();
-// 		if (*verbosity>=1) Rprintf("HMM: Error in Baum-Welch: %s\n", e.what());
-// 		if (strcmp(e.what(),"nan detected")==0) { *error = 1; }
-// 		else { *error = 2; }
-// 	}
-// 	//FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
-//
+
+	/* initialize the distributions */
+	//FILE_LOG(logDEBUG1) << "Initializing the distributions";
+
+	for (int imod=0; imod < *Nmod; imod++) //for each modification
+	{
+		std::vector <Density*> tempMarginals;
+		for (int iN=0; iN<*N; iN++) //for each combinatorial state
+		{
+			Density *d;
+			if (iN==1) //construct the marginal density function for modification imod being enriched
+			{
+				d = new NegativeBinomial(multiO[imod], *T, size[2*imod+1], prob[2*imod+1]); // delete is done inside ~MVCopulaApproximation()
+			}
+			else //construct the density function for modification imod being non-enriched
+			{
+				d = new ZiNB(multiO[imod], *T, size[2*imod], prob[2*imod], w[imod]); // delete is done inside ~MVCopulaApproximation()
+			}
+			tempMarginals.push_back(d);
+		}
+		//FILE_LOG(logDEBUG1) << "Calling MVCopulaApproximation for state " << iN;
+
+		//MVCopulaApproximation *tempMVdens = new MVCopulaApproximation(multiO, *T, tempMarginals, &(cor_matrix_inv[iN**Nmod**Nmod]), det[iN]); // delete is done inside ~ScaleHMM()
+		hmm_influence->densityFunctions.push_back(tempMarginals);
+	}
+ 	FreeBoolMatrix(binary_states, *N);
+
+	// Estimate the parameters
+	//FILE_LOG(logDEBUG1) << "Starting Baum-Welch estimation";
+	try
+	{
+		hmm_influence->baumWelch(maxiter, maxtime, eps);
+	}
+	catch (std::exception& e)
+	{
+		//FILE_LOG(logERROR) << "Error in Baum-Welch: " << e.what();
+		if (*verbosity>=1) Rprintf("HMM: Error in Baum-Welch: %s\n", e.what());
+		if (strcmp(e.what(),"nan detected")==0) { *error = 1; }
+		else { *error = 2; }
+	}
+	//FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
+
 // 	// Get the posteriors and save results directly to the R pointer
 // 	if (*keep_posteriors == true)
 // 	{

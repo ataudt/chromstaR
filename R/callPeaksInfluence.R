@@ -241,7 +241,7 @@ callPeaksInfluence <- function(hmms, use.states, max.states=NULL, per.chrom=TRUE
 }
 
 #' @importFrom stats ecdf
-runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, distributions, weights, max.iter, max.time, eps, num.threads, keep.posteriors, keep.densities, transitionProbs.initial=NULL, startProbs.initial=NULL, verbosity=1) {
+runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, distributions, weights, max.iter, max.time, eps, num.threads, keep.posteriors, keep.densities, transitionProbs.initial=NULL,tiestrength.initial=NULL, startProbs.initial=NULL, verbosity=1) {
 
     ptm.start <- startTimedMessage("Starting multivariate HMM with ", length(comb.states), " combinatorial states")
     message("")
@@ -277,6 +277,14 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
 
 
     }
+    
+    if (is.null(tiestrength.initial)) {
+      
+      tiestrength.initial <- array((1-0.9)/(nstates-1), dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
+      diag(tiestrength.initial) <- 0.9
+      
+    }
+    
     if (is.null(startProbs.initial)) {
         startProbs.initial <- array((1/nstates), dim=c(nummod, nstates), dimnames=list(track=tracknames, state=statenames))
     }
@@ -333,9 +341,11 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
             maxPosterior = double(length=length(binned.data)), # double* maxPosterior
             A = double(length=nstates*nstates*nummod*nummod), # double* A
             proba = double(length=nummod*nstates), # double* proba
+            tiestrength= double(length=nummod*nummod),# double* tiestrength
             loglik = double(length=1), # double* loglik
             A.initial = as.double(transitionProbs.initial), # double* initial A
             proba.initial = as.double(startProbs.initial), # double* initial proba
+            tiestrength.initial= as.double(tiestrength.initial),# double* initial_tiestrength
             use.initial.params = as.logical(TRUE), # bool* use_initial_params
             num.threads = as.integer(num.threads), # int* num_threads
             error = as.integer(0), # error handling

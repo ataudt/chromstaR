@@ -28,13 +28,13 @@ class InfluenceScaleHMM  {
 		~InfluenceScaleHMM();
 
 		// Member variables
-		std::vector<Density*> densityFunctions; ///< density functions for each state
+		std::vector< std::vector<Density*> > densityFunctions; ///< density functions for each state
 
 		// Methods
 		void initialize_transition_probs(double* initial_A, bool use_initial_params);
 		void initialize_proba(double* initial_proba, bool use_initial_params);
-		//void initialize_influence();
-		void initialize_tiestrength(double* initial_tiestrenght, bool use_initial_params);
+		void initialize_influence();
+		void initialize_tiestrength(double* initial_tiestrength, bool use_initial_params);
 		void baumWelch(int* maxiter, int* maxtime, double* eps);
 		//void check_for_state_swap();
 		std::vector< std::vector< double > > calc_weights();
