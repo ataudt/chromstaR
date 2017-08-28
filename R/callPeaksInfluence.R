@@ -46,7 +46,7 @@
 #'  models[[i1]] <- callPeaksUnivariate(binned.data[[i1]], max.time=60, eps=1)
 #'}
 #'# Call multivariate peaks
-#'multimodel <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60)
+#'multimodel <- callPeaksInfluence(models, use.states=states, eps=1, max.time=60)
 #'# Check some plots
 #'heatmapTransitionProbs(multimodel)
 #'heatmapCountCorrelation(multimodel)
@@ -143,7 +143,7 @@ callPeaksInfluence <- function(hmms, use.states, max.states=NULL, per.chrom=TRUE
     }
 
     ## Prepare the HMM
-    p <- prepareMultivariate(hmms, use.states=use.states, max.states=max.states, chromosomes=chromosomes)
+    p <- prepareInfluence(hmms, use.states=use.states, max.states=max.states, chromosomes=chromosomes)
 
     if (is.null(chromosomes)) {
         chromosomes <- intersect(seqlevels(p$bincounts), unique(seqnames(p$bincounts)))
@@ -180,13 +180,13 @@ callPeaksInfluence <- function(hmms, use.states, max.states=NULL, per.chrom=TRUE
                 if (!is.null(temp.savedir)) {
                     temp.savename <- file.path(temp.savedir, paste0('chromosome_', chrom, '.RData'))
                     if (!file.exists(temp.savename)) {
-                        model <- runMultivariate(binned.data=bincounts, stepbins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
+                        model <- runInfluence(binned.data=bincounts, stepbins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
                         save(model, file=temp.savename)
                         rm(model); gc()
                     }
                     temp.savename
                 } else {
-                    model <- runMultivariate(binned.data=bincounts, stepbins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
+                    model <- runInfluence(binned.data=bincounts, stepbins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
                     model
                 }
             }
@@ -200,7 +200,7 @@ callPeaksInfluence <- function(hmms, use.states, max.states=NULL, per.chrom=TRUE
                 if (!is.null(temp.savedir)) {
                     temp.savename <- file.path(temp.savedir, paste0('chromosome_', chrom, '.RData'))
                     if (!file.exists(temp.savename)) {
-                        model <- runMultivariate(binned.data=bincounts, stepbins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
+                        model <- runInfluence(binned.data=bincounts, stepbins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
                         ptm <- startTimedMessage("Saving chromosome ", chrom, " to temporary file ", temp.savename, " ...")
                         save(model, file=temp.savename)
                         rm(model); gc()
@@ -208,7 +208,7 @@ callPeaksInfluence <- function(hmms, use.states, max.states=NULL, per.chrom=TRUE
                     }
                     models[[as.character(chrom)]] <- temp.savename
                 } else {
-                    model <- runMultivariate(binned.data=bincounts, stepbins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
+                    model <- runInfluence(binned.data=bincounts, stepbins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
                     models[[as.character(chrom)]] <- model
                 }
                 message("Time spent for chromosome = ", chrom, ":", appendLF=FALSE)
@@ -227,7 +227,7 @@ callPeaksInfluence <- function(hmms, use.states, max.states=NULL, per.chrom=TRUE
     ## Run multivariate for all chromosomes
     } else {
 
-        model <- runMultivariate(binned.data=p$bincounts, stepbins=p$bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=num.threads, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
+        model <- runInfluence(binned.data=p$bincounts, stepbins=p$bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=num.threads, keep.posteriors=keep.posteriors, keep.densities=keep.densities, verbosity=verbosity)
 
     }
 
@@ -241,12 +241,15 @@ callPeaksInfluence <- function(hmms, use.states, max.states=NULL, per.chrom=TRUE
 }
 
 #' @importFrom stats ecdf
-runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states, distributions, weights, max.iter, max.time, eps, num.threads, keep.posteriors, keep.densities, transitionProbs.initial=NULL, startProbs.initial=NULL, verbosity=1) {
+runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, distributions, weights, max.iter, max.time, eps, num.threads, keep.posteriors, keep.densities, transitionProbs.initial=NULL, startProbs.initial=NULL, verbosity=1) {
 
     ptm.start <- startTimedMessage("Starting multivariate HMM with ", length(comb.states), " combinatorial states")
     message("")
 
     ### Variables ###
+    nstates <- 2
+    statenames <- c('unmodified', 'modified')
+    tracknames <- dimnames(binned.data$counts)$track
     nummod <- dim(binned.data$counts)[2]
     offsets <- dimnames(binned.data$counts)[[3]]
     binstates <- dec2bin(comb.states, ndigits=nummod)
@@ -259,16 +262,25 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
     ws3 <- unlist(lapply(weights,"[",3))
     ws <- ws1 / (ws2+ws1)
     get.posteriors <- TRUE
-    if (get.posteriors) { lenPosteriors <- length(binned.data) * length(comb.states) } else { lenPosteriors <- 1 }
-    if (keep.densities) { lenDensities <- length(binned.data) * length(comb.states) } else { lenDensities <- 1 }
+    if (get.posteriors) { lenPosteriors <- length(binned.data) * nstates * nummod } else { lenPosteriors <- 1 }
+    if (keep.densities) { lenDensities <- length(binned.data) * nstates * nummod } else { lenDensities <- 1 }
+
 
     if (is.null(transitionProbs.initial)) {
-        transitionProbs.initial <- matrix((1-0.9)/(length(comb.states)-1), ncol=length(comb.states), nrow=length(comb.states))
-        diag(transitionProbs.initial) <- 0.9
+       
+        transitionProbs.initial <- array((1-0.9)/(nstates-1), dim=c(nummod, nummod, nstates, nstates), dimnames= list(fromTrack=tracknames, toTrack=tracknames, fromState=statenames, toState=statenames))
+        for (ic in 1:nummod) {
+            for (jc in 1:nummod) {
+                diag(transitionProbs.initial[ic,jc,,]) <- 0.9
+            }
+        }
+
+
     }
     if (is.null(startProbs.initial)) {
-        startProbs.initial <- rep(1/length(comb.states), length(comb.states))
+        startProbs.initial <- array((1/nstates), dim=c(nummod, nstates), dimnames=list(track=tracknames, state=statenames))
     }
+ 
 
     ### Arrays for finding maximum posterior for each bin between offsets
     ## Make bins with offset
@@ -300,27 +312,27 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
         }
       
         # Call the C function
-        on.exit(.C("C_influence_cleanup", as.integer(nummod)))
-        hmm <- .C("C_influence",
+        # on.exit(.C("C_influence_cleanup", as.integer(nummod)))
+        hmm <- .C("C_influence_hmm",
             counts = as.integer(as.vector(binned.data$counts[,, offset])), # int* multiO
             num.bins = as.integer(length(binned.data)), # int* T
-            max.states = as.integer(length(comb.states)), # int* N
+            max.states = as.integer(nstates), # int* N
             num.modifications = as.integer(nummod), # int* Nmod
             comb.states = as.numeric(comb.states), # double* comb_states
             size = as.double(rs), # double* size
             prob = as.double(ps), # double* prob
             w = as.double(ws), # double* w
             num.iterations = as.integer(max.iter), # int* maxiter
-            time.sec = as.integer(max.time), # double* maxtime
+            time.sec = as.integer(max.time), # int* maxtime
             loglik.delta = as.double(eps), # double* eps
             posteriors = double(length=lenPosteriors), # double* posteriors
             get.posteriors = as.logical(get.posteriors), # bool* keep_posteriors
             densities = double(length=lenDensities), # double* densities
             keep.densities = as.logical(keep.densities), # bool* keep_densities
-            states = double(length=length(binned.data)), # double* states
+            states = double(length=length(binned.data) * nummod), # double* states
             maxPosterior = double(length=length(binned.data)), # double* maxPosterior
-            A = double(length=length(comb.states)*length(comb.states)), # double* A
-            proba = double(length=length(comb.states)), # double* proba
+            A = double(length=nstates*nstates*nummod*nummod), # double* A
+            proba = double(length=nummod*nstates), # double* proba
             loglik = double(length=1), # double* loglik
             A.initial = as.double(transitionProbs.initial), # double* initial A
             proba.initial = as.double(startProbs.initial), # double* initial proba
@@ -329,7 +341,7 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
             error = as.integer(0), # error handling
             verbosity = as.integer(verbosity) # int* verbosity
             )
-                
+                stop('on purpose')
         ### Check convergence ###
         if (hmm$error == 1) {
             stop("A nan occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
@@ -515,7 +527,7 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
 
 
 #' @importFrom stats pnbinom qnorm dnbinom
-prepareMultivariate = function(hmms, use.states=NULL, max.states=NULL, chromosomes=NULL) {
+prepareInfluence = function(hmms, use.states=NULL, max.states=NULL, chromosomes=NULL) {
 
     nummod <- length(hmms)
     if (nummod > 53) {
