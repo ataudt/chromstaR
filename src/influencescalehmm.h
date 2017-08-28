@@ -1,5 +1,5 @@
-#ifndef SCALEHMM_H
-#define SCALEHMM_H
+#ifndef INFLUENCESCALEHMM_H
+#define INFLUENCESCALEHMM_H
 
 #include <R.h> // R_CheckUserInterrupt()
 #include <vector> // storing density functions
@@ -36,8 +36,8 @@ class InfluenceScaleHMM  {
 		//void initialize_influence();
 		void initialize_tiestrength(double* initial_tiestrenght, bool use_initial_params);
 		void baumWelch(int* maxiter, int* maxtime, double* eps);
-		void check_for_state_swap();
-		std::vector<double> calc_weights();
+		//void check_for_state_swap();
+		std::vector< std::vector< double > > calc_weights();
 		void calc_weights(double* weights);
 
 		// Getters and Setters

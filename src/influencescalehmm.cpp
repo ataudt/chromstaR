@@ -94,13 +94,17 @@ InfluenceScaleHMM::~InfluenceScaleHMM()
 	FreeDoubleMatrix(this->proba, this->Nmod);
 	free4Ddouble(this->influence, this->Nmod, this->Nmod, this->N);
 	FreeDoubleMatrix(this->scalefactoralpha, this->Nmod);
-	freeDoubleMatrix(this->densityFunctions, this->Nmod);
-
-	for (int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
+	for (int iN=0; iN<this->N; iN++)
 	{
 		//FILE_LOG(logDEBUG1) << "Deleting density functions";
-		delete this->tiesumxitotal[c1Nmod];
+		delete this->densityFunctions[iN];
 	}
+
+	// for (int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
+	// {
+	// 	//FILE_LOG(logDEBUG1) << "Deleting density functions";
+	// 	delete this->tiesumxitotal[c1Nmod];
+	// }
 // 	Free(this->num_nonzero_A_into_state);
 // 	FreeIntMatrix(this->index_nonzero_A_into_state, this->N);
 }
@@ -397,7 +401,7 @@ void InfluenceScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 		{
 			//FILE_LOG(logINFO) << "Convergence reached!\n";
 			if (this->verbosity>=1) Rprintf("HMM: Convergence reached!\n");
-			if (this->xvariate == UNIVARIATE) this->check_for_state_swap();
+			//if (this->xvariate == UNIVARIATE) this->check_for_state_swap();
 			break;
 		} else {// not converged
 			this->baumWelchTime_real = difftime(time(NULL),this->baumWelchStartTime_sec);
@@ -405,14 +409,14 @@ void InfluenceScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 			{
 				//FILE_LOG(logINFO) << "Maximum number of iterations reached!";
 				if (this->verbosity>=1) Rprintf("HMM: Maximum number of iterations reached!\n");
-				if (this->xvariate == UNIVARIATE) this->check_for_state_swap();
+				//if (this->xvariate == UNIVARIATE) this->check_for_state_swap();
 				break;
 			}
 			else if ((this->baumWelchTime_real >= *maxtime) and (*maxtime >= 0))
 			{
 				//FILE_LOG(logINFO) << "Exceeded maximum time!";
 				if (this->verbosity>=1) Rprintf("HMM: Exceeded maximum time!\n");
-				if (this->xvariate == UNIVARIATE) this->check_for_state_swap();
+				//if (this->xvariate == UNIVARIATE) this->check_for_state_swap();
 				break;
 			}
 			logPold = logPnew;
@@ -1295,7 +1299,8 @@ void InfluenceScaleHMM::calc_densities()
 			{
 				//HEREEEE only for dimension, need to check what fr dimension
 				//TODO
-				this->densityFunctions[c1Nmod][iN]->calc_densities(this->densities[c1Nmod][iN]);
+				//LUISA LUISA LUISA HEY here commented bt not dure if legitim
+				//this->densityFunctions[c1Nmod][iN]->calc_densities(this->densities[c1Nmod][iN]);
 			}
 			catch(std::exception& e)
 			{
