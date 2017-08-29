@@ -248,12 +248,13 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
 
     ### Variables ###
     comb.states <- c(0,1)
-    nstates <- 2
+    numstates <- 2
     statenames <- c('unmodified', 'modified')
     tracknames <- dimnames(binned.data$counts)$track
     nummod <- dim(binned.data$counts)[2]
     offsets <- dimnames(binned.data$counts)[[3]]
     binstates <- dec2bin(comb.states, ndigits=nummod)
+    numbins <- length(binned.data)
     
     # Prepare input for C function
     rs <- unlist(lapply(distributions,"[",2:3,'size'))
@@ -263,13 +264,13 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
     ws3 <- unlist(lapply(weights,"[",3))
     ws <- ws1 / (ws2+ws1)
     get.posteriors <- TRUE
-    if (get.posteriors) { lenPosteriors <- length(binned.data) * nstates * nummod } else { lenPosteriors <- 1 }
-    if (keep.densities) { lenDensities <- length(binned.data) * nstates * nummod } else { lenDensities <- 1 }
+    if (get.posteriors) { lenPosteriors <- numbins * numstates * nummod } else { lenPosteriors <- 1 }
+    if (keep.densities) { lenDensities <- numbins * numstates * nummod } else { lenDensities <- 1 }
 
 
     if (is.null(transitionProbs.initial)) {
        
-        transitionProbs.initial <- array((1-0.9)/(nstates-1), dim=c(nstates, nstates, nummod, nummod), dimnames= list(fromState=statenames, toState=statenames, fromTrack=tracknames, toTrack=tracknames))
+        transitionProbs.initial <- array((1-0.9)/(numstates-1), dim=c(numstates, numstates, nummod, nummod), dimnames= list(fromState=statenames, toState=statenames, fromTrack=tracknames, toTrack=tracknames))
         for (ic in 1:nummod) {
             for (jc in 1:nummod) {
                 diag(transitionProbs.initial[,,ic,jc]) <- 0.9
@@ -280,13 +281,13 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
     
     if (is.null(tiestrength.initial)) {
       
-      tiestrength.initial <- array((1-0.9)/(nstates-1), dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
+      tiestrength.initial <- array((1-0.9)/(numstates-1), dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
       diag(tiestrength.initial) <- 0.9
       
     }
     
     if (is.null(startProbs.initial)) {
-        startProbs.initial <- array((1/nstates), dim=c(nummod, nstates), dimnames=list(track=tracknames, state=statenames))
+        startProbs.initial <- array((1/numstates), dim=c(nummod, numstates), dimnames=list(track=tracknames, state=statenames))
     }
  
 
@@ -323,8 +324,8 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
         # on.exit(.C("C_influence_cleanup", as.integer(nummod)))
         hmm <- .C("C_influence_hmm",
             counts = as.integer(as.vector(binned.data$counts[,, offset])), # int* multiO
-            num.bins = as.integer(length(binned.data)), # int* T
-            max.states = as.integer(nstates), # int* N
+            num.bins = as.integer(numbins), # int* T
+            max.states = as.integer(numstates), # int* N
             num.modifications = as.integer(nummod), # int* Nmod
             comb.states = as.numeric(comb.states), # double* comb_states
             size = as.double(rs), # double* size
@@ -337,10 +338,10 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
             get.posteriors = as.logical(get.posteriors), # bool* keep_posteriors
             densities = double(length=lenDensities), # double* densities
             keep.densities = as.logical(keep.densities), # bool* keep_densities
-            states = double(length=length(binned.data) * nummod), # double* states
-            maxPosterior = double(length=length(binned.data)), # double* maxPosterior
-            A = double(length=nstates*nstates*nummod*nummod), # double* A
-            proba = double(length=nummod*nstates), # double* proba
+            states = double(length=numbins * nummod), # double* states
+            maxPosterior = double(length=numbins), # double* maxPosterior
+            A = double(length=numstates*numstates*nummod*nummod), # double* A
+            proba = double(length=nummod*numstates), # double* proba
             tiestrength= double(length=nummod*nummod),# double* tiestrength
             loglik = double(length=1), # double* loglik
             A.initial = as.double(transitionProbs.initial), # double* initial A
@@ -358,12 +359,13 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
             stop("An error occurred during the Baum-Welch! Parameter estimation terminated prematurely.")
         }
         
-         stop('on purpose')
-        
         if (ioffset == 1) {
             ### Make return object ###
                 result <- list()
                 result$info <- info
+            ## States
+                dim(hmm$states) <- c(numbins, nummod)
+                hmm$states <- bin2dec(hmm$states)
             ## Parameters
                 if (!is.null(use.states)) {
                     mapping <- use.states$combination
@@ -379,26 +381,23 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
                 result$weights.univariate <- weights
                 names(result$weights.univariate) <- result$info$ID
                 # Transition matrices
-                result$transitionProbs <- array(hmm$A, dim=c(nstates, nstates, nummod, nummod), dimnames= list(fromState=statenames, toState=statenames, fromTrack=tracknames, toTrack=tracknames))
-                colnames(result$transitionProbs) <- combinations
-                rownames(result$transitionProbs) <- combinations
-                result$transitionProbs.initial <- matrix(hmm$A.initial, ncol=length(comb.states), byrow=TRUE)
-                colnames(result$transitionProbs.initial) <- combinations
-                rownames(result$transitionProbs.initial) <- combinations
+                result$transitionProbs <- array(hmm$A, dim=c(numstates, numstates, nummod, nummod), dimnames= list(fromState=statenames, toState=statenames, fromTrack=tracknames, toTrack=tracknames))
+                result$transitionProbs.initial <- array(hmm$A.initial, dim=c(numstates, numstates, nummod, nummod), dimnames= list(fromState=statenames, toState=statenames, fromTrack=tracknames, toTrack=tracknames))
+                # Tie strengths
+                result$tiestrengths <- array(hmm$tiestrength, dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
+                result$tiestrengths.initial <- array(hmm$tiestrength.initial, dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
                 # Initial probs
-                result$startProbs <- hmm$proba
-                names(result$startProbs) <- combinations
-                result$startProbs.initial <- hmm$proba.initial
-                names(result$startProbs.initial) <- combinations
+                result$startProbs <- array(hmm$proba, dim=c(nummod, numstates), dimnames=list(track=tracknames, state=statenames))
+                result$startProbs.initial <- array(hmm$proba.initial, dim=c(nummod, numstates), dimnames=list(track=tracknames, state=statenames))
                 # Distributions
                 result$distributions <- distributions
                 names(result$distributions) <- result$info$ID
             ## Convergence info
                 convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec)
                 result$convergenceInfo <- convergenceInfo
-            ## Correlation matrices
-                result$correlation.matrix <- correlationMatrix
             ## Add class
+                print(result)
+                stop("on purpose")
                 class(result) <- class.multivariate.hmm
             
             ## Check convergence
@@ -408,29 +407,30 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
         }
         
         ## Store counts and posteriors in list
-        dim(hmm$posteriors) <- c(length(binned.data), length(comb.states))
-        dimnames(hmm$posteriors) <- list(bin=NULL, state=comb.states)
+        dim(hmm$posteriors) <- c(numbins, numstates, nummod)
+        dimnames(hmm$posteriors) <- list(bin=NULL, state=statenames, track=tracknames)
         dim(hmm$counts) <- c(length(binned.data), nummod)
         dimnames(hmm$counts) <- list(bin=NULL, track=info$ID)
         if (keep.densities) {
             densities <- hmm$densities
-            dim(densities) <- c(length(binned.data), length(comb.states))
-            dimnames(densities) <- list(bin=NULL, state=comb.states)
+            dim(densities) <- c(numbins, numstates, nummod)
+            dimnames(densities) <- list(bin=NULL, state=statenames, track=tracknames)
         }
         hmm.A <- hmm$A
         hmm.proba <- hmm$proba
         
         ## Transform posteriors to 'per-sample' representation
         if (get.posteriors) {
-            post.per.track <- hmm$posteriors %*% binstates
-            colnames(post.per.track) <- info$ID
+            # post.per.track <- hmm$posteriors %*% binstates
+            # colnames(post.per.track) <- info$ID
+            post.per.track <- hmm$posteriors
         }
         
         ## Inflate posteriors, states, counts to new offset
         bins.shift <- suppressWarnings( shift(sbins, shift = as.numeric(offset)) )
         ind <- findOverlaps(stepbins, bins.shift)
         if (get.posteriors) {
-            aposteriors.step[ind@from, , 'currentOffset'] <- post.per.track[ind@to, , drop=FALSE]
+            aposteriors.step[ind@from, , , 'currentOffset'] <- post.per.track[ind@to, , , drop=FALSE]
         }
         astates.step[ind@from, 'currentOffset'] <- hmm$states[ind@to]
         amaxPosterior.step[ind@from, 'currentOffset'] <- hmm$maxPosterior[ind@to]
