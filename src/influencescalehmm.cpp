@@ -77,22 +77,27 @@ InfluenceScaleHMM::InfluenceScaleHMM(int T, int N, int Nmod, int verbosity)
 
 InfluenceScaleHMM::~InfluenceScaleHMM()
 {
-	if(this->verbosity>=2){ Rprintf("%s\n", __PRETTY_FUNCTION__);}	free4Ddouble(this->A,this->Nmod, this->Nmod, this->N);
+	if(this->verbosity>=2){ Rprintf("%s\n", __PRETTY_FUNCTION__);}
+	free4Ddouble(this->A,this->Nmod, this->Nmod, this->N);
 	FreeDoubleMatrix(this->scalefactoralpha, this->Nmod);
 	free3Ddouble(this->scalealpha,this->Nmod, this->T);
 	free3Ddouble(this->scalebeta, this->Nmod,this->T);
+	FreeDoubleMatrix(this->scalefactoralpha, this->Nmod);
 	free3Ddouble(this->densities, this->Nmod,this->N);
 // 	if (this->xvariate==MULTIVARIATE)
 // 	{
 // 		FreeDoubleMatrix(this->tdensities, this->T);
 // 	}
-	free3Ddouble(this->gamma,this->Nmod, this->Nmod);
-	FreeDoubleMatrix(this->weights, this->Nmod);
-	free4Ddouble(this->sumxi, this->Nmod, this->Nmod, this->N);
-	free3Ddouble(this->tie_onestatus_sumxi, this->Nmod, this->Nmod);
 	FreeDoubleMatrix(this->proba, this->Nmod);
+	free3Ddouble(this->gamma,this->Nmod, this->N);
+	free4Ddouble(this->sumxi, this->Nmod, this->Nmod, this->N);
+	FreeDoubleMatrix(this->tiesumxi, this->Nmod);
+	free3Ddouble(this->tie_onestatus_sumxi, this->Nmod, this->Nmod);
+
 	free4Ddouble(this->influence, this->Nmod, this->Nmod, this->N);
-	FreeDoubleMatrix(this->scalefactoralpha, this->Nmod);
+	FreeDoubleMatrix(this->tiestrength, this->Nmod);
+	FreeDoubleMatrix(this->weights, this->Nmod);
+
 
 	for (int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++) {
 		for (int iN=0; iN<this->N; iN++)
@@ -187,7 +192,9 @@ void InfluenceScaleHMM::initialize_proba(double* initial_proba, bool use_initial
 			{
 				this->proba[c1Nmod][iN] = initial_proba[i1];
 				i1++;
+				//Rprintf("\t%g\t", this->proba[c1Nmod][iN]);
 			}
+			//Rprintf("\n");
 		}
 	}
 	else
@@ -201,17 +208,13 @@ void InfluenceScaleHMM::initialize_proba(double* initial_proba, bool use_initial
 				// Save value to initial proba
 				initial_proba[i1] = this->proba[c1Nmod][iN];
 				i1++;
+
 			}
 		}
 	}
 
 }
 
-
-
-
-//--- LUISA these initialization functions are not based on an initialized vector like it is done for proba and transisions. Should I do it like that?
-//-- As off now every value is zero.
 
 void InfluenceScaleHMM::initialize_influence()
 {
@@ -225,17 +228,16 @@ void InfluenceScaleHMM::initialize_influence()
 				for (int jN=0; jN<this->N; jN++)
 				{
 					this->influence[c1Nmod][c2Nmod][iN][jN]= this->tiestrength[c1Nmod][c2Nmod] * this-> A[c1Nmod][c2Nmod][iN][jN];
+
 				}
 			}
 		}
 	}
 }
 
-//initial_tiestrength has dimension as initial_proba
 
 void InfluenceScaleHMM::initialize_tiestrength(double* initial_tiestrength, bool use_initial_params)
 {
-
 	if (use_initial_params)
 	{
 		int i1=0;
@@ -361,9 +363,6 @@ void InfluenceScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 		this->calc_tiesumxi();
 		R_CheckUserInterrupt();
 
-
-//--LUISA UNIVARIATE ---should i let it like it is ???
-//LUISA--comment
 /**
 		if (this->xvariate == UNIVARIATE)
 		{
@@ -444,15 +443,19 @@ void InfluenceScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 		{
 			for(int c2Nmod=0; c2Nmod<this->Nmod ; c2Nmod++)
 			{
+				//Rprintf("%d %d %g\n",c1Nmod, c2Nmod, this->tiesumxitotal[c2Nmod]);
+
 				for (int iN=0; iN<this->N; iN++)
 				{
-					this->proba[c1Nmod][iN] = this->gamma[c1Nmod][iN][0];
+					this->proba[c2Nmod][iN] = this->gamma[c2Nmod][iN][0];
+
+					//Rprintf("%g\t\t",this->gamma[c1Nmod][iN][0] );
+					//Rprintf("this->proba[c1Nmod=%d][iN=%d](%g) = this->gamma[c1Nmod][iN][0](%g)\n", c1Nmod,iN,this->proba[c1Nmod][iN], this->gamma[c1Nmod][iN][0]);
 					//FILE_LOG(logDEBUG4) << "sumgamma["<<iN<<"] = " << sumgamma[iN];
-					//TODO : not sumgamma
 					if (this->tie_onestatus_sumxi[c1Nmod][c2Nmod][iN] == 0)
 					{
 						//FILE_LOG(logINFO) << "Not reestimating A["<<iN<<"][x] because sumgamma["<<iN<<"] = 0";
-		// 				Rprintf("Not reestimating A[%d][x] because sumgamma[%d] = 0\n", iN, iN);
+						// Rprintf("Not reestimating A[%d][x] because sumgamma[%d] = 0\n", iN, iN);
 					}
 					else
 					{
@@ -461,7 +464,6 @@ void InfluenceScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 							//FILE_LOG(logDEBUG4) << "sumxi["<<iN<<"]["<<jN<<"] = " << sumxi[iN][jN];
 							this->A[c1Nmod][c2Nmod][iN][jN] = this->sumxi[c1Nmod][c2Nmod][iN][jN] / this->tie_onestatus_sumxi[c1Nmod][c2Nmod][iN];
 
-							//LUISA
 							this->tiestrength[c1Nmod][c2Nmod]= this->tiesumxi[c1Nmod][c2Nmod]/this->tiesumxitotal[c2Nmod];
 
 							this->influence[c1Nmod][c2Nmod][iN][jN]= this->tiestrength[c1Nmod][c2Nmod] * this-> A[c1Nmod][c2Nmod][iN][jN];
@@ -491,6 +493,7 @@ void InfluenceScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 					}
 				}
 			}
+			Rprintf("\n");
 		}
 
 
@@ -507,8 +510,7 @@ void InfluenceScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 // 			}
 // 		}
 
-//LUISA univariate so no touch for now
-//comments
+
 /*
 		if (this->xvariate == UNIVARIATE)
 		{
@@ -547,7 +549,6 @@ void InfluenceScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 	*maxtime = this->baumWelchTime_real;
 }
 
-//LUISA commented
 /*
 void InfluenceScaleHMM::check_for_state_swap()
 {
@@ -614,7 +615,6 @@ void InfluenceScaleHMM::check_for_state_swap()
 		{
 			//FILE_LOG(logINFO) << "...swapping states";
 // 			Rprintf("...swapping states\n");
-//LUISA-----changing all to null for chains, or for all chains??
 			NegativeBinomial *tempDens = new NegativeBinomial();
 			tempDens->copy(this->densityFunctions[2]); // tempDens is densifunc[2]
 			this->densityFunctions[2]->copy(this->densityFunctions[1]);
@@ -711,7 +711,8 @@ std::vector< std::vector< double > > InfluenceScaleHMM::calc_weights()
 	}
 	return(weights);
 }
-//TODO see if needed
+
+
 void InfluenceScaleHMM::calc_weights(double* weights)
 {
 	#pragma omp parallel for
@@ -743,7 +744,6 @@ int InfluenceScaleHMM::get_T()
 }
 
 
-//---LUISA--- change?????????--- problem
 void InfluenceScaleHMM::get_posteriors(double**** post)
 {
 	if(this->verbosity>=2){ Rprintf("%s\n", __PRETTY_FUNCTION__);}	for(int c1Nmod=0; c1Nmod<this->Nmod ; c1Nmod++)
@@ -762,7 +762,6 @@ void InfluenceScaleHMM::get_posteriors(double**** post)
 
 }
 
-//LUISA-changed
 double InfluenceScaleHMM::get_posterior(int c1, int iN, int t)
 {
 	//FILE_LOG(logDEBUG4) << __PRETTY_FUNCTION__;
@@ -809,14 +808,10 @@ void InfluenceScaleHMM::forward()
 // 	if (this->xvariate==UNIVARIATE)
 // 	{
 
-//LUISA HERE need to change alpha dimensions !!
 
 		//std::vector<double> alpha(this->N);
-		//LUISA -----------------Changed alpha dimension, is it ok? or matrix- not tested yet
 		std::vector< std::vector< double > > alpha( this->Nmod, std::vector< double >( this->N ) );
 		// Initialization
-		//--LUISA-- question :  is alpha initialization right? same chain for densities?
-
 		for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++){
 
 			this->scalefactoralpha[c1Nmod][0] = 0.0;
@@ -825,12 +820,10 @@ void InfluenceScaleHMM::forward()
 				alpha[c1Nmod][iN] = this->proba[c1Nmod][iN] * this->densities[c1Nmod][iN][0];
 				//FILE_LOG(logDEBUG4) << "alpha["<<iN<<"] = " << alpha[iN];
 				this->scalefactoralpha[c1Nmod][0] += alpha[c1Nmod][iN];
+				//Rprintf("%d %g\n", c1Nmod,this->scalefactoralpha[c1Nmod][0]);
 				//Rprintf("alpha[c1Nmod=%d][iN=%d](%g) = this->proba[c1Nmod][iN](%g) * this->densities[c1Nmod][iN][0](%g);\n", c1Nmod, iN,alpha[c1Nmod][iN] ,this->proba[c1Nmod][iN] , this->densities[c1Nmod][iN][0] );
 			}
 		}
-
-
-		//--LUISA ???
 		//FILE_LOG(logDEBUG4) << "scalefactoralpha["<<0<<"] = " << scalefactoralpha[0];
 		for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
 		{
@@ -865,7 +858,7 @@ void InfluenceScaleHMM::forward()
 							//FILE_LOG(logDEBUG4) << "scalefactoralpha["<<t<<"] = " << scalefactoralpha[t];
 						}
 					}
-					//----------
+
 					for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
 					{
 						for (int iN=0; iN<this->N; iN++)
@@ -998,7 +991,6 @@ void InfluenceScaleHMM::backward()
 					{
 						for(int jN=0; jN<this->N; jN++)
 						{
-							//LUISA embedding new formula
 							beta[c1Nmod][iN] += this->influence[c1Nmod][c2Nmod][iN][jN]* this->densities[c2Nmod][jN][t+1]*scalebeta[c2Nmod][t+1][jN];
 						}
 						//FILE_LOG(logDEBUG4) << "beta["<<iN<<"] = " << beta[iN];
@@ -1116,7 +1108,10 @@ void InfluenceScaleHMM::calc_sumgamma()
 				for (int t=0; t<this->T; t++)
 				{
 					this->gamma[c1Nmod][iN][t] = this->scalealpha[c1Nmod][t][iN] * this->scalebeta[c1Nmod][t][iN] * this->scalefactoralpha[c1Nmod][t];
-				//	this->sumgamma[c1Nmod][iN] += this->gamma[c1Nmod][iN][t];
+
+
+				//this->sumgamma[c1Nmod][iN] += this->gamma[c1Nmod][iN][t];
+				//Rprintf("%g %g %g %g\n", this->scalealpha[c1Nmod][t][iN],this->scalebeta[c1Nmod][t][iN] , this->scalefactoralpha[c1Nmod][t], this->gamma[c1Nmod][iN][t] );
 
 				}
 			}
@@ -1125,7 +1120,6 @@ void InfluenceScaleHMM::calc_sumgamma()
 }
 
 			// Subtract the last value because sumgamma goes only until T-1 and we computed until T to get also loggamma at T
-		// 	//--LUISA now for each chain
 		// 	for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
 		// 	{
 		// 		for(int c2Nmod=0; c2Nmod<this->Nmod; c2Nmod++)
@@ -1144,7 +1138,6 @@ void InfluenceScaleHMM::calc_sumgamma()
 // 	//FILE_LOG(logDEBUG) << "calc_sumgamma(): " << dtime << " clicks";
 
 
-//------------------LUISA-------------------------------------
 void InfluenceScaleHMM::calc_sumxi()
 {
 	if(this->verbosity>=2){ Rprintf("%s\n", __PRETTY_FUNCTION__);}// 	clock_t time = clock(), dtime;
@@ -1267,7 +1260,6 @@ void InfluenceScaleHMM::calc_tiesumxi(){
 
 }
 
-//--LUISA here maybe
 void InfluenceScaleHMM::calc_loglikelihood()
 {
 	if(this->verbosity>=2){ Rprintf("%s\n", __PRETTY_FUNCTION__);}// 	clock_t time = clock(), dtime;
@@ -1277,7 +1269,6 @@ void InfluenceScaleHMM::calc_loglikelihood()
 	{
 		for(int c1Nmod=0; c1Nmod< this->Nmod; c1Nmod++)
 		{
-			//only for dimensions!!!!
 			this->logP += log(this->scalefactoralpha[c1Nmod][t]);
 		}
 	}
@@ -1292,7 +1283,6 @@ void InfluenceScaleHMM::calc_densities()
 	// Errors thrown inside a #pragma must be handled inside the thread
 	std::vector<bool> nan_encountered(this->N);
 	#pragma omp parallel for
-	//LUISA : here i changed + only for univariate
 	for(int c1Nmod=0; c1Nmod< this->Nmod; c1Nmod++)
 	{
 		for (int iN=0; iN<this->N; iN++)
@@ -1300,9 +1290,7 @@ void InfluenceScaleHMM::calc_densities()
 			//FILE_LOG(logDEBUG3) << "Calculating densities for state " << iN;
 			try
 			{
-				//HEREEEE only for dimension, need to check what fr dimension
-				//TODO
-				//LUISA LUISA LUISA HEY here commented bt not dure if legitim
+
 				this->densityFunctions[c1Nmod][iN]->calc_densities(this->densities[c1Nmod][iN]);
 			}
 			catch(std::exception& e)
@@ -1320,7 +1308,6 @@ void InfluenceScaleHMM::calc_densities()
 		}
 	}
 
-// ----------------------------------LUISA ------ from here nix mehr
 	// Check if the density for all states is close to zero and correct to prevent NaNs
 // 	double zero_cutoff = 1.18e-37; // 32-bit precision is 1.18e-38
 	double zero_cutoff = 2.23e-307; // 64-bit precision is 2.23e-308
@@ -1351,7 +1338,6 @@ void InfluenceScaleHMM::calc_densities()
 		{
 		for (int iN=0; iN<this->N; iN++)
 		{
-			//HERE
 			temp[iN] = this->densities[c1Nmod][iN][t];
 		}
 		}
