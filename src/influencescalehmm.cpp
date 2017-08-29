@@ -769,7 +769,6 @@ double InfluenceScaleHMM::get_posterior(int c1, int iN, int t)
 	return(this->gamma[c1][iN][t]);
 }
 
-//--LUISA------solved
 double InfluenceScaleHMM::get_density(int c1,int iN, int t)
 {
 	//FILE_LOG(logDEBUG3) << __PRETTY_FUNCTION__;
@@ -780,10 +779,15 @@ double InfluenceScaleHMM::get_proba(int c1, int i)
 {
 	return( this->proba[c1][i] );
 }
-//--LUISA fixed
+
 double InfluenceScaleHMM::get_A(int c1, int c2, int i, int j)
 {
 	return( this->A[c1][c2][i][j] );
+}
+
+double InfluenceScaleHMM::get_tiestrength(int c1, int c2)
+{
+	return( this->tiestrength[c1][c2]);
 }
 //-----------------
 double InfluenceScaleHMM::get_logP()

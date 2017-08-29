@@ -714,6 +714,19 @@ void influence_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, doubl
 		}
 	}
 
+//lulu
+		for(int c1=0; c1<*Nmod; c1++)
+		{
+				for(int c2=0; c2<*Nmod; c2++)
+				{
+					tiestrength[c1+ c2*(*Nmod)]= hmm_influence -> get_tiestrength(c1,c2);
+				}
+			}
+
+
+
+
+
 	*loglik = hmm_influence->get_logP();
 
 	//FILE_LOG(logDEBUG1) << "Deleting the hmm";
