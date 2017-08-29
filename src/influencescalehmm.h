@@ -48,6 +48,7 @@ class InfluenceScaleHMM  {
 		double get_density(int c1, int iN, int t);
 		double get_proba(int c1, int i);
 		double get_A(int c1, int c2, int i, int j);
+		double get_tiestrength(int c1, int c2);
 		double get_logP();
 		void set_cutoff(int cutoff);
 
