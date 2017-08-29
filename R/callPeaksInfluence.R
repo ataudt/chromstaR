@@ -250,7 +250,7 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
     comb.states <- c(0,1)
     numstates <- 2
     statenames <- c('unmodified', 'modified')
-    tracknames <- dimnames(binned.data$counts)$track
+    tracknames <- info$ID
     nummod <- dim(binned.data$counts)[2]
     offsets <- dimnames(binned.data$counts)[[3]]
     binstates <- dec2bin(comb.states, ndigits=nummod)
@@ -299,9 +299,9 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
     mcols(sbins) <- NULL
     ## Initialize arrays
     if (get.posteriors) {
-        aposteriors.step <- array(0, dim = c(length(stepbins), nummod, 2), dimnames = list(bin=NULL, track=info$ID, offset=c('previousOffsets', 'currentOffset'))) # to store posteriors-per-sample for current and max-of-previous offsets
+        aposteriors.step <- array(0, dim = c(length(stepbins), numstates, nummod, 2), dimnames = list(bin=NULL, state=statenames, track=info$ID, offset=c('previousOffsets', 'currentOffset'))) # to store posteriors-per-sample for current and max-of-previous offsets
     }
-    amaxPosterior.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset'))) # to store maximum posterior for current and max-of-previous offsets
+    amaxPosterior.step <- array(0, dim = c(length(stepbins), nummod, 2), dimnames = list(bin=NULL, track=tracknames, offset=c('previousOffsets', 'currentOffset'))) # to store maximum posterior for current and max-of-previous offsets
     astates.step <- array(0, dim = c(length(stepbins), 2), dimnames = list(bin=NULL, offset=c('previousOffsets', 'currentOffset'))) # to store states for current and max-of-previous offsets
     stopTimedMessage(ptm)
     
@@ -321,7 +321,7 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
         }
       
         # Call the C function
-        # on.exit(.C("C_influence_cleanup", as.integer(nummod)))
+        on.exit(.C("C_influence_cleanup", as.integer(nummod)))
         hmm <- .C("C_influence_hmm",
             counts = as.integer(as.vector(binned.data$counts[,, offset])), # int* multiO
             num.bins = as.integer(numbins), # int* T
@@ -339,7 +339,7 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
             densities = double(length=lenDensities), # double* densities
             keep.densities = as.logical(keep.densities), # bool* keep_densities
             states = double(length=numbins * nummod), # double* states
-            maxPosterior = double(length=numbins), # double* maxPosterior
+            maxPosterior = double(length=numbins*nummod), # double* maxPosterior
             A = double(length=numstates*numstates*nummod*nummod), # double* A
             proba = double(length=nummod*numstates), # double* proba
             tiestrength= double(length=nummod*nummod),# double* tiestrength
@@ -363,9 +363,12 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
             ### Make return object ###
                 result <- list()
                 result$info <- info
-            ## States
+            ## States and maxPosterior
                 dim(hmm$states) <- c(numbins, nummod)
                 hmm$states <- bin2dec(hmm$states)
+                dim(hmm$maxPosterior) <- c(numbins, nummod)
+                dimnames(hmm$maxPosterior) <- list(bin=NULL, track=tracknames)
+                # hmm$maxPosterior <- array(hmm$maxPosterior, dim=c(numbins, nummod), dimnames=list(bin=NULL, track=tracknames))
             ## Parameters
                 if (!is.null(use.states)) {
                     mapping <- use.states$combination
@@ -396,8 +399,6 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
                 convergenceInfo <- list(eps=eps, loglik=hmm$loglik, loglik.delta=hmm$loglik.delta, num.iterations=hmm$num.iterations, time.sec=hmm$time.sec)
                 result$convergenceInfo <- convergenceInfo
             ## Add class
-                print(result)
-                stop("on purpose")
                 class(result) <- class.multivariate.hmm
             
             ## Check convergence
@@ -409,6 +410,7 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
         ## Store counts and posteriors in list
         dim(hmm$posteriors) <- c(numbins, numstates, nummod)
         dimnames(hmm$posteriors) <- list(bin=NULL, state=statenames, track=tracknames)
+        # hmm$posteriors <- array(hmm$posteriors, dim=c(numbins, numstates, nummod), dimnames=list(bin=NULL, state=statenames, track=tracknames))
         dim(hmm$counts) <- c(length(binned.data), nummod)
         dimnames(hmm$counts) <- list(bin=NULL, track=info$ID)
         if (keep.densities) {
@@ -433,7 +435,9 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
             aposteriors.step[ind@from, , , 'currentOffset'] <- post.per.track[ind@to, , , drop=FALSE]
         }
         astates.step[ind@from, 'currentOffset'] <- hmm$states[ind@to]
-        amaxPosterior.step[ind@from, 'currentOffset'] <- hmm$maxPosterior[ind@to]
+        amaxPosterior.step[ind@from, , 'currentOffset'] <- hmm$maxPosterior[ind@to, , drop=FALSE]
+        
+                stop("on purpose")
         
         ## Find offset that maximizes the posteriors for each bin
         ##-- Start stuff to call C code

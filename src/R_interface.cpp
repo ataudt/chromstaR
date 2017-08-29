@@ -587,13 +587,13 @@ void influence_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, doubl
 		for (int iN=0; iN<*N; iN++) //for each combinatorial state
 		{
 			Density *d;
-			if (iN==1) //construct the marginal density function for modification imod being enriched
+			if (iN == 1) //construct the marginal density function for modification imod being enriched
 			{
-				d = new NegativeBinomial(multiO[imod], *T, size[2*imod+1], prob[2*imod+1]); // delete is done inside ~MVCopulaApproximation()
+				d = new NegativeBinomial(multiO[imod], *T, size[2*imod+1], prob[2*imod+1]); // delete is done at the end
 			}
 			else //construct the density function for modification imod being non-enriched
 			{
-				d = new ZiNB(multiO[imod], *T, size[2*imod], prob[2*imod], w[imod]); // delete is done inside ~MVCopulaApproximation()
+				d = new ZiNB(multiO[imod], *T, size[2*imod], prob[2*imod], w[imod]); // delete is done at the end
 			}
 			tempMarginals.push_back(d);
 		}
@@ -665,7 +665,6 @@ void influence_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, doubl
 		std::vector<double> posterior_per_t(*N);
 		for(int c1=0; c1<*Nmod; c1++)
 		{
-
 				for (int t=0; t<*T; t++)
 				{
 					for (int iN=0; iN<*N; iN++)
@@ -673,11 +672,10 @@ void influence_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, doubl
 						posterior_per_t[iN] = hmm_influence->get_posterior(c1,iN, t);
 					}
 					ind_max = std::distance(posterior_per_t.begin(), std::max_element(posterior_per_t.begin(), posterior_per_t.end()));
-					//TODO
-					states[t+c1*(*T)] = comb_states[ind_max];
-					maxPosterior[t] = posterior_per_t[ind_max];
+					states[t + c1 * (*T)] = comb_states[ind_max];
+					maxPosterior[t + c1 * (*T)] = posterior_per_t[ind_max];
+					// Rprintf("maxPosterior[c1=%d, t=%d] = %g\n", c1, t, maxPosterior[t+c1*(*T)]);
 				}
-
 		}
 
 // 	}
@@ -714,24 +712,20 @@ void influence_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, doubl
 		}
 	}
 
-//lulu
-		for(int c1=0; c1<*Nmod; c1++)
+	// return tie strengths
+	for(int c1=0; c1<*Nmod; c1++)
+	{
+		for(int c2=0; c2<*Nmod; c2++)
 		{
-				for(int c2=0; c2<*Nmod; c2++)
-				{
-					tiestrength[c1+ c2*(*Nmod)]= hmm_influence -> get_tiestrength(c1,c2);
-				}
-			}
-
-
-
-
+			tiestrength[c1+ c2*(*Nmod)] = hmm_influence->get_tiestrength(c1,c2);
+		}
+	}
 
 	*loglik = hmm_influence->get_logP();
 
 	//FILE_LOG(logDEBUG1) << "Deleting the hmm";
-// 	delete hmm_influence;
-// 	hmm_influence = NULL; // assign NULL to defuse the additional delete in on.exit() call
+	delete hmm_influence;
+	hmm_influence = NULL; // assign NULL to defuse the additional delete in on.exit() call
 // 	FreeIntMatrix(multiO, *Nmod); // free on.exit() in R code
 }
 
