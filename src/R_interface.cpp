@@ -619,47 +619,44 @@ void influence_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, doubl
 	}
 	//FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
 
-// 	// Get the posteriors and save results directly to the R pointer
-// 	if (*keep_posteriors == true)
-// 	{
-// 		//FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
-// 		if (*verbosity>=1) Rprintf("HMM: Recoding posteriors ...\n");
-// 		R_FlushConsole();
-// 		#pragma omp parallel for
-// 		for(int c1=0; c1<*Nmod; c1++){
-//
-// 				for (int iN=0; iN<*N; iN++)
-// 				{
-// 					for (int t=0; t<*T; t++)
-// 					{
-// 						posteriors[t + iN * (*T)] = hmm_influence->get_posterior(c1,iN, t);
-// 					}
-// 				}
-//
-// 		}
-//
-// 	}
-//
-// 	// Get the densities and save results directly to the R pointer
-// 	if (*keep_densities == true)
-// 	{
-// 		//FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
-// 		if (*verbosity>=1) Rprintf("HMM: Recoding densities ...\n");
-// 		R_FlushConsole();
-// 		#pragma omp parallel for
-// 		//LUISA -- here changed too!
-// 		for(int c1=0; c1<*Nmod; c1++){
-// 			for (int iN=0; iN<*N; iN++)
-// 			{
-// 				for (int t=0; t<*T; t++)
-// 				{
-// 					densities[t + iN * (*T)] = hmm_influence->get_density(c1,iN, t);
-// 				}
-// 			}
-// 		}
-//
-// 	}
-//
+	// Get the posteriors (gammas) and save results directly to the R pointer
+	if (*keep_posteriors == true)
+	{
+		//FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
+		if (*verbosity>=1) Rprintf("HMM: Recoding posteriors ...\n");
+		R_FlushConsole();
+		#pragma omp parallel for
+		for(int c1=0; c1<*Nmod; c1++)
+		{
+			for (int iN=0; iN<*N; iN++)
+			{
+				for (int t=0; t<*T; t++)
+				{
+					posteriors[t + iN * (*T) + c1 * (*T)*(*N)] = hmm_influence->get_posterior(c1,iN, t);
+				}
+			}
+		}
+	}
+
+	// Get the densities and save results directly to the R pointer
+	if (*keep_densities == true)
+	{
+		//FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
+		if (*verbosity>=1) Rprintf("HMM: Recoding densities ...\n");
+		R_FlushConsole();
+		#pragma omp parallel for
+		for(int c1=0; c1<*Nmod; c1++)
+		{
+			for (int iN=0; iN<*N; iN++)
+			{
+				for (int t=0; t<*T; t++)
+				{
+					densities[t + iN * (*T) + c1 * (*T)*(*N)] = hmm_influence->get_density(c1,iN, t);
+				}
+			}
+		}
+	}
+
 // 	// Compute the states from posteriors
 // 	//FILE_LOG(logDEBUG1) << "Computing states from posteriors";
 // // 	if (*fdr == -1)
@@ -698,32 +695,29 @@ void influence_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, doubl
 // // 		}
 // // 	}
 //
-// 	//FILE_LOG(logDEBUG1) << "Return parameters";
-// 	// also return the estimated transition matrix and the initial probs
-//
-// 	//LUISA addition, to be controlled
-// 	for(int c1=0; c1<*Nmod; c1++){
-// 		for(int c2=0; c2<*Nmod; c2++){
-// 			for (int i=0; i<*N; i++)
-// 			{
-// 				proba[i] = hmm_influence->get_proba(c1,i);
-// 				for (int j=0; j<*N; j++)
-// 				{
-// 						A[i * (*N) + j] = hmm_influence->get_A(c1,c2,i,j);
-// 				}
-// 			}
-// 		}
-// 	}
-//
-//
-//
-//
-//
-// 	*loglik = hmm_influence->get_logP();
-//
-	// //FILE_LOG(logDEBUG1) << "Deleting the hmm";
-	// delete hmm_influence;
-	// hmm_influence = NULL; // assign NULL to defuse the additional delete in on.exit() call
+	//FILE_LOG(logDEBUG1) << "Return parameters";
+	// also return the estimated transition matrix (A) and the proba (gamma(0))
+	for (int i=0; i<*N; i++)
+	{
+		for(int c1=0; c1<*Nmod; c1++)
+		{
+			proba[c1 + i*(*Nmod)] = hmm_influence->get_proba(c1,i);
+			for (int j=0; j<*N; j++)
+			{
+				for(int c2=0; c2<*Nmod; c2++)
+				{
+					// A[c1 + c2 * (*Nmod) + i * (*Nmod) * (*Nmod) + j * (*Nmod) * (*Nmod) * (*N)] = hmm_influence->get_A(c1,c2,i,j);
+					A[i + j * (*N) + c1 * (*N) * (*N) + c2 * (*N) * (*N) * (*Nmod)] = hmm_influence->get_A(c1,c2,i,j);
+				}
+			}
+		}
+	}
+
+	*loglik = hmm_influence->get_logP();
+
+	//FILE_LOG(logDEBUG1) << "Deleting the hmm";
+// 	delete hmm_influence;
+// 	hmm_influence = NULL; // assign NULL to defuse the additional delete in on.exit() call
 // 	FreeIntMatrix(multiO, *Nmod); // free on.exit() in R code
 }
 

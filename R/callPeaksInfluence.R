@@ -268,13 +268,12 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
 
     if (is.null(transitionProbs.initial)) {
        
-        transitionProbs.initial <- array((1-0.9)/(nstates-1), dim=c(nummod, nummod, nstates, nstates), dimnames= list(fromTrack=tracknames, toTrack=tracknames, fromState=statenames, toState=statenames))
+        transitionProbs.initial <- array((1-0.9)/(nstates-1), dim=c(nstates, nstates, nummod, nummod), dimnames= list(fromState=statenames, toState=statenames, fromTrack=tracknames, toTrack=tracknames))
         for (ic in 1:nummod) {
             for (jc in 1:nummod) {
-                diag(transitionProbs.initial[ic,jc,,]) <- 0.9
+                diag(transitionProbs.initial[,,ic,jc]) <- 0.9
             }
         }
-
 
     }
     
@@ -351,14 +350,14 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
             error = as.integer(0), # error handling
             verbosity = as.integer(verbosity) # int* verbosity
             )
-                stop('on purpose')
         ### Check convergence ###
         if (hmm$error == 1) {
             stop("A nan occurred during the Baum-Welch! Parameter estimation terminated prematurely. Check your read counts for very high numbers, they could be the cause for this problem.")
         } else if (hmm$error == 2) {
             stop("An error occurred during the Baum-Welch! Parameter estimation terminated prematurely.")
         }
-        
+        print(array(hmm$A, dim=c(nstates, nstates, nummod, nummod), dimnames= list(fromState=statenames, toState=statenames, fromTrack=tracknames, toTrack=tracknames)))
+                stop('on purpose')
         if (ioffset == 1) {
             ### Make return object ###
                 result <- list()
@@ -378,7 +377,7 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
                 result$weights.univariate <- weights
                 names(result$weights.univariate) <- result$info$ID
                 # Transition matrices
-                result$transitionProbs <- matrix(hmm$A, ncol=length(comb.states), byrow=TRUE)
+                result$transitionProbs <- array(hmm$A, dim=c(nstates, nstates, nummod, nummod), dimnames= list(fromState=statenames, toState=statenames, fromTrack=tracknames, toTrack=tracknames))
                 colnames(result$transitionProbs) <- combinations
                 rownames(result$transitionProbs) <- combinations
                 result$transitionProbs.initial <- matrix(hmm$A.initial, ncol=length(comb.states), byrow=TRUE)

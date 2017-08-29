@@ -119,17 +119,17 @@ void InfluenceScaleHMM::initialize_transition_probs(double* initial_A, bool use_
 	if (use_initial_params)
 	{
  		int i1=0 ;
-		for (int jN=0; jN<this->N; jN++)
+		for(int c2Nmod=0; c2Nmod<this->Nmod; c2Nmod++)
 		{
-			for (int iN=0; iN<this->N; iN++)
+			for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
 			{
-				for(int c2Nmod=0; c2Nmod<this->Nmod; c2Nmod++)
-				{
-					for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
-					{
+    		for (int jN=0; jN<this->N; jN++)
+    		{
+    			for (int iN=0; iN<this->N; iN++)
+    			{
 						// convert from vector to matrix representation
 						this->A[c1Nmod][c2Nmod][iN][jN] = initial_A[i1];
-						// Rprintf(" c1Nmod=%d c2Nmod=%d iN=%d jN=%d A=%g \n", c1Nmod, c2Nmod, iN, jN, this->A[c1Nmod][c2Nmod][iN][jN] );
+						Rprintf(" c1Nmod=%d c2Nmod=%d iN=%d jN=%d A=%g \n", c1Nmod, c2Nmod, iN, jN, this->A[c1Nmod][c2Nmod][iN][jN] );
 						 i1++;
 
 					}
@@ -144,22 +144,20 @@ void InfluenceScaleHMM::initialize_transition_probs(double* initial_A, bool use_
 		double other = (1.0 - self) / ((this->N - 1.0));
 
 		int i1=0 ;
-		for (int jN=0; jN<this->N; jN++)
+		for(int c2Nmod=0; c2Nmod<this->Nmod; c2Nmod++)
 		{
-			for (int iN=0; iN<this->N; iN++)
+			for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
 			{
-				for(int c2Nmod=0; c2Nmod<this->Nmod; c2Nmod++)
-				{
-					for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
-					{
-
+    		for (int jN=0; jN<this->N; jN++)
+    		{
+    			for (int iN=0; iN<this->N; iN++)
+    			{
 						if (iN == jN )
 							this->A[c1Nmod][c2Nmod][iN][jN] = self;
 						else
 							this->A[c1Nmod][c2Nmod][iN][jN] = other;
 						// Save value to initial A
 						initial_A[i1] = this->A[c1Nmod][c2Nmod][iN][jN];
-
 						i1++;
 					}
 				}
@@ -403,7 +401,7 @@ void InfluenceScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 		}
 
 		// Check convergence
-		if(this->dlogP < *eps) //it has converged
+		if(fabs(this->dlogP) < *eps) //it has converged
 		{
 			//FILE_LOG(logINFO) << "Convergence reached!\n";
 			if (this->verbosity>=1) Rprintf("HMM: Convergence reached!\n");
@@ -523,10 +521,10 @@ void InfluenceScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 // 			//FILE_LOG(logDEBUG) << "updating distributions: " << dtime << " clicks";
 			R_CheckUserInterrupt();
 		}
+	*/
 
 
 	}
-	*/
 	/* main loop end */
 
 
@@ -548,7 +546,6 @@ void InfluenceScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 }
 
 //LUISA commented
-
 /*
 void InfluenceScaleHMM::check_for_state_swap()
 {
@@ -685,9 +682,8 @@ void InfluenceScaleHMM::check_for_state_swap()
 		}
 	}
 }
-
 */
-}
+
 
 
 
