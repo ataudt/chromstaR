@@ -82,7 +82,6 @@ InfluenceScaleHMM::~InfluenceScaleHMM()
 	FreeDoubleMatrix(this->scalefactoralpha, this->Nmod);
 	free3Ddouble(this->scalealpha,this->Nmod, this->T);
 	free3Ddouble(this->scalebeta, this->Nmod,this->T);
-	FreeDoubleMatrix(this->scalefactoralpha, this->Nmod);
 	free3Ddouble(this->densities, this->Nmod,this->N);
 // 	if (this->xvariate==MULTIVARIATE)
 // 	{
