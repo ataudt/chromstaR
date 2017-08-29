@@ -129,7 +129,7 @@ void InfluenceScaleHMM::initialize_transition_probs(double* initial_A, bool use_
     			{
 						// convert from vector to matrix representation
 						this->A[c1Nmod][c2Nmod][iN][jN] = initial_A[i1];
-						Rprintf(" c1Nmod=%d c2Nmod=%d iN=%d jN=%d A=%g \n", c1Nmod, c2Nmod, iN, jN, this->A[c1Nmod][c2Nmod][iN][jN] );
+						//Rprintf(" c1Nmod=%d c2Nmod=%d iN=%d jN=%d A=%g \n", c1Nmod, c2Nmod, iN, jN, this->A[c1Nmod][c2Nmod][iN][jN] );
 						 i1++;
 
 					}
@@ -213,7 +213,8 @@ void InfluenceScaleHMM::initialize_proba(double* initial_proba, bool use_initial
 //--- LUISA these initialization functions are not based on an initialized vector like it is done for proba and transisions. Should I do it like that?
 //-- As off now every value is zero.
 
-void InfluenceScaleHMM::initialize_influence(){
+void InfluenceScaleHMM::initialize_influence()
+{
 
 	for(int c1Nmod=0; c1Nmod<this->Nmod ; c1Nmod++)
 	{
@@ -232,7 +233,8 @@ void InfluenceScaleHMM::initialize_influence(){
 
 //initial_tiestrength has dimension as initial_proba
 
-void InfluenceScaleHMM::initialize_tiestrength(double* initial_tiestrength, bool use_initial_params){
+void InfluenceScaleHMM::initialize_tiestrength(double* initial_tiestrength, bool use_initial_params)
+{
 
 	if (use_initial_params)
 	{
@@ -1090,7 +1092,7 @@ void InfluenceScaleHMM::calc_sumgamma()
 	if(this->verbosity>=2){ Rprintf("%s\n", __PRETTY_FUNCTION__);}// 	clock_t time = clock(), dtime;
 
 	// // Initialize the sumgamma
-	// for(int c1Nmod=0; c1Nmod<this->Nmod; Nmod++)
+	// for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
 	// {
 	// 		for (int iN=0; iN<this->N; iN++)
 	// 		{
@@ -1109,8 +1111,6 @@ void InfluenceScaleHMM::calc_sumgamma()
 			{
 				for (int t=0; t<this->T; t++)
 				{
-					//--LUISA scalefactor alpha ????
-
 					this->gamma[c1Nmod][iN][t] = this->scalealpha[c1Nmod][t][iN] * this->scalebeta[c1Nmod][t][iN] * this->scalefactoralpha[c1Nmod][t];
 				//	this->sumgamma[c1Nmod][iN] += this->gamma[c1Nmod][iN][t];
 
@@ -1119,11 +1119,12 @@ void InfluenceScaleHMM::calc_sumgamma()
 	}
 
 }
+
 			// Subtract the last value because sumgamma goes only until T-1 and we computed until T to get also loggamma at T
 		// 	//--LUISA now for each chain
-		// 	for(int c1Nmod=0; c1Nmod<this->Nmod; Nmod++)
+		// 	for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
 		// 	{
-		// 		for(int c2Nmod=0; c2Nmod<this->Nmod;Nmod++)
+		// 		for(int c2Nmod=0; c2Nmod<this->Nmod; c2Nmod++)
 		// 		{
 		// 			for (int iN=0; iN<this->N; iN++)
 		// 			{

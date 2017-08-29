@@ -247,6 +247,7 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
     message("")
 
     ### Variables ###
+    comb.states <- c(0,1)
     nstates <- 2
     statenames <- c('unmodified', 'modified')
     tracknames <- dimnames(binned.data$counts)$track
@@ -356,8 +357,9 @@ runInfluence <- function(binned.data, stepbins, info, comb.states, use.states, d
         } else if (hmm$error == 2) {
             stop("An error occurred during the Baum-Welch! Parameter estimation terminated prematurely.")
         }
-        print(array(hmm$A, dim=c(nstates, nstates, nummod, nummod), dimnames= list(fromState=statenames, toState=statenames, fromTrack=tracknames, toTrack=tracknames)))
-                stop('on purpose')
+        
+         stop('on purpose')
+        
         if (ioffset == 1) {
             ### Make return object ###
                 result <- list()

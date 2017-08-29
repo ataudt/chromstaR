@@ -657,44 +657,45 @@ void influence_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, doubl
 		}
 	}
 
-// 	// Compute the states from posteriors
-// 	//FILE_LOG(logDEBUG1) << "Computing states from posteriors";
-// // 	if (*fdr == -1)
-// // 	{
-// 		int ind_max;
-// 		std::vector<double> posterior_per_t(*N);
-// 		for(int c1=0; c1<*Nmod; c1++){
-//
-// 				for (int t=0; t<*T; t++)
+	// Compute the states from posteriors
+	//FILE_LOG(logDEBUG1) << "Computing states from posteriors";
+// 	if (*fdr == -1)
+// 	{
+		int ind_max;
+		std::vector<double> posterior_per_t(*N);
+		for(int c1=0; c1<*Nmod; c1++)
+		{
+
+				for (int t=0; t<*T; t++)
+				{
+					for (int iN=0; iN<*N; iN++)
+					{
+						posterior_per_t[iN] = hmm_influence->get_posterior(c1,iN, t);
+					}
+					ind_max = std::distance(posterior_per_t.begin(), std::max_element(posterior_per_t.begin(), posterior_per_t.end()));
+					//TODO
+					states[t+c1*(*T)] = comb_states[ind_max];
+					maxPosterior[t] = posterior_per_t[ind_max];
+				}
+
+		}
+
+// 	}
+// 	else
+// 	{
+// 		double** transformed_posteriors = CallocDoubleMatrix(*T, *Nmod);
+// 		for (int t=0; t<*T; t++)
+// 		{
+// 			for (int iN=0; iN<*N; iN++)
+// 			{
+// 				for (int iNmod=0; iNmod<*Nmod; iNmod++)
 // 				{
-// 					for (int iN=0; iN<*N; iN++)
-// 					{
-// 						posterior_per_t[iN] = hmm_influence->get_posterior(c1,iN, t);
-// 					}
-// 					ind_max = std::distance(posterior_per_t.begin(), std::max_element(posterior_per_t.begin(), posterior_per_t.end()));
-// 					//TODO
-// 					states[t] = comb_states[ind_max];
-// 					maxPosterior[t] = posterior_per_t[ind_max];
+// 					transformed_posteriors[t][iNmod] += (double)binary_states[iN][iNmod] * hmm->get_posterior(iN, t);
 // 				}
-//
+// 			}
 // 		}
-//
-// // 	}
-// // 	else
-// // 	{
-// // 		double** transformed_posteriors = CallocDoubleMatrix(*T, *Nmod);
-// // 		for (int t=0; t<*T; t++)
-// // 		{
-// // 			for (int iN=0; iN<*N; iN++)
-// // 			{
-// // 				for (int iNmod=0; iNmod<*Nmod; iNmod++)
-// // 				{
-// // 					transformed_posteriors[t][iNmod] += (double)binary_states[iN][iNmod] * hmm->get_posterior(iN, t);
-// // 				}
-// // 			}
-// // 		}
-// // 	}
-//
+// 	}
+
 	//FILE_LOG(logDEBUG1) << "Return parameters";
 	// also return the estimated transition matrix (A) and the proba (gamma(0))
 	for (int i=0; i<*N; i++)

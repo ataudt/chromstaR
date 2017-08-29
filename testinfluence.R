@@ -1,6 +1,7 @@
+library(devtools)
 load_all()
 
-savename <- '~/Bioconductor/chromstaR/influencetest.RData'
+savename <- '~/Desktop/Arbeit/CHROMSTAR_2/chromstaR/influencetest.RData'
 if (!file.exists(savename)) {
   # Get example BAM files for 2 different marks in hypertensive rat
   file.path <- system.file("extdata","euratrans", package='chromstaRData')
@@ -29,4 +30,4 @@ if (!file.exists(savename)) {
 }
   
 # Call multivariate peaks
-load_all(); multimodel <- callPeaksInfluence(models, use.states=states, eps=1, max.time=60, verbosity=1, keep.densities = TRUE, max.iter=NULL)
+load_all(); multimodel <- callPeaksInfluence(models, use.states=states, eps=1, max.time=60, verbosity=4, keep.densities = TRUE, max.iter=NULL)
