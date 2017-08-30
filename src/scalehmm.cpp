@@ -80,10 +80,11 @@ ScaleHMM::~ScaleHMM()
 	FreeDoubleMatrix(this->sumxi, this->N);
 	Free(this->proba);
 	Free(this->sumgamma);
+	Free(this->states_prev);
 
 	for (int iN=0; iN<this->N; iN++)
 	{
-		//FILE_LOG(logDEBUG1) << "Deleting density functions"; 
+		//FILE_LOG(logDEBUG1) << "Deleting density functions";
 		delete this->densityFunctions[iN];
 	}
 // 	Free(this->num_nonzero_A_into_state);
@@ -123,13 +124,13 @@ void ScaleHMM::initialize_transition_probs(double* initial_A, bool use_initial_p
 			}
 		}
 	}
-	
+
 // 	// Initialize sparsity exploit such that no sparsity exploit is done in first iteration
 // 	for (int iN=0; iN<this->N; iN++)
 // 	{
 // 		this->num_nonzero_A_into_state[iN] = this->N;
 // 	}
-	
+
 
 }
 
@@ -166,7 +167,7 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 // 	#ifdef _OPENMP
 // 	omp_set_nested(1);
 // 	#endif
-	
+
 	// measuring the time
 	this->baumWelchStartTime_sec = time(NULL);
 
@@ -201,7 +202,7 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 // 			}
 // 			//FILE_LOG(logDEBUG) << buffer;
 // 		}
-				
+
 	}
 
 	R_CheckUserInterrupt();
@@ -212,7 +213,7 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 	{
 
 		iteration++;
-		
+
 		if (this->xvariate == UNIVARIATE)
 		{
 			//FILE_LOG(logDEBUG1) << "Calling calc_densities() from baumWelch()";
@@ -318,7 +319,7 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 // 				this->index_nonzero_A_into_state[iN][jN] = 0;
 // 			}
 // 		}
-		
+
 		// Updating initial probabilities proba and transition matrix A
 		for (int iN=0; iN<this->N; iN++)
 		{
@@ -393,8 +394,8 @@ void ScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 		}
 
 	} /* main loop end */
-    
-    
+
+
 	//Print the last results
 	if (this->xvariate == UNIVARIATE)
 	{
@@ -479,8 +480,8 @@ void ScaleHMM::check_for_state_swap()
 // 			Rprintf("...swapping states\n");
 			NegativeBinomial *tempDens = new NegativeBinomial();
 			tempDens->copy(this->densityFunctions[2]); // tempDens is densifunc[2]
-			this->densityFunctions[2]->copy(this->densityFunctions[1]); 
-			this->densityFunctions[1]->copy(tempDens); 
+			this->densityFunctions[2]->copy(this->densityFunctions[1]);
+			this->densityFunctions[1]->copy(tempDens);
 			delete tempDens;
 			// swap proba
 			double temp;
@@ -518,7 +519,7 @@ void ScaleHMM::check_for_state_swap()
 			//FILE_LOG(logDEBUG1) << "Calling calc_gamma() from check_for_state_swap()";
 			this->calc_gamma();
 			R_CheckUserInterrupt();
-			
+
 			// recalculate weight, maxdens and logdens at cutoff
 			weights = this->calc_weights();
 			maxdens[0] = weights[0];
@@ -695,7 +696,7 @@ void ScaleHMM::forward()
 // 	}
 // 	else if (this->xvariate==MULTIVARIATE)
 // 	{
-// 
+//
 // 		std::vector<double> alpha(this->N);
 // 		// Initialization
 // 		this->scalefactoralpha[0] = 0.0;
@@ -745,7 +746,7 @@ void ScaleHMM::forward()
 // 				}
 // 			}
 // 		}
-// 
+//
 // 	}
 
 // 	dtime = clock() - time;
@@ -809,7 +810,7 @@ void ScaleHMM::backward()
 // 	}
 // 	else if (this->xvariate==MULTIVARIATE)
 // 	{
-// 
+//
 // 		std::vector<double> beta(this->N);
 // 		// Initialization
 // 		for (int iN=0; iN<this->N; iN++)
@@ -855,7 +856,7 @@ void ScaleHMM::backward()
 // 				}
 // 			}
 // 		}
-// 
+//
 // 	}
 
 // 	dtime = clock() - time;
@@ -894,7 +895,7 @@ void ScaleHMM::calc_sumxi()
 		{
 			this->sumxi[iN][jN] = 0.0;
 		}
-	}	
+	}
 
 // 	if (this->xvariate==UNIVARIATE)
 // 	{
@@ -916,7 +917,7 @@ void ScaleHMM::calc_sumxi()
 // 	}
 // 	else if (this->xvariate==MULTIVARIATE)
 // 	{
-// 
+//
 // 		#pragma omp parallel for
 // 		for (int iN=0; iN<this->N; iN++)
 // 		{
@@ -930,7 +931,7 @@ void ScaleHMM::calc_sumxi()
 // 				}
 // 			}
 // 		}
-// 
+//
 // 	}
 
 // 	dtime = clock() - time;
@@ -1159,7 +1160,7 @@ void ScaleHMM::print_uni_params()
 	 			Rprintf("%s\n", buffer);
 			}
 		}
-		
+
 		snprintf(buffer, bs, "|%80s", "|");
 		//FILE_LOG(logINFO) << buffer;
 	 	Rprintf("%s\n", buffer);
@@ -1173,4 +1174,3 @@ void ScaleHMM::print_uni_params()
 	 	R_FlushConsole();
 	}
 }
-

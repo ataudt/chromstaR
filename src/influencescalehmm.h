@@ -66,7 +66,7 @@ class InfluenceScaleHMM  {
 		double logP; ///< loglikelihood
 		int* O; ///< vector [T] of observations
 		int** multiO; ///< matrix [Nmod x T] of observations
-		double** scalefactoralpha; ///< vector[T] of scaling factors
+		double* scalefactoralpha; ///< vector[T] of scaling factors
 		double*** scalealpha; ///< matrix [T x N] of forward probabilities
 		double*** scalebeta; ///<  matrix [T x N] of backward probabilities
 		double*** densities; ///< matrix [N x T] of density values
@@ -77,7 +77,7 @@ class InfluenceScaleHMM  {
 		double**** sumxi; ///< matrix[N x N] of xi values
 		double** tiesumxi;
 		double* tiesumxitotal;
-		double*** tie_onestatus_sumxi;
+		double*** onestatus_sumxi;
 		double*** gamma; ///< matrix[N x T] of posteriors
 		bool* states_prev; ///< vector[T] with modification state of last state ('modified') of previous iteration
 		double dlogP; ///< difference in loglikelihood from one iteration to the next
