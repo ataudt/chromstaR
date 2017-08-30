@@ -49,6 +49,49 @@
 #'heatmapTransitionProbs(multimodel)
 #'heatmapCountCorrelation(multimodel)
 #'
+
+
+
+#__________________________________________________________________________________________________________        
+#----------------------------------------------------------------------------------------------------------        
+#                       OVERVIEW: correspondence of variable names among R and C++ code
+# ---------------------------------------------------------------------------------------------------------       
+#
+#        
+#    R code                         C++ code                     Dimension(C++)          Description           
+#           
+#    num.bins                       T                            int*                    Number of time points   
+#    max.states                     N                            int*                    Number of states       
+#    num.modifications              Nmod                         int*                    Number of modifications 
+#    comb.states                    comb_states                  double*                 States that exist for each chain ( either 0 or 1)
+#    size                           size                         double*                 Parameter for the negative binomial distribution
+#    prob                           prob                         double*                 Parameter for the negative binomial distribution
+#    w                              w                            double*                 Parameter for the ZeroInflated negative binomial distribution
+#    num.iterations                 maxiter                      int*                    Maximal number of iterations allowed
+#    time.sec                       maxtime                      int*                    Maximal number of seconds allowed for completing the computation 
+#    loglik.delta                   eps                          double*                 Defines the value where convergence is defined to be reached (when dLogP is lower then this value convergence is reached)
+#    posteriors                     gamma                        double***               Describes the probability of being in specific state at a time point t in correspondence of a specific modification
+#    get.posteriors                 keep_posteriors              bool*                   If set to true the gammas (posteriors) are kept
+#    densities                      densities                    double***               The observation symbol probability distribution in a given state (See NOTES for dimension correspondence)
+#    keep.densities                 keep_densities               bool*                   If set to true the densities are kept
+#    states                         states                       double**                Total number of modifications in all different timepoints (Nmod*T)
+#    maxPosterior                   maxPosterior                 double*                 Maximum of the posteriors (gammas)
+#    A                              A                            double*                 State transition probabilities matrix (See NOTES for dimension correspondence)
+#    proba                          proba                        double**                Initial state distributions (See NOTES for dimensions correspondence)
+#    tiestrength                    tiestrength                  double*                 Tiestrenghts (See NOTES for dimensions correspondence)
+#    A.initial                      initial A                    double*                 Initial values for the state transition matrix (See NOTES for dimensions correspondence)
+#    proba.initial                  initial proba                double*                 Initial value for the (See NOTES for dimensions correspondence) 
+#    tiestrength.initial            initial tiestrength          double*                 Initial values for the tiestrengths ( See NOTES for dimensions correspondence)
+#    use_initial_params             use_initial_params           bool*                   If set to true, the initial parameters are used for the initialization
+#    num.threads                    num_threads                  int*                    Number of threads to be used
+#    verbosity                      verbosity                    int*                    Defines the completeness of the printed messages: the higher it is, the completer are the messages. 
+#
+#
+#    NOTE: In the R code matrixes are represented flattened; they have only one dimension and the length corresponds 
+#          to the product of the lengths of all the dimension of the matrix.          
+#        
+#---------------------------------------------------------------------------------------------------------- 
+
 callPeaksInfluence <- function(hmms, per.chrom=TRUE, chromosomes=NULL, eps=0.01, keep.posteriors=FALSE, num.threads=1, max.time=NULL, max.iter=NULL, keep.densities=FALSE, verbosity=1, temp.savedir=NULL) {
 
     ## Intercept user input
