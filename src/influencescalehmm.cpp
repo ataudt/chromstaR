@@ -40,7 +40,7 @@
 
 InfluenceScaleHMM::InfluenceScaleHMM(int T, int N, int Nmod, int verbosity)
 {
-	if(this->verbosity>=2){ Rprintf("%s\n", __PRETTY_FUNCTION__);}
+	if(verbosity>=2){ Rprintf("%s\n", __PRETTY_FUNCTION__);}
 	//FILE_LOG(logDEBUG2) << "Initializing multivariate InfluenceScaleHMM";
 	this->xvariate = MULTIVARIATE;
 	this->verbosity = verbosity;
