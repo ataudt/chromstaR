@@ -105,14 +105,12 @@ InfluenceScaleHMM::~InfluenceScaleHMM()
 			delete this->densityFunctions[c1Nmod][iN];
 		}
 	}
-
 	// 	Free(this->num_nonzero_A_into_state);
 	// 	FreeIntMatrix(this->index_nonzero_A_into_state, this->N);
 }
 
 
 //methods
-
 void InfluenceScaleHMM::initialize_transition_probs(double* initial_A, bool use_initial_params)
 {
 
@@ -130,8 +128,11 @@ void InfluenceScaleHMM::initialize_transition_probs(double* initial_A, bool use_
 						// convert from vector to matrix representation
 						this->A[c1Nmod][c2Nmod][iN][jN] = initial_A[i1];
 						//Rprintf(" c1Nmod=%d c2Nmod=%d iN=%d jN=%d A=%g \n", c1Nmod, c2Nmod, iN, jN, this->A[c1Nmod][c2Nmod][iN][jN] );
-						 i1++;
+						i1++;
+
+						//Rprintf("%g\t",this->A[c1Nmod][c2Nmod][iN][jN] );
 					}
+					//Rprintf("\n");
 				}
 			}
 		}
@@ -160,7 +161,9 @@ void InfluenceScaleHMM::initialize_transition_probs(double* initial_A, bool use_
 							initial_A[i1] = this->A[c1Nmod][c2Nmod][iN][jN];
 							i1++;
 						}
+						//Rprintf("%g\t",this->A[c1Nmod][c2Nmod][iN][jN] );
 					}
+					//Rprintf("\n");
 				}
 			}
 		}
@@ -171,6 +174,8 @@ void InfluenceScaleHMM::initialize_transition_probs(double* initial_A, bool use_
 // 	{
 // 		this->num_nonzero_A_into_state[iN] = this->N;
 // 	}
+
+
 
 
 }
@@ -200,11 +205,13 @@ void InfluenceScaleHMM::initialize_proba(double* initial_proba, bool use_initial
 		{
 			for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
 			{
-				this->proba[c1Nmod][iN] = (double)1/((this->N));
+				this->proba[c1Nmod][iN] = (double)1/(((this->N)*(this->Nmod)));
 				// Save value to initial proba
 				initial_proba[i1] = this->proba[c1Nmod][iN];
 				i1++;
+				//Rprintf("\t%g\t", this->proba[c1Nmod][iN]);
 			}
+				//Rprintf("\n");
 		}
 	}
 }
@@ -221,6 +228,7 @@ void InfluenceScaleHMM::initialize_influence()
 				for (int jN=0; jN<this->N; jN++)
 				{
 					this->influence[c1Nmod][c2Nmod][iN][jN]= this->tiestrength[c1Nmod][c2Nmod] * this-> A[c1Nmod][c2Nmod][iN][jN];
+					//Rprintf("%g\n",this->influence[c1Nmod][c2Nmod][iN][jN]);
 				}
 			}
 		}
@@ -237,23 +245,31 @@ void InfluenceScaleHMM::initialize_tiestrength(double* initial_tiestrength, bool
 		{
 			for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
 			{
+
 				this->tiestrength[c1Nmod][c2Nmod]= initial_tiestrength[i1];
 				i1++;
+				//Rprintf("%g\n",this->tiestrength[c1Nmod][c2Nmod]);
 			}
+			//Rprintf("\n");
 		}
 	}
 	else
 	{
 		int i1=0;
+
 		for(int c2Nmod=0; c2Nmod<this->Nmod; c2Nmod++)
 		{
+			double sum=0;
 			for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
 			{
 				this->tiestrength[c1Nmod][c2Nmod]= double(1)/(this->Nmod);
 				initial_tiestrength[i1] = this->tiestrength[c1Nmod][c2Nmod];
 				i1++;
+				sum+=this->tiestrength[c1Nmod][c2Nmod];
 			}
+			//Rprintf("SUM OF TIESTRENGTH=%g\n", sum);
 		}
+
 	}
 }
 
@@ -458,8 +474,6 @@ void InfluenceScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 
 							this->influence[c1Nmod][c2Nmod][iN][jN]= this->tiestrength[c1Nmod][c2Nmod] * this-> A[c1Nmod][c2Nmod][iN][jN];
 
-
-
 		// 					// This could give performance increase, but risks numerical instabilities
 		// 					if (this->logA[iN][jN] < log(1.0/(double)(this->T*10)))
 		// 					{
@@ -517,16 +531,16 @@ void InfluenceScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 	// }
 //----
 
-		for(int c1Nmod=0; c1Nmod<this->Nmod ; c1Nmod++)
-		{
-			double sum = 0 ;
-			for(int c2Nmod=0; c2Nmod<this->Nmod ; c2Nmod++)
-			{
-			//Rprintf("this->tiestrength[c1Nmod=%d][c2Nmod=%d](%g)= this->tiesumxi[c1Nmod][c2Nmod](%g)/this->tiesumxitotal[c2Nmod](%g)\n",c1Nmod, c2Nmod,this->tiestrength[c1Nmod][c2Nmod],this->tiesumxi[c1Nmod][c2Nmod],this->tiesumxitotal[c2Nmod]);
-				sum += this->tiestrength[c1Nmod][c2Nmod];
-			}
-			//Rprintf("tiestrength SUM=%g\n\n", sum);
-		}
+		// for(int c1Nmod=0; c1Nmod<this->Nmod ; c1Nmod++)
+		// {
+		// 	double sum = 0 ;
+		// 	for(int c2Nmod=0; c2Nmod<this->Nmod ; c2Nmod++)
+		// 	{
+		// 	//Rprintf("this->tiestrength[c1Nmod=%d][c2Nmod=%d](%g)= this->tiesumxi[c1Nmod][c2Nmod](%g)/this->tiesumxitotal[c2Nmod](%g)\n",c1Nmod, c2Nmod,this->tiestrength[c1Nmod][c2Nmod],this->tiesumxi[c1Nmod][c2Nmod],this->tiesumxitotal[c2Nmod]);
+		// 		sum += this->tiestrength[c1Nmod][c2Nmod];
+		// 	}
+		// 	//Rprintf("tiestrength SUM=%g\n\n", sum);
+		// }
 
 
 // 		// Check if sparsity exploit will be used in the next iteration
