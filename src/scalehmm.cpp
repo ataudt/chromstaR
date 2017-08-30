@@ -80,7 +80,10 @@ ScaleHMM::~ScaleHMM()
 	FreeDoubleMatrix(this->sumxi, this->N);
 	Free(this->proba);
 	Free(this->sumgamma);
-	Free(this->states_prev);
+	if (this->xvariate==UNIVARIATE)
+	{
+  	Free(this->states_prev);
+	}
 
 	for (int iN=0; iN<this->N; iN++)
 	{
