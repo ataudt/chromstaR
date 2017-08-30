@@ -20,6 +20,7 @@ mergeChroms <- function(multi.hmm.list, filename=NULL) {
         
     ## Check if posteriors are present everywhere
     post.present <- Reduce('|', unlist(lapply(multi.hmm.list, function(x) { !is.null(x$bins$posteriors) })))
+    densities.present <- Reduce('|', unlist(lapply(multi.hmm.list, function(x) { !is.null(x$bincounts$densities) })))
 
     ## Variables
     num.models <- length(multi.hmm.list)
@@ -31,6 +32,7 @@ mergeChroms <- function(multi.hmm.list, filename=NULL) {
     peaks <- list()
     bincounts.bins <- list()
     bincounts.counts <- list()
+    bincounts.densities <- list()
     for (i1 in 1:num.models) {
         hmm <- multi.hmm.list[[1]]    # select always first because we remove it at the end of the loop
         if (!post.present) {
@@ -43,6 +45,7 @@ mergeChroms <- function(multi.hmm.list, filename=NULL) {
         bincounts.bins[[i1]] <- hmm$bincounts
         mcols(bincounts.bins[[i1]]) <- NULL
         bincounts.counts[[i1]] <- hmm$bincounts$counts
+        bincounts.densities[[i1]] <- hmm$bincounts$densities
         # Remove current HMM to save memory
         if (i1 < num.models) remove(hmm)    # remove it because otherwise R will make a copy when we NULL the underlying reference (multi.hmm.list[[1]])
         multi.hmm.list[[1]] <- NULL
@@ -55,14 +58,27 @@ mergeChroms <- function(multi.hmm.list, filename=NULL) {
     segments <- sort(do.call('c', segments))
     dim.1 <- sapply(bincounts.bins, function(x) { length(x) })
     dim.1.cumsum <- c(0,cumsum(dim.1))
+    # Merge
+    bincounts.bins <- sort(do.call('c', bincounts.bins))
+    # Counts
     dims <- c(sum(dim.1), dim(bincounts.counts[[1]])[2:3])
     dimnames <- dimnames(bincounts.counts[[1]])
     counts <- array(NA, dim = dims, dimnames = dimnames)
     for (i1 in 1:length(bincounts.counts)) {
         counts[(dim.1.cumsum[i1]+1):dim.1.cumsum[i1+1],,] <- bincounts.counts[[i1]]
     }
-    bincounts.bins <- sort(do.call('c', bincounts.bins))
     bincounts.bins$counts <- counts
+    # Densities
+    if (densities.present) {
+        dims <- c(sum(dim.1), dim(bincounts.densities[[1]])[2:3])
+        dimnames <- dimnames(bincounts.densities[[1]])
+        densities <- array(NA, dim = dims, dimnames = dimnames)
+        for (i1 in 1:length(bincounts.densities)) {
+            densities[(dim.1.cumsum[i1]+1):dim.1.cumsum[i1+1],,] <- bincounts.densities[[i1]]
+        }
+        bincounts.bins$densities <- densities
+    }
+    # Peaks
     if (length(peaks) == 1) { # only one chromosome
         peaks.merged <- peaks[[1]]
     } else if (length(peaks) > 1) {

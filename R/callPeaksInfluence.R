@@ -310,13 +310,13 @@ runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$sta
     
     if (is.null(tiestrength.initial)) {
       
-      tiestrength.initial <- array((1-0.9)/(numstates-1), dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
+      tiestrength.initial <- array((1-0.9)/(nummod-1), dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
       diag(tiestrength.initial) <- 0.9
       
     }
     
     if (is.null(startProbs.initial)) {
-        startProbs.initial <- array((1/numstates), dim=c(nummod, numstates), dimnames=list(track=tracknames, state=statenames))
+        startProbs.initial <- array((1/numstates/nummod), dim=c(nummod, numstates), dimnames=list(track=tracknames, state=statenames))
     }
  
 
@@ -398,6 +398,12 @@ runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$sta
             ### Make return object ###
                 result <- list()
                 result$info <- info
+            ## Densities
+                if (keep.densities) {
+                    densities <- hmm$densities
+                    dim(densities) <- c(numbins, numstates, nummod)
+                    dimnames(densities) <- list(bin=NULL, state=statenames, track=tracknames)
+                }
             ## Parameters
                 if (!is.null(use.states)) {
                     mapping <- use.states$combination
@@ -442,11 +448,6 @@ runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$sta
         hmm$posteriors <- sweep(x = hmm$posteriors, MARGIN = c(1,3), STATS = apply(hmm$posteriors, c(1,3), sum), FUN = '/') # normalize posteriors
         dim(hmm$counts) <- c(length(binned.data), nummod)
         dimnames(hmm$counts) <- list(bin=NULL, track=info$ID)
-        if (keep.densities) {
-            densities <- hmm$densities
-            dim(densities) <- c(numbins, numstates, nummod)
-            dimnames(densities) <- list(bin=NULL, state=statenames, track=tracknames)
-        }
         hmm.A <- hmm$A
         hmm.proba <- hmm$proba
         
