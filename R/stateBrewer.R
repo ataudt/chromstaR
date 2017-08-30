@@ -42,6 +42,8 @@ stateBrewer <- function(experiment.table, mode, differential.states=FALSE, commo
         combstates <- state.brewer(replicates=exp$mark, conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states, exclusive.table=exclusive.table, binary.matrix=binary.matrix)
     } else if (mode == 'differential') {
         combstates <- state.brewer(replicates=exp$condition, conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states, exclusive.table=exclusive.table, binary.matrix=binary.matrix)
+    } else if (mode == 'all') {
+        combstates <- state.brewer(replicates=paste0(exp$mark, '-', exp$condition, '-rep', exp$replicate), conditions=exp$condition, tracks2compare=exp$mark, differential.states=differential.states, common.states=common.states, exclusive.table=exclusive.table, binary.matrix=binary.matrix)
     } else {
         stop("Unknown mode.")
     }

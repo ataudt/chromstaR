@@ -1,8 +1,8 @@
 library(devtools)
 load_all()
 
-# savename <- '~/Desktop/Arbeit/CHROMSTAR_2/chromstaR/influencetest.RData'
-savename <- '~/Bioconductor/chromstaR/influencetest.RData'
+savename <- '~/Desktop/Arbeit/CHROMSTAR_2/chromstaR/influencetest.RData'
+# savename <- '~/Bioconductor/chromstaR/influencetest.RData'
 if (!file.exists(savename)) {
   # Get example BAM files for 2 different marks in hypertensive rat
   file.path <- system.file("extdata","euratrans", package='chromstaRData')
@@ -19,6 +19,7 @@ if (!file.exists(savename)) {
     binned.data[[basename(file)]] <- binReads(file, binsizes=1000, stepsizes=500,
                                               experiment.table=exp,
                                               assembly=rn4_chrominfo, chromosomes='chr12')
+    # binned.data[[basename(file)]] <- binned.data[[basename(file)]][1:1000]
   }
   # Obtain the univariate fits
   models <- list()
