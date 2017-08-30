@@ -29,7 +29,6 @@
 #'exp <- data.frame(file=files, mark=c("H3K27me3","H3K27me3","H3K4me3"),
 #'                  condition=rep("SHR",3), replicate=c(1:2,1), pairedEndReads=FALSE,
 #'                  controlFiles=NA)
-#'states <- stateBrewer(exp, mode='combinatorial')
 #'# Bin the data
 #'data(rn4_chrominfo)
 #'binned.data <- list()
@@ -48,6 +47,7 @@
 #'# Check some plots
 #'heatmapTransitionProbs(multimodel)
 #'heatmapCountCorrelation(multimodel)
+#'heatmapTiestrengths(multimodel)
 #'
 
 

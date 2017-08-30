@@ -49,7 +49,6 @@ files <- list.files(file.path, full.names=TRUE, pattern='SHR.*bam$')[c(1:2,6)]
 exp <- data.frame(file=files, mark=c("H3K27me3","H3K27me3","H3K4me3"),
                  condition=rep("SHR",3), replicate=c(1:2,1), pairedEndReads=FALSE,
                  controlFiles=NA)
-states <- stateBrewer(exp, mode='combinatorial')
 # Bin the data
 data(rn4_chrominfo)
 binned.data <- list()
@@ -68,6 +67,7 @@ multimodel <- callPeaksInfluence(models, eps=1, max.time=60)
 # Check some plots
 heatmapTransitionProbs(multimodel)
 heatmapCountCorrelation(multimodel)
+heatmapTiestrengths(multimodel)
 
 }
 \author{

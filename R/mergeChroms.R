@@ -61,7 +61,7 @@ mergeChroms <- function(multi.hmm.list, filename=NULL) {
     # Merge
     bincounts.bins <- sort(do.call('c', bincounts.bins))
     # Counts
-    dims <- c(sum(dim.1), dim(bincounts.counts[[1]])[2:3])
+    dims <- c(sum(dim.1), dim(bincounts.counts[[1]])[-1])
     dimnames <- dimnames(bincounts.counts[[1]])
     counts <- array(NA, dim = dims, dimnames = dimnames)
     for (i1 in 1:length(bincounts.counts)) {
@@ -70,11 +70,15 @@ mergeChroms <- function(multi.hmm.list, filename=NULL) {
     bincounts.bins$counts <- counts
     # Densities
     if (densities.present) {
-        dims <- c(sum(dim.1), dim(bincounts.densities[[1]])[2:3])
+        dims <- c(sum(dim.1), dim(bincounts.densities[[1]])[-1])
         dimnames <- dimnames(bincounts.densities[[1]])
         densities <- array(NA, dim = dims, dimnames = dimnames)
         for (i1 in 1:length(bincounts.densities)) {
-            densities[(dim.1.cumsum[i1]+1):dim.1.cumsum[i1+1],,] <- bincounts.densities[[i1]]
+            if (length(dims) == 3) {
+                densities[(dim.1.cumsum[i1]+1):dim.1.cumsum[i1+1],,] <- bincounts.densities[[i1]]
+            } else if (length(dims) == 2) {
+                densities[(dim.1.cumsum[i1]+1):dim.1.cumsum[i1+1],] <- bincounts.densities[[i1]]
+            }
         }
         bincounts.bins$densities <- densities
     }
