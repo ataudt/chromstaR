@@ -312,6 +312,8 @@ runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$sta
       
       tiestrength.initial <- array((1-0.9)/(nummod-1), dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
       diag(tiestrength.initial) <- 0.9
+#      cor <- cor(binned.data$counts[,,'0'])
+#      tiestrength.initial <- sweep(x = cor, MARGIN = 1, STATS = rowSums(cor), FUN = '/')
       
     }
     
@@ -445,7 +447,7 @@ runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$sta
         ## Store counts and posteriors in list
         dim(hmm$posteriors) <- c(numbins, numstates, nummod)
         dimnames(hmm$posteriors) <- list(bin=NULL, state=statenames, track=tracknames)
-        hmm$posteriors <- sweep(x = hmm$posteriors, MARGIN = c(1,3), STATS = apply(hmm$posteriors, c(1,3), sum), FUN = '/') # normalize posteriors
+        #hmm$posteriors <- sweep(x = hmm$posteriors, MARGIN = c(1,3), STATS = apply(hmm$posteriors, c(1,3), sum), FUN = '/') # normalize posteriors
         dim(hmm$counts) <- c(length(binned.data), nummod)
         dimnames(hmm$counts) <- list(bin=NULL, track=info$ID)
         hmm.A <- hmm$A
