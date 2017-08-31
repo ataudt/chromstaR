@@ -488,8 +488,7 @@ void multivariate_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, do
 // This function takes parameters from R, creates a multivariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
 // =====================================================================================================================================================
 
-//HOLA
-void influence_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, double* size, double* prob, double* w,  int* maxiter, int* maxtime, double* eps, double* posteriors, bool* keep_posteriors, double* densities, bool* keep_densities, double* states, double* maxPosterior, double* A, double* proba, double* tiestrength, double* loglik, double* initial_A, double* initial_proba, double* initial_tiestrength, bool* use_initial_params, int* num_threads, int* error, int* verbosity)
+void influence_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, double* size, double* prob, double* w,  int* maxiter, int* maxtime, double* eps, double* posteriors, bool* keep_posteriors, double* densities, bool* keep_densities, double* states, double* maxPosterior, double* A, double* proba, double* tiestrength, bool* update_tiestrengths, double* loglik, double* initial_A, double* initial_proba, double* initial_tiestrength, bool* use_initial_params, int* num_threads, int* error, int* verbosity)
 {
 
 	// Define logging level {"ERROR", "WARNING", "INFO", "ITERATION", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4"}
@@ -608,7 +607,7 @@ void influence_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, doubl
 	//FILE_LOG(logDEBUG1) << "Starting Baum-Welch estimation";
 	try
 	{
-		hmm_influence->baumWelch(maxiter, maxtime, eps);
+		hmm_influence->baumWelch(maxiter, maxtime, eps, update_tiestrengths);
 	}
 	catch (std::exception& e)
 	{

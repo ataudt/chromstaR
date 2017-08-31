@@ -35,7 +35,7 @@ class InfluenceScaleHMM  {
 		void initialize_proba(double* initial_proba, bool use_initial_params);
 		void initialize_influence();
 		void initialize_tiestrength(double* initial_tiestrength, bool use_initial_params);
-		void baumWelch(int* maxiter, int* maxtime, double* eps);
+		void baumWelch(int* maxiter, int* maxtime, double* eps, bool* update_tiestrengths);
 		//void check_for_state_swap();
 		std::vector< std::vector< double > > calc_weights();
 		void calc_weights(double* weights);

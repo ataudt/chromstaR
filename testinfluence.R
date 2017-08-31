@@ -1,8 +1,8 @@
 library(devtools)
 load_all()
 
-# savename <- '~/Desktop/Arbeit/CHROMSTAR_2/chromstaR/influencetest.RData'
-savename <- '~/Bioconductor/chromstaR/influencetest.RData'
+ savename <- '~/Desktop/Arbeit/DIR/chromstaR/influencetest.RData'
+#savename <- '~/Bioconductor/chromstaR/influencetest.RData'
 if (!file.exists(savename)) {
   # Get example BAM files for 2 different marks in hypertensive rat
   file.path <- system.file("extdata","euratrans", package='chromstaRData')
@@ -19,7 +19,7 @@ if (!file.exists(savename)) {
     binned.data[[basename(file)]] <- binReads(file, binsizes=1000, stepsizes=500,
                                               experiment.table=exp,
                                               assembly=rn4_chrominfo, chromosomes='chr12')
-    # binned.data[[basename(file)]] <- binned.data[[basename(file)]][1:1000]
+     binned.data[[basename(file)]] <- binned.data[[basename(file)]][1:1000]
   }
   # Obtain the univariate fits
   models <- list()
@@ -33,7 +33,8 @@ if (!file.exists(savename)) {
   
 # Call multivariate peaks
 load_all(); mi <- callPeaksInfluence(models, eps=1, max.time=60, verbosity=1, keep.densities = TRUE, keep.posteriors=TRUE, max.iter=NULL)
-load_all(); mm <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60, verbosity=1, keep.densities = TRUE, keep.posteriors=TRUE, max.iter=NULL)
-
-exportPeaks(model = mi, filename = '~/work_ERIBA/test/influence_model/influence', header = FALSE, separate.files = TRUE, trackname = 'influence')
-exportPeaks(model = mm, filename = '~/work_ERIBA/test/influence_model/copula', header = FALSE, separate.files = TRUE, trackname = 'copula')
+#load_all(); mm <- callPeaksMultivariate(models, use.states=states, eps=1, max.time=60, verbosity=1, keep.densities = TRUE, keep.posteriors=TRUE, max.iter=NULL)
+print(mi$tiestrengths)
+#exportPeaks(model = mi, filename = '~/work_ERIBA/test/influence_model/influence', header = FALSE, separate.files = TRUE, trackname = 'influence')
+#exportPeaks(model = mm, filename = '~/work_ERIBA/test/influence_model/copula', header = FALSE, separate.files = TRUE, trackname = 'copula')
+countTable <- read.table("counts.tsv")

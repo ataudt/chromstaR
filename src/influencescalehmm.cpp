@@ -275,7 +275,7 @@ void InfluenceScaleHMM::initialize_tiestrength(double* initial_tiestrength, bool
 
 
 
-void InfluenceScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
+void InfluenceScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps, bool* update_tiestrengths)
 {
 	if(this->verbosity>=2){ Rprintf("%s\n", __PRETTY_FUNCTION__);}
 	double logPold = -INFINITY;
@@ -450,7 +450,15 @@ void InfluenceScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps)
 			for(int c2Nmod=0; c2Nmod<this->Nmod ; c2Nmod++)
 			{
 				//Rprintf("%d %d %g\n",c1Nmod, c2Nmod, this->tiesumxitotal[c2Nmod]);
-				this->tiestrength[c1Nmod][c2Nmod]= this->tiesumxi[c1Nmod][c2Nmod]/this->tiesumxitotal[c1Nmod];
+				if(*update_tiestrengths == true)
+				{
+
+					this->tiestrength[c1Nmod][c2Nmod]= this->tiesumxi[c1Nmod][c2Nmod]/this->tiesumxitotal[c1Nmod];
+					//Rprintf("-------------------------------------TIESTRENGTH UPDATED %s \n\n", update_tiestrengths ? "true" : "false");
+				}else{
+					//Rprintf("-------------------------------------TIESTRENGTH NT UPDATED\n\n");
+
+				}
 
 				for (int iN=0; iN<this->N; iN++)
 				{
@@ -1146,9 +1154,11 @@ void InfluenceScaleHMM::calc_sumgamma()
 	#pragma omp parallel for
 	for (int t=0; t<this->T; t++)
 	{
-		double sum = 0 ;
 			for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
 			{
+
+				double sum = 0 ;
+
 				for (int iN=0; iN<this->N; iN++)
 				{
 					this->gamma[c1Nmod][iN][t] = this->scalealpha[c1Nmod][t][iN] * this->scalebeta[c1Nmod][t][iN] * this->scalefactoralpha[t];
@@ -1157,8 +1167,11 @@ void InfluenceScaleHMM::calc_sumgamma()
 				//Rprintf("%g %g %g %g\n", this->scalealpha[c1Nmod][t][iN],this->scalebeta[c1Nmod][t][iN] , this->scalefactoralpha[c1Nmod][t], this->gamma[c1Nmod][iN][t] );
 
 				}
+				//Rprintf("t=%d, c1=%d, Sum over states in gamma = %g\n", t,c1Nmod,sum );
+
 			}
-			//Rprintf("t=%d, Sum over states in gamma= %g\n", t,sum );
+
+
 	}
 }
 
