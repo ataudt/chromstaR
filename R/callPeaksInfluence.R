@@ -275,7 +275,7 @@ callPeaksInfluence <- function(hmms, per.chrom=TRUE, chromosomes=NULL, eps=0.01,
 }
 
 #' @importFrom stats ecdf
-runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$state, use.states, distributions, weights, max.iter, max.time, eps, num.threads, keep.posteriors, keep.densities, transitionProbs.initial=NULL,tiestrength.initial=NULL, startProbs.initial=NULL, verbosity=1, update.tiestrengths=update.tiestrengths) {
+runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$state, use.states, distributions, weights, max.iter, max.time, eps, num.threads, keep.posteriors, keep.densities, transitionProbs.initial=NULL, tiestrength.initial=NULL, startProbs.initial=NULL, verbosity=1, update.tiestrengths=TRUE) {
 
     ptm.start <- startTimedMessage("Starting influence HMM with ", length(info$ID), " experiments")
     message("")
