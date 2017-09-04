@@ -105,7 +105,7 @@ heatmapCountCorrelation <- function(model, cluster=TRUE) {
         df$Var1 <- factor(df$Var1, levels=levels(df$Var1)[hc$order])
         df$Var2 <- factor(df$Var2, levels=levels(df$Var2)[hc$order])
     }
-    ggplt <- ggplot(df) + geom_tile(aes_string(x='Var1', y='Var2', fill='correlation')) + xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=0.5)) + scale_fill_gradient(low='red', high='yellow')
+    ggplt <- ggplot(df) + geom_tile(aes_string(x='Var1', y='Var2', fill='correlation')) + xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=0.5)) + scale_fill_gradient2(low='blue', high='yellow', mid='red')
     return(ggplt)
 
 }

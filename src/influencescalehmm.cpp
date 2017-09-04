@@ -455,7 +455,9 @@ void InfluenceScaleHMM::baumWelch(int* maxiter, int* maxtime, double* eps, bool*
 
 					this->tiestrength[c1Nmod][c2Nmod]= this->tiesumxi[c1Nmod][c2Nmod]/this->tiesumxitotal[c1Nmod];
 					//Rprintf("-------------------------------------TIESTRENGTH UPDATED %s \n\n", update_tiestrengths ? "true" : "false");
-				}else{
+				}
+				else
+				{
 					//Rprintf("-------------------------------------TIESTRENGTH NT UPDATED\n\n");
 
 				}

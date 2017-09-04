@@ -16,6 +16,7 @@
 #' @param keep.densities If set to \code{TRUE} (default=\code{FALSE}), densities will be available in the output. This should only be needed debugging.
 #' @param verbosity Verbosity level for the fitting procedure. 0 - No output, 1 - Iterations are printed.
 #' @param temp.savedir A directory where to store intermediate results if \code{per.chrom=TRUE}.
+#' @param update.tiestrengths Set to \code{FALSE} if you don't want to update the tiestrengths during Baum-Welch training.
 #' @return A \code{\link{multiHMM}} object.
 #' @seealso \code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksReplicates}}
 #' @import doParallel
@@ -79,7 +80,7 @@
 #    A                              A                            double*                 State transition probabilities matrix (See NOTES for dimension correspondence)
 #    proba                          proba                        double**                Initial state distributions (See NOTES for dimensions correspondence)
 #    tiestrength                    tiestrength                  double*                 Tiestrenghts (See NOTES for dimensions correspondence)
-#    keep.tiestrengths              keep_tiestrengths            bool*                   If set to TRUE 
+#    update.tiestrengths            update_tiestrengths          bool*                   If set to TRUE tiestrengths are updated in the C++ code
 #    A.initial                      initial A                    double*                 Initial values for the state transition matrix (See NOTES for dimensions correspondence)
 #    proba.initial                  initial proba                double*                 Initial value for the (See NOTES for dimensions correspondence) 
 #    tiestrength.initial            initial tiestrength          double*                 Initial values for the tiestrengths ( See NOTES for dimensions correspondence)
@@ -93,7 +94,7 @@
 #        
 #---------------------------------------------------------------------------------------------------------- 
 
-callPeaksInfluence <- function(hmms, per.chrom=TRUE, chromosomes=NULL, eps=0.01, keep.posteriors=FALSE, num.threads=1, max.time=NULL, max.iter=NULL, keep.densities=FALSE, verbosity=1, temp.savedir=NULL, update_tiestrengths= TRUE) {
+callPeaksInfluence <- function(hmms, per.chrom=TRUE, chromosomes=NULL, eps=0.01, keep.posteriors=FALSE, num.threads=1, max.time=NULL, max.iter=NULL, keep.densities=FALSE, verbosity=1, temp.savedir=NULL, update.tiestrengths=TRUE) {
 
     ## Intercept user input
     if (check.positive(eps)!=0) stop("argument 'eps' expects a positive numeric")
@@ -102,7 +103,7 @@ callPeaksInfluence <- function(hmms, per.chrom=TRUE, chromosomes=NULL, eps=0.01,
     if (is.null(max.iter)) { max.iter <- -1 } else if (check.nonnegative.integer(max.iter)!=0) { stop("argument 'max.iter' expects a non-negative integer") }
     if (check.logical(keep.posteriors)!=0) stop("argument 'keep.posteriors' expects a logical (TRUE or FALSE)")
     if (check.logical(keep.densities)!=0) stop("argument 'keep.densities' expects a logical (TRUE or FALSE)")
-    if (check.logical(update_tiestrengths)!=0) stop("argument 'keep.tiestrengths' expects a logical (TRUE or FALSE)")
+    if (check.logical(update.tiestrengths)!=0) stop("argument 'keep.tiestrengths' expects a logical (TRUE or FALSE)")
     if (check.integer(verbosity)!=0) stop("argument 'verbosity' expects an integer")
     if (length(hmms)==0) {
         stop("argument 'hmms' is of length=0. Cannot call multivariate peaks with no models.")
@@ -213,13 +214,13 @@ callPeaksInfluence <- function(hmms, per.chrom=TRUE, chromosomes=NULL, eps=0.01,
                 if (!is.null(temp.savedir)) {
                     temp.savename <- file.path(temp.savedir, paste0('chromosome_', chrom, '.RData'))
                     if (!file.exists(temp.savename)) {
-                        model <- runInfluence(binned.data=bincounts, stepbins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, update_tiestrengths=update_tiestrengths, verbosity=verbosity)
+                        model <- runInfluence(binned.data=bincounts, stepbins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, update.tiestrengths=update.tiestrengths, verbosity=verbosity)
                         save(model, file=temp.savename)
                         rm(model); gc()
                     }
                     temp.savename
                 } else {
-                    model <- runInfluence(binned.data=bincounts, stepbins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities,update_tiestrengths=update_tiestrengths, verbosity=verbosity)
+                    model <- runInfluence(binned.data=bincounts, stepbins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, update.tiestrengths=update.tiestrengths, verbosity=verbosity)
                     model
                 }
             }
@@ -233,7 +234,7 @@ callPeaksInfluence <- function(hmms, per.chrom=TRUE, chromosomes=NULL, eps=0.01,
                 if (!is.null(temp.savedir)) {
                     temp.savename <- file.path(temp.savedir, paste0('chromosome_', chrom, '.RData'))
                     if (!file.exists(temp.savename)) {
-                        model <- runInfluence(binned.data=bincounts, stepbins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities,update_tiestrengths=update_tiestrengths, verbosity=verbosity)
+                        model <- runInfluence(binned.data=bincounts, stepbins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, update.tiestrengths=update.tiestrengths, verbosity=verbosity)
                         ptm <- startTimedMessage("Saving chromosome ", chrom, " to temporary file ", temp.savename, " ...")
                         save(model, file=temp.savename)
                         rm(model); gc()
@@ -241,7 +242,7 @@ callPeaksInfluence <- function(hmms, per.chrom=TRUE, chromosomes=NULL, eps=0.01,
                     }
                     models[[as.character(chrom)]] <- temp.savename
                 } else {
-                    model <- runInfluence(binned.data=bincounts, stepbins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities,update_tiestrengths=update_tiestrengths, verbosity=verbosity)
+                    model <- runInfluence(binned.data=bincounts, stepbins=bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=1, keep.posteriors=keep.posteriors, keep.densities=keep.densities, update.tiestrengths=update.tiestrengths, verbosity=verbosity)
                     models[[as.character(chrom)]] <- model
                 }
                 message("Time spent for chromosome = ", chrom, ":", appendLF=FALSE)
@@ -260,7 +261,7 @@ callPeaksInfluence <- function(hmms, per.chrom=TRUE, chromosomes=NULL, eps=0.01,
     ## Run multivariate for all chromosomes
     } else {
 
-        model <- runInfluence(binned.data=p$bincounts, stepbins=p$bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=num.threads, keep.posteriors=keep.posteriors, keep.densities=keep.densities, update_tiestrengths=update_tiestrengths, verbosity=verbosity)
+        model <- runInfluence(binned.data=p$bincounts, stepbins=p$bins, info=p$info, comb.states=p$comb.states, use.states=p$use.states, distributions=p$distributions, weights=p$weights, max.iter=max.iter, max.time=max.time, eps=eps, num.threads=num.threads, keep.posteriors=keep.posteriors, keep.densities=keep.densities, update.tiestrengths=update.tiestrengths, verbosity=verbosity)
 
     }
 
@@ -274,7 +275,7 @@ callPeaksInfluence <- function(hmms, per.chrom=TRUE, chromosomes=NULL, eps=0.01,
 }
 
 #' @importFrom stats ecdf
-runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$state, use.states, distributions, weights, max.iter, max.time, eps, num.threads, keep.posteriors, keep.densities, transitionProbs.initial=NULL,tiestrength.initial=NULL, startProbs.initial=NULL, verbosity=1, update_tiestrengths=update_tiestrengths) {
+runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$state, use.states, distributions, weights, max.iter, max.time, eps, num.threads, keep.posteriors, keep.densities, transitionProbs.initial=NULL,tiestrength.initial=NULL, startProbs.initial=NULL, verbosity=1, update.tiestrengths=update.tiestrengths) {
 
     ptm.start <- startTimedMessage("Starting influence HMM with ", length(info$ID), " experiments")
     message("")
@@ -295,7 +296,6 @@ runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$sta
     ws3 <- unlist(lapply(weights,"[",3))
     ws <- ws1 / (ws2+ws1)
     get.posteriors <- TRUE
-    #update_tiestrengths <- TRUE
     if (get.posteriors) { lenPosteriors <- numbins * numstates * nummod } else { lenPosteriors <- 1 }
     if (keep.densities) { lenDensities <- numbins * numstates * nummod } else { lenDensities <- 1 }
 
@@ -313,13 +313,10 @@ runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$sta
     
     if (is.null(tiestrength.initial)) {
       
-      #tiestrength.initial <- array((1-0.9)/(nummod-1), dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
-      #diag(tiestrength.initial) <- 0.9
-      
-        cor <- cor(binned.data$counts[,,'0'])
-        tiestrength.initial <- sweep(x = cor, MARGIN = 1, STATS = rowSums(cor), FUN = '/')
-    
-
+      # tiestrength.initial <- array((1-0.9)/(nummod-1), dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
+      # diag(tiestrength.initial) <- 0.9
+      cor <- cor(binned.data$counts[,,'0'])^2
+      tiestrength.initial <- sweep(x = cor, MARGIN = 1, STATS = rowSums(cor), FUN = '/')
       
     }
     
@@ -379,8 +376,8 @@ runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$sta
             maxPosterior = double(length=numbins*nummod), # double* maxPosterior
             A = double(length=numstates*numstates*nummod*nummod), # double* A
             proba = double(length=nummod*numstates), # double* proba
-            tiestrength= double(length=nummod*nummod),# double* tiestrength
-            update_tiestrengths=as.logical(update_tiestrengths),#bool* keep_tiestrengths
+            tiestrength= double(length=nummod*nummod), # double* tiestrength
+            update.tiestrengths = as.logical(update.tiestrengths), # bool* update_tiestrengths
             loglik = double(length=1), # double* loglik
             A.initial = as.double(transitionProbs.initial), # double* initial A
             proba.initial = as.double(startProbs.initial), # double* initial proba
