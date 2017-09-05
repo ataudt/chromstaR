@@ -108,7 +108,7 @@ callPeaksInfluence <- function(hmms, per.chrom=TRUE, chromosomes=NULL, eps=0.01,
     if (length(hmms)==0) {
         stop("argument 'hmms' is of length=0. Cannot call multivariate peaks with no models.")
     }
-    if (length(hmms)==1) {
+    if (length(hmms)==0) {
         hmm <- loadHmmsFromFiles(hmms, check.class=class.univariate.hmm)[[1]]
         ### Make return object ###
             result <- list()
@@ -132,7 +132,7 @@ callPeaksInfluence <- function(hmms, per.chrom=TRUE, chromosomes=NULL, eps=0.01,
             result$bins$posteriorScores <- matrix(hmm$bins$posterior.modified.score, ncol=1, dimnames=list(NULL, result$info$ID))
             result$bins$differential.score <- 0
         ## Add combinations
-            use.states <- stateBrewer(experiment.table = result$info, mode = 'all')
+            use.states <- stateBrewer(experiment.table = result$info[, setdiff(names(result$info), 'ID'), drop=FALSE], mode = 'all')
             mapping <- NULL
             if (!is.null(use.states)) {
                 mapping <- use.states$combination
@@ -313,10 +313,14 @@ runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$sta
     
     if (is.null(tiestrength.initial)) {
       
-      # tiestrength.initial <- array((1-0.9)/(nummod-1), dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
-      # diag(tiestrength.initial) <- 0.9
-      cor <- cor(binned.data$counts[,,'0'])^2
-      tiestrength.initial <- sweep(x = cor, MARGIN = 1, STATS = rowSums(cor), FUN = '/')
+      if (nummod == 1) {
+          tiestrength.initial <- array(1, dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
+      } else {
+          # tiestrength.initial <- array((1-0.9)/(nummod-1), dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
+          # diag(tiestrength.initial) <- 0.9
+          cor <- abs(cor(binned.data$counts[,,'0']))
+          tiestrength.initial <- sweep(x = cor, MARGIN = 1, STATS = rowSums(cor), FUN = '/')
+      }
       
     }
     
@@ -505,13 +509,18 @@ runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$sta
     
         rm(hmm, ind); gc()
     } # loop over offsets
-    states.step <- bin2dec(astates.step[, , 'previousOffsets'])
-    rm(amaxPosterior.step, astates.step); gc()
+    ptm <- startTimedMessage("Collecting states and posteriors over offsets ...")
+    bin <- astates.step[, , 'previousOffsets']
+    dim(bin) <- dim(astates.step)[1:2]
+    dimnames(bin) <- dimnames(astates.step)[1:2]
+    states.step <- bin2dec(bin)
+    rm(amaxPosterior.step, astates.step, bin); gc()
 
-    # Average and normalize counts to RPKM
-    ptm <- startTimedMessage("Collecting counts and posteriors over offsets ...")
+    # Collect posteriors
     if (get.posteriors) {
         stepbins$posteriors <- aposteriors.step[,'modified',,'previousOffsets']
+        dim(stepbins$posteriors) <- dim(aposteriors.step)[c(1,3)]
+        dimnames(stepbins$posteriors) <- dimnames(aposteriors.step)[c(1,3)]
         stepbins$posteriorScores <- apply(stepbins$posteriors, 2, function(x) { stats::ecdf(x)(x)*1000 })
         rm(aposteriors.step); gc()
     }
@@ -619,18 +628,20 @@ prepareInfluence = function(hmms, chromosomes=NULL) {
     binary_statesmatrix <- matrix(NA, ncol=nummod, nrow=length(bincounts))
     bins.state <- hmm$bins$state[seq(from=1, to=length(hmm$bins), by=length(hmm$bins)/length(hmm$bincounts))]
     binary_statesmatrix[,1] <- c(FALSE,FALSE,TRUE)[bins.state]
-    for (i1 in 2:nummod) {
-        hmm <- suppressMessages( loadHmmsFromFiles(hmms[[i1]], check.class=class.univariate.hmm)[[1]] )
-    # hmm$bins$counts <- array(hmm$bins$counts, dim=c(length(hmm$bins), 1), dimnames=list(bin=NULL, offset='0'))
-    # hmm$bincounts <- hmm$bins
-    # hmm$bins$counts.rpkm <- rpkm.matrix(hmm$bins$counts, width(hmm$bins)[1])
-        info[[i1]] <- hmm$info
-        distributions[[i1]] <- hmm$distributions
-        weights[[i1]] <- hmm$weights
-        counts[,i1,] <- hmm$bincounts$counts
-        counts.rpkm[,i1] <- hmm$bins$counts.rpkm
-        bins.state <- hmm$bins$state[seq(from=1, to=length(hmm$bins), by=length(hmm$bins)/length(hmm$bincounts))]
-        binary_statesmatrix[,i1] <- c(FALSE,FALSE,TRUE)[bins.state] # F,F,T corresponds to levels 'zero-inflation','unmodified','modified'
+    if (nummod > 1) {
+        for (i1 in 2:nummod) {
+            hmm <- suppressMessages( loadHmmsFromFiles(hmms[[i1]], check.class=class.univariate.hmm)[[1]] )
+        # hmm$bins$counts <- array(hmm$bins$counts, dim=c(length(hmm$bins), 1), dimnames=list(bin=NULL, offset='0'))
+        # hmm$bincounts <- hmm$bins
+        # hmm$bins$counts.rpkm <- rpkm.matrix(hmm$bins$counts, width(hmm$bins)[1])
+            info[[i1]] <- hmm$info
+            distributions[[i1]] <- hmm$distributions
+            weights[[i1]] <- hmm$weights
+            counts[,i1,] <- hmm$bincounts$counts
+            counts.rpkm[,i1] <- hmm$bins$counts.rpkm
+            bins.state <- hmm$bins$state[seq(from=1, to=length(hmm$bins), by=length(hmm$bins)/length(hmm$bincounts))]
+            binary_statesmatrix[,i1] <- c(FALSE,FALSE,TRUE)[bins.state] # F,F,T corresponds to levels 'zero-inflation','unmodified','modified'
+        }
     }
     info <- do.call(rbind, info)
     rownames(info) <- NULL
@@ -662,7 +673,7 @@ prepareInfluence = function(hmms, chromosomes=NULL) {
     }
     bincounts$binary_statesmatrix <- NULL
     bincounts$state <- decimal_states
-    use.states <- stateBrewer(experiment.table = info[, setdiff(names(info), 'ID')], mode = 'all')
+    use.states <- stateBrewer(experiment.table = info[, setdiff(names(info), 'ID'), drop=FALSE], mode = 'all')
     if (is.null(use.states)) {
         comb.states.table <- sort(table(bincounts$state), decreasing=TRUE)
         comb.states <- names(comb.states.table)

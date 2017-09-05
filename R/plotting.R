@@ -105,7 +105,7 @@ heatmapCountCorrelation <- function(model, cluster=TRUE) {
         df$Var1 <- factor(df$Var1, levels=levels(df$Var1)[hc$order])
         df$Var2 <- factor(df$Var2, levels=levels(df$Var2)[hc$order])
     }
-    ggplt <- ggplot(df) + geom_tile(aes_string(x='Var1', y='Var2', fill='correlation')) + xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=0.5)) + scale_fill_gradient2(low='blue', high='yellow', mid='red')
+    ggplt <- ggplot(df) + geom_tile(aes_string(x='Var1', y='Var2', fill='correlation')) + xlab('') + ylab('') + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=0.5)) + scale_fill_gradient2(low='blue', high='yellow', mid='red', limits=c(-1,1))
     return(ggplt)
 
 }
@@ -134,13 +134,13 @@ heatmapTransitionProbs <- function(model) {
         A <- reshape2::melt(model$transitionProbs, varnames=c('from','to'), value.name='prob')
         A$from <- factor(A$from, levels=stateorderByTransition(model))
         A$to <- factor(A$to, levels=stateorderByTransition(model))
-        ggplt <- ggplot(data=A) + geom_tile(aes_string(x='to', y='from', fill='prob')) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5)) + scale_fill_gradient(low="white", high="blue")
+        ggplt <- ggplot(data=A) + geom_tile(aes_string(x='to', y='from', fill='prob')) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5)) + scale_fill_gradient(low="white", high="blue", limits=c(0,1))
     } else if (length(dim(model$transitionProbs)) == 4) {
         A <- reshape2::melt(model$transitionProbs, value.name='prob')
         levels <- paste(rep(dimnames(model$transitionProbs)[[3]], each=dim(model$transitionProbs)[2]), dimnames(model$transitionProbs)[[2]])
         A$from <- factor(paste(A$fromTrack, A$fromState), levels = levels)
         A$to <- factor(paste(A$toTrack, A$toState), levels = levels)
-        ggplt <- ggplot(data=A) + geom_tile(aes_string(x='to', y='from', fill='prob')) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5)) + scale_fill_gradient(low="white", high="blue")
+        ggplt <- ggplot(data=A) + geom_tile(aes_string(x='to', y='from', fill='prob')) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5)) + scale_fill_gradient(low="white", high="blue", limits=c(0,1))
     }
 
     return(ggplt)
@@ -174,7 +174,7 @@ heatmapTiestrengths <- function(model) {
         tie <- reshape2::melt(model$tiestrengths, value.name='prob')
         tie$from <- factor(tie$fromTrack, levels = dimnames(model$tiestrengths)[[1]])
         tie$to <- factor(tie$toTrack, levels = dimnames(model$tiestrengths)[[1]])
-        ggplt <- ggplot(data=tie) + geom_tile(aes_string(x='toTrack', y='fromTrack', fill='prob')) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5)) + scale_fill_gradient(low="red", high="yellow")
+        ggplt <- ggplot(data=tie) + geom_tile(aes_string(x='toTrack', y='fromTrack', fill='prob')) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5)) + scale_fill_gradient(low="red", high="yellow", limits=c(0,1))
     }
 
     return(ggplt)

@@ -362,7 +362,8 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
                     mapping <- use.states$combination
                     names(mapping) <- use.states$state
                 } else {
-                    mapping <- NULL
+                    mapping <- comb.states
+                    names(mapping) <- comb.states
                 }
                 result$mapping <- mapping
                 combinations <- mapping[as.character(comb.states)]
@@ -465,11 +466,11 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
     
         rm(hmm, ind); gc()
     } # loop over offsets
+    ptm <- startTimedMessage("Collecting states and posteriors over offsets ...")
     states.step <- astates.step[, 'previousOffsets']
     rm(amaxPosterior.step, astates.step); gc()
 
     # Average and normalize counts to RPKM
-    ptm <- startTimedMessage("Collecting counts and posteriors over offsets ...")
     # if (is.null(counts.rpkm)) {
     #     counts.step <- acounts.step[, , 'previousOffsets'] / length(offsets)
     #     rm(acounts.step); gc()
