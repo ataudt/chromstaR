@@ -211,7 +211,7 @@ combineMultivariates <- function(hmms, mode) {
             combs[[as.character(condition)]] <- mapping.condition[as.character(hmm$bins$state)]
             stopTimedMessage(ptm)
         }
-        combs.df <- as.data.frame(combs) # get factors instead of characters
+        combs.df <- as.data.frame(combs, stringsAsFactors=TRUE) # get factors instead of characters
         combs.df <- methods::as(combs.df, 'DataFrame')
         
     } else if (mode == 'replicate') {
