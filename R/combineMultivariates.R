@@ -183,7 +183,7 @@ combineMultivariates <- function(hmms, mode) {
             # Make combinations
             combs[[condition]] <- mapping[as.character(states.cond)]
         }
-        combs.df <- as.data.frame(combs) # get factors instead of characters
+        combs.df <- as.data.frame(combs, stringsAsFactors=TRUE) # get factors instead of characters
         combs.df <- methods::as(combs.df, 'DataFrame')
         stopTimedMessage(ptm)
         
