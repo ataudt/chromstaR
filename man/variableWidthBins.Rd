@@ -38,4 +38,3 @@ hist(width(bins[['1000']]), breaks=50)
 \author{
 Aaron Taudt
 }
-

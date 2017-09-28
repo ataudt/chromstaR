@@ -55,4 +55,3 @@ freqs$table
 \author{
 Aaron Taudt
 }
-

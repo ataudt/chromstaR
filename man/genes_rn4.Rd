@@ -12,4 +12,3 @@ A data.frame containing gene coordinates and biotypes of the rn4 assembly.
 data(genes_rn4)
 head(genes_rn4)
 }
-

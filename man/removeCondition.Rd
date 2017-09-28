@@ -30,4 +30,3 @@ print(unique(model$info$condition))
 new.model <- removeCondition(model, conditions='SHR')
 
 }
-

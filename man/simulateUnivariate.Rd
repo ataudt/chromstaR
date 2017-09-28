@@ -21,4 +21,3 @@ A \code{list} with entries $bins containing the simulated states and read count,
 \description{
 Simulate known states, read counts and read coordinates using a univariate Hidden Markov Model with three states ("zero-inflation", "unmodified" and "modified").
 }
-

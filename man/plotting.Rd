@@ -32,4 +32,3 @@ Other plotting functions:
   \item{\code{\link{heatmapCombinations}}}{Binary presence/absence pattern of combinatorial states.}
 }
 }
-

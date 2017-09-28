@@ -43,4 +43,3 @@ plotHistogram(hmm)
 \seealso{
 \code{\link{plotting}}
 }
-

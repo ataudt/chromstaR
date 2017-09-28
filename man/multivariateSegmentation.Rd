@@ -17,4 +17,3 @@ A \code{\link[GenomicRanges]{GRanges}} with segmented regions.
 \description{
 Make segmentation from bins for a \code{\link{multiHMM}} object.
 }
-

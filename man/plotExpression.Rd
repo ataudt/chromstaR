@@ -57,10 +57,9 @@ plotExpression(model, expression.SHR, return.marks=TRUE) +
  ggtitle('Expression of marks overlapping combinatorial states')
 
 }
-\author{
-Aaron Taudt
-}
 \seealso{
 \code{\link{plotting}}
 }
-
+\author{
+Aaron Taudt
+}

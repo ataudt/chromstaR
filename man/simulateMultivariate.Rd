@@ -30,4 +30,3 @@ A \code{list()} with entries $bins containing the simulated states and read coun
 \description{
 Simulate known states, read counts and read coordinates using a multivariate Hidden Markov Model.
 }
-

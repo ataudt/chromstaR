@@ -52,10 +52,9 @@ states <- chromstaR:::combinatorialStates(models, binary=FALSE)
 table(states)
 
 }
-\author{
-Aaron Taudt
-}
 \seealso{
 \code{\link{dec2bin}}, \code{\link{bin2dec}}
 }
-
+\author{
+Aaron Taudt
+}

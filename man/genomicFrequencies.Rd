@@ -30,4 +30,3 @@ genomicFrequencies(model)
 \author{
 Aaron Taudt
 }
-

@@ -18,4 +18,3 @@ Read a chromstaR configuration file into a list structure. The configuration fil
 \author{
 Aaron Taudt
 }
-

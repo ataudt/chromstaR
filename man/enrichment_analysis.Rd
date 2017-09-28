@@ -2,9 +2,9 @@
 % Please edit documentation in R/enrichmentAnalysis.R
 \name{enrichment_analysis}
 \alias{enrichment_analysis}
+\alias{plotFoldEnrichHeatmap}
 \alias{plotEnrichCountHeatmap}
 \alias{plotEnrichment}
-\alias{plotFoldEnrichHeatmap}
 \title{Enrichment analysis}
 \usage{
 plotFoldEnrichHeatmap(hmm, annotations, what = "combinations",
@@ -59,6 +59,7 @@ Plotting functions for enrichment analysis of \code{\link{multiHMM}} or \code{\l
 
 \item \code{plotEnrichment}: Plot fold enrichment of combinatorial states around and inside of annotation.
 }}
+
 \examples{
 ### Get an example multiHMM ###
 file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
@@ -110,10 +111,9 @@ print(genes)
    plotFoldEnrichHeatmap(model, annotations=biotypes) + coord_flip()
 
 }
-\author{
-Aaron Taudt
-}
 \seealso{
 \code{\link{plotting}}
 }
-
+\author{
+Aaron Taudt
+}

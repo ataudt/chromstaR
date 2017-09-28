@@ -29,4 +29,3 @@ A \code{\link[ggplot2:ggplot]{ggplot}} object.
 \description{
 Plot a simple genome browser view. This is useful for scripted genome browser snapshots.
 }
-

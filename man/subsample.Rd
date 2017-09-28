@@ -20,4 +20,3 @@ Normalize read counts to a given read depth. Reads counts are randomly removed f
 \author{
 Aaron Taudt
 }
-

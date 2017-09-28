@@ -27,4 +27,3 @@ heatmapTransitionProbs(model)
 \seealso{
 \code{\link{plotting}}
 }
-

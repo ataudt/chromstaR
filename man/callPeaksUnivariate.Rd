@@ -84,10 +84,9 @@ hmm <- callPeaksUnivariate(binned, max.time=60, eps=1)
 plotHistogram(hmm)
 
 }
-\author{
-Aaron Taudt, Maria Colome Tatche
-}
 \seealso{
 \code{\link{uniHMM}}, \code{\link{callPeaksMultivariate}}
 }
-
+\author{
+Aaron Taudt, Maria Colome Tatche
+}

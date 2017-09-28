@@ -11,4 +11,3 @@
 \item \code{\link{combinedMultiHMM}}: Returned by \code{\link{combineMultivariates}}.
 }
 }
-

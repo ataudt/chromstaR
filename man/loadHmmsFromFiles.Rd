@@ -35,4 +35,3 @@ loaded.hmm <- loadHmmsFromFiles(temp.file)[[1]]
 class(loaded.hmm)
 
 }
-

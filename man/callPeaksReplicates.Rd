@@ -61,10 +61,9 @@ for (i1 in 1:length(binned.data)) {
 multi.model <- callPeaksReplicates(models, force.equal=TRUE, max.time=60, eps=1)
 
 }
-\author{
-Aaron Taudt
-}
 \seealso{
 \code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksMultivariate}}
 }
-
+\author{
+Aaron Taudt
+}
