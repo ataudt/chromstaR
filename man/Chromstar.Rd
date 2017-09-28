@@ -86,4 +86,3 @@ Chromstar(inputfolder, experiment.table=experiment_table_SHR,
          eps.multivariate=1)
 
 }
-

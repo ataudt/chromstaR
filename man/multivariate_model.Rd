@@ -14,4 +14,3 @@ file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData"
                     package="chromstaR")
 model <- get(load(file))
 }
-

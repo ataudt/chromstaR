@@ -36,4 +36,3 @@ data <- readCustomBedFile(bedfile, skip=10)
 \author{
 Aaron Taudt
 }
-

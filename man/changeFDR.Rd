@@ -42,4 +42,3 @@ plotHistogram(changeFDR(hmm, fdr=1e-12)) + ylim(0,0.3)
 \author{
 Aaron Taudt
 }
-

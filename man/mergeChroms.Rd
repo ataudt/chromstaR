@@ -20,4 +20,3 @@ Merge several \code{\link{multiHMM}}s into one object. This can be done to merge
 \author{
 Aaron Taudt
 }
-

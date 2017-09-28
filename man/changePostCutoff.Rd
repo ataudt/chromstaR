@@ -42,4 +42,3 @@ plotHistogram(changePostCutoff(hmm, post.cutoff=0.99)) + ylim(0,0.25)
 \author{
 Aaron Taudt
 }
-

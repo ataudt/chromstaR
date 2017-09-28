@@ -43,4 +43,3 @@ reads <- readBamFileAsGRanges(bamfile, chromosomes='chr12', pairedEndReads=FALSE
 print(reads)
 
 }
-

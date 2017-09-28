@@ -28,10 +28,9 @@ file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData"
 heatmapCombinations(file)
 
 }
-\author{
-Aaron Taudt
-}
 \seealso{
 \code{\link{plotting}}
 }
-
+\author{
+Aaron Taudt
+}

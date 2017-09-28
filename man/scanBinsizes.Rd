@@ -37,4 +37,3 @@ The function first runs \code{\link{callPeaksUnivariate}} on the given binned.da
 \author{
 Aaron Taudt
 }
-

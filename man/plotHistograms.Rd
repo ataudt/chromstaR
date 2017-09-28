@@ -20,4 +20,3 @@ Plot histograms of binned read counts with fitted mixture distributions from a \
 \seealso{
 \code{\link{plotting}}
 }
-

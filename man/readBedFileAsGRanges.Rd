@@ -40,4 +40,3 @@ reads <- readBedFileAsGRanges(bedfile, assembly=rn4_chrominfo, chromosomes='chr1
 print(reads)
 
 }
-

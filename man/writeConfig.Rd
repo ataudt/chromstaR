@@ -20,4 +20,3 @@ Write a chromstaR configuration file from a list structure.
 \author{
 Aaron Taudt
 }
-

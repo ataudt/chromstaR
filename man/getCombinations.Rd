@@ -27,4 +27,3 @@ seg.combs <- getCombinations(model$segments)
 print(seg.combs)
 
 }
-

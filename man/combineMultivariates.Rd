@@ -76,4 +76,3 @@ comb.model <- combineMultivariates(hmms, mode='combinatorial')
 \author{
 Aaron Taudt
 }
-

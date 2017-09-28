@@ -52,10 +52,9 @@ exportGRangesAsBedFile(binned[binned$counts[,1] > 20], filename=tempfile(),
              trackname='read counts above 20')
 
 }
-\author{
-Aaron Taudt
-}
 \seealso{
 \code{\link{exportPeaks}}, \code{\link{exportCounts}}, \code{\link{exportCombinations}}
 }
-
+\author{
+Aaron Taudt
+}

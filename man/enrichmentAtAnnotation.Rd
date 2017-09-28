@@ -34,4 +34,3 @@ The function calculates the enrichment of a genomic feature with peaks or combin
 \author{
 Aaron Taudt
 }
-

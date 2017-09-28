@@ -18,4 +18,3 @@ Plot a karyogram with read counts and peak calls from a \code{\link{uniHMM}} obj
 \author{
 Aaron Taudt
 }
-

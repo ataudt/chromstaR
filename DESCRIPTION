@@ -38,4 +38,4 @@ LazyLoad: yes
 VignetteBuilder: knitr
 Packaged: 2014-05-03 00:00:00 CET+1; Taudt
 biocViews: Software, DifferentialPeakCalling, HiddenMarkovModel, ChIPSeq, HistoneModification, MultipleComparison
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1

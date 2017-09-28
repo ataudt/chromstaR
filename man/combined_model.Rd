@@ -14,4 +14,3 @@ file <- system.file("data","combined_mode-differential.RData",
                     package="chromstaR")
 model <- get(load(file))
 }
-

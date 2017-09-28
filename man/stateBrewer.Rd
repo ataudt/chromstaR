@@ -55,4 +55,3 @@ stateBrewer(experiment_table, mode='full', exclusive.table=excl)
 \author{
 Aaron Taudt
 }
-

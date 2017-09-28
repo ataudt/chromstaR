@@ -50,4 +50,3 @@ genomicFrequencies(pseudo.multi.HMM)
 \author{
 Aaron Taudt
 }
-

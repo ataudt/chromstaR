@@ -29,4 +29,3 @@ heatmapCountCorrelation(model)
 \seealso{
 \code{\link{plotting}}
 }
-

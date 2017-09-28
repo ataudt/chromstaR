@@ -17,4 +17,3 @@ A \code{\link[GenomicRanges]{GRanges}} with read coordinates.
 \description{
 Simulate read coordinates using read counts as input.
 }
-
