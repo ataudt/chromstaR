@@ -3,7 +3,7 @@ CHANGES IN VERSION 1.3.2
 
 SIGNIFICANT USER-LEVEL CHANGES
 
-    o Column 'peakScores' is now bounded between 0 and 1000. It is calculated from columns 'posteriorScores'.
+    o Column 'peakScores' is now bounded between 0 and 1000 and uniformly distributed. It is calculated from columns 'posteriorScores'.
     
     
 CHANGES IN VERSION 1.3.1
