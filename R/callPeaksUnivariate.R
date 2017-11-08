@@ -52,8 +52,18 @@
 callPeaksUnivariate <- function(binned.data, input.data=NULL, prefit.on.chr=NULL, short=TRUE, eps=0.1, init="standard", max.time=NULL, max.iter=5000, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, post.cutoff=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
 
     if (class(binned.data) == 'character') { 
-        messageU("Loading file ",binned.data, overline="_", underline=NULL)
-        binned.data <- loadHmmsFromFiles(binned.data)[[1]]
+        messageU("Loading file(s) ", paste0(binned.data, collapse=', '), overline="_", underline=NULL)
+        binned.datas <- loadHmmsFromFiles(binned.data)
+        binned.data <- binned.datas[[1]]
+        offsets <- dimnames(binned.data$counts)[[2]]
+        if (length(binned.datas) > 1) {
+            for (i1 in 2:length(binned.datas)) {
+                for (ioffset in 1:length(offsets)) {
+                    offset <- offsets[ioffset]
+                    binned.data$counts[,offset] <- binned.data$counts[,offset, drop=FALSE] + binned.datas[[i1]]$counts[,offset, drop=FALSE]
+                }
+            }
+        }
     }
     if (!is.null(input.data)) {
         if (class(input.data) == 'character') { 

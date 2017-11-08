@@ -78,7 +78,7 @@ binReads <- function(file, experiment.table=NULL, ID=NULL, assembly, bamindex=fi
     ## Create INFO object as row from the experiment.table
     if (!is.null(experiment.table)) {
         check.experiment.table(experiment.table)
-        info <- experiment.table[basename(as.character(experiment.table$file))==basename(file),]
+        info <- experiment.table[grepl(basename(file),basename(as.character(experiment.table$file))),]
         if (nrow(info) > 1) {
             if (is.null(ID)) {
                 stop("Please specify argument 'ID' if multiple files in 'experiment.table' are identical.")
