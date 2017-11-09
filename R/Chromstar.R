@@ -316,18 +316,22 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         temp <- foreach (i1 = 1:nrow(inputfiles), .packages=c("chromstaR")) %dopar% {
             ID <- inputfiles[i1, 'ID']
             inputfile <- inputfiles[i1, 'file']
-            inputsavename <- inputsavenames[i1, 'file']
-            inputsavename.stepsize <- inputsavenames.stepsize[i1, 'file']
-            parallel.helper(ID, input=TRUE, file=inputfile, savename=inputsavename, savename.stepsize=inputsavename.stepsize)
+            if (!is.na(inputfile)) {
+                inputsavename <- inputsavenames[i1, 'file']
+                inputsavename.stepsize <- inputsavenames.stepsize[i1, 'file']
+                parallel.helper(ID, input=TRUE, file=inputfile, savename=inputsavename, savename.stepsize=inputsavename.stepsize)
+            }
         }
         stopTimedMessage(ptm)
     } else {
         for (i1 in 1:nrow(inputfiles)) {
             ID <- inputfiles[i1, 'ID']
             inputfile <- inputfiles[i1, 'file']
-            inputsavename <- inputsavenames[i1, 'file']
-            inputsavename.stepsize <- inputsavenames.stepsize[i1, 'file']
-            parallel.helper(ID, input=TRUE, file=inputfile, savename=inputsavename, savename.stepsize=inputsavename.stepsize)
+            if (!is.na(inputfile)) {
+                inputsavename <- inputsavenames[i1, 'file']
+                inputsavename.stepsize <- inputsavenames.stepsize[i1, 'file']
+                parallel.helper(ID, input=TRUE, file=inputfile, savename=inputsavename, savename.stepsize=inputsavename.stepsize)
+            }
         }
     }
     
