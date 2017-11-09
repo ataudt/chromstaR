@@ -301,17 +301,23 @@ combineMultivariates <- function(hmms, mode) {
     stopTimedMessage(ptm)
 
     ## Assign combinatorial states
+    ptm <- startTimedMessage("Assigning combinatorial states ...")
     bins$state <- states
     mcols(bins)[names(combs.df)] <- combs.df
+    stopTimedMessage(ptm)
     
     ## Transferring counts and posteriors
+    ptm <- startTimedMessage("Transferring counts and posteriors ...")
     bins$counts.rpkm <- counts
     bins$posteriors <- posteriors
     bins$posteriorScores <- posteriorScores
     bins$peakScores <- peakScores
+    stopTimedMessage(ptm)
 
     ## Add differential score ##
+    ptm <- startTimedMessage("Adding differential score ...")
     bins$differential.score <- differentialScoreSum(bins$peakScores, infos)
+    stopTimedMessage(ptm)
 
     ### Redo the segmentation for all conditions combined
     ptm <- startTimedMessage("Redoing segmentation for all conditions combined ...")
