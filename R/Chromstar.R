@@ -98,11 +98,13 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         ID <- IDs[i1]
         filestructure[[ID]] <- list()
         filestructure[[ID]][['datafiles']] <- datafiles.splt[[i1]]
-        filestructure[[ID]][['inputfiles']] <- inputfiles.splt[[i1]]
         filestructure[[ID]][['datasavenames']] <- paste0(ID, '_', datafiles.splt[[i1]], '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData')
-        filestructure[[ID]][['inputsavenames']] <- paste0('input_', inputfiles.splt[[i1]], '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData')
         filestructure[[ID]][['datasavenames.stepsize']] <- paste0(ID, '_', datafiles.splt[[i1]], '_binsize', stepsize.string, '_stepsize', stepsize.string, '.RData')
-        filestructure[[ID]][['inputsavenames.stepsize']] <- paste0('input_', inputfiles.splt[[i1]], '_binsize', stepsize.string, '_stepsize', stepsize.string, '.RData')
+        if (!is.na(inputfiles.splt[[i1]][1])) {
+            filestructure[[ID]][['inputfiles']] <- inputfiles.splt[[i1]]
+            filestructure[[ID]][['inputsavenames']] <- paste0('input_', inputfiles.splt[[i1]], '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData')
+            filestructure[[ID]][['inputsavenames.stepsize']] <- paste0('input_', inputfiles.splt[[i1]], '_binsize', stepsize.string, '_stepsize', stepsize.string, '.RData')
+        }
         filestructure[[ID]][['unifilenames']] <- paste0(ID, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData')
     }
     filestructure.df <- reshape2::melt(filestructure)
