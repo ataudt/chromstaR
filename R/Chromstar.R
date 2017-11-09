@@ -311,26 +311,28 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     inputfiles <- filestructure.df[filestructure.df$what == 'inputfiles', , drop=FALSE]
     inputsavenames <- filestructure.df[filestructure.df$what == 'inputsavenames', , drop=FALSE]
     inputsavenames.stepsize <- filestructure.df[filestructure.df$what == 'inputsavenames.stepsize', , drop=FALSE]
-    if (numcpu > 1) {
-        ptm <- startTimedMessage("Binning input ...")
-        temp <- foreach (i1 = 1:nrow(inputfiles), .packages=c("chromstaR")) %dopar% {
-            ID <- inputfiles[i1, 'ID']
-            inputfile <- inputfiles[i1, 'file']
-            if (!is.na(inputfile)) {
-                inputsavename <- inputsavenames[i1, 'file']
-                inputsavename.stepsize <- inputsavenames.stepsize[i1, 'file']
-                parallel.helper(ID, input=TRUE, file=inputfile, savename=inputsavename, savename.stepsize=inputsavename.stepsize)
+    if (nrow(inputfiles) > 0) {
+        if (numcpu > 1) {
+            ptm <- startTimedMessage("Binning input ...")
+            temp <- foreach (i1 = 1:nrow(inputfiles), .packages=c("chromstaR")) %dopar% {
+                ID <- inputfiles[i1, 'ID']
+                inputfile <- inputfiles[i1, 'file']
+                if (!is.na(inputfile)) {
+                    inputsavename <- inputsavenames[i1, 'file']
+                    inputsavename.stepsize <- inputsavenames.stepsize[i1, 'file']
+                    parallel.helper(ID, input=TRUE, file=inputfile, savename=inputsavename, savename.stepsize=inputsavename.stepsize)
+                }
             }
-        }
-        stopTimedMessage(ptm)
-    } else {
-        for (i1 in 1:nrow(inputfiles)) {
-            ID <- inputfiles[i1, 'ID']
-            inputfile <- inputfiles[i1, 'file']
-            if (!is.na(inputfile)) {
-                inputsavename <- inputsavenames[i1, 'file']
-                inputsavename.stepsize <- inputsavenames.stepsize[i1, 'file']
-                parallel.helper(ID, input=TRUE, file=inputfile, savename=inputsavename, savename.stepsize=inputsavename.stepsize)
+            stopTimedMessage(ptm)
+        } else {
+            for (i1 in 1:nrow(inputfiles)) {
+                ID <- inputfiles[i1, 'ID']
+                inputfile <- inputfiles[i1, 'file']
+                if (!is.na(inputfile)) {
+                    inputsavename <- inputsavenames[i1, 'file']
+                    inputsavename.stepsize <- inputsavenames.stepsize[i1, 'file']
+                    parallel.helper(ID, input=TRUE, file=inputfile, savename=inputsavename, savename.stepsize=inputsavename.stepsize)
+                }
             }
         }
     }
