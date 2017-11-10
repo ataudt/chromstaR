@@ -11,7 +11,7 @@ plotFoldEnrichHeatmap(hmm, annotations, what = "combinations",
   combinations = NULL, marks = NULL, plot = TRUE, logscale = TRUE)
 
 plotEnrichCountHeatmap(hmm, annotation, bp.around.annotation = 10000,
-  max.rows = 1000)
+  max.rows = 1000, combinations = NULL)
 
 plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
   region = c("start", "inside", "end"), num.intervals = 20,

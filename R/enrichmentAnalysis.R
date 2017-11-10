@@ -257,7 +257,7 @@ plotFoldEnrichHeatmap <- function(hmm, annotations, what="combinations", combina
 #' @importFrom reshape2 melt
 #' @importFrom IRanges subsetByOverlaps
 #' @export
-plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=1000) {
+plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=1000, combinations=NULL) {
 
     hmm <- loadHmmsFromFiles(hmm, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     ## Variables
@@ -319,8 +319,12 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
     ## Go through combinations and then IDs to get the read counts
     ptm <- startTimedMessage("Getting read counts")
     counts <- list()
-    combinations <- names(sort(table(bins$combination[index]), decreasing = TRUE))
-    for (combination in combinations) {
+    if (is.null(combinations)) {
+        comb.levels <- names(sort(table(bins$combination[index]), decreasing = TRUE))
+    } else {
+        comb.levels <- combinations
+    }
+    for (combination in comb.levels) {
         counts[[combination]] <- list()
         index.combination <- which(bins$combination[index]==combination)
         ext.index.combination <- ext.index[index.combination,]
@@ -346,9 +350,11 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
     ## Prepare data.frame
     ptm <- startTimedMessage("Making the plot ...")
     # Exclude rare combinations for plotting
-    num.comb <- sapply(counts, function(x) { nrow(x[[1]]) })
-    comb2keep <- names(num.comb)[num.comb/sum(num.comb) > 0.005]
-    counts <- counts[comb2keep]
+    if (is.null(combinations)) {
+        num.comb <- sapply(counts, function(x) { nrow(x[[1]]) })
+        comb2keep <- names(num.comb)[num.comb/sum(num.comb) > 0.005]
+        counts <- counts[comb2keep]
+    }
     df <- reshape2::melt(counts)
     names(df) <- c('id','position','RPKM','ID','combination')
     df$id <- factor(df$id, levels=rev(unique(df$id)))
