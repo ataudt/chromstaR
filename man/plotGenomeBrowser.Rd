@@ -29,3 +29,15 @@ A \code{\link[ggplot2:ggplot]{ggplot}} object.
 \description{
 Plot a simple genome browser view. This is useful for scripted genome browser snapshots.
 }
+\examples{
+## Get an example multiHMM ##
+file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
+                    package="chromstaR")
+model <- get(load(file))
+## Plot count correlations as heatmap
+bins <- model$bins
+bins$counts <- model$bins$counts.rpkm[,1]
+plotGenomeBrowser(counts=bins, peaklist=model$peaks,
+                 chr='chr12', start=1, end=1e6)
+
+}

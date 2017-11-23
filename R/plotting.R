@@ -385,6 +385,18 @@ plotBoxplot <- function(model) {
 #' @param style One of \code{c('peaks', 'density')}.
 #' @param peakTrackHeight Relative height of the tracks given in \code{peaklist} compared to the \code{counts}.
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
+#' @export
+#' @examples
+#'## Get an example multiHMM ##
+#'file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
+#'                     package="chromstaR")
+#'model <- get(load(file))
+#'## Plot count correlations as heatmap
+#'bins <- model$bins
+#'bins$counts <- model$bins$counts.rpkm[,1]
+#'plotGenomeBrowser(counts=bins, peaklist=model$peaks,
+#'                  chr='chr12', start=1, end=1e6)
+#'
 plotGenomeBrowser <- function(counts, peaklist=NULL, chr, start, end, countcol='black', peakcols=NULL, style='peaks', peakTrackHeight=5) {
   
     ## Select ranges to plot
