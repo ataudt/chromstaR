@@ -246,9 +246,15 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     utils::write.table(chrom.lengths.df, file=file.path(outputfolder, 'chrominfo.tsv'), sep='\t', row.names=FALSE, col.names=TRUE, quote=FALSE)
     
     ### Make bins ###
-    pre.bins.list <- fixedWidthBins(chrom.lengths=chrom.lengths, chromosomes=conf[['chromosomes']], binsizes=c(binsize, stepsize))
-    pre.bins <- pre.bins.list[[binsize.string]]
-    pre.bins.stepsize <- pre.bins.list[[stepsize.string]]
+    if (binsize != stepsize) {
+        pre.bins.list <- fixedWidthBins(chrom.lengths=chrom.lengths, chromosomes=conf[['chromosomes']], binsizes=c(binsize, stepsize))
+        pre.bins <- pre.bins.list[[binsize.string]]
+        pre.bins.stepsize <- pre.bins.list[[stepsize.string]]
+    } else {
+        pre.bins.list <- fixedWidthBins(chrom.lengths=chrom.lengths, chromosomes=conf[['chromosomes']], binsizes=c(binsize))
+        pre.bins <- pre.bins.list[[binsize.string]]
+        pre.bins.stepsize <- pre.bins.list[[binsize.string]]
+    }
     
     ### Count reads in bins ###
     if (!file.exists(binpath)) { dir.create(binpath) }
