@@ -547,7 +547,6 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     result$bins$posteriors <- posteriors
     if (!control) {
         result$bins$posterior.modified <- posteriors[,'modified']
-        result$bins$posterior.modified.score <- stats::ecdf(result$bins$posterior.modified)(result$bins$posterior.modified) * 1000
     }
     if (keep.densities) {
         result$bincounts$densities <- matrix(densities, ncol=numstates)
@@ -560,7 +559,9 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     result <- stateswap(result)
     
     ## Peak score as maximum posterior in that peak ##
-    result$bins$peakScores <- getPeakScore.univariate(result$bins)
+    result$bins$maxPostInPeak <- getMaxPostInPeaks.univariate(result$bins$state, result$bins$posterior.modified)
+    result$bins$peakScores <- calculatePeakScores.univariate(result$bins$maxPostInPeak)
+    result$bins$maxPostInPeak <- NULL
     
     ## Segmentation ##
     ptm <- startTimedMessage("Making segmentation ...")

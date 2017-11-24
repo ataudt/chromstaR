@@ -479,7 +479,6 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
     # }
     if (get.posteriors) {
         stepbins$posteriors <- aposteriors.step[,,'previousOffsets']
-        stepbins$posteriorScores <- apply(stepbins$posteriors, 2, function(x) { stats::ecdf(x)(x)*1000 })
         rm(aposteriors.step); gc()
     }
     stopTimedMessage(ptm)
@@ -502,13 +501,14 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
     
     if (get.posteriors) {
         ptm <- startTimedMessage("Calculating peak scores ...")
-        result$bins$peakScores <- getPeakScores(result$bins)
+        result$bins$maxPostInPeak <- getMaxPostInPeaks(result$bins$state, result$bins$posteriors)
+        result$bins$peakScores <- calculatePeakScores(result$bins$maxPostInPeak)
+        result$bins$maxPostInPeak <- NULL
         result$bins$differential.score <- differentialScoreSum(result$bins$peakScores, result$info)
         stopTimedMessage(ptm)
     }
     if (!keep.posteriors) {
         result$bins$posteriors <- NULL
-        result$bins$posteriorScores <- NULL
     }
     if (keep.densities) {
         result$bincounts$densities <- densities
