@@ -37,5 +37,5 @@ License: Artistic-2.0
 LazyLoad: yes
 VignetteBuilder: knitr
 Packaged: 2014-05-03 00:00:00 CET+1; Taudt
-biocViews: Software, DifferentialPeakCalling, HiddenMarkovModel, ChIPSeq, HistoneModification, MultipleComparison
+biocViews: Software, DifferentialPeakCalling, HiddenMarkovModel, ChIPSeq, HistoneModification, MultipleComparison, Sequencing, PeakDetection
 RoxygenNote: 6.0.1
