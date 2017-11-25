@@ -1,4 +1,6 @@
 ![chromstaR](chromstaR_logo.png)
+[![bioc](http://www.bioconductor.org/shields/downloads/chromstaR.svg)](https://bioconductor.org/packages/stats/bioc/chromstaR/) 
+[![bioc](http://www.bioconductor.org/shields/years-in-bioc/chromstaR.svg)](http://bioconductor.org/packages/devel/bioc/html/chromstaR.html)
 ================================
 
 ChromstaR is a versatile ChIP-seq analysis suite with the following features:
