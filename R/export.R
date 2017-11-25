@@ -203,13 +203,13 @@ exportUnivariatePeaks <- function(hmm.list, filename, header=TRUE, separate.file
         # Make score integer
         df$peakScores <- round(df$peakScores)
         numsegments <- nrow(df)
-        df <- cbind(df, thickStart=df$start, thickEnd=df$end)
         # Convert from 1-based closed to 0-based half open
         df$start <- df$start - 1
-        df$thickStart <- df$thickStart - 1
-        # Colors
-        RGB <- t(grDevices::col2rgb(getStateColors('modified')))
-        df$itemRgb <- apply(RGB,1,paste,collapse=",")
+        # df$thickStart <- df$start
+        # df$thickEnd <- df$end
+        # # Colors
+        # RGB <- t(grDevices::col2rgb(getStateColors('modified')))
+        # df$itemRgb <- apply(RGB,1,paste,collapse=",")
         if (nrow(df) == 0) {
             warning('hmm ',imod,' does not contain any \'modified\' calls')
         } else {
@@ -452,11 +452,11 @@ exportMultivariatePeaks <- function(hmm, filename, trackname=NULL, header=TRUE, 
         
         # Convert from 1-based closed to 0-based half open
         df$start <- df$start - 1
-        df$thickStart <- df$start
-        df$thickEnd <- df$end
-        # Colors
-        RGB <- t(grDevices::col2rgb(getStateColors('modified')))
-        df$itemRgb <- apply(RGB,1,paste,collapse=",")
+        # df$thickStart <- df$start
+        # df$thickEnd <- df$end
+        # # Colors
+        # RGB <- t(grDevices::col2rgb(getStateColors('modified')))
+        # df$itemRgb <- apply(RGB,1,paste,collapse=",")
         
         ## Write to file
         if (separate.files) {
@@ -624,11 +624,11 @@ exportCombinedMultivariatePeaks <- function(hmm, filename, trackname=NULL, heade
         
         # Convert from 1-based closed to 0-based half open
         df$start <- df$start - 1
-        df$thickStart <- df$start
-        df$thickEnd <- df$end
-        # Colors
-        RGB <- t(grDevices::col2rgb(getStateColors('modified')))
-        df$itemRgb <- apply(RGB,1,paste,collapse=",")
+        # df$thickStart <- df$start
+        # df$thickEnd <- df$end
+        # # Colors
+        # RGB <- t(grDevices::col2rgb(getStateColors('modified')))
+        # df$itemRgb <- apply(RGB,1,paste,collapse=",")
         
         ## Write to file
         if (separate.files) {
