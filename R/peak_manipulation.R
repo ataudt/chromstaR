@@ -45,7 +45,9 @@ calculatePeakScores <- function(maxPostInPeak) {
     peakScores <- maxPostInPeak
     for (i1 in 1:ncol(maxPostInPeak)) {
         mask <- maxPostInPeak[,i1] > 0
-        peakScores[mask,i1] <- stats::ecdf(maxPostInPeak[mask,i1])(maxPostInPeak[mask,i1])*1000
+        if (length(which(mask)) > 0) {
+            peakScores[mask,i1] <- stats::ecdf(maxPostInPeak[mask,i1])(maxPostInPeak[mask,i1])*1000
+        }
     }
     return(peakScores)
 }
@@ -54,7 +56,9 @@ calculatePeakScores <- function(maxPostInPeak) {
 calculatePeakScores.univariate <- function(maxPostInPeak) {
     peakScores <- maxPostInPeak
     mask <- maxPostInPeak > 0
-    peakScores[mask] <- stats::ecdf(maxPostInPeak[mask])(maxPostInPeak[mask]) * 1000
+    if (length(which(mask)) > 0) {
+        peakScores[mask] <- stats::ecdf(maxPostInPeak[mask])(maxPostInPeak[mask]) * 1000
+    }
     return(peakScores)
 }
 
