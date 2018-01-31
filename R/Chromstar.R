@@ -362,8 +362,11 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 model <- callPeaksUnivariate(binned.data=datafiles, input.data=input.files, eps=conf[['eps.univariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], read.cutoff.absolute=conf[['read.cutoff.absolute']], prefit.on.chr=conf[['prefit.on.chr']], keep.posteriors=FALSE, verbosity=0)
                 # Replace counts.rpkm column with the binsize=stepsize counts, instead of the averaged ones
                 binned.data.stepsize <- loadHmmsFromFiles(files = datafiles.stepsize, check.class = 'GRanges')
+                model$bins$counts.rpkm <- 0
                 for (i1 in 1:length(binned.data.stepsize)) {
-                  model$bins$counts.rpkm <- model$bins$counts.rpkm + rpkm.vector(binned.data.stepsize[[i1]]$counts, binsize=stepsize)
+                    binned.data.stepsize[[i1]]$counts.rpkm <- rpkm.vector(binned.data.stepsize[[i1]]$counts, binsize=stepsize)
+                    ind <- findOverlaps(model$bins, binned.data.stepsize[[i1]])
+                    model$bins$counts.rpkm[queryHits(ind)] <- model$bins$counts.rpkm[queryHits(ind)] + binned.data.stepsize[[i1]]$counts.rpkm[subjectHits(ind)]
                 }
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(model, file=savename)
@@ -373,11 +376,13 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
             })
         }
         ## Plot distributions
-        savename.pdf <- file.path(uniplotpath, paste0(ID,'.pdf'))
+        savename.pdf <- file.path(uniplotpath, sub('.RData','.pdf', basename(unifile)))
+        savename.png <- file.path(uniplotpath, sub('.RData','.png', basename(unifile)))
         if (!file.exists(savename.pdf)) {
             ptm <- startTimedMessage("Plotting to file ", savename.pdf, " ...")
             ggplt <- plotHistogram(savename)
             ggsave(filename=savename.pdf, plot=ggplt, width=7, height=5)
+            ggsave(filename=savename.png, plot=ggplt, width=7, height=5)
             stopTimedMessage(ptm)
         }
     }

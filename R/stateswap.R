@@ -1,13 +1,14 @@
 stateswap <- function(model) {
   
     distr <- model$distributions
+    w <- model$weights
     mean1 <- distr['unmodified','mu']
     mean2 <- distr['modified','mu']
-    valat0_1 <- dnbinom(x = 0, size = distr['unmodified','size'], prob = distr['unmodified','prob'])
-    valat0_2 <- dnbinom(x = 0, size = distr['modified','size'], prob = distr['modified','prob'])
+    valat0_1 <- w['unmodified'] * dnbinom(x = 0, size = distr['unmodified','size'], prob = distr['unmodified','prob'])
+    valat0_2 <- w['modified'] * dnbinom(x = 0, size = distr['modified','size'], prob = distr['modified','prob'])
     maxcount <- max(model$bincounts$counts[,'0'])
-    valatmax_1 <- dnbinom(x = maxcount, size = distr['unmodified','size'], prob = distr['unmodified','prob'])
-    valatmax_2 <- dnbinom(x = maxcount, size = distr['modified','size'], prob = distr['modified','prob'])
+    valatmax_1 <- w['unmodified'] * dnbinom(x = maxcount, size = distr['unmodified','size'], prob = distr['unmodified','prob'])
+    valatmax_2 <- w['modified'] * dnbinom(x = maxcount, size = distr['modified','size'], prob = distr['modified','prob'])
     
     meanL <- mean2 >= mean1
     valat0L <- valat0_1 >= valat0_2
