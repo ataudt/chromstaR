@@ -442,7 +442,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         ordering <- unique(gsub('-rep.*', '', IDs))
         repfiles <- repfiles[ordering]
         if (!file.exists(combipath)) { dir.create(combipath) }
-        savename <- file.path(combipath, paste0('combined_mode-', modename, '.RData'))
+        savename <- file.path(combipath, paste0('combined_mode-', modename, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData'))
         if (!file.exists(savename)) {
             combined.model <- combineMultivariates(repfiles, mode='replicate')
             ptm <- startTimedMessage("Saving to file ", savename, " ...")
@@ -459,10 +459,10 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         min.tiles <- 5
         width <- max(min.tiles, length(combined.model$info$ID)) / tiles.per.cm + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
         height <- max(min.tiles, length(combined.model$info$ID)) / tiles.per.cm + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
-        savename <- file.path(plotpath, 'read-count-correlation.pdf')
+        savename <- file.path(plotpath, paste0('read-count-correlation', '_binsize', binsize.string, '_stepsize', stepsize.string, '.pdf'))
         ggplt <- heatmapCountCorrelation(combined.model, cluster=FALSE)
         ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
-        savename <- file.path(plotpath, 'read-count-correlation-clustered.pdf')
+        savename <- file.path(plotpath, paste0('read-count-correlation-clustered', '_binsize', binsize.string, '_stepsize', stepsize.string, '.pdf'))
         ggplt <- heatmapCountCorrelation(combined.model, cluster=TRUE)
         ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
         stopTimedMessage(ptm)
@@ -472,8 +472,8 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         #-------------------------
         messageU("Exporting browser files")
         if (!file.exists(browserpath)) { dir.create(browserpath) }
-        savename <- file.path(browserpath, paste0('combined_mode-', modename))
-        trackname <- paste0('mode-', modename)
+        savename <- file.path(browserpath, paste0('combined_mode-', modename, '_binsize', binsize.string, '_stepsize', stepsize.string))
+        trackname <- paste0('mode-', modename, '_binsize', binsize.string, '_stepsize', stepsize.string)
         if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
             exportCombinedMultivariate(combined.model, filename=savename, trackname=trackname, what='combinations', separate.files=TRUE)
         }
@@ -510,8 +510,8 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     ## Run multivariate depending on mode
     #--------------------
     if (mode == 'full') {
-        multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '.RData'))
-        savename <- file.path(plotpath, paste0('multivariate_mode-', mode))
+        multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData'))
+        savename <- file.path(plotpath, paste0('multivariate_mode-', '_binsize', binsize.string, '_stepsize', stepsize.string, mode))
         if (!file.exists(multifile)) {
             files <- file.path(unipath, unifilenames)
             states <- stateBrewer(exp.table, mode=mode, exclusive.table=conf[['exclusive.table']])
@@ -530,8 +530,8 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     } else if (mode == 'combinatorial') {
         for (condition in conditions) {
             messageU("condition = ", condition, underline='-', overline='-')
-            multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '_condition-', condition, '.RData'))
-            savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_condition-', condition))
+            multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '_condition-', condition, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData'))
+            savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_condition-', condition, '_binsize', binsize.string, '_stepsize', stepsize.string))
             if (!file.exists(multifile)) {
                 mask <- exp.table[,'condition'] == condition
                 files <- file.path(unipath, unifilenames)[mask]
@@ -552,8 +552,8 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     } else if (mode == 'differential') {
         for (mark in marks) {
             messageU("mark = ", mark, underline='-', overline='-')
-            multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '_mark-', mark, '.RData'))
-            savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_mark-', mark))
+            multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '_mark-', mark, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData'))
+            savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_mark-', mark, '_binsize', binsize.string, '_stepsize', stepsize.string))
             if (!file.exists(multifile)) {
                 mask <- exp.table[,'mark'] == mark
                 files <- file.path(unipath, unifilenames)[mask]
@@ -579,7 +579,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     multifiles <- list.files(multipath, full.names=TRUE, pattern=paste0('mode-',mode))
 
     if (!file.exists(combipath)) { dir.create(combipath) }
-    savename <- file.path(combipath, paste0('combined_mode-', mode, '.RData'))
+    savename <- file.path(combipath, paste0('combined_mode-', mode, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData'))
     if (!file.exists(savename)) {
         combined.model <- combineMultivariates(multifiles, mode=mode)
         ptm <- startTimedMessage("Saving to file ", savename, " ...")
@@ -596,10 +596,10 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     min.tiles <- 5
     width <- max(min.tiles, length(combined.model$info$ID)) / tiles.per.cm + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
     height <- max(min.tiles, length(combined.model$info$ID)) / tiles.per.cm + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
-    savename <- file.path(plotpath, 'read-count-correlation.pdf')
+    savename <- file.path(plotpath, paste0('read-count-correlation', '_binsize', binsize.string, '_stepsize', stepsize.string, '.pdf'))
     ggplt <- heatmapCountCorrelation(combined.model, cluster=FALSE)
     ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
-    savename <- file.path(plotpath, 'read-count-correlation-clustered.pdf')
+    savename <- file.path(plotpath, paste0('read-count-correlation-clustered', '_binsize', binsize.string, '_stepsize', stepsize.string, '.pdf'))
     ggplt <- heatmapCountCorrelation(combined.model, cluster=TRUE)
     ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
     stopTimedMessage(ptm)
@@ -609,8 +609,8 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #-------------------------
     messageU("Exporting browser files")
     if (!file.exists(browserpath)) { dir.create(browserpath) }
-    savename <- file.path(browserpath, paste0('combined_mode-', mode))
-    trackname <- paste0('mode-', mode)
+    savename <- file.path(browserpath, paste0('combined_mode-', mode, '_binsize', binsize.string, '_stepsize', stepsize.string))
+    trackname <- paste0('mode-', mode, '_binsize', binsize.string, '_stepsize', stepsize.string)
     if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
         exportCombinedMultivariate(combined.model, filename=savename, trackname=trackname, what='combinations', separate.files=TRUE)
     }
