@@ -2,9 +2,12 @@
 % Please edit documentation in R/adjustSensitivity.R
 \name{adjustSensitivity}
 \alias{adjustSensitivity}
+\alias{changeFDR}
 \title{Adjust sensitivity of peak detection}
 \usage{
 adjustSensitivity(model, sensitivity = 0.01, invert = FALSE)
+
+changeFDR(model, fdr = 0.01, invert = FALSE)
 }
 \arguments{
 \item{model}{A \code{\link{uniHMM}} or \code{\link{multiHMM}} object with posteriors.}
@@ -12,16 +15,23 @@ adjustSensitivity(model, sensitivity = 0.01, invert = FALSE)
 \item{sensitivity}{A vector of values between 0 and 1 for each column in \code{model$bins$posteriors}. If only one value is given, it will be reused for all columns. Values close to 0 will yield more stringent peak calls with lower false positive but higher false negative rate (i.e. more precise but less sensitive).}
 
 \item{invert}{Select peaks below (\code{FALSE}) or above (\code{TRUE}) the given \code{sensitivity}. This is useful to select low confidence peaks.}
+
+\item{fdr}{Same as \code{sensitivity}.}
 }
 \value{
 The input object is returned with adjusted peak calls.
 }
 \description{
-Adjusts the peak calls of a \code{\link{uniHMM}}, \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object with a cutoff on the maximum-posterior within each peak. Lower values of \code{sensitivity} mean less sensitive and more precise peak calls. Remaining peaks are kept intact, as opposed to function \code{\link{changePostCutoff}}, where broad peaks are fragmented.
+Adjusts the peak calls of a \code{\link{uniHMM}}, \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object with a cutoff on the maximum-posterior within each peak. Lower values of \code{sensitivity} mean less sensitive and more precise peak calls. Remaining peaks are kept intact, as opposed to function \code{\link{changePostCutoff}}, where broad peaks are fragmented. This function was formerly called 'changeFDR' and is still available for backwards compatibiltiy.
 }
 \details{
 Each peak has a maximum-posterior (maxPostInPeak, between 0 and 1) associated. The sensitivity is adjusted with a simple cutoff on 1-maxPostInPeak, e.g. for \code{sensitivity = 0.01} only peaks with a maximum-posterior \code{>= 0.99} will be selected.
 }
+\section{Functions}{
+\itemize{
+\item \code{changeFDR}: This function was renamed to 'adjustSensitivity' in chromstaR 1.5.1 but it still available for backwards compatibility.
+}}
+
 \examples{
 ## Get an example BAM file
 file <- system.file("extdata", "euratrans",

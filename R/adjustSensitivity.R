@@ -1,6 +1,6 @@
 #' Adjust sensitivity of peak detection
 #'
-#' Adjusts the peak calls of a \code{\link{uniHMM}}, \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object with a cutoff on the maximum-posterior within each peak. Lower values of \code{sensitivity} mean less sensitive and more precise peak calls. Remaining peaks are kept intact, as opposed to function \code{\link{changePostCutoff}}, where broad peaks are fragmented.
+#' Adjusts the peak calls of a \code{\link{uniHMM}}, \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object with a cutoff on the maximum-posterior within each peak. Lower values of \code{sensitivity} mean less sensitive and more precise peak calls. Remaining peaks are kept intact, as opposed to function \code{\link{changePostCutoff}}, where broad peaks are fragmented. This function was formerly called 'changeFDR' and is still available for backwards compatibiltiy.
 #'
 #' Each peak has a maximum-posterior (maxPostInPeak, between 0 and 1) associated. The sensitivity is adjusted with a simple cutoff on 1-maxPostInPeak, e.g. for \code{sensitivity = 0.01} only peaks with a maximum-posterior \code{>= 0.99} will be selected.
 #' 
@@ -436,4 +436,13 @@ changePostCutoff.univariate <- function(model, post.cutoff) {
     ## Return model
     return(model)
   
+}
+
+
+#' @describeIn adjustSensitivity This function was renamed to 'adjustSensitivity' in chromstaR 1.5.1 but it still available for backwards compatibility.
+#' @export
+#' @param fdr Same as \code{sensitivity}.
+changeFDR <- function(model, fdr=0.01, invert=FALSE) {
+    warning("Usage of 'changeFDR' is discouraged since chromstaR 1.5.1. Please use 'adjustSensitivity' instead.")
+    return(adjustSensitivity(model=model, sensitivity=fdr, invert=invert))
 }

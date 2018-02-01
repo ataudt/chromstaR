@@ -23,31 +23,10 @@ A data.frame with transition frequencies.
 Get a table of transition frequencies between combinatorial states of different \code{\link{multiHMM}}s.
 }
 \examples{
-#=== Step 1: Preparation ===
-## Prepare the file paths. Exchange this with your input and output directories.
-inputfolder <- system.file("extdata","euratrans", package="chromstaRData")
-outputfolder <- file.path(tempdir(), 'SHR-BN-example')
-## Define experiment structure
-data(experiment_table)
-print(experiment_table)
-## Define assembly
-# This is only necessary if you have BED files, BAM files are handled automatically.
-# For common assemblies you can also specify them as 'hg19' for example.
-data(rn4_chrominfo)
-head(rn4_chrominfo)
-
-#=== Step 2: Run Chromstar ===
-## Run ChromstaR
-Chromstar(inputfolder, experiment.table=experiment_table,
-         outputfolder=outputfolder, numCPU=2, binsize=1000, assembly=rn4_chrominfo,
-         prefit.on.chr='chr12', chromosomes='chr12', mode='combinatorial', eps.univariate=1,
-         eps.multivariate=1)
-## Results are stored in 'outputfolder' and can be loaded for further processing
-list.files(outputfolder)
-model <- get(load(file.path(outputfolder,'combined', 'combined_mode-combinatorial.RData')))
-
-#=== Step 3: Analysis ===
-# Get frequencies
+## Get an example combinedMultiHMM
+file <- system.file("data","combined_mode-differential.RData",
+                    package="chromstaR")
+model <- get(load(file))
 freqs <- transitionFrequencies(combined.hmm=model)
 freqs$table
 

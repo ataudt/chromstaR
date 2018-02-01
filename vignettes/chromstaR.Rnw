@@ -276,7 +276,7 @@ Chromstar(inputfolder, experiment.table=experiment_table_H4K20me1,
 ## Results are stored in 'outputfolder' and can be loaded for further processing
 list.files(outputfolder)
 model <- get(load(file.path(outputfolder,'multivariate',
-                            'multivariate_mode-differential_mark-H4K20me1.RData')))
+      'multivariate_mode-differential_mark-H4K20me1_binsize1000_stepsize500.RData')))
 @
 
 \textbf{!! It is important that the distributions in folder outputfolder/PLOTS/univariate-distributions are fitted correctly !!} Please check section \ref{sec:FAQ_example_histograms} for examples of how this plot should \emph{not} look like and what can be done to get a correct fit.\\
@@ -344,7 +344,7 @@ Chromstar(inputfolder, experiment.table=experiment_table_SHR,
 ## Results are stored in 'outputfolder' and can be loaded for further processing
 list.files(outputfolder)
 model <- get(load(file.path(outputfolder,'multivariate',
-                            'multivariate_mode-combinatorial_condition-SHR.RData')))
+      'multivariate_mode-combinatorial_condition-SHR_binsize1000_stepsize500.RData')))
 # Obtain genomic frequencies for combinatorial states
 genomicFrequencies(model)
 # Plot transition probabilities and read count correlation
@@ -485,7 +485,7 @@ Chromstar(inputfolder, experiment.table=experiment_table,
 ## Results are stored in 'outputfolder' and can be loaded for further processing
 list.files(outputfolder)
 model <- get(load(file.path(outputfolder,'combined',
-                            'combined_mode-differential.RData')))
+      'combined_mode-differential_binsize1000_stepsize500.RData')))
 @
 
 \textbf{!! It is important that the distributions in folder outputfolder/PLOTS/univariate-distributions are fitted correctly !!} Please check section \ref{sec:FAQ_example_histograms} for examples of how this plot should \emph{not} look like and what can be done to get a correct fit.\\
@@ -585,7 +585,7 @@ The strictness of the peak calling can be controlled with a sensitivity paramete
 \begin{scriptsize}
 <<faq_postcutoff, results='markup', message=FALSE, eval=TRUE>>=
 model <- get(load(file.path(outputfolder,'combined',
-                            'combined_mode-differential.RData')))
+      'combined_mode-differential_binsize1000_stepsize500.RData')))
 # Set a strict cutoff close to 1
 model2 <- adjustSensitivity(model, sensitivity=1e-4)
 ## Compare the number and width of peaks before and after cutoff adjustment
