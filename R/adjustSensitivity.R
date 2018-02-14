@@ -75,7 +75,11 @@ adjustSensitivity.multivariate <- function(model, sensitivity, invert=FALSE) {
     if (is(model, class.multivariate.hmm)) {
         ## Calculate states
         ptm <- startTimedMessage("Calculating states from maximum-posterior in each peak ...")
-        p <- getMaxPostInPeaks(model$bins$state, model$bins$posteriors)
+        if (is.null(model$bins$maxPostInPeak)) {
+            p <- getMaxPostInPeaks(model$bins$state, model$bins$posteriors)
+        } else {
+            p <- model$bins$maxPostInPeak
+        }
         p.thresholded <- matrix(FALSE, ncol=ncol(p), nrow=nrow(p))
         for (icol in 1:ncol(p)) {
             if (!invert) {
@@ -92,25 +96,23 @@ adjustSensitivity.multivariate <- function(model, sensitivity, invert=FALSE) {
             model$bins$combination <- factor(mapping[as.character(model$bins$state)], levels=mapping[as.character(levels(model$bins$state))])
         }
         stopTimedMessage(ptm)
-        ## Redo peakScores
-        ptm <- startTimedMessage("Re-estimating peakScores ...")
-        p <- getMaxPostInPeaks(model$bins$state, model$bins$posteriors)
-        model$bins$peakScores <- calculatePeakScores(p)
-        rm(p)
+        ## Redo maxPostInPeak
+        ptm <- startTimedMessage("Re-estimating maximum posterior in peaks ...")
+        model$bins$maxPostInPeak <- getMaxPostInPeaks(model$bins$state, model$bins$posteriors)
         stopTimedMessage(ptm)
         ## Redo segmentation
         model$segments <- multivariateSegmentation(model$bins, column2collapseBy='state')
         ## Redo peaks
         ptm <- startTimedMessage("Recalculating peaks ...")
         model$peaks <- list()
-        for (i1 in 1:ncol(model$segments$peakScores)) {
-            mask <- model$segments$peakScores[,i1] > 0
+        for (i1 in 1:ncol(model$segments$maxPostInPeak)) {
+            mask <- model$segments$maxPostInPeak[,i1] > 0
             peaks <- model$segments[mask]
             mcols(peaks) <- NULL
-            peaks$peakScores <- model$segments$peakScores[mask,i1]
+            peaks$maxPostInPeak <- model$segments$maxPostInPeak[mask,i1]
             model$peaks[[i1]] <- peaks
         }
-        names(model$peaks) <- colnames(model$segments$peakScores)
+        names(model$peaks) <- colnames(model$segments$maxPostInPeak)
         stopTimedMessage(ptm)
         
     } else if (is(model, class.combined.multivariate.hmm)) {
@@ -118,7 +120,11 @@ adjustSensitivity.multivariate <- function(model, sensitivity, invert=FALSE) {
         mapping.df <- stateBrewer(model$info[,setdiff(names(model$info), 'ID')], mode='full')
         mapping <- mapping.df$combination
         names(mapping) <- mapping.df$state
-        p <- getMaxPostInPeaks(model$bins$state, model$bins$posteriors)
+        if (is.null(model$bins$maxPostInPeak)) {
+            p <- getMaxPostInPeaks(model$bins$state, model$bins$posteriors)
+        } else {
+            p <- model$bins$maxPostInPeak
+        }
         p.thresholded <- matrix(FALSE, ncol=ncol(p), nrow=nrow(p))
         for (icol in 1:ncol(p)) {
             if (!invert) {
@@ -137,11 +143,9 @@ adjustSensitivity.multivariate <- function(model, sensitivity, invert=FALSE) {
         multiHMM$bins$combination <- mapping[as.character(states)]
         multiHMM$bins$state <- factor(states)
         multiHMM$bins$posteriors <- model$bins$posteriors
-        ## Redo peakScores
-        ptm <- startTimedMessage("Re-estimating peakScores ...")
-        p <- getMaxPostInPeaks(multiHMM$bins$state, multiHMM$bins$posteriors)
-        multiHMM$bins$peakScores <- calculatePeakScores(p)
-        rm(p)
+        ## Redo maxPostInPeak
+        ptm <- startTimedMessage("Re-estimating maximum posterior in peaks ...")
+        multiHMM$bins$maxPostInPeak <- getMaxPostInPeaks(multiHMM$bins$state, multiHMM$bins$posteriors)
         stopTimedMessage(ptm)
         multiHMM$mapping <- mapping
         multiHMM$peaks <- model$peaks
@@ -149,14 +153,14 @@ adjustSensitivity.multivariate <- function(model, sensitivity, invert=FALSE) {
         ## Redo peaks
         ptm <- startTimedMessage("Recalculating peaks ...")
         model$peaks <- list()
-        for (i1 in 1:ncol(model$segments$peakScores)) {
-            mask <- model$segments$peakScores[,i1] > 0
+        for (i1 in 1:ncol(model$segments$maxPostInPeak)) {
+            mask <- model$segments$maxPostInPeak[,i1] > 0
             peaks <- model$segments[mask]
             mcols(peaks) <- NULL
-            peaks$peakScores <- model$segments$peakScores[mask,i1]
+            peaks$maxPostInPeak <- model$segments$maxPostInPeak[mask,i1]
             model$peaks[[i1]] <- peaks
         }
-        names(model$peaks) <- colnames(model$segments$peakScores)
+        names(model$peaks) <- colnames(model$segments$maxPostInPeak)
         stopTimedMessage(ptm)
     } else {
         stop("Supply either a uniHMM, multiHMM or combinedMultiHMM object.")
@@ -187,7 +191,9 @@ adjustSensitivity.univariate <- function(model, sensitivity, invert=FALSE) {
     if (is.null(model$bins$posterior.modified)) stop("Cannot recalculate states because column 'posterior.modified' is missing.")
     ## Calculate states
     ptm <- startTimedMessage("Calculating states from maximum-posterior in each peak ...")
-    model$bins$maxPostInPeak <- getMaxPostInPeaks.univariate(model$bins$state, model$bins$posterior.modified)
+    if (is.null(model$bins$maxPostInPeak)) {
+        model$bins$maxPostInPeak <- getMaxPostInPeaks.univariate(model$bins$state, model$bins$posterior.modified)
+    }
     states <- model$bins$state
     states[model$bins$state == 'modified'] <- 'unmodified'
     if (!invert) {
@@ -198,17 +204,15 @@ adjustSensitivity.univariate <- function(model, sensitivity, invert=FALSE) {
     model$bins$state <- states
     model$bins$maxPostInPeak <- NULL
     stopTimedMessage(ptm)
-    ## Redo peakScores
-    ptm <- startTimedMessage("Re-estimating peakScores ...")
+    ## Redo maxPostInPeak
+    ptm <- startTimedMessage("Re-estimating maximum posterior in peaks ...")
     model$bins$maxPostInPeak <- getMaxPostInPeaks.univariate(model$bins$state, model$bins$posterior.modified)
-    model$bins$peakScores <- calculatePeakScores.univariate(model$bins$maxPostInPeak)
-    model$bins$maxPostInPeak <- NULL
     stopTimedMessage(ptm)
     ## Redo segmentation
     ptm <- startTimedMessage("Making segmentation ...")
     gr <- model$bins
     df <- as.data.frame(gr)
-    red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2average=c('score'), columns2drop=c('width',grep('posteriors', names(df), value=TRUE), 'counts', 'counts.rpkm', 'posterior.modified')))
+    red.df <- suppressMessages(collapseBins(df, column2collapseBy='state', columns2drop=c('width',grep('posteriors', names(df), value=TRUE), 'counts', 'counts.rpkm', 'posterior.modified')))
     model$segments <- methods::as(red.df, 'GRanges')
     seqlengths(model$segments) <- seqlengths(model$bins)[seqlevels(model$segments)]
     ## Redo peaks
@@ -317,25 +321,23 @@ changePostCutoff.multivariate <- function(model, post.cutoff) {
             model$bins$combination <- factor(mapping[as.character(model$bins$state)], levels=mapping[as.character(levels(model$bins$state))])
         }
         stopTimedMessage(ptm)
-        ## Redo peakScores
-        ptm <- startTimedMessage("Re-estimating peakScores ...")
-        p <- getMaxPostInPeaks(model$bins$state, model$bins$posteriors)
-        model$bins$peakScores <- calculatePeakScores(p)
-        rm(p)
+        ## Redo maxPostInPeak
+        ptm <- startTimedMessage("Re-estimating maximum posterior in peaks ...")
+        model$bins$maxPostInPeak <- getMaxPostInPeaks(model$bins$state, model$bins$posteriors)
         stopTimedMessage(ptm)
         ## Redo segmentation
         model$segments <- multivariateSegmentation(model$bins, column2collapseBy='state')
         ## Redo peaks
         ptm <- startTimedMessage("Recalculating peaks ...")
         model$peaks <- list()
-        for (i1 in 1:ncol(model$segments$peakScores)) {
-            mask <- model$segments$peakScores[,i1] > 0
+        for (i1 in 1:ncol(model$segments$maxPostInPeak)) {
+            mask <- model$segments$maxPostInPeak[,i1] > 0
             peaks <- model$segments[mask]
             mcols(peaks) <- NULL
-            peaks$peakScores <- model$segments$peakScores[mask,i1]
+            peaks$maxPostInPeak <- model$segments$maxPostInPeak[mask,i1]
             model$peaks[[i1]] <- peaks
         }
-        names(model$peaks) <- colnames(model$segments$peakScores)
+        names(model$peaks) <- colnames(model$segments$maxPostInPeak)
         stopTimedMessage(ptm)
     } else if (is(model, class.combined.multivariate.hmm)) {
         ptm <- startTimedMessage("Calculating states from posteriors ...")
@@ -357,11 +359,9 @@ changePostCutoff.multivariate <- function(model, post.cutoff) {
         multiHMM$bins$combination <- mapping[as.character(states)]
         multiHMM$bins$state <- factor(states)
         multiHMM$bins$posteriors <- post
-        ## Redo peakScores
-        ptm <- startTimedMessage("Re-estimating peakScores ...")
-        p <- getMaxPostInPeaks(multiHMM$bins$state, multiHMM$bins$posteriors)
-        multiHMM$bins$peakScores <- calculatePeakScores(p)
-        rm(p)
+        ## Redo maxPostInPeak
+        ptm <- startTimedMessage("Re-estimating maximum posterior in peaks ...")
+        multiHMM$bins$maxPostInPeak <- getMaxPostInPeaks(multiHMM$bins$state, multiHMM$bins$posteriors)
         stopTimedMessage(ptm)
         multiHMM$mapping <- mapping
         multiHMM$peaks <- model$peaks
@@ -369,14 +369,14 @@ changePostCutoff.multivariate <- function(model, post.cutoff) {
         ## Redo peaks
         ptm <- startTimedMessage("Recalculating peaks ...")
         model$peaks <- list()
-        for (i1 in 1:ncol(model$segments$peakScores)) {
-            mask <- model$segments$peakScores[,i1] > 0
+        for (i1 in 1:ncol(model$segments$maxPostInPeak)) {
+            mask <- model$segments$maxPostInPeak[,i1] > 0
             peaks <- model$segments[mask]
             mcols(peaks) <- NULL
-            peaks$peakScores <- model$segments$peakScores[mask,i1]
+            peaks$maxPostInPeak <- model$segments$maxPostInPeak[mask,i1]
             model$peaks[[i1]] <- peaks
         }
-        names(model$peaks) <- colnames(model$segments$peakScores)
+        names(model$peaks) <- colnames(model$segments$maxPostInPeak)
         stopTimedMessage(ptm)
     } else {
         stop("Supply either a uniHMM, multiHMM or combinedMultiHMM object.")
@@ -416,11 +416,9 @@ changePostCutoff.univariate <- function(model, post.cutoff) {
     states <- state.labels[states]
     model$bins$state <- states
     stopTimedMessage(ptm)
-    ## Redo peakScores
-    ptm <- startTimedMessage("Re-estimating peakScores ...")
+    ## Redo maxPostInPeak
+    ptm <- startTimedMessage("Re-estimating maximum posterior in peaks ...")
     model$bins$maxPostInPeak <- getMaxPostInPeaks.univariate(model$bins$state, model$bins$posterior.modified)
-    model$bins$peakScores <- calculatePeakScores.univariate(model$bins$maxPostInPeak)
-    model$bins$maxPostInPeak <- NULL
     stopTimedMessage(ptm)
     ## Redo segmentation
     ptm <- startTimedMessage("Making segmentation ...")

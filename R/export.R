@@ -193,8 +193,11 @@ exportUnivariatePeaks <- function(hmm.list, filename, header=TRUE, separate.file
             }
             cat(paste0("track name=\"",trackname.string,"\" description=\"",trackname.string,"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
         }
-        if (is.null(peaks$peakScores)) {
+        if (is.null(peaks$maxPostInPeak)) {
             peaks$peakScores <- 0
+        } else {
+            peaks$peakScores <- suppressWarnings( -10*log10(1-peaks$maxPostInPeak) )
+            peaks$peakScores[is.nan(peaks$peakScores) | peaks$peakScores > 1000] <- 1000
         }
         df <- as.data.frame(peaks)
         df$peakNumber <- paste0('peak_', 1:nrow(df))
@@ -434,12 +437,19 @@ exportMultivariatePeaks <- function(hmm, filename, trackname=NULL, header=TRUE, 
         cat("", file=filename.gz)
     }
 
-    ## Export peaks on a per bin basis to obtain proper posterior scores
+    ## Export peaks
     for (imod in 1:length(hmm$info$ID)) {
         ID <- hmm$info$ID[imod]
         
-        ## Select only segments with peaks
+        ## Add peak score
         peaks <- insertchr(hmm$peaks[[ID]])
+        if (is.null(peaks$maxPostInPeak)) {
+            peaks$peakScores <- 0
+        } else {
+            peaks$peakScores <- suppressWarnings( -10*log10(1-peaks$maxPostInPeak) )
+            peaks$peakScores[is.nan(peaks$peakScores) | peaks$peakScores > 1000] <- 1000
+        }
+        
         peaks.df <- as.data.frame(peaks)
         peaks.df$peakNumber <- paste0('peak_', 1:nrow(peaks.df))
         
@@ -606,12 +616,20 @@ exportCombinedMultivariatePeaks <- function(hmm, filename, trackname=NULL, heade
         cat("", file=filename.gz)
     }
 
+    ## Export peaks
     for (imod in 1:length(hmm$info$ID)) {
         ID <- hmm$info$ID[imod]
         cond <- hmm$info$condition[imod]
         
-        ## Select only segments with peaks
+        ## Add peak score
         peaks <- insertchr(hmm$peaks[[ID]])
+        if (is.null(peaks$maxPostInPeak)) {
+            peaks$peakScores <- 0
+        } else {
+            peaks$peakScores <- suppressWarnings( -10*log10(1-peaks$maxPostInPeak) )
+            peaks$peakScores[is.nan(peaks$peakScores) | peaks$peakScores > 1000] <- 1000
+        }
+        
         peaks.df <- as.data.frame(peaks)
         peaks.df$peakNumber <- paste0('peak_', 1:nrow(peaks.df))
         

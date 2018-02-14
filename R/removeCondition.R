@@ -76,21 +76,21 @@ removeCondition <- function(model, conditions) {
         }
         model$bins$posteriors <- posteriors
     }
-    if (!is.null(model$bins$peakScores)) {
-        peakScores <- model$bins$peakScores
+    if (!is.null(model$bins$maxPostInPeak)) {
+        maxPostInPeak <- model$bins$maxPostInPeak
         removeconds <- paste0(paste0('-', conditions, '-'), collapse='|')
-        keepconds <- grep(removeconds, colnames(peakScores), invert=TRUE, value=TRUE)
-        peakScores <- peakScores[,keepconds]
-        if (class(peakScores) != "matrix") {
-            peakScores <- matrix(peakScores, ncol=1, dimnames=list(NULL, keepconds))
+        keepconds <- grep(removeconds, colnames(maxPostInPeak), invert=TRUE, value=TRUE)
+        maxPostInPeak <- maxPostInPeak[,keepconds]
+        if (class(maxPostInPeak) != "matrix") {
+            maxPostInPeak <- matrix(maxPostInPeak, ncol=1, dimnames=list(NULL, keepconds))
         }
-        model$bins$peakScores <- peakScores
+        model$bins$maxPostInPeak <- maxPostInPeak
     }
     stopTimedMessage(ptm)
     # Redo differential score
     if (!is.null(model$bins$differential.score)) {
         ptm <- startTimedMessage("Differential score ...")
-        model$bins$differential.score <- differentialScoreSum(model$bins$peakScores, model$info)
+        model$bins$differential.score <- differentialScoreSum(model$bins$maxPostInPeak, model$info)
         stopTimedMessage(ptm)
     }
     # Redo transition frequencies and groups

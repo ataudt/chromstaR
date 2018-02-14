@@ -2,7 +2,7 @@ getMaxPostInPeaks <- function(states, posteriors) {
     
     binstates <- dec2bin(states, colnames = colnames(posteriors))
     rownames(binstates) <- NULL
-    peakScores <- matrix(NA, nrow=nrow(binstates), ncol=ncol(binstates), dimnames=list(NULL, colnames(binstates)))
+    maxPostInPeak <- matrix(NA, nrow=nrow(binstates), ncol=ncol(binstates), dimnames=list(NULL, colnames(binstates)))
     for (icol in 1:ncol(binstates)) {
         r.bin <- rle(binstates[,icol])
         r <- r.bin
@@ -16,9 +16,9 @@ getMaxPostInPeaks <- function(states, posteriors) {
         r <- r.bin
         r$values[r$values == TRUE] <- df$x
         r$values[r$values == FALSE] <- 0
-        peakScores[,icol] <- inverse.rle(r)
+        maxPostInPeak[,icol] <- inverse.rle(r)
     }
-    return(peakScores)
+    return(maxPostInPeak)
     
 }
 

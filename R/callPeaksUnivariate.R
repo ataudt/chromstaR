@@ -560,8 +560,6 @@ callPeaksUnivariateAllChr <- function(binned.data, input.data=NULL, eps=0.01, in
     
     ## Peak score as maximum posterior in that peak ##
     result$bins$maxPostInPeak <- getMaxPostInPeaks.univariate(result$bins$state, result$bins$posterior.modified)
-    result$bins$peakScores <- calculatePeakScores.univariate(result$bins$maxPostInPeak)
-    result$bins$maxPostInPeak <- NULL
     
     ## Segmentation ##
     ptm <- startTimedMessage("Making segmentation ...")
