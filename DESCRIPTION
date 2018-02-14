@@ -31,8 +31,7 @@ Suggests:
     knitr,
     BiocStyle,
     testthat,
-    biomaRt,
-    ggbio
+    biomaRt
 License: Artistic-2.0
 LazyLoad: yes
 VignetteBuilder: knitr

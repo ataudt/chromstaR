@@ -313,27 +313,6 @@ plotHistogram <- function(model, state=NULL, chromosomes=NULL, start=NULL, end=N
 
 }
 
-#' Plot a karyogram with read counts and univariate peak calls
-#'
-#' Plot a karyogram with read counts and peak calls from a \code{\link{uniHMM}} object.
-#'
-#' @author Aaron Taudt
-#' @param model A \code{\link{uniHMM}} object or file that contains such an object.
-#' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
-plotKaryogram <- function(model) {
-
-    model <- suppressMessages( loadHmmsFromFiles(model, check.class=class.univariate.hmm)[[1]] )
-
-    # Plot the peaks
-    ggplt <- ggbio::autoplot(model$segments[model$segments$state=='modified'], layout='karyogram', color=getStateColors('modified'))
-
-    # Plot the read counts
-    ggplt <- ggplt + ggbio::layout_karyogram(model$bins, aes_string(x='start', y='counts'), ylim=c(10,40), geom='line', color=getStateColors('counts'))
-    ggplt <- ggplt + theme(axis.text.y=element_blank(), panel.background=element_blank())
-
-    return(ggplt)
-}
-
 #' @importFrom stats pnbinom qnorm dnorm
 plotNormalTransformation <- function(model, state='unmodified') {
 
