@@ -300,17 +300,20 @@ combineMultivariates <- function(hmms, mode) {
     bins$maxPostInPeak <- maxPostInPeak
     stopTimedMessage(ptm)
 
+    ### Redo the segmentation for all conditions combined
+    segments <- multivariateSegmentation(bins, column2collapseBy='state')
+    names(mcols(segments)) <- setdiff(names(mcols(bins)), c('posteriors','counts.rpkm'))
     ## Add differential score ##
     ptm <- startTimedMessage("Adding differential score ...")
-    bins$differential.score <- differentialScoreSum(bins$maxPostInPeak, infos)
+    segments$differential.score <- differentialScoreSum(segments$maxPostInPeak, infos)
     stopTimedMessage(ptm)
-
-    ### Redo the segmentation for all conditions combined
-    ptm <- startTimedMessage("Redoing segmentation for all conditions combined ...")
-    segments <- suppressMessages( multivariateSegmentation(bins, column2collapseBy='state') )
-    names(mcols(segments)) <- setdiff(names(mcols(bins)), c('posteriors','counts.rpkm'))
+    ## Maximum posterior in peaks ##
+    ptm <- startTimedMessage("Getting maximum posterior in peaks ...")
+    ind <- findOverlaps(bins, segments)
+    bins$maxPostInPeak <- segments$maxPostInPeak[subjectHits(ind), , drop=FALSE]
+    bins$differential.score <- segments$differential.score[subjectHits(ind)]
     stopTimedMessage(ptm)
-    
+        
     ### Redo the segmentation for each condition separately
     ptm <- startTimedMessage("Redoing segmentation for each condition separately ...")
     segments.per.condition <- list()

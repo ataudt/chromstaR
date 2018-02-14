@@ -12,20 +12,30 @@ multivariateSegmentation <- function(bins, column2collapseBy='state') {
     df <- as.data.frame(bins)
     ind.readcols <- grep('^counts', names(df))
     ind.postcols <- grep('^posteriors', names(df))
-    ind.peakcols <- grep('^maxPostInPeak', names(df))
+    ind.maxpostcols <- grep('^maxPostInPeak', names(df))
+    ind.scorecol <- grep('^differential.score', names(df))
     ind.widthcol <- grep('width', names(df))
-    ind.scorecol <- grep('differential.score', names(df))
-    red.df <- suppressMessages(collapseBins(df, column2collapseBy=column2collapseBy, columns2average=c(ind.scorecol), columns2drop=c(ind.readcols, ind.widthcol, ind.postcols)))
-    names(red.df) <- sub('^mean.','', names(red.df))
-    red.maxPostInPeak <- as.matrix(red.df[grep('^maxPostInPeak', names(red.df))])
+    red.df <- suppressMessages(collapseBins(df, column2collapseBy=column2collapseBy, columns2getMax=c(ind.postcols), columns2drop=c(ind.readcols, ind.widthcol, ind.postcols, ind.scorecol)))
+    names(red.df) <- sub('^mean\\.','', names(red.df))
+    names(red.df) <- sub('^max\\.','', names(red.df))
+    red.maxPostInPeak <- NULL
+    if (!is.null(bins$posteriors)) {
+        red.maxPostInPeak <- as.matrix(red.df[grep('^posteriors', names(red.df))])
+        colnames(red.maxPostInPeak) <- colnames(bins$posteriors)
+    } else if (!is.null(bins$maxPostInPeak)) {
+        red.maxPostInPeak <- as.matrix(red.df[grep('^maxPostInPeak', names(red.df))])
+        colnames(red.maxPostInPeak) <- colnames(bins$maxPostInPeak)
+    }
+    red.df[grep('^posteriors', names(red.df))] <- NULL
     red.df[grep('^maxPostInPeak', names(red.df))] <- NULL
     segments <- methods::as(red.df, 'GRanges')
-    segments$maxPostInPeak <- red.maxPostInPeak
-    colnames(segments$maxPostInPeak) <- colnames(bins$maxPostInPeak)
-    ## Reorder properly to match the order in bins
-    diffscore.temp <- segments$differential.score
-    segments$differential.score <- NULL
-    segments$differential.score <- diffscore.temp
+    ## Null the maxPostInPeak entries outside of peaks
+    if (!is.null(red.maxPostInPeak)) {
+        segments$maxPostInPeak <- red.maxPostInPeak
+        segments$maxPostInPeak <- segments$maxPostInPeak * dec2bin(segments$state, colnames = colnames(bins$posteriors))
+    }
+    
+    ## Reorder the seqlevels to match the order in bins
     segments <- keepSeqlevels(segments, seqlevels(bins))
     seqlengths(segments) <- seqlengths(bins)[seqlevels(segments)]
     stopTimedMessage(ptm)

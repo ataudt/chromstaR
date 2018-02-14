@@ -399,8 +399,10 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
         }
         
         ## Store counts and posteriors in list
-        dim(hmm$posteriors) <- c(length(binned.data), length(comb.states))
-        dimnames(hmm$posteriors) <- list(bin=NULL, state=comb.states)
+        if (get.posteriors) {
+            dim(hmm$posteriors) <- c(length(binned.data), length(comb.states))
+            dimnames(hmm$posteriors) <- list(bin=NULL, state=comb.states)
+        }
         dim(hmm$counts) <- c(length(binned.data), nummod)
         dimnames(hmm$counts) <- list(bin=NULL, track=info$ID)
         if (keep.densities) {
@@ -497,15 +499,6 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
     result$bins$state <- factor(states.step, levels=state.levels)
     stopTimedMessage(ptm)
     
-    if (get.posteriors) {
-        ptm <- startTimedMessage("Getting maximum posterior in peaks ...")
-        result$bins$maxPostInPeak <- getMaxPostInPeaks(result$bins$state, result$bins$posteriors)
-        result$bins$differential.score <- differentialScoreSum(result$bins$maxPostInPeak, result$info)
-        stopTimedMessage(ptm)
-    }
-    if (!keep.posteriors) {
-        result$bins$posteriors <- NULL
-    }
     if (keep.densities) {
         result$bincounts$densities <- densities
     }
@@ -521,19 +514,32 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
     
     ## Segmentation ##
     result$segments <- multivariateSegmentation(result$bins, column2collapseBy='state')
-        
-    ## Peaks ##
-    ptm <- startTimedMessage("Obtaining peaks ...")
-    result$peaks <- list()
-    for (i1 in 1:ncol(result$segments$maxPostInPeak)) {
-        mask <- result$segments$maxPostInPeak[,i1] > 0
-        peaks <- result$segments[mask]
-        mcols(peaks) <- NULL
-        peaks$maxPostInPeak <- result$segments$maxPostInPeak[mask,i1]
-        result$peaks[[i1]] <- peaks
-    }
-    names(result$peaks) <- colnames(result$segments$maxPostInPeak)
+    ptm <- startTimedMessage("Adding differential score ...")
+    result$segments$differential.score <- differentialScoreSum(result$segments$maxPostInPeak, result$info)
     stopTimedMessage(ptm)
+    if (!keep.posteriors) {
+        result$bins$posteriors <- NULL
+    }
+    if (get.posteriors) {
+        ptm <- startTimedMessage("Getting maximum posterior in peaks ...")
+        ind <- findOverlaps(result$bins, result$segments)
+        result$bins$maxPostInPeak <- result$segments$maxPostInPeak[subjectHits(ind), , drop=FALSE]
+        result$bins$differential.score <- result$segments$differential.score[subjectHits(ind)]
+        stopTimedMessage(ptm)
+            
+        ## Peaks ##
+        ptm <- startTimedMessage("Obtaining peaks ...")
+        result$peaks <- list()
+        for (i1 in 1:ncol(result$segments$maxPostInPeak)) {
+            mask <- result$segments$maxPostInPeak[,i1] > 0
+            peaks <- result$segments[mask]
+            mcols(peaks) <- NULL
+            peaks$maxPostInPeak <- result$segments$maxPostInPeak[mask,i1]
+            result$peaks[[i1]] <- peaks
+        }
+        names(result$peaks) <- colnames(result$segments$maxPostInPeak)
+        stopTimedMessage(ptm)
+    }
         
     return(result)
 

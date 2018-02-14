@@ -103,12 +103,24 @@ removeCondition <- function(model, conditions) {
     bins <- model$bins
     combs <- getCombinations(model$bins)
     names(combs) <- sub('combination.', '', names(combs))
-    ### Redo the segmentation for all conditions combined ###
+    
+    ### Redo the segmentation for all conditions combined
     ptm <- startTimedMessage("Redoing segmentation for all conditions combined ...")
     segments <- suppressMessages( multivariateSegmentation(bins, column2collapseBy='state') )
     names(mcols(segments)) <- setdiff(names(mcols(bins)), c('posteriors','counts.rpkm'))
-    model$segments <- segments
     stopTimedMessage(ptm)
+    ## Add differential score ##
+    ptm <- startTimedMessage("Adding differential score ...")
+    segments$differential.score <- differentialScoreSum(segments$maxPostInPeak, model$info)
+    stopTimedMessage(ptm)
+    ## Maximum posterior in peaks ##
+    ptm <- startTimedMessage("Getting maximum posterior in peaks ...")
+    ind <- findOverlaps(bins, segments)
+    bins$maxPostInPeak <- segments$maxPostInPeak[subjectHits(ind), , drop=FALSE]
+    bins$differential.score <- segments$differential.score[subjectHits(ind)]
+    stopTimedMessage(ptm)
+    model$segments <- segments
+    model$bins <- bins
     
     ### Redo the segmentation for each condition separately ###
     ptm <- startTimedMessage("Redoing segmentation for each condition separately ...")

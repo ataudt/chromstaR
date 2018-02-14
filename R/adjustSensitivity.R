@@ -96,12 +96,18 @@ adjustSensitivity.multivariate <- function(model, sensitivity, invert=FALSE) {
             model$bins$combination <- factor(mapping[as.character(model$bins$state)], levels=mapping[as.character(levels(model$bins$state))])
         }
         stopTimedMessage(ptm)
-        ## Redo maxPostInPeak
-        ptm <- startTimedMessage("Re-estimating maximum posterior in peaks ...")
-        model$bins$maxPostInPeak <- getMaxPostInPeaks(model$bins$state, model$bins$posteriors)
-        stopTimedMessage(ptm)
         ## Redo segmentation
         model$segments <- multivariateSegmentation(model$bins, column2collapseBy='state')
+        ## Add differential score ##
+        ptm <- startTimedMessage("Adding differential score ...")
+        model$segments$differential.score <- differentialScoreSum(model$segments$maxPostInPeak, model$infos)
+        stopTimedMessage(ptm)
+        ## Maximum posterior in peaks ##
+        ptm <- startTimedMessage("Getting maximum posterior in peaks ...")
+        ind <- findOverlaps(model$bins, model$segments)
+        model$bins$maxPostInPeak <- model$segments$maxPostInPeak[subjectHits(ind), , drop=FALSE]
+        model$bins$differential.score <- model$segments$differential.score[subjectHits(ind)]
+        stopTimedMessage(ptm)
         ## Redo peaks
         ptm <- startTimedMessage("Recalculating peaks ...")
         model$peaks <- list()
@@ -321,12 +327,18 @@ changePostCutoff.multivariate <- function(model, post.cutoff) {
             model$bins$combination <- factor(mapping[as.character(model$bins$state)], levels=mapping[as.character(levels(model$bins$state))])
         }
         stopTimedMessage(ptm)
-        ## Redo maxPostInPeak
-        ptm <- startTimedMessage("Re-estimating maximum posterior in peaks ...")
-        model$bins$maxPostInPeak <- getMaxPostInPeaks(model$bins$state, model$bins$posteriors)
-        stopTimedMessage(ptm)
         ## Redo segmentation
         model$segments <- multivariateSegmentation(model$bins, column2collapseBy='state')
+        ## Add differential score ##
+        ptm <- startTimedMessage("Adding differential score ...")
+        model$segments$differential.score <- differentialScoreSum(model$segments$maxPostInPeak, model$infos)
+        stopTimedMessage(ptm)
+        ## Maximum posterior in peaks ##
+        ptm <- startTimedMessage("Getting maximum posterior in peaks ...")
+        ind <- findOverlaps(model$bins, model$segments)
+        model$bins$maxPostInPeak <- model$segments$maxPostInPeak[subjectHits(ind), , drop=FALSE]
+        model$bins$differential.score <- model$segments$differential.score[subjectHits(ind)]
+        stopTimedMessage(ptm)
         ## Redo peaks
         ptm <- startTimedMessage("Recalculating peaks ...")
         model$peaks <- list()
