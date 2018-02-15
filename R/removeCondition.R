@@ -107,7 +107,7 @@ removeCondition <- function(model, conditions) {
     ### Redo the segmentation for all conditions combined
     ptm <- startTimedMessage("Redoing segmentation for all conditions combined ...")
     segments <- suppressMessages( multivariateSegmentation(bins, column2collapseBy='state') )
-    names(mcols(segments)) <- setdiff(names(mcols(bins)), c('posteriors','counts.rpkm'))
+    names(mcols(segments))[grep("combination", names(mcols(segments)))] <- names(mcols(bins))[grep("combination", names(mcols(bins)))]
     stopTimedMessage(ptm)
     ## Add differential score ##
     ptm <- startTimedMessage("Adding differential score ...")

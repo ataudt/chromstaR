@@ -302,7 +302,7 @@ combineMultivariates <- function(hmms, mode) {
 
     ### Redo the segmentation for all conditions combined
     segments <- multivariateSegmentation(bins, column2collapseBy='state')
-    names(mcols(segments)) <- setdiff(names(mcols(bins)), c('posteriors','counts.rpkm'))
+    names(mcols(segments))[grep("combination", names(mcols(segments)))] <- names(mcols(bins))[grep("combination", names(mcols(bins)))]
     ## Add differential score ##
     ptm <- startTimedMessage("Adding differential score ...")
     segments$differential.score <- differentialScoreSum(segments$maxPostInPeak, infos)
