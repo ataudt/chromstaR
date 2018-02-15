@@ -1,13 +1,13 @@
 #' Adjust sensitivity of peak detection
 #'
-#' Adjusts the peak calls of a \code{\link{uniHMM}}, \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object with a cutoff on the maximum-posterior within each peak. Lower values of \code{sensitivity} mean less sensitive and more precise peak calls. Remaining peaks are kept intact, as opposed to function \code{\link{changePostCutoff}}, where broad peaks are fragmented. This function was formerly called 'changeFDR' and is still available for backwards compatibiltiy.
+#' Adjusts the peak calls of a \code{\link{uniHMM}}, \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object with a cutoff on the maximum-posterior within each peak. Higher values of \code{maxPost.cutoff} mean less sensitive and more precise peak calls. Remaining peaks are kept intact, as opposed to function \code{\link{changePostCutoff}}, where broad peaks are fragmented. This function was formerly called 'changeFDR' and is still available for backwards compatibiltiy.
 #'
-#' Each peak has a maximum-posterior (maxPostInPeak, between 0 and 1) associated. The sensitivity is adjusted with a simple cutoff on 1-maxPostInPeak, e.g. for \code{sensitivity = 0.01} only peaks with a maximum-posterior \code{>= 0.99} will be selected.
+#' Each peak has a maximum-posterior (maxPostInPeak, between 0 and 1) associated. The sensitivity is adjusted with a simple cutoff on maxPostInPeak, e.g. for \code{maxPost.cutoff = 0.99} only peaks with \code{maxPostInPeak >= 0.99} will be selected.
 #' 
 #' @author Aaron Taudt
 #' @param model A \code{\link{uniHMM}} or \code{\link{multiHMM}} object with posteriors.
-#' @param sensitivity A vector of values between 0 and 1 for each column in \code{model$bins$posteriors}. If only one value is given, it will be reused for all columns. Values close to 0 will yield more stringent peak calls with lower false positive but higher false negative rate (i.e. more precise but less sensitive).
-#' @param invert Select peaks below (\code{FALSE}) or above (\code{TRUE}) the given \code{sensitivity}. This is useful to select low confidence peaks.
+#' @param maxPost.cutoff A vector of values between 0 and 1 for each column in \code{model$bins$posteriors}. If only one value is given, it will be reused for all columns. Values close to 1 will yield more stringent peak calls with lower false positive but higher false negative rate (i.e. more precise but less sensitive).
+#' @param invert Select peaks below (\code{FALSE}) or above (\code{TRUE}) the given \code{maxPost.cutoff}. This is useful to select low confidence peaks.
 #' @return The input object is returned with adjusted peak calls.
 #' @export
 #' @seealso \code{\link{changePostCutoff}}
@@ -24,52 +24,52 @@
 #'hmm <- callPeaksUnivariate(binned, max.time=60, eps=1)
 #'## Compare fits with different fdrs
 #'plotHistogram(hmm) + ylim(0,0.25) + ylim(0,0.3)
-#'plotHistogram(adjustSensitivity(hmm, sensitivity=0.01)) + ylim(0,0.3)
-#'plotHistogram(adjustSensitivity(hmm, sensitivity=1e-12)) + ylim(0,0.3)
+#'plotHistogram(changeMaxPostCutoff(hmm, maxPost.cutoff=0.99)) + ylim(0,0.3)
+#'plotHistogram(changeMaxPostCutoff(hmm, maxPost.cutoff=1-1e-12)) + ylim(0,0.3)
 #'
-adjustSensitivity <- function(model, sensitivity=0.01, invert=FALSE) {
+changeMaxPostCutoff <- function(model, maxPost.cutoff=0.99, invert=FALSE) {
 
-    if (!is.numeric(sensitivity)) {
-        warning("'sensitivity' is not numeric. Nothing done.")
+    if (!is.numeric(maxPost.cutoff)) {
+        warning("'maxPost.cutoff' is not numeric. Nothing done.")
         return(model)
     }
     if (is(model, class.univariate.hmm)) {
-        model.new <- adjustSensitivity.univariate(model=model, sensitivity=sensitivity, invert=invert)
+        model.new <- changeMaxPostCutoff.univariate(model=model, maxPost.cutoff=maxPost.cutoff, invert=invert)
     } else if (is(model, class.multivariate.hmm) | is(model, class.combined.multivariate.hmm)) {
-        model.new <- adjustSensitivity.multivariate(model=model, sensitivity=sensitivity, invert=invert)
+        model.new <- changeMaxPostCutoff.multivariate(model=model, maxPost.cutoff=maxPost.cutoff, invert=invert)
     }
     return(model.new)
     
 }
 
 
-adjustSensitivity.multivariate <- function(model, sensitivity, invert=FALSE) {
+changeMaxPostCutoff.multivariate <- function(model, maxPost.cutoff, invert=FALSE) {
   
-    ## Make sensitivity vector
+    ## Make maxPost.cutoff vector
     if (is.null(model$bins$posteriors)) stop("Cannot recalculate states because posteriors are missing.")
     numcol <- ncol(model$bins$posteriors)
-    if (length(sensitivity) == 1) {
-        sensitivity <- rep(sensitivity, numcol)
+    if (length(maxPost.cutoff) == 1) {
+        maxPost.cutoff <- rep(maxPost.cutoff, numcol)
     }
-    if (length(sensitivity) != numcol) {
-        stop("Need ", numcol, " values in 'sensitivity' but only ", length(sensitivity), " are provided.")
+    if (length(maxPost.cutoff) != numcol) {
+        stop("Need ", numcol, " values in 'maxPost.cutoff' but only ", length(maxPost.cutoff), " are provided.")
     }
     
-    for (sensitivity.i in sensitivity) {
-        if (sensitivity.i < 0 | sensitivity.i > 1) {
-            stop("Values for 'sensitivity' need to be inside the interval [0,1].")
+    for (maxPost.cutoff.i in maxPost.cutoff) {
+        if (maxPost.cutoff.i < 0 | maxPost.cutoff.i > 1) {
+            stop("Values for 'maxPost.cutoff' need to be inside the interval [0,1].")
         }
     }
-    names(sensitivity) <- colnames(model$bins$posteriors)
+    names(maxPost.cutoff) <- colnames(model$bins$posteriors)
 
-    # Check if replicates have the same sensitivity value
+    # Check if replicates have the same maxPost.cutoff value
     reps <- sub('-rep.*', '', model$info$ID)
-    if (any(sapply(split(sensitivity, reps), function(x) { Reduce('&', x==x[1]) }) == FALSE)) {
-        stop("Replicates must have the same sensitivity value.")
+    if (any(sapply(split(maxPost.cutoff, reps), function(x) { Reduce('&', x==x[1]) }) == FALSE)) {
+        stop("Replicates must have the same maxPost.cutoff value.")
     }
     
-    ## sensitivity threshold
-    threshold <- 1-sensitivity
+    ## maxPost.cutoff threshold
+    threshold <- maxPost.cutoff
 
     ### Multivariate HMM ###
     if (is(model, class.multivariate.hmm)) {
@@ -172,7 +172,7 @@ adjustSensitivity.multivariate <- function(model, sensitivity, invert=FALSE) {
         stop("Supply either a uniHMM, multiHMM or combinedMultiHMM object.")
     }
     ## Return model
-    model$sensitivity <- sensitivity
+    model$maxPost.cutoff <- maxPost.cutoff
     return(model)
     
 
@@ -180,19 +180,19 @@ adjustSensitivity.multivariate <- function(model, sensitivity, invert=FALSE) {
 }
 
 
-adjustSensitivity.univariate <- function(model, sensitivity, invert=FALSE) {
+changeMaxPostCutoff.univariate <- function(model, maxPost.cutoff, invert=FALSE) {
   
-    sensitivity <- suppressWarnings( as.numeric(sensitivity) )
-    if (!is.numeric(sensitivity) | is.na(sensitivity)) {
-        warning("Not changing false discovery rate because given 'sensitivity' is not numeric.")
+    maxPost.cutoff <- suppressWarnings( as.numeric(maxPost.cutoff) )
+    if (!is.numeric(maxPost.cutoff) | is.na(maxPost.cutoff)) {
+        warning("Not changing false discovery rate because given 'maxPost.cutoff' is not numeric.")
         return(model)
-    } else if (sensitivity < 0 | sensitivity > 1) {
-        warning("sensitivity has to be inside the interval [0,1]. Nothing done.")
+    } else if (maxPost.cutoff < 0 | maxPost.cutoff > 1) {
+        warning("maxPost.cutoff has to be inside the interval [0,1]. Nothing done.")
         return(model)
     }
 
-    ## sensitivity threshold
-    threshold <- 1-sensitivity
+    ## maxPost.cutoff threshold
+    threshold <- maxPost.cutoff
 
     if (is.null(model$bins$posterior.modified)) stop("Cannot recalculate states because column 'posterior.modified' is missing.")
     ## Calculate states
@@ -230,7 +230,7 @@ adjustSensitivity.univariate <- function(model, sensitivity, invert=FALSE) {
     stopTimedMessage(ptm)
 
     ## Return model
-    model$sensitivity <- sensitivity
+    model$maxPost.cutoff <- maxPost.cutoff
     return(model)
   
 }
@@ -247,7 +247,7 @@ adjustSensitivity.univariate <- function(model, sensitivity, invert=FALSE) {
 #' @param post.cutoff A vector of posterior cutoff values between 0 and 1 the same length as \code{ncol(model$bins$posteriors)}. If only one value is given, it will be reused for all columns. Values close to 1 will yield more stringent peak calls with lower false positive but higher false negative rate.
 #' @return The input object is returned with adjusted peak calls.
 #' @export
-#' @seealso \code{\link{adjustSensitivity}}
+#' @seealso \code{\link{changeMaxPostCutoff}}
 #' @examples
 #'## Get an example BAM file
 #'file <- system.file("extdata", "euratrans",
@@ -449,10 +449,10 @@ changePostCutoff.univariate <- function(model, post.cutoff) {
 }
 
 
-#' @describeIn adjustSensitivity This function was renamed to 'adjustSensitivity' in chromstaR 1.5.1 but it still available for backwards compatibility.
+#' @describeIn changeMaxPostCutoff This function was renamed to 'changeMaxPostCutoff' in chromstaR 1.5.1 but it still available for backwards compatibility.
 #' @export
-#' @param fdr Same as \code{sensitivity}.
+#' @param fdr Same as \code{1-maxPost.cutoff}.
 changeFDR <- function(model, fdr=0.01, invert=FALSE) {
-    warning("Usage of 'changeFDR' is discouraged since chromstaR 1.5.1. Please use 'adjustSensitivity' instead.")
-    return(adjustSensitivity(model=model, sensitivity=fdr, invert=invert))
+    warning("Usage of 'changeFDR' is discouraged since chromstaR 1.5.1. Please use 'changeMaxPostCutoff' instead.")
+    return(changeMaxPostCutoff(model=model, maxPost.cutoff=1-fdr, invert=invert))
 }

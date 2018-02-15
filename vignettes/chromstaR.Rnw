@@ -70,7 +70,7 @@ plotHistogram(model) + ggtitle('H3K4me3')
 length(model$peaks); mean(width(model$peaks))
 
 # Adjust the sensitivity and get number of peaks
-model <- adjustSensitivity(model, sensitivity=1e-4)
+model <- changeMaxPostCutoff(model, maxPost.cutoff=0.9999)
 length(model$peaks); mean(width(model$peaks))
 @
 
@@ -125,7 +125,7 @@ peaks <- model$peaks
 length(peaks); mean(width(peaks))
 
 # Adjust the sensitivity and get number of peaks
-model <- adjustSensitivity(model, sensitivity=1e-4)
+model <- changeMaxPostCutoff(model, maxPost.cutoff=0.9999)
 peaks <- model$peaks
 length(peaks); mean(width(peaks))
 @
@@ -580,14 +580,14 @@ plots[['BN']] + coord_flip() +
 
 \subsection{\label{sec:FAQ_peaks}The peak calls are too lenient. Can I adjust the strictness of the peak calling?}
 
-The strictness of the peak calling can be controlled with a sensitivity parameter. The Hidden Markov Model gives posterior probabilities for each peak, and based on these probabilites the model decides if a peak is present or not by picking the state with the highest probability. This way of peak calling leads to very lenient peak calls, and for some applications it may be desirable to obtain only very clear peaks. This can be achieved by setting the sensitivity parameter (which is a cutoff on the maximum posterior probability within each peak). To follow the below example, please first run step 1 and 2 from section~\ref{sec:Task4}.
+The strictness of the peak calling can be controlled with a cutoff on the posterior probability. The Hidden Markov Model gives posterior probabilities for each peak, and based on these probabilites the model decides if a peak is present or not by picking the state with the highest probability. This way of peak calling leads to very lenient peak calls, and for some applications it may be desirable to obtain only very clear peaks. This can be achieved by using \Rfunction{changePostCutoff} and \Rfunction{changeMaxPostCutoff}. To follow the below example, please first run step 1 and 2 from section~\ref{sec:Task4}.
 
 \begin{scriptsize}
 <<faq_postcutoff, results='markup', message=FALSE, eval=TRUE>>=
 model <- get(load(file.path(outputfolder,'combined',
       'combined_mode-differential_binsize1000_stepsize500.RData')))
 # Set a strict cutoff close to 1
-model2 <- adjustSensitivity(model, sensitivity=1e-4)
+model2 <- changeMaxPostCutoff(model, maxPost.cutoff=0.9999)
 ## Compare the number and width of peaks before and after cutoff adjustment
 length(model$segments); mean(width(model$segments))
 length(model2$segments); mean(width(model2$segments))
@@ -599,10 +599,10 @@ It is even possible to adjust the sensitivity differently for the different mark
 \begin{scriptsize}
 <<faq_postcutoff_single, results='markup', message=FALSE, eval=TRUE>>=
 # Set a stricter cutoff for H3K4me3 than for H3K27me3
-cutoffs <- c(0.1, 0.1, 0.1, 0.1, 0.01, 0.01, 0.01, 0.01)
+cutoffs <- c(0.9, 0.9, 0.9, 0.9, 0.99, 0.99, 0.99, 0.99)
 names(cutoffs) <- model$info$ID
 print(cutoffs)
-model2 <- adjustSensitivity(model, sensitivity=cutoffs)
+model2 <- changeMaxPostCutoff(model, maxPost.cutoff=cutoffs)
 ## Compare the number and width of peaks before and after cutoff adjustment
 length(model$segments); mean(width(model$segments))
 length(model2$segments); mean(width(model2$segments))
@@ -615,7 +615,7 @@ You were interested in combinatorial state differences as in section~\ref{sec:Ta
 \begin{enumerate}
 \item Run \Rfunction{Chromstar} in mode='differential' (instead of mode='combinatorial') and see if the results improve.
 \item You can play with the ``differential.score'' (see section~\ref{sec:Task4}, step 3) and export only differences with a high score. A differential score around 1 means that one modification is different, a score close to 2 means that two modifications are different etc. The score is calculated as the sum of differences in posterior probabilities between marks.
-\item Set a strict sensitivity (previous example) to obtain only high confidence peaks.
+\item Use \Rfunction{changePostCutoff} or \Rfunction{changeMaxPostCutoff} to obtain only high confidence peaks.
 \item Check for bad replicates that are very different from the rest and exclude them prior to the analysis.
 \end{enumerate}
 

@@ -40,7 +40,7 @@ plotHistogram(changePostCutoff(hmm, post.cutoff=0.99)) + ylim(0,0.25)
 
 }
 \seealso{
-\code{\link{adjustSensitivity}}
+\code{\link{changeMaxPostCutoff}}
 }
 \author{
 Aaron Taudt
