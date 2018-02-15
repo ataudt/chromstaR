@@ -31,8 +31,7 @@ multivariateSegmentation <- function(bins, column2collapseBy='state') {
     segments <- methods::as(red.df, 'GRanges')
     ## Null the maxPostInPeak entries outside of peaks
     if (!is.null(red.maxPostInPeak)) {
-        segments$maxPostInPeak <- red.maxPostInPeak
-        segments$maxPostInPeak <- segments$maxPostInPeak * dec2bin(segments$state, colnames = colnames(bins$posteriors))
+        segments$maxPostInPeak <- red.maxPostInPeak * dec2bin(segments$state, colnames = colnames(bins$posteriors))
     }
     
     ## Reorder the seqlevels to match the order in bins

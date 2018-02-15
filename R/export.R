@@ -191,7 +191,7 @@ exportUnivariatePeaks <- function(hmm.list, filename, header=TRUE, separate.file
             } else {
                 trackname.string <- paste0("univariate peak calls for ", ID, ", ", trackname)
             }
-            cat(paste0("track name=\"",trackname.string,"\" description=\"",trackname.string,"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
+            cat(paste0("track name=\"",trackname.string,"\" description=\"",trackname.string,"\" visibility=1 itemRgb=Off priority=",priority,"\n"), file=filename.gz, append=TRUE)
         }
         if (is.null(peaks$maxPostInPeak)) {
             peaks$peakScores <- 0
@@ -484,7 +484,7 @@ exportMultivariatePeaks <- function(hmm, filename, trackname=NULL, header=TRUE, 
                 trackname.string <- paste0("peaks for ", ID, ", ", trackname)
             }
             priority <- 52 + 4*imod
-            cat(paste0('track name="', trackname.string, '" description="', trackname.string, '" visibility=1 itemRgb=On priority=',priority,'\n'), file=filename.gz, append=TRUE)
+            cat(paste0('track name="', trackname.string, '" description="', trackname.string, '" visibility=1 itemRgb=Off priority=',priority,'\n'), file=filename.gz, append=TRUE)
         }
         utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
         if (separate.files) {
@@ -664,7 +664,7 @@ exportCombinedMultivariatePeaks <- function(hmm, filename, trackname=NULL, heade
                 trackname.string <- paste0("peaks for ", ID, ", ", trackname)
             }
             priority <- 52 + 4*imod
-            cat(paste0('track name="', trackname.string, '" description="', trackname.string, '" visibility=1 itemRgb=On priority=',priority,'\n'), file=filename.gz, append=TRUE)
+            cat(paste0('track name="', trackname.string, '" description="', trackname.string, '" visibility=1 itemRgb=Off priority=',priority,'\n'), file=filename.gz, append=TRUE)
         }
         utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
         if (separate.files) {
