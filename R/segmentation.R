@@ -9,6 +9,12 @@
 multivariateSegmentation <- function(bins, column2collapseBy='state') {
 
     ptm <- startTimedMessage("Making segmentation ...")
+    ## Intercept case when only one column in posteriors
+    if (!is.null(bins$posteriors)) {
+        if (ncol(bins$posteriors) == 1) {
+            colnames(bins$posteriors) <- paste0('posteriors.', colnames(bins$posteriors))
+        }
+    }
     df <- as.data.frame(bins)
     ind.readcols <- grep('^counts', names(df))
     ind.postcols <- grep('^posteriors', names(df))
