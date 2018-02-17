@@ -7,10 +7,10 @@
 Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
   numCPU = 1, binsize = 1000, stepsize = binsize/2, assembly = NULL,
   chromosomes = NULL, remove.duplicate.reads = TRUE, min.mapq = 10,
-  prefit.on.chr = NULL, eps.univariate = 0.1, max.time = NULL,
-  max.iter = 5000, read.cutoff.absolute = 500, keep.posteriors = TRUE,
-  mode = "differential", max.states = 128, per.chrom = TRUE,
-  eps.multivariate = 0.01, exclusive.table = NULL)
+  format = NULL, prefit.on.chr = NULL, eps.univariate = 0.1,
+  max.time = NULL, max.iter = 5000, read.cutoff.absolute = 500,
+  keep.posteriors = TRUE, mode = "differential", max.states = 128,
+  per.chrom = TRUE, eps.multivariate = 0.01, exclusive.table = NULL)
 }
 \arguments{
 \item{inputfolder}{Folder with either BAM or BED-6 (see \code{\link{readBedFileAsGRanges}} files.}
@@ -34,6 +34,8 @@ Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
 \item{remove.duplicate.reads}{A logical indicating whether or not duplicate reads should be removed.}
 
 \item{min.mapq}{Minimum mapping quality when importing from BAM files. Set \code{min.mapq=0} to keep all reads.}
+
+\item{format}{One of \code{c('bed','bam',NULL)}. With \code{NULL} the format is determined automatically from the file ending.}
 
 \item{prefit.on.chr}{A chromosome that is used to pre-fit the Hidden Markov Model. Set to \code{NULL} if you don't want to prefit but use the whole genome instead.}
 
