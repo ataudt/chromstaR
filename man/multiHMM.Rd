@@ -6,9 +6,11 @@
 \title{Multivariate HMM object}
 \value{
 A \code{list()} with the following entries:
-\item{IDs}{IDs of the input univariate HMMs.}
+\item{info}{Experiment table for this object.}
+\item{bincounts}{A \code{\link[GenomicRanges]{GRanges}} object containing the genomic bin coordinates and original binned read count values for different offsets.}
 \item{bins}{A \code{\link[GenomicRanges]{GRanges}} object containing the genomic bin coordinates, their read count, (optional) posteriors and state classification.}
 \item{segments}{Same as \code{bins}, but consecutive bins with the same state are collapsed into segments.}
+\item{peaks}{A \code{list()} with \code{\link[GenomicRanges]{GRanges}} containing peak coordinates for each ID in \code{info}.}
 \item{mapping}{A named vector giving the mapping from decimal combinatorial states to human readable combinations.}
 \item{weights}{Weight for each component. Same as \code{apply(hmm$posteriors,2,mean)}.}
 \item{weights.univariate}{Weights of the univariate HMMs.}
@@ -17,7 +19,6 @@ A \code{list()} with the following entries:
 \item{startProbs}{Probabilities for the first bin. Same as \code{hmm$posteriors[1,]}.}
 \item{startProbs.initial}{Initial \code{startProbs} at the beginning of the Baum-Welch.}
 \item{distributions}{Emission distributions used for this model.}
-\item{post.cutoff}{False discovery rate. NULL means that the state with maximum posterior probability was chosen, irrespective of its absolute probability (default=NULL).}
 \item{convergenceInfo}{Contains information about the convergence of the Baum-Welch algorithm.}
 \item{convergenceInfo$eps}{Convergence threshold for the Baum-Welch.}
 \item{convergenceInfo$loglik}{Final loglikelihood after the last iteration.}
@@ -27,7 +28,7 @@ A \code{list()} with the following entries:
 \item{correlation.matrix}{Correlation matrix of transformed reads.}
 }
 \description{
-The multivariate HMM object is output of the function \code{\link{callPeaksMultivariate}} and is a \code{list()} with various entries. The class() attribute of this list was set to "multiHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' or 'hmm$'.
+The multivariate HMM object is output of the function \code{\link{callPeaksMultivariate}} and is a \code{list()} with various entries. The \code{class()} attribute of this list was set to "multiHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' or 'hmm$'.
 }
 \examples{
 ## Get an example multiHMM

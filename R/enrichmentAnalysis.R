@@ -260,7 +260,7 @@ plotFoldEnrichHeatmap <- function(hmm, annotations, what="combinations", combina
 #' @importFrom reshape2 melt
 #' @importFrom IRanges subsetByOverlaps
 #' @export
-plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=1000, combinations=NULL, colorByCombinations=TRUE, sortByCombinations=TRUE, sortByColumns=NULL) {
+plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=1000, combinations=NULL, colorByCombinations=sortByCombinations, sortByCombinations=is.null(sortByColumns), sortByColumns=NULL) {
 
     if (!is.null(sortByColumns)) {
         sortByCombinations <- FALSE
@@ -391,7 +391,13 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
     ggplt <- ggplt + scale_fill_continuous(trans='log1p', low='white', high='black')
     if (sortByCombinations) {
         # Insert horizontal lines
-        y.lines <- sapply(split(df$id, df$combination), function(x) { max(as.integer(x)) })
+        y.lines <- sapply(split(df$id, df$combination), function(x) { 
+          y <- -Inf
+          if (length(x)>0) {
+            y <- max(as.integer(x))
+          }
+          return(y)
+        })
         df.lines <- data.frame(y=sort(y.lines[-1]) + 0.5)
         ggplt <- ggplt + geom_hline(data=df.lines, mapping=aes_string(yintercept='y'), linetype=2)
     }
@@ -591,7 +597,7 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
     seqlevels.only.in.bins <- setdiff(seqlevels(bins), seqlevels(annotation))
     seqlevels.only.in.annotation <- setdiff(seqlevels(annotation), seqlevels(bins))
     if (length(seqlevels.only.in.bins) > 0 | length(seqlevels.only.in.annotation) > 0) {
-        warning("Sequence levels in 'bins' but not in 'annotation': ", paste0(seqlevels.only.in.bins, collapse = ', '), "\n  Sequence levels in 'annotation' but not in 'bins': ", paste0(seqlevels.only.in.annotation, collapse = ''))
+        warning("Sequence levels in 'bins' but not in 'annotation': ", paste0(seqlevels.only.in.bins, collapse = ', '), "\n  Sequence levels in 'annotation' but not in 'bins': ", paste0(seqlevels.only.in.annotation, collapse = ', '))
     }
   
     ## Variables

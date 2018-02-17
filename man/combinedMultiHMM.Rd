@@ -6,12 +6,16 @@
 \title{Combined multivariate HMM object}
 \value{
 A \code{list()} with the following entries:
+\item{info}{Experiment table for this object.}
 \item{bins}{A \code{\link[GenomicRanges]{GRanges}} object containing genomic bin coordinates and human readable combinations for the combined \code{\link{multiHMM}} objects.}
 \item{segments}{Same as \code{bins}, but consecutive bins with the same state are collapsed into segments.}
-\item{segments.per.condition}{A \code{list} with segments for each condition separately.}
+\item{segments.per.condition}{A \code{list()} with segments for each condition separately.}
+\item{peaks}{A \code{list()} with \code{\link[GenomicRanges]{GRanges}} containing peak coordinates for each ID in \code{info}.}
+\item{frequencies}{Genomic frequencies of combinations.}
+\item{mode}{Mode of analysis.}
 }
 \description{
-The multivariate HMM object is output of the function \code{\link{combineMultivariates}} and is a \code{list()} with various entries. The class() attribute of this list was set to "combinedMultiHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' or 'hmm$'.
+The combined multivariate HMM object is output of the function \code{\link{combineMultivariates}} and is a \code{list()} with various entries. The \code{class()} attribute of this list was set to "combinedMultiHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' or 'hmm$'.
 }
 \seealso{
 \code{\link{combineMultivariates}}, \code{\link{uniHMM}}, \code{\link{multiHMM}}

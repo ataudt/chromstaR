@@ -343,6 +343,7 @@ combineMultivariates <- function(hmms, mode) {
     hmm$segments.per.condition <- segments.per.condition
     hmm$peaks <- peaks
     hmm$frequencies <- freqs$table
+    hmm$mode <- mode
     return(hmm)
     
 }
