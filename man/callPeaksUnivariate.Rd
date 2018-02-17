@@ -4,7 +4,7 @@
 \alias{callPeaksUnivariate}
 \title{Fit a Hidden Markov Model to a ChIP-seq sample.}
 \usage{
-callPeaksUnivariate(binned.data, input.data = NULL, prefit.on.chr = NULL,
+callPeaksUnivariate(binned.data, control.data = NULL, prefit.on.chr = NULL,
   short = TRUE, eps = 0.1, init = "standard", max.time = NULL,
   max.iter = 5000, num.trials = 1, eps.try = NULL, num.threads = 1,
   read.cutoff = TRUE, read.cutoff.quantile = 1,
@@ -15,7 +15,7 @@ callPeaksUnivariate(binned.data, input.data = NULL, prefit.on.chr = NULL,
 \arguments{
 \item{binned.data}{A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.}
 
-\item{input.data}{Input control for the experiment. A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.}
+\item{control.data}{Input control for the experiment. A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.}
 
 \item{prefit.on.chr}{A chromosome that is used to pre-fit the Hidden Markov Model. Set to \code{NULL} if you don't want to prefit but use the whole genome instead.}
 
