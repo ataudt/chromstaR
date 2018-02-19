@@ -11,12 +11,26 @@
 NULL
 
 
+#' Univariate HMM for demonstration purposes
+#'
+#' A \code{\link{uniHMM}} object for demonstration purposes in examples of package \pkg{\link{chromstaR}}.
+#'
+#' @docType data
+#' @name model.univariate
+#' @format A \code{\link{uniHMM}} object.
+#' @examples
+#'## Get an example uniHMM
+#'file <- system.file("data","H3K27me3-BN-rep1.RData", package="chromstaR")
+#'model <- get(load(file))
+NULL
+
+
 #' Multivariate HMM for demonstration purposes
 #'
 #' A \code{\link{multiHMM}} object for demonstration purposes in examples of package \pkg{\link{chromstaR}}.
 #'
 #' @docType data
-#' @name multivariate_model
+#' @name model.multivariate
 #' @format A \code{\link{multiHMM}} object.
 #' @examples
 #'## Get an example multiHMM
@@ -31,7 +45,7 @@ NULL
 #' A \code{\link{combinedMultiHMM}} object for demonstration purposes in examples of package \pkg{\link{chromstaR}}.
 #'
 #' @docType data
-#' @name combined_model
+#' @name model.combined
 #' @format A \code{\link{combinedMultiHMM}} object.
 #' @examples
 #'## Get an example combinedMultiHMM

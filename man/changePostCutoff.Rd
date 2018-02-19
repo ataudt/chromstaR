@@ -21,22 +21,39 @@ Adjusts the peak calls of a \code{\link{uniHMM}}, \code{\link{multiHMM}} or \cod
 Posterior probabilities are between 0 and 1. Peaks are called if the posteriors for a state (univariate) or sample (multivariate) are >= \code{post.cutoff}.
 }
 \examples{
-## Get an example BAM file
+## Get an example BAM file with ChIP-seq reads
 file <- system.file("extdata", "euratrans",
                       "lv-H3K27me3-BN-male-bio2-tech1.bam",
                        package="chromstaRData")
-## Bin the file into bin size 1000bp
+## Bin the BED file into bin size 1000bp
 data(rn4_chrominfo)
-binned <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
+data(experiment_table)
+binned <- binReads(file, experiment.table=experiment_table,
+                  assembly=rn4_chrominfo, binsizes=1000,
                   stepsizes=500, chromosomes='chr12')
-## Fit the univariate Hidden Markov Model
-# !Keep posteriors to change the post.cutoff later!
-hmm <- callPeaksUnivariate(binned, max.time=60, eps=1,
-                          keep.posteriors=TRUE)
+plotHistogram(binned)
+## Fit HMM
+model <- callPeaksUnivariate(binned, keep.posteriors=TRUE, verbosity=0)
 ## Compare fits with different post.cutoffs
-plotHistogram(changePostCutoff(hmm, post.cutoff=0.01)) + ylim(0,0.25)
-plotHistogram(hmm) + ylim(0,0.25)
-plotHistogram(changePostCutoff(hmm, post.cutoff=0.99)) + ylim(0,0.25)
+plotHistogram(changePostCutoff(model, post.cutoff=0.01)) + ylim(0,0.25)
+plotHistogram(model) + ylim(0,0.25)
+plotHistogram(changePostCutoff(model, post.cutoff=0.99)) + ylim(0,0.25)
+
+## Get an example multiHMM ##
+file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
+                    package="chromstaR")
+model <- get(load(file))
+genomicFrequencies(model)
+model.new <- changePostCutoff(model, post.cutoff=0.9999)
+genomicFrequencies(model.new)
+
+## Get an example combinedMultiHMM ##
+file <- system.file("data","combined_mode-differential.RData",
+                    package="chromstaR")
+model <- get(load(file))
+genomicFrequencies(model)
+model.new <- changePostCutoff(model, post.cutoff=0.9999)
+genomicFrequencies(model.new)
 
 }
 \seealso{

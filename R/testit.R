@@ -10,3 +10,7 @@ opt <- list()
 opt$chromstarObject <- '~/bioinformatics/galaxy/tools/chromstaR-galaxy/test-data/output_chromstaR-result.rdata'
 opt$changeWhat <- 'changePostCutoff'
 opt$cutoff <- 0.9999999
+
+opt$differentialScore <- 0.9999
+opt$minWidth <- 300
+opt$differentialPosterior <- 0.9999

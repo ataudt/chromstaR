@@ -1,3 +1,4 @@
-combined_mode-differential: combined_model
-multivariate_mode-combinatorial_condition-SHR: multivariate_model
-genes_rn4: genes_rn4
+H3K27me3-BN-rep1.RData: model.univariate
+combined_mode-differential.RData: model.combined
+genes_rn4.RData: genes_rn4
+multivariate_mode-combinatorial_condition-SHR.RData: model.multivariate

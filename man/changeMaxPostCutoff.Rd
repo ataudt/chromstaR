@@ -33,20 +33,29 @@ Each peak has a maximum-posterior (maxPostInPeak, between 0 and 1) associated. T
 }}
 
 \examples{
-## Get an example BAM file
-file <- system.file("extdata", "euratrans",
-                      "lv-H3K27me3-BN-male-bio2-tech1.bam",
-                       package="chromstaRData")
-## Bin the file into bin size 1000bp
-data(rn4_chrominfo)
-binned <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
-                  stepsizes=500, chromosomes='chr12')
-## Fit the univariate Hidden Markov Model
-hmm <- callPeaksUnivariate(binned, max.time=60, eps=1)
+## Get an example uniHMM ##
+file <- system.file("data","H3K27me3-BN-rep1.RData", package="chromstaR")
+model <- get(load(file))
 ## Compare fits with different fdrs
-plotHistogram(hmm) + ylim(0,0.25) + ylim(0,0.3)
-plotHistogram(changeMaxPostCutoff(hmm, maxPost.cutoff=0.99)) + ylim(0,0.3)
-plotHistogram(changeMaxPostCutoff(hmm, maxPost.cutoff=1-1e-12)) + ylim(0,0.3)
+plotHistogram(model) + ylim(0,0.25) + ylim(0,0.3)
+plotHistogram(changeMaxPostCutoff(model, maxPost.cutoff=0.99)) + ylim(0,0.3)
+plotHistogram(changeMaxPostCutoff(model, maxPost.cutoff=1-1e-12)) + ylim(0,0.3)
+
+## Get an example multiHMM ##
+file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
+                    package="chromstaR")
+model <- get(load(file))
+genomicFrequencies(model)
+model.new <- changeMaxPostCutoff(model, maxPost.cutoff=0.9999, invert=FALSE)
+genomicFrequencies(model.new)
+
+## Get an example combinedMultiHMM ##
+file <- system.file("data","combined_mode-differential.RData",
+                    package="chromstaR")
+model <- get(load(file))
+genomicFrequencies(model)
+model.new <- changeMaxPostCutoff(model, maxPost.cutoff=0.9999, invert=FALSE)
+genomicFrequencies(model.new)
 
 }
 \seealso{

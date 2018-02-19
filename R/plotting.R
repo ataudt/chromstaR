@@ -352,83 +352,157 @@ plotBoxplot <- function(model) {
 }
 
 
+#' #' Plot a genome browser view
+#' #' 
+#' #' Plot a simple genome browser view. This is useful for scripted genome browser snapshots.
+#' #' 
+#' #' @param counts A \code{\link[GenomicRanges]{GRanges}} object with meta-data column 'counts'.
+#' #' @param peaklist A named list() of \code{\link[GenomicRanges]{GRanges}} objects containing peak coordinates.
+#' #' @param chr,start,end Chromosome, start and end coordinates for the plot.
+#' #' @param countcol A character giving the color for the counts.
+#' #' @param peakcols A character vector with colors for the peaks in \code{peaklist}.
+#' #' @param style One of \code{c('peaks', 'density')}.
+#' #' @param peakTrackHeight Relative height of the tracks given in \code{peaklist} compared to the \code{counts}.
+#' #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
+#' #' @examples
+#' #'## Get an example multiHMM ##
+#' #'file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
+#' #'                     package="chromstaR")
+#' #'model <- get(load(file))
+#' #'## Plot genome browser snapshot
+#' #'bins <- model$bins
+#' #'bins$counts <- model$bins$counts.rpkm[,1]
+#' #'plotGenomeBrowser(counts=bins, peaklist=model$peaks,
+#' #'                  chr='chr12', start=1, end=1e6)
+#' #'
+#' plotGenomeBrowser2 <- function(counts, peaklist=NULL, chr, start, end, countcol='black', peakcols=NULL, style='peaks', peakTrackHeight=5) {
+#'   
+#'     ## Select ranges to plot
+#'     ranges2plot <- reduce(counts[counts@seqnames == chr & start(counts) >= start & start(counts) <= end])
+#'     
+#'     ## Counts
+#'     counts <- subsetByOverlaps(counts, ranges2plot)
+#'     
+#'     if (style == 'peaks') {
+#'         df <- data.frame(x=(start(counts)+end(counts))/2, counts=counts$counts) # plot triangles centered at middle of the bin
+#'         ggplt <- ggplot(df) + geom_area(aes_string(x='x', y='counts')) + theme(panel.grid = element_blank(), panel.background = element_blank(), axis.text.x = element_blank(), axis.title = element_blank(), axis.ticks.x = element_blank(), axis.line = element_blank())
+#'         maxcounts <- max(counts$counts)
+#'         ggplt <- ggplt + scale_y_continuous(breaks=c(0, maxcounts))
+#'     } else if (style == 'density') {
+#'         df <- data.frame(xmin=start(counts), xmax=end(counts), counts=counts$counts)
+#'         
+#'         ggplt <- ggplot(df) + geom_rect(aes_string(xmin='xmin', xmax='xmax', ymin=0, ymax=4, alpha='counts')) + theme(panel.grid = element_blank(), panel.background = element_blank(), axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank(), axis.line = element_blank())
+#'     } else {
+#'         stop("Unknown value '", style, "' for parameter 'style'. Must be one of c('peaks', 'density').")
+#'     }
+#'     
+#'     ## Peaks
+#'     if (!is.null(peaklist)) {
+#'         if (is.null(peakcols)) {
+#'             peakcols <- getDistinctColors(length(peaklist))
+#'         }
+#'         for (i1 in 1:length(peaklist)) {
+#'             p <- peakTrackHeight
+#'             peaks <- subsetByOverlaps(peaklist[[i1]], ranges2plot)
+#'             if (length(peaks) > 0) {
+#'                 df <- data.frame(start=start(peaks), end=end(peaks), ymin=-p*i1, ymax=-p*i1+0.9*p)
+#'                 ggplt <- ggplt + geom_rect(data=df, mapping=aes_string(xmin='start', xmax='end', ymin='ymin', ymax='ymax'), col=peakcols[i1], fill=peakcols[i1])
+#'             }
+#'             trackname <- names(peaklist)[i1]
+#'             df <- data.frame(x=start(counts)[1], y=-p*i1+0.5*p, label=trackname)
+#'             ggplt <- ggplt + geom_text(data=df, mapping=aes_string(x='x', y='y', label='label'), vjust=0.5, hjust=0.5, col=peakcols[i1])
+#'         }
+#'     }
+#'     
+#'     return(ggplt)
+#' }
+
 #' Plot a genome browser view
 #' 
-#' Plot a simple genome browser view. This is useful for scripted genome browser snapshots.
+#' Plot a simple genome browser view of \code{\link{chromstaR-objects}}. This is useful for scripted genome browser snapshots.
 #' 
-#' @param counts A \code{\link[GenomicRanges]{GRanges}} object with meta-data column 'counts'.
-#' @param peaklist A named list() of \code{\link[GenomicRanges]{GRanges}} objects containing peak coordinates.
+#' @param model A \code{\link{uniHMM}}, \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object or file that contains such an object.
 #' @param chr,start,end Chromosome, start and end coordinates for the plot.
-#' @param countcol A character giving the color for the counts.
-#' @param peakcols A character vector with colors for the peaks in \code{peaklist}.
 #' @param style One of \code{c('peaks', 'density')}.
-#' @param peakTrackHeight Relative height of the tracks given in \code{peaklist} compared to the \code{counts}.
+#' @param peakHeight Height of the peak track relative to the count track.
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
 #' @export
 #' @examples
+#'## Get an example uniHMM ##
+#'file <- system.file("data","H3K27me3-BN-rep1.RData", package="chromstaR")
+#'model <- get(load(file))
+#'plotGenomeBrowser(model, chr='chr12', start=1, end=1e6, style='peaks',
+#'                  peakHeight=0.1)
+#'                  
 #'## Get an example multiHMM ##
 #'file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData",
 #'                     package="chromstaR")
 #'model <- get(load(file))
-#'## Plot count correlations as heatmap
-#'bins <- model$bins
-#'bins$counts <- model$bins$counts.rpkm[,1]
-#'plotGenomeBrowser(counts=bins, peaklist=model$peaks,
-#'                  chr='chr12', start=1, end=1e6)
+#'plotGenomeBrowser(model, chr='chr12', start=1, end=1e6, style='peaks',
+#'                  peakHeight=0.1)
+#'                  
+#'## Get an example combinedMultiHMM ##
+#'file <- system.file("data","combined_mode-differential.RData",
+#'                     package="chromstaR")
+#'model <- get(load(file))
+#'plotlist <- plotGenomeBrowser(model, chr='chr12', start=1, end=1e6, style='peaks',
+#'                  peakHeight=0.1)
 #'
-plotGenomeBrowser <- function(counts, peaklist=NULL, chr, start, end, countcol='black', peakcols=NULL, style='peaks', peakTrackHeight=5) {
+plotGenomeBrowser <- function(model, chr, start, end, style='peaks', peakHeight=0.2) {
   
+    model <- loadHmmsFromFiles(model, check.class = c('uniHMM', 'multiHMM', 'combinedMultiHMM'))[[1]]
+    
     ## Select ranges to plot
-    ranges2plot <- reduce(counts[counts@seqnames == chr & start(counts) >= start & start(counts) <= end])
-    
-    ## Counts
-    counts <- subsetByOverlaps(counts, ranges2plot)
-    
-    if (style == 'peaks') {
-        # df.start <- data.frame(x=start(counts), counts=counts$counts)
-        # df.end <- data.frame(x=end(counts), counts=counts$counts)
-        # df <- rbind(df.start, df.end)
-        # df <- df[order(df$x),]
-        df <- data.frame(x=(start(counts)+end(counts))/2, counts=counts$counts) # plot triangles centered at middle of the bin
-        ggplt <- ggplot(df) + geom_area(aes_string(x='x', y='counts')) + theme(panel.grid = element_blank(), panel.background = element_blank(), axis.text.x = element_blank(), axis.title = element_blank(), axis.ticks.x = element_blank(), axis.line = element_blank())
-        maxcounts <- max(counts$counts)
-        ggplt <- ggplt + scale_y_continuous(breaks=c(0, maxcounts))
-    } else if (style == 'density') {
-        df <- data.frame(xmin=start(counts), xmax=end(counts), counts=counts$counts)
-        
-        # # Rolling mean
-        # n <- 10
-        # cx <- cumsum(df$counts)
-        # rsum <- (cx[n:length(df$counts)] - c(0, cx[1:(length(df$counts) - n)])) / n
-        # df$counts[(n%/%2 + 1):(length(df$counts)-(n-1)%/%2)] <- rsum
-        
-        # # Expand high peaks
-        # fact <- 1e-5
-        # df$xmin <- df$xmin - (end-start)*df$counts * fact
-        # df$xmax <- df$xmax + (end-start)*df$counts * fact
-        
-        ggplt <- ggplot(df) + geom_rect(aes_string(xmin='xmin', xmax='xmax', ymin=0, ymax=4, alpha='counts')) + theme(panel.grid = element_blank(), panel.background = element_blank(), axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank(), axis.line = element_blank())
+    bins <- model$bins
+    ranges2plot <- reduce(bins[bins@seqnames == chr & start(bins) >= start & start(bins) <= end, , drop=FALSE])
+    bins <- subsetByOverlaps(bins, ranges2plot)
+    if (class(model)=='uniHMM') {
+        peaklist <- list(model$peaks)
+        bins$counts.rpkm <- matrix(bins$counts.rpkm, ncol=1)
+        if (is.null(model$info)) {
+            model$info <- data.frame(file=NA, mark="peaks", condition=NA, replicate=1, ID='browser_snapshot')
+        }
+        names(peaklist) <- model$info$ID
+        colnames(bins$counts.rpkm) <- model$info$ID
     } else {
-        stop("Unknown value '", style, "' for parameter 'style'. Must be one of c('peaks', 'density').")
+        peaklist <- model$peaks
     }
     
-    ## Peaks
-    if (!is.null(peaklist)) {
-        if (is.null(peakcols)) {
-            peakcols <- getDistinctColors(length(peaklist))
-        }
-        for (i1 in 1:length(peaklist)) {
-            p <- peakTrackHeight
-            peaks <- subsetByOverlaps(peaklist[[i1]], ranges2plot)
-            if (length(peaks) > 0) {
-                df <- data.frame(start=start(peaks), end=end(peaks), ymin=-p*i1, ymax=-p*i1+0.9*p)
-                ggplt <- ggplt + geom_rect(data=df, mapping=aes_string(xmin='start', xmax='end', ymin='ymin', ymax='ymax'), col=peakcols[i1], fill=peakcols[i1])
-            }
-            trackname <- names(peaklist)[i1]
-            df <- data.frame(x=start(counts)[1], y=-p*i1+0.5*p, label=trackname)
-            ggplt <- ggplt + geom_text(data=df, mapping=aes_string(x='x', y='y', label='label'), vjust=0.5, hjust=0.5, col=peakcols[i1])
-        }
+    ## Determine y-limits, same within across marks ##
+    maxcounts <- apply(bins$counts.rpkm, 2, max)
+    maxcounts.permark <- list()
+    for (mark in unique(model$info$mark)) {
+        maxcounts.permark[[mark]] <- max(maxcounts[model$info$mark==mark])
     }
     
-    return(ggplt)
+    ggplts <- list()
+    for (i1 in 1:nrow(model$info)) {
+      
+        ymax.counts <- round(maxcounts.permark[[as.character(model$info$mark[i1])]])
+        ID <- model$info$ID[i1]
+      
+        if (style == 'peaks') {
+            df <- data.frame(position=(start(bins)+end(bins))/2, RPKM=bins$counts.rpkm[,ID]) # plot triangles centered at middle of the bin
+            ggplt <- ggplot(df) + geom_area(aes_string(x='position', y='RPKM')) + theme(panel.grid = element_blank(), panel.background = element_blank(), axis.line = element_blank())
+        } else if (style == 'density') {
+            df <- data.frame(xmin=start(bins), xmax=end(bins), RPKM=bins$counts.rpkm[,ID])
+            ggplt <- ggplot(df) + geom_rect(aes_string(xmin='xmin', xmax='xmax', ymin=0, ymax.counts=4, alpha='RPKM')) + theme(panel.grid = element_blank(), panel.background = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(), axis.line = element_blank(), axis.title.y = element_blank())
+            ggplt <- ggplt + xlab('position')
+        } else {
+            stop("Unknown value '", style, "' for parameter 'style'. Must be one of c('peaks', 'density').")
+        }
+        
+        ## Peaks
+        peaks <- subsetByOverlaps(peaklist[[ID]], ranges2plot)
+        if (length(peaks) > 0) {
+            df <- data.frame(start=start(peaks), end=end(peaks), ymin=-peakHeight*ymax.counts, ymax=0.1*(-peakHeight*ymax.counts))
+            ggplt <- ggplt + geom_rect(data=df, mapping=aes_string(xmin='start', xmax='end', ymin='ymin', ymax='ymax'), col='blue', fill='blue')
+        }
+      
+        ggplt <- ggplt + scale_y_continuous(breaks=c(0, ymax.counts)) + coord_cartesian(xlim=c(start, end), ylim=c(-peakHeight*ymax.counts,ymax.counts))
+        ggplt <- ggplt + ggtitle(ID)
+        ggplts[[ID]] <- ggplt
+    }
+    
+    return(ggplts)
 }
