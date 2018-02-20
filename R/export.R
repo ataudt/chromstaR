@@ -191,25 +191,28 @@ exportUnivariatePeaks <- function(hmm.list, filename, header=TRUE, separate.file
             } else {
                 trackname.string <- paste0("univariate peak calls for ", ID, ", ", trackname)
             }
-            cat(paste0("track name=\"",trackname.string,"\" description=\"",trackname.string,"\" visibility=1 itemRgb=On priority=",priority,"\n"), file=filename.gz, append=TRUE)
+            cat(paste0("track name=\"",trackname.string,"\" description=\"",trackname.string,"\" visibility=1 itemRgb=Off priority=",priority,"\n"), file=filename.gz, append=TRUE)
         }
-        if (is.null(peaks$peakScores)) {
+        if (is.null(peaks$maxPostInPeak)) {
             peaks$peakScores <- 0
+        } else {
+            peaks$peakScores <- suppressWarnings( -10*log10(1-peaks$maxPostInPeak) )
+            peaks$peakScores[is.nan(peaks$peakScores) | peaks$peakScores > 1000] <- 1000
         }
         df <- as.data.frame(peaks)
         df$peakNumber <- paste0('peak_', 1:nrow(df))
         df$strand <- sub('\\*', '.', df$strand)
         df <- df[,c('chromosome','start','end','peakNumber','peakScores','strand')]
         # Make score integer
-        df$peakScores <- round(df$peakScores*1000)
+        df$peakScores <- round(df$peakScores)
         numsegments <- nrow(df)
-        df <- cbind(df, thickStart=df$start, thickEnd=df$end)
         # Convert from 1-based closed to 0-based half open
         df$start <- df$start - 1
-        df$thickStart <- df$thickStart - 1
-        # Colors
-        RGB <- t(grDevices::col2rgb(getStateColors('modified')))
-        df$itemRgb <- apply(RGB,1,paste,collapse=",")
+        # df$thickStart <- df$start
+        # df$thickEnd <- df$end
+        # # Colors
+        # RGB <- t(grDevices::col2rgb(getStateColors('modified')))
+        # df$itemRgb <- apply(RGB,1,paste,collapse=",")
         if (nrow(df) == 0) {
             warning('hmm ',imod,' does not contain any \'modified\' calls')
         } else {
@@ -434,12 +437,19 @@ exportMultivariatePeaks <- function(hmm, filename, trackname=NULL, header=TRUE, 
         cat("", file=filename.gz)
     }
 
-    ## Export peaks on a per bin basis to obtain proper posterior scores
+    ## Export peaks
     for (imod in 1:length(hmm$info$ID)) {
         ID <- hmm$info$ID[imod]
         
-        ## Select only segments with peaks
+        ## Add peak score
         peaks <- insertchr(hmm$peaks[[ID]])
+        if (is.null(peaks$maxPostInPeak)) {
+            peaks$peakScores <- 0
+        } else {
+            peaks$peakScores <- suppressWarnings( -10*log10(1-peaks$maxPostInPeak) )
+            peaks$peakScores[is.nan(peaks$peakScores) | peaks$peakScores > 1000] <- 1000
+        }
+        
         peaks.df <- as.data.frame(peaks)
         peaks.df$peakNumber <- paste0('peak_', 1:nrow(peaks.df))
         
@@ -448,15 +458,15 @@ exportMultivariatePeaks <- function(hmm, filename, trackname=NULL, header=TRUE, 
         df$strand <- sub('\\*', '.', df$strand)
         
         # Make score integer
-        df$peakScores <- round(df$peakScores*1000)
+        df$peakScores <- round(df$peakScores)
         
         # Convert from 1-based closed to 0-based half open
         df$start <- df$start - 1
-        df$thickStart <- df$start
-        df$thickEnd <- df$end
-        # Colors
-        RGB <- t(grDevices::col2rgb(getStateColors('modified')))
-        df$itemRgb <- apply(RGB,1,paste,collapse=",")
+        # df$thickStart <- df$start
+        # df$thickEnd <- df$end
+        # # Colors
+        # RGB <- t(grDevices::col2rgb(getStateColors('modified')))
+        # df$itemRgb <- apply(RGB,1,paste,collapse=",")
         
         ## Write to file
         if (separate.files) {
@@ -474,7 +484,7 @@ exportMultivariatePeaks <- function(hmm, filename, trackname=NULL, header=TRUE, 
                 trackname.string <- paste0("peaks for ", ID, ", ", trackname)
             }
             priority <- 52 + 4*imod
-            cat(paste0('track name="', trackname.string, '" description="', trackname.string, '" visibility=1 itemRgb=On priority=',priority,'\n'), file=filename.gz, append=TRUE)
+            cat(paste0('track name="', trackname.string, '" description="', trackname.string, '" visibility=1 itemRgb=Off priority=',priority,'\n'), file=filename.gz, append=TRUE)
         }
         utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
         if (separate.files) {
@@ -606,12 +616,20 @@ exportCombinedMultivariatePeaks <- function(hmm, filename, trackname=NULL, heade
         cat("", file=filename.gz)
     }
 
+    ## Export peaks
     for (imod in 1:length(hmm$info$ID)) {
         ID <- hmm$info$ID[imod]
         cond <- hmm$info$condition[imod]
         
-        ## Select only segments with peaks
+        ## Add peak score
         peaks <- insertchr(hmm$peaks[[ID]])
+        if (is.null(peaks$maxPostInPeak)) {
+            peaks$peakScores <- 0
+        } else {
+            peaks$peakScores <- suppressWarnings( -10*log10(1-peaks$maxPostInPeak) )
+            peaks$peakScores[is.nan(peaks$peakScores) | peaks$peakScores > 1000] <- 1000
+        }
+        
         peaks.df <- as.data.frame(peaks)
         peaks.df$peakNumber <- paste0('peak_', 1:nrow(peaks.df))
         
@@ -620,15 +638,15 @@ exportCombinedMultivariatePeaks <- function(hmm, filename, trackname=NULL, heade
         df$strand <- sub('\\*', '.', df$strand)
         
         # Make score integer
-        df$peakScores <- round(df$peakScores*1000)
+        df$peakScores <- round(df$peakScores)
         
         # Convert from 1-based closed to 0-based half open
         df$start <- df$start - 1
-        df$thickStart <- df$start
-        df$thickEnd <- df$end
-        # Colors
-        RGB <- t(grDevices::col2rgb(getStateColors('modified')))
-        df$itemRgb <- apply(RGB,1,paste,collapse=",")
+        # df$thickStart <- df$start
+        # df$thickEnd <- df$end
+        # # Colors
+        # RGB <- t(grDevices::col2rgb(getStateColors('modified')))
+        # df$itemRgb <- apply(RGB,1,paste,collapse=",")
         
         ## Write to file
         if (separate.files) {
@@ -646,7 +664,7 @@ exportCombinedMultivariatePeaks <- function(hmm, filename, trackname=NULL, heade
                 trackname.string <- paste0("peaks for ", ID, ", ", trackname)
             }
             priority <- 52 + 4*imod
-            cat(paste0('track name="', trackname.string, '" description="', trackname.string, '" visibility=1 itemRgb=On priority=',priority,'\n'), file=filename.gz, append=TRUE)
+            cat(paste0('track name="', trackname.string, '" description="', trackname.string, '" visibility=1 itemRgb=Off priority=',priority,'\n'), file=filename.gz, append=TRUE)
         }
         utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
         if (separate.files) {

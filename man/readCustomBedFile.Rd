@@ -6,7 +6,7 @@
 \usage{
 readCustomBedFile(bedfile, col.names = c("chromosome", "start", "end", "name",
   "score", "strand"), col.classes = NULL, skip = 0,
-  chromosome.format = "NCBI")
+  chromosome.format = "NCBI", sep = "")
 }
 \arguments{
 \item{bedfile}{Filename of the bed or bed.gz file.}
@@ -17,7 +17,9 @@ readCustomBedFile(bedfile, col.names = c("chromosome", "start", "end", "name",
 
 \item{skip}{Number of lines to skip at the beginning.}
 
-\item{chromosome.format}{Desired format of the chromosomes. Either 'NCBI' for (1,2,3 ...) or 'UCSC' for (chr1,chr2,chr3 ...).}
+\item{chromosome.format}{Desired format of the chromosomes. Either 'NCBI' for (1,2,3 ...) or 'UCSC' for (chr1,chr2,chr3 ...) or \code{NULL} to keep the original names.}
+
+\item{sep}{Field separator from \code{\link{read.table}}.}
 }
 \value{
 A \code{\link{GRanges}} object with the contents of the bed-file.

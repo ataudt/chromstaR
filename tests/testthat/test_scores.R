@@ -1,8 +1,8 @@
 messageU("scores")
 
 data("combined_mode-differential")
-info0 <- combined_model$info
-bins0 <- combined_model$bins[1:9]
+info0 <- model.combined$info
+bins0 <- model.combined$bins[1:9]
 bins0$peakScores <- matrix(1:72, ncol=nrow(info0))
 colnames(bins0$peakScores) <- info0$ID
 

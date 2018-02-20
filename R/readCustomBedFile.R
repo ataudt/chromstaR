@@ -8,7 +8,8 @@
 #' @param col.names A character vector giving the names of the columns in the \code{bedfile}. Must contain at least \code{c('chromosome','start','end')}.
 #' @param col.classes A character vector giving the classes of the columns in \code{bedfile}. Speeds up the import.
 #' @param skip Number of lines to skip at the beginning.
-#' @param chromosome.format Desired format of the chromosomes. Either 'NCBI' for (1,2,3 ...) or 'UCSC' for (chr1,chr2,chr3 ...).
+#' @param chromosome.format Desired format of the chromosomes. Either 'NCBI' for (1,2,3 ...) or 'UCSC' for (chr1,chr2,chr3 ...) or \code{NULL} to keep the original names.
+#' @param sep Field separator from \code{\link{read.table}}.
 #' @return A \code{\link{GRanges}} object with the contents of the bed-file.
 #' @author Aaron Taudt
 #' @importFrom utils read.table
@@ -21,13 +22,13 @@
 #'## Import the file and skip the first 10 lines
 #'data <- readCustomBedFile(bedfile, skip=10)
 #'
-readCustomBedFile <- function(bedfile, col.names=c('chromosome','start','end','name','score','strand'), col.classes=NULL, skip=0, chromosome.format='NCBI') {
+readCustomBedFile <- function(bedfile, col.names=c('chromosome','start','end','name','score','strand'), col.classes=NULL, skip=0, chromosome.format='NCBI', sep="") {
 
     if (!is.null(col.classes)) {
         names(col.classes) <- col.names
-        data <- utils::read.table(bedfile, col.names=col.names, colClasses=col.classes, skip=skip)
+        data <- utils::read.table(bedfile, col.names=col.names, colClasses=col.classes, skip=skip, sep=sep)
     } else {
-        data <- utils::read.table(bedfile, col.names=col.names, skip=skip)
+        data <- utils::read.table(bedfile, col.names=col.names, skip=skip, sep=sep)
     }
     if (!is.null(data$strand)) {
         # GRanges compatible strand information
@@ -36,10 +37,12 @@ readCustomBedFile <- function(bedfile, col.names=c('chromosome','start','end','n
         data$strand <- '*'
     }
     if (nrow(data) > 0) {
-        # Adjust chromosome format
-        data$chromosome <- sub('^chr', '', data$chromosome)
-        if (chromosome.format=='UCSC') {
-            data$chromosome <- paste0('chr', data$chromosome)
+        if (!is.null(chromosome.format)) {
+            # Adjust chromosome format
+            data$chromosome <- sub('^chr', '', data$chromosome)
+            if (chromosome.format=='UCSC') {
+                data$chromosome <- paste0('chr', data$chromosome)
+            }
         }
     }
     # Convert to GRanges object

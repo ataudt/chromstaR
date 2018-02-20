@@ -5,7 +5,6 @@
 #' Plotting functions that work on \code{\link{uniHMM}} objects:
 #' \describe{
 #'   \item{\code{\link{plotHistogram}}}{Read count histogram with fitted mixture distributions.}
-#'   \item{\code{\link{plotKaryogram}}}{Karyogram with read counts and peak calls.}
 #' }
 #' Plotting functions that work on \code{\link{multiHMM}} objects:
 #' \describe{

@@ -4,7 +4,7 @@
 \alias{callPeaksUnivariateAllChr}
 \title{Fit a Hidden Markov Model to a ChIP-seq sample.}
 \usage{
-callPeaksUnivariateAllChr(binned.data, input.data = NULL, eps = 0.01,
+callPeaksUnivariateAllChr(binned.data, control.data = NULL, eps = 0.01,
   init = "standard", max.time = NULL, max.iter = NULL, num.trials = 1,
   eps.try = NULL, num.threads = 1, read.cutoff = TRUE,
   read.cutoff.quantile = 1, read.cutoff.absolute = 500, max.mean = Inf,
@@ -14,7 +14,7 @@ callPeaksUnivariateAllChr(binned.data, input.data = NULL, eps = 0.01,
 \arguments{
 \item{binned.data}{A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.}
 
-\item{input.data}{Input control for the experiment. A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.}
+\item{control.data}{Input control for the experiment. A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.}
 
 \item{eps}{Convergence threshold for the Baum-Welch algorithm.}
 

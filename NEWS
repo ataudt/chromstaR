@@ -1,3 +1,15 @@
+CHANGES IN VERSION 1.5.1
+------------------------
+
+SIGNIFICANT USER-LEVEL CHANGES
+
+    o New column 'maxPostInPeak' containing the maximum posterior within each peak.
+
+    o Score in exported BED files is calculated as -10*log10(maxPostInPeak).
+    
+    o 'changeFDR()' was renamed to 'changeMaxPostCutoff()'.
+    
+    
 CHANGES IN VERSION 1.3.1
 ------------------------
 

@@ -46,3 +46,13 @@ rpkm.matrix <- function(counts, binsize) {
     rpkm <- rpkm * 1e6 * 1000 / binsize
     return(rpkm)
 }
+
+calculate.transition.probs <- function(state) {
+    if (is.null(state)) {
+        warning("Input is NULL.")
+    }
+    df <- data.frame(from=state, to=factor(c(as.character(state[-1]), '[]'), levels=levels(state)))
+    tab <- table(df)
+    A <- sweep(tab, MARGIN = 1, STATS = rowSums(tab), FUN = '/')
+    return(A)
+}

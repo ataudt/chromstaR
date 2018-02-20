@@ -11,7 +11,9 @@ plotFoldEnrichHeatmap(hmm, annotations, what = "combinations",
   combinations = NULL, marks = NULL, plot = TRUE, logscale = TRUE)
 
 plotEnrichCountHeatmap(hmm, annotation, bp.around.annotation = 10000,
-  max.rows = 1000)
+  max.rows = 1000, combinations = NULL,
+  colorByCombinations = sortByCombinations,
+  sortByCombinations = is.null(sortByColumns), sortByColumns = NULL)
 
 plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
   region = c("start", "inside", "end"), num.intervals = 20,
@@ -38,6 +40,12 @@ plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
 \item{bp.around.annotation}{An integer specifying the number of basepairs up- and downstream of the annotation for which the enrichment will be calculated.}
 
 \item{max.rows}{An integer specifying the number of randomly subsampled rows that are plotted from the \code{annotation} object. This is necessary to avoid crashing for heatmaps with too many rows.}
+
+\item{colorByCombinations}{A logical indicating whether or not to color the heatmap by combinations.}
+
+\item{sortByCombinations}{A logical indicating whether or not to sort the heatmap by combinations.}
+
+\item{sortByColumns}{An integer vector specifying the column numbers by which to sort the rows. If \code{sortByColumns} is specified, will force \code{sortByCombinations=FALSE}.}
 
 \item{region}{A combination of \code{c('start','inside','end')} specifying the region of the annotation for which the enrichment will be calculated. Select \code{'start'} if you have a point-sized annotation like transcription start sites. Select \code{c('start','inside','end')} if you have long annotations like genes.}
 

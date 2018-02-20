@@ -47,7 +47,7 @@ binReads(file, experiment.table = NULL, ID = NULL, assembly,
 
 \item{use.bamsignals}{If \code{TRUE} the \pkg{\link[bamsignals]{bamsignals}} package is used for parsing of BAM files. This gives tremendous speed advantage for only one binsize but linearly increases for multiple binsizes, while \code{use.bamsignals=FALSE} has a binsize dependent runtime and might be faster if many binsizes are calculated.}
 
-\item{format}{One of \code{c('bed','bam','GRanges')} or \code{NULL} if the format is to be determined automatically.}
+\item{format}{One of \code{c('bed','bam','GRanges',NULL)}. With \code{NULL} the format is determined automatically from the file ending.}
 }
 \value{
 If only one bin size was specified for option \code{binsizes}, the function returns a single \code{\link{GRanges}} object with meta data column 'counts' that contains the read count. If multiple \code{binsizes} were specified , the function returns a named \code{list()} of \link{GRanges} objects.

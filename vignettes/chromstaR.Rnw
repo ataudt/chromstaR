@@ -20,7 +20,17 @@ options(width=110)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
 
-ChIP-seq has become the standard technique for assessing the genome-wide chromatin state of DNA. \Rpackage{chromstaR} provides functions for the joint analysis of multiple ChIP-seq samples. It allows peak calling for transcription factor binding and histone modifications with a narrow (e.g. H3K4me3, H3K27ac,~...) or broad (e.g. H3K36me3, H3K27me3,~...) profile. All analysis can be performed on each sample individually (=univariate), or in a joint analysis considering all samples simultaneously (=multivariate).
+ChIP-seq has become the standard technique for assessing the genome-wide chromatin state of DNA. \Rpackage{chromstaR} provides functions for the joint analysis of multiple ChIP-seq samples. It allows peak calling for transcription factor binding and histone modifications with a narrow (e.g. H3K4me3, H3K27ac,~...) or broad (e.g. H3K36me3, H3K27me3,~...) profile. All analysis can be performed on each sample individually (=univariate), or in a joint analysis considering all samples simultaneously (=multivariate).  The joint analysis is generally recommended because it is more powerful for detecting differences.
+
+\section{Citation}
+
+If you use \Rpackage{chromstaR} for chromatin state analysis, please cite \cite{Taudt2016}:
+
+Taudt, A., Nguyen, M. A., Heinig, M., Johannes, F. and Colome-Tatche, M. \textbf{chromstaR: Tracking combinatorial chromatin state dynamics in space and time.} bioRxiv (Cold Spring Harbor Labs Journals, 2016). doi:10.1101/038612
+
+If you use \Rpackage{chromstaR} for differential ChIP-seq analysis, please cite \cite{Taudt2016} and \cite{Hanna2018}:
+
+Hanna, C. W., Taudt, A., Huang, J., Gahurova, L., Kranz, A., Andrews, S., Dean, W., Stewart, A. F., Colome-Tatche, M. and Kelsey, G. \textbf{MLL2 conveys transcription-independent H3K4 trimethylation in oocytes.} Nat. Struct. Mol. Biol. 1 (2018). doi:10.1038/s41594-017-0013-5
 
 \section{Outline of workflow}
 
@@ -63,14 +73,18 @@ model <- callPeaksUnivariate(binned.data, verbosity=0)
 # with the 'modified'-component near the bottom of the figure
 plotHistogram(model) + ggtitle('H3K4me3')
 @
+<<univariate_narrow_plotting2, fig.width=10, fig.height=2, out.width='0.7\\textwidth'>>=
+# We can also check a browser snapshot of the data
+plotGenomeBrowser(model, chr='chr12', start=1, end=1e6)[[1]]
+@
 
 <<univariate_narrow_posterior, results='markup', message=FALSE, eval=TRUE>>=
 ## === Step 4: Working with peaks ===
 # Get the number and average size of peaks
 length(model$peaks); mean(width(model$peaks))
 
-# Change the false discovery rate and get number of peaks
-model <- changeFDR(model, fdr=1e-4)
+# Adjust the sensitivity and get number of peaks
+model <- changeMaxPostCutoff(model, maxPost.cutoff=0.9999)
 length(model$peaks); mean(width(model$peaks))
 @
 
@@ -118,14 +132,17 @@ model <- callPeaksUnivariate(binned.data, verbosity=0)
 # with a 'modified'-component that fits the thick tail of the distribution.
 plotHistogram(model) + ggtitle('H3K27me3')
 @
+<<univariate_broad_plotting2, fig.width=10, fig.height=2, out.width='0.7\\textwidth'>>=
+plotGenomeBrowser(model, chr='chr12', start=1, end=1e6)[[1]]
+@
 
 <<univariate_broad_posterior, results='markup', message=FALSE, eval=TRUE>>=
 ## === Step 4: Working with peaks ===
 peaks <- model$peaks
 length(peaks); mean(width(peaks))
 
-# Change the false discovery rate and get number of peaks
-model <- changeFDR(model, fdr=1e-4)
+# Adjust the sensitivity and get number of peaks
+model <- changeMaxPostCutoff(model, maxPost.cutoff=0.9999)
 peaks <- model$peaks
 length(peaks); mean(width(peaks))
 @
@@ -146,6 +163,10 @@ binned.data <- binReads(file, assembly=rn4_chrominfo, binsizes=1000,
                         stepsizes=500, chromosomes='chr12')
 model <- callPeaksUnivariate(binned.data, max.time=60, verbosity=0)
 plotHistogram(model) + ggtitle('H4K20me1')
+@
+<<univariate_braod_H4K20me1.2, fig.width=10, fig.height=2, out.width='0.7\\textwidth'>>=
+# We can also check a browser snapshot of the data
+plotGenomeBrowser(model, chr='chr12', start=1, end=1e6)[[1]]
 @
 \end{scriptsize}
 
@@ -276,7 +297,7 @@ Chromstar(inputfolder, experiment.table=experiment_table_H4K20me1,
 ## Results are stored in 'outputfolder' and can be loaded for further processing
 list.files(outputfolder)
 model <- get(load(file.path(outputfolder,'multivariate',
-                            'multivariate_mode-differential_mark-H4K20me1.RData')))
+      'multivariate_mode-differential_mark-H4K20me1_binsize1000_stepsize500.RData')))
 @
 
 \textbf{!! It is important that the distributions in folder outputfolder/PLOTS/univariate-distributions are fitted correctly !!} Please check section \ref{sec:FAQ_example_histograms} for examples of how this plot should \emph{not} look like and what can be done to get a correct fit.\\
@@ -344,7 +365,7 @@ Chromstar(inputfolder, experiment.table=experiment_table_SHR,
 ## Results are stored in 'outputfolder' and can be loaded for further processing
 list.files(outputfolder)
 model <- get(load(file.path(outputfolder,'multivariate',
-                            'multivariate_mode-combinatorial_condition-SHR.RData')))
+      'multivariate_mode-combinatorial_condition-SHR_binsize1000_stepsize500.RData')))
 # Obtain genomic frequencies for combinatorial states
 genomicFrequencies(model)
 # Plot transition probabilities and read count correlation
@@ -485,7 +506,7 @@ Chromstar(inputfolder, experiment.table=experiment_table,
 ## Results are stored in 'outputfolder' and can be loaded for further processing
 list.files(outputfolder)
 model <- get(load(file.path(outputfolder,'combined',
-                            'combined_mode-differential.RData')))
+      'combined_mode-differential_binsize1000_stepsize500.RData')))
 @
 
 \textbf{!! It is important that the distributions in folder outputfolder/PLOTS/univariate-distributions are fitted correctly !!} Please check section \ref{sec:FAQ_example_histograms} for examples of how this plot should \emph{not} look like and what can be done to get a correct fit.\\
@@ -565,10 +586,10 @@ plots[['BN']] + coord_flip() +
 \item \textbf{BROWSERFILES}: \\ Bed files for upload to the UCSC genome browser. It contains files with combinatorial states (``\_combinations.bed.gz'') and underlying peak calls (``\_peaks.bed.gz''). !!Always check the ``\_peaks.bed.gz'' files if you are satisfied with the peak calls. If not, there are ways to make the calls stricter (see section~\ref{sec:FAQ_peaks}).
 \item $\rightarrow$\textbf{combined}$\leftarrow$: \\ RData files with the combined results of the uni- and multivariate peak calling steps. This is what you want to use for downstream analyses. Contains \Rclass{combinedMultiHMM} objects.
 \begin{itemize}
-\item \emph{combined\_mode-separate.RData} Simple combination of peak calls (replicates considered) without multivariate analysis.
-\item \emph{combined\_mode-combinatorial.RData} Combination of multivariate results for mode='combinatorial'.
-\item \emph{combined\_mode-differential.RData} Combination of multivariate results for mode='differential'.
-\item \emph{combined\_mode-full.RData} Combination of multivariate results for mode='full'.
+\item \emph{combined\_mode-separate.RData}: Simple combination of peak calls (replicates considered) without multivariate analysis.
+\item \emph{combined\_mode-combinatorial.RData}: Combination of multivariate results for mode='combinatorial'.
+\item \emph{combined\_mode-differential.RData}: Combination of multivariate results for mode='differential'.
+\item \emph{combined\_mode-full.RData}: Combination of multivariate results for mode='full'.
 \end{itemize}
 \item \textbf{multivariate}: \\ RData files with the results of the multivariate peak calling step. Contains \Rclass{multiHMM} objects.
 \item \textbf{PLOTS}: \\ Several plots that are produced by default. Please check the plots in subfolder \textbf{univariate-distributions} for irregularities (see section~\ref{sec:univariate}).
@@ -580,32 +601,37 @@ plots[['BN']] + coord_flip() +
 
 \subsection{\label{sec:FAQ_peaks}The peak calls are too lenient. Can I adjust the strictness of the peak calling?}
 
-The strictness of the peak calling can be controlled with a false discovery rate. The Hidden Markov Model gives posterior probabilities for each peak, and based on these probabilites the model decides if a peak is present or not by picking the state with the highest probability. This way of peak calling leads to very lenient peak calls, and for some applications it may be desirable to obtain only very clear peaks. This can be achieved by setting a false discovery rate (which is a cutoff on the maximum posterior probability within each peak). To follow the below example, please first run step 1 and 2 from section~\ref{sec:Task4}.
+The strictness of the peak calling can be controlled with a cutoff on the posterior probability. The Hidden Markov Model gives posterior probabilities for each peak, and based on these probabilites the model decides if a peak is present or not by picking the state with the highest probability. This way of peak calling leads to very lenient peak calls, and for some applications it may be desirable to obtain only very clear peaks. This can be achieved by using \Rfunction{changePostCutoff} and \Rfunction{changeMaxPostCutoff}. \Rfunction{changePostCutoff} applies a cutoff on the posteriors in each bin, which will make peaks narrower but might also lead to fragmented peaks in the case of broad peaks. \Rfunction{changeMaxPostCutoff} applies a cutoff on the maximum posterior within each peak, which will preserve broad peaks. To follow the below example, please first run step 1 and 2 from section~\ref{sec:Task4}.
 
 \begin{scriptsize}
-<<faq_postcutoff, results='markup', message=FALSE, eval=TRUE>>=
+<<faq_postcutoff, results='markup', message=FALSE, eval=TRUE, fig.width=10, fig.height=2, out.width='0.7\\textwidth'>>=
 model <- get(load(file.path(outputfolder,'combined',
-                            'combined_mode-differential.RData')))
-# Set a strict cutoff close to 1
-model2 <- changeFDR(model, fdr=1e-4)
-## Compare the number and width of peaks before and after cutoff adjustment
-length(model$segments); mean(width(model$segments))
-length(model2$segments); mean(width(model2$segments))
+      'combined_mode-differential_binsize1000_stepsize500.RData')))
+# Try a strict cutoff close to 1
+model2 <- changeMaxPostCutoff(model, maxPost.cutoff=0.99999)
+model3 <- changePostCutoff(model, post.cutoff=0.99999)
+# Check the peaks before and after adjustment
+plots <- plotGenomeBrowser(model, chr='chr12', start=1, end=3e5)
+plots2 <- plotGenomeBrowser(model2, chr='chr12', start=1, end=3e5)
+plots3 <- plotGenomeBrowser(model3, chr='chr12', start=1, end=3e5)
+plots$`H3K27me3-BN-rep1` + ggtitle('H3K27me3 original')
+plots2$`H3K27me3-BN-rep1` + ggtitle('H3K27me3 maxPost.cutoff=0.99999')
+plots3$`H3K27me3-BN-rep1` + ggtitle('H3K27me3 post.cutoff=0.99999')
+plots$`H3K4me3-BN-rep1` + ggtitle('H3K4me3 original')
+plots2$`H3K4me3-BN-rep1` + ggtitle('H3K4me3 maxPost.cutoff=0.99999')
+plots3$`H3K4me3-BN-rep1` + ggtitle('H3K4me3 post.cutoff=0.99999')
 @
 \end{scriptsize}
 
-It is even possible to adjust the false discovery rate differently for the different marks or conditions.
+It is even possible to adjust the sensitivity differently for the different marks or conditions.
 
 \begin{scriptsize}
 <<faq_postcutoff_single, results='markup', message=FALSE, eval=TRUE>>=
 # Set a stricter cutoff for H3K4me3 than for H3K27me3
-fdrs <- c(0.1, 0.1, 0.1, 0.1, 0.01, 0.01, 0.01, 0.01)
-names(fdrs) <- model$info$ID
-print(fdrs)
-model2 <- changeFDR(model, fdr=fdrs)
-## Compare the number and width of peaks before and after cutoff adjustment
-length(model$segments); mean(width(model$segments))
-length(model2$segments); mean(width(model2$segments))
+cutoffs <- c(0.9, 0.9, 0.9, 0.9, 0.99, 0.99, 0.99, 0.99)
+names(cutoffs) <- model$info$ID
+print(cutoffs)
+model2 <- changeMaxPostCutoff(model, maxPost.cutoff=cutoffs)
 @
 \end{scriptsize}
 
@@ -614,8 +640,8 @@ length(model2$segments); mean(width(model2$segments))
 You were interested in combinatorial state differences as in section~\ref{sec:Task4} and checked the results in a genome browser. You found that some differences are convincing by eye and some are not. There are several possibilities to explore:
 \begin{enumerate}
 \item Run \Rfunction{Chromstar} in mode='differential' (instead of mode='combinatorial') and see if the results improve.
-\item You can play with the ``differential.score'' (see section~\ref{sec:Task4}, step 3) and export only differences with a high score. A differential score around 1 means that one modification is different, a score close to 2 means that two modifications are different etc. The score is calculated as the sum of differences in posterior probabilities between marks.
-\item Set a strict false discovery rate (previous example) to obtain only high confidence peaks.
+\item You can play with the ``differential.score'' (see section~\ref{sec:Task4}, step 3) and export only differences with a high score. A differential score close to 1 means that one modification is different, a score close to 2 means that two modifications are different etc. The score is calculated as the sum of differences in posterior probabilities between marks.
+\item Use \Rfunction{changePostCutoff} or \Rfunction{changeMaxPostCutoff} to obtain only high confidence peaks.
 \item Check for bad replicates that are very different from the rest and exclude them prior to the analysis.
 \end{enumerate}
 
@@ -648,6 +674,8 @@ The plot shows data for H3K27me3 at binsize 150bp. (a) Incorrectly converged fit
 toLatex(sessionInfo())
 @
 \end{scriptsize}
+
+\bibliography{references.bib}
 
 \end{document}
 

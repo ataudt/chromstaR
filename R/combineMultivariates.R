@@ -92,8 +92,8 @@ combineMultivariates <- function(hmms, mode) {
         counts[[1]] <- hmm$bins$counts.rpkm
         posteriors <- list()
         posteriors[[1]] <- hmm$bins$posteriors
-        peakScores <- list()
-        peakScores[[1]] <- hmm$bins$peakScores
+        maxPostInPeak <- list()
+        maxPostInPeak[[1]] <- hmm$bins$maxPostInPeak
         peaks <- list()
         peaks[[1]] <- hmm$peaks
         binstates <- list()
@@ -108,7 +108,7 @@ combineMultivariates <- function(hmms, mode) {
                 combs[[i1]] <- hmm$bins$combination
                 counts[[i1]] <- hmm$bins$counts.rpkm
                 posteriors[[i1]] <- hmm$bins$posteriors
-                peakScores[[i1]] <- hmm$bins$peakScores
+                maxPostInPeak[[i1]] <- hmm$bins$maxPostInPeak
                 peaks[[i1]] <- hmm$peaks
                 binstates[[i1]] <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
                 stopTimedMessage(ptm)
@@ -116,7 +116,7 @@ combineMultivariates <- function(hmms, mode) {
         }
         ptm <- startTimedMessage("Concatenating conditions ...")
         posteriors <- do.call(cbind, posteriors)
-        peakScores <- do.call(cbind, peakScores)
+        maxPostInPeak <- do.call(cbind, maxPostInPeak)
         infos <- do.call(rbind, infos)
         conditions <- unique(infos$condition)
         states <- factor(bin2dec(do.call(cbind, binstates)))
@@ -131,7 +131,7 @@ combineMultivariates <- function(hmms, mode) {
         infos <- list()
         counts <- list()
         posteriors <- list()
-        peakScores <- list()
+        maxPostInPeak <- list()
         peaks <- list()
         binstates <- list()
         for (i1 in 1:length(hmms)) {
@@ -140,7 +140,7 @@ combineMultivariates <- function(hmms, mode) {
             infos[[i1]] <- hmm$info
             counts[[i1]] <- hmm$bins$counts.rpkm
             posteriors[[i1]] <- hmm$bins$posteriors
-            peakScores[[i1]] <- hmm$bins$peakScores
+            maxPostInPeak[[i1]] <- hmm$bins$maxPostInPeak
             peaks[[i1]] <- hmm$peaks
             binstates[[i1]] <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
             stopTimedMessage(ptm)
@@ -158,8 +158,8 @@ combineMultivariates <- function(hmms, mode) {
         counts <- counts[,infos$ID]
         posteriors <- do.call(cbind, posteriors)
         posteriors <- posteriors[,infos$ID]
-        peakScores <- do.call(cbind, peakScores)
-        peakScores <- peakScores[,infos$ID]
+        maxPostInPeak <- do.call(cbind, maxPostInPeak)
+        maxPostInPeak <- maxPostInPeak[,infos$ID]
         binstates <- do.call(cbind, binstates)
         binstates <- binstates[,infos$ID]
         states <- factor(bin2dec(binstates))
@@ -199,7 +199,7 @@ combineMultivariates <- function(hmms, mode) {
         conditions <- unique(infos$condition)
         counts <- hmm$bins$counts.rpkm
         posteriors <- hmm$bins$posteriors
-        peakScores <- hmm$bins$peakScores
+        maxPostInPeak <- hmm$bins$maxPostInPeak
         peaks <- hmm$peaks
         states <- hmm$bins$state
         combs <- list()
@@ -227,8 +227,8 @@ combineMultivariates <- function(hmms, mode) {
         counts[[1]] <- hmm$bins$counts.rpkm
         posteriors <- list()
         posteriors[[1]] <- hmm$bins$posteriors
-        peakScores <- list()
-        peakScores[[1]] <- hmm$bins$peakScores
+        maxPostInPeak <- list()
+        maxPostInPeak[[1]] <- hmm$bins$maxPostInPeak
         peaks <- list()
         peaks[[1]] <- hmm$peaks
         binstates <- list()
@@ -242,7 +242,7 @@ combineMultivariates <- function(hmms, mode) {
                 infos[[i1]] <- hmm$info
                 counts[[i1]] <- hmm$bins$counts.rpkm
                 posteriors[[i1]] <- hmm$bins$posteriors
-                peakScores[[i1]] <- hmm$bins$peakScores
+                maxPostInPeak[[i1]] <- hmm$bins$maxPostInPeak
                 peaks[[i1]] <- hmm$peaks
                 binstates[[i1]] <- dec2bin(hmm$bins$state, colnames=hmm$info$ID)
                 stopTimedMessage(ptm)
@@ -251,7 +251,7 @@ combineMultivariates <- function(hmms, mode) {
         ptm <- startTimedMessage("Concatenating mark-conditions ...")
         counts <- do.call(cbind, counts)
         posteriors <- do.call(cbind, posteriors)
-        peakScores <- do.call(cbind, peakScores)
+        maxPostInPeak <- do.call(cbind, maxPostInPeak)
         binstates <- do.call(cbind, binstates)
         infos <- do.call(rbind, infos)
         conditions <- unique(infos$condition)
@@ -288,23 +288,32 @@ combineMultivariates <- function(hmms, mode) {
     stopTimedMessage(ptm)
 
     ## Assign combinatorial states
+    ptm <- startTimedMessage("Assigning combinatorial states ...")
     bins$state <- states
     mcols(bins)[names(combs.df)] <- combs.df
-    
-    ## Transferring counts and posteriors
-    bins$counts.rpkm <- counts
-    bins$posteriors <- posteriors
-    bins$peakScores <- peakScores
-
-    ## Add differential score ##
-    bins$differential.score <- differentialScoreSum(bins$peakScores, infos)
-
-    ### Redo the segmentation for all conditions combined
-    ptm <- startTimedMessage("Redoing segmentation for all conditions combined ...")
-    segments <- suppressMessages( multivariateSegmentation(bins, column2collapseBy='state') )
-    names(mcols(segments)) <- setdiff(names(mcols(bins)), c('posteriors','counts.rpkm'))
     stopTimedMessage(ptm)
     
+    ## Transferring counts and posteriors
+    ptm <- startTimedMessage("Transferring counts and posteriors ...")
+    bins$counts.rpkm <- counts
+    bins$posteriors <- posteriors
+    bins$maxPostInPeak <- maxPostInPeak
+    stopTimedMessage(ptm)
+
+    ### Redo the segmentation for all conditions combined
+    segments <- multivariateSegmentation(bins, column2collapseBy='state')
+    names(mcols(segments))[grep("combination", names(mcols(segments)))] <- names(mcols(bins))[grep("combination", names(mcols(bins)))]
+    ## Add differential score ##
+    ptm <- startTimedMessage("Adding differential score ...")
+    segments$differential.score <- differentialScoreSum(segments$maxPostInPeak, infos)
+    stopTimedMessage(ptm)
+    ## Maximum posterior in peaks ##
+    ptm <- startTimedMessage("Getting maximum posterior in peaks ...")
+    ind <- findOverlaps(bins, segments)
+    bins$maxPostInPeak <- segments$maxPostInPeak[subjectHits(ind), , drop=FALSE]
+    bins$differential.score <- segments$differential.score[subjectHits(ind)]
+    stopTimedMessage(ptm)
+        
     ### Redo the segmentation for each condition separately
     ptm <- startTimedMessage("Redoing segmentation for each condition separately ...")
     segments.per.condition <- list()
@@ -334,6 +343,7 @@ combineMultivariates <- function(hmms, mode) {
     hmm$segments.per.condition <- segments.per.condition
     hmm$peaks <- peaks
     hmm$frequencies <- freqs$table
+    hmm$mode <- mode
     return(hmm)
     
 }

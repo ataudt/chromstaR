@@ -6,9 +6,10 @@
 \title{Univariate HMM object}
 \value{
 A \code{list()} with the following entries:
-\item{ID}{An identifier that is used in various \pkg{\link{chromstaR}} functions.}
+\item{info}{Experiment table for this object.}
+\item{bincounts}{A \code{\link[GenomicRanges]{GRanges}} object containing the genomic bin coordinates and original binned read count values for different offsets.}
 \item{bins}{A \code{\link[GenomicRanges]{GRanges}} object containing the genomic bin coordinates, their read count, (optional) posteriors and state classification.}
-\item{segments}{Same as \code{bins}, but consecutive bins with the same state are collapsed into segments.}
+\item{peaks}{A \code{list()} with \code{\link[GenomicRanges]{GRanges}} containing peak coordinates for each ID in \code{info}.}
 \item{weights}{Weight for each component. Same as \code{apply(hmm$posteriors,2,mean)}.}
 \item{transitionProbs}{Matrix of transition probabilities from each state (row) into each state (column).}
 \item{transitionProbs.initial}{Initial \code{transitionProbs} at the beginning of the Baum-Welch.}
@@ -16,7 +17,7 @@ A \code{list()} with the following entries:
 \item{startProbs.initial}{Initial \code{startProbs} at the beginning of the Baum-Welch.}
 \item{distributions}{Estimated parameters of the emission distributions.}
 \item{distributions.initial}{Distribution parameters at the beginning of the Baum-Welch.}
-\item{post.cutoff}{Cutoff for posterior probabilities to call peaks (default=0.5).}
+\item{post.cutoff}{Cutoff for posterior probabilities to call peaks.}
 \item{convergenceInfo}{Contains information about the convergence of the Baum-Welch algorithm.}
 \item{convergenceInfo$eps}{Convergence threshold for the Baum-Welch.}
 \item{convergenceInfo$loglik}{Final loglikelihood after the last iteration.}
@@ -27,7 +28,7 @@ A \code{list()} with the following entries:
 \item{convergenceInfo$read.cutoff}{Cutoff value for read counts.}
 }
 \description{
-The univariate HMM object is output of the function \code{\link{callPeaksUnivariate}} and is a \code{list()} with various entries. The class() attribute of this list was set to "uniHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' or 'hmm$'.
+The univariate HMM object is output of the function \code{\link{callPeaksUnivariate}} and is a \code{list()} with various entries. The \code{class()} attribute of this list was set to "uniHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' or 'hmm$'.
 }
 \seealso{
 \code{\link{callPeaksUnivariate}}, \code{\link{multiHMM}}, \code{\link{combinedMultiHMM}}

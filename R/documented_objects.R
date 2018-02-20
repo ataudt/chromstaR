@@ -11,12 +11,26 @@
 NULL
 
 
+#' Univariate HMM for demonstration purposes
+#'
+#' A \code{\link{uniHMM}} object for demonstration purposes in examples of package \pkg{\link{chromstaR}}.
+#'
+#' @docType data
+#' @name model.univariate
+#' @format A \code{\link{uniHMM}} object.
+#' @examples
+#'## Get an example uniHMM
+#'file <- system.file("data","H3K27me3-BN-rep1.RData", package="chromstaR")
+#'model <- get(load(file))
+NULL
+
+
 #' Multivariate HMM for demonstration purposes
 #'
 #' A \code{\link{multiHMM}} object for demonstration purposes in examples of package \pkg{\link{chromstaR}}.
 #'
 #' @docType data
-#' @name multivariate_model
+#' @name model.multivariate
 #' @format A \code{\link{multiHMM}} object.
 #' @examples
 #'## Get an example multiHMM
@@ -31,7 +45,7 @@ NULL
 #' A \code{\link{combinedMultiHMM}} object for demonstration purposes in examples of package \pkg{\link{chromstaR}}.
 #'
 #' @docType data
-#' @name combined_model
+#' @name model.combined
 #' @format A \code{\link{combinedMultiHMM}} object.
 #' @examples
 #'## Get an example combinedMultiHMM
@@ -77,13 +91,14 @@ NULL
 
 #' Univariate HMM object
 #'
-#' The univariate HMM object is output of the function \code{\link{callPeaksUnivariate}} and is a \code{list()} with various entries. The class() attribute of this list was set to "uniHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' or 'hmm$'.
+#' The univariate HMM object is output of the function \code{\link{callPeaksUnivariate}} and is a \code{list()} with various entries. The \code{class()} attribute of this list was set to "uniHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' or 'hmm$'.
 #'
 #' @return
 #' A \code{list()} with the following entries:
-#' \item{ID}{An identifier that is used in various \pkg{\link{chromstaR}} functions.}
+#' \item{info}{Experiment table for this object.}
+#' \item{bincounts}{A \code{\link[GenomicRanges]{GRanges}} object containing the genomic bin coordinates and original binned read count values for different offsets.}
 #' \item{bins}{A \code{\link[GenomicRanges]{GRanges}} object containing the genomic bin coordinates, their read count, (optional) posteriors and state classification.}
-#' \item{segments}{Same as \code{bins}, but consecutive bins with the same state are collapsed into segments.}
+#' \item{peaks}{A \code{list()} with \code{\link[GenomicRanges]{GRanges}} containing peak coordinates for each ID in \code{info}.}
 #' \item{weights}{Weight for each component. Same as \code{apply(hmm$posteriors,2,mean)}.}
 #' \item{transitionProbs}{Matrix of transition probabilities from each state (row) into each state (column).}
 #' \item{transitionProbs.initial}{Initial \code{transitionProbs} at the beginning of the Baum-Welch.}
@@ -91,7 +106,7 @@ NULL
 #' \item{startProbs.initial}{Initial \code{startProbs} at the beginning of the Baum-Welch.}
 #' \item{distributions}{Estimated parameters of the emission distributions.}
 #' \item{distributions.initial}{Distribution parameters at the beginning of the Baum-Welch.}
-#' \item{post.cutoff}{Cutoff for posterior probabilities to call peaks (default=0.5).}
+#' \item{post.cutoff}{Cutoff for posterior probabilities to call peaks.}
 #' \item{convergenceInfo}{Contains information about the convergence of the Baum-Welch algorithm.}
 #' \item{convergenceInfo$eps}{Convergence threshold for the Baum-Welch.}
 #' \item{convergenceInfo$loglik}{Final loglikelihood after the last iteration.}
@@ -107,13 +122,15 @@ NULL
 
 #' Multivariate HMM object
 #'
-#' The multivariate HMM object is output of the function \code{\link{callPeaksMultivariate}} and is a \code{list()} with various entries. The class() attribute of this list was set to "multiHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' or 'hmm$'.
+#' The multivariate HMM object is output of the function \code{\link{callPeaksMultivariate}} and is a \code{list()} with various entries. The \code{class()} attribute of this list was set to "multiHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' or 'hmm$'.
 #' 
 #' @return
 #' A \code{list()} with the following entries:
-#' \item{IDs}{IDs of the input univariate HMMs.}
+#' \item{info}{Experiment table for this object.}
+#' \item{bincounts}{A \code{\link[GenomicRanges]{GRanges}} object containing the genomic bin coordinates and original binned read count values for different offsets.}
 #' \item{bins}{A \code{\link[GenomicRanges]{GRanges}} object containing the genomic bin coordinates, their read count, (optional) posteriors and state classification.}
 #' \item{segments}{Same as \code{bins}, but consecutive bins with the same state are collapsed into segments.}
+#' \item{peaks}{A \code{list()} with \code{\link[GenomicRanges]{GRanges}} containing peak coordinates for each ID in \code{info}.}
 #' \item{mapping}{A named vector giving the mapping from decimal combinatorial states to human readable combinations.}
 #' \item{weights}{Weight for each component. Same as \code{apply(hmm$posteriors,2,mean)}.}
 #' \item{weights.univariate}{Weights of the univariate HMMs.}
@@ -122,7 +139,6 @@ NULL
 #' \item{startProbs}{Probabilities for the first bin. Same as \code{hmm$posteriors[1,]}.}
 #' \item{startProbs.initial}{Initial \code{startProbs} at the beginning of the Baum-Welch.}
 #' \item{distributions}{Emission distributions used for this model.}
-#' \item{post.cutoff}{False discovery rate. NULL means that the state with maximum posterior probability was chosen, irrespective of its absolute probability (default=NULL).}
 #' \item{convergenceInfo}{Contains information about the convergence of the Baum-Welch algorithm.}
 #' \item{convergenceInfo$eps}{Convergence threshold for the Baum-Welch.}
 #' \item{convergenceInfo$loglik}{Final loglikelihood after the last iteration.}
@@ -143,13 +159,17 @@ NULL
 
 #' Combined multivariate HMM object
 #'
-#' The multivariate HMM object is output of the function \code{\link{combineMultivariates}} and is a \code{list()} with various entries. The class() attribute of this list was set to "combinedMultiHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' or 'hmm$'.
+#' The combined multivariate HMM object is output of the function \code{\link{combineMultivariates}} and is a \code{list()} with various entries. The \code{class()} attribute of this list was set to "combinedMultiHMM". For a given hmm, the entries can be accessed with the list operators 'hmm[[]]' or 'hmm$'.
 #' 
 #' @return
 #' A \code{list()} with the following entries:
+#' \item{info}{Experiment table for this object.}
 #' \item{bins}{A \code{\link[GenomicRanges]{GRanges}} object containing genomic bin coordinates and human readable combinations for the combined \code{\link{multiHMM}} objects.}
 #' \item{segments}{Same as \code{bins}, but consecutive bins with the same state are collapsed into segments.}
-#' \item{segments.per.condition}{A \code{list} with segments for each condition separately.}
+#' \item{segments.per.condition}{A \code{list()} with segments for each condition separately.}
+#' \item{peaks}{A \code{list()} with \code{\link[GenomicRanges]{GRanges}} containing peak coordinates for each ID in \code{info}.}
+#' \item{frequencies}{Genomic frequencies of combinations.}
+#' \item{mode}{Mode of analysis.}
 #' @seealso \code{\link{combineMultivariates}}, \code{\link{uniHMM}}, \code{\link{multiHMM}}
 #' @name combinedMultiHMM
 #' @aliases combinedHMM

@@ -254,11 +254,18 @@ plotFoldEnrichHeatmap <- function(hmm, annotations, what="combinations", combina
 #' @describeIn enrichment_analysis Plot read counts around annotation as heatmap.
 #' @inheritParams enrichmentAtAnnotation
 #' @param max.rows An integer specifying the number of randomly subsampled rows that are plotted from the \code{annotation} object. This is necessary to avoid crashing for heatmaps with too many rows.
+#' @param colorByCombinations A logical indicating whether or not to color the heatmap by combinations.
+#' @param sortByCombinations A logical indicating whether or not to sort the heatmap by combinations.
+#' @param sortByColumns An integer vector specifying the column numbers by which to sort the rows. If \code{sortByColumns} is specified, will force \code{sortByCombinations=FALSE}.
 #' @importFrom reshape2 melt
 #' @importFrom IRanges subsetByOverlaps
 #' @export
-plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=1000) {
+plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, max.rows=1000, combinations=NULL, colorByCombinations=sortByCombinations, sortByCombinations=is.null(sortByColumns), sortByColumns=NULL) {
 
+    if (!is.null(sortByColumns)) {
+        sortByCombinations <- FALSE
+    }
+  
     hmm <- loadHmmsFromFiles(hmm, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     ## Variables
     bins <- hmm$bins
@@ -284,54 +291,82 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
     # Subsampling for plotting of huge data.frames
     annotation <- IRanges::subsetByOverlaps(annotation, bins)
     if (length(annotation)>max.rows) {
+        warning("Subsampled the data to 'max.rows=", max.rows, "'. Set 'max.rows=Inf' to turn this off, but be aware that plotting might take a very long time.")
         annotation <- sample(annotation, size=max.rows, replace=FALSE)
     }
   
     # Get bins that overlap the start of annotation
     ptm <- startTimedMessage("Overlaps with annotation ...")
-    index.plus <- findOverlaps(annotation[strand(annotation)=='+' | strand(annotation)=='*'], bins, select="first")
-    index.minus <- findOverlaps(annotation[strand(annotation)=='-'], bins, select="last")
-    index.plus <- index.plus[!is.na(index.plus)]
-    index.minus <- index.minus[!is.na(index.minus)]
-    index <- c(index.plus, index.minus)
+    annotation$index <- NA
+    mask.plus <- as.logical(strand(annotation)=='+' | strand(annotation)=='*')
+    index.plus <- findOverlaps(annotation[mask.plus], bins, select="first")
+    annotation$index[mask.plus] <- index.plus
+    mask.minus <- as.logical(strand(annotation)=='-')
+    index.minus <- findOverlaps(annotation[mask.minus], bins, select="last")
+    annotation$index[mask.minus] <- index.minus
     stopTimedMessage(ptm)
     
     # Get surrounding indices
     ptm <- startTimedMessage("Getting surrounding indices ...")
-    ext.index.plus <- array(NA, dim=c(length(index.plus), 2*around+1), dimnames=list(anno=1:length(index.plus), position=binsize*seq(-around, around, 1)))
-    for (i1 in 1:length(index.plus)) {
-        ext.index.plus[i1,] <- seq(from=-around+index.plus[i1], to=index.plus[i1]+around)
-    }
-    if (length(index.minus)>0) {
-        ext.index.minus <- array(NA, dim=c(length(index.minus), 2*around+1), dimnames=list(anno=1:length(index.minus), position=binsize*seq(-around, around, 1)))
-        for (i1 in 1:length(index.minus)) {
-            ext.index.minus[i1,] <- rev( seq(from=-around+index.minus[i1], to=index.minus[i1]+around) )
-        }
-        ext.index <- rbind(ext.index.plus, ext.index.minus)
-    } else {
-        ext.index <- ext.index.plus
+    seq.around <- seq(-around, around, 1)
+    ext.index <- array(NA, dim=c(length(annotation), length(seq.around)), dimnames=list(anno=1:length(annotation), position=binsize*seq.around))
+    for (icol in 1:ncol(ext.index)) {
+        shift.index <- seq.around[icol]
+        ext.index[mask.plus, icol] <- annotation$index[mask.plus] + shift.index
+        ext.index[mask.minus, icol] <- annotation$index[mask.minus] - shift.index
     }
     ext.index[ext.index <= 0] <- NA
     ext.index[ext.index > length(bins)] <- NA
-    rownames(ext.index) <- 1:nrow(ext.index)
+    annotation$ext.index <- ext.index
     stopTimedMessage(ptm)
+    
+    ## Add combination to annotation
+    annotation$combination <- bins$combination[annotation$index]
     
     ## Go through combinations and then IDs to get the read counts
     ptm <- startTimedMessage("Getting read counts")
     counts <- list()
-    combinations <- names(sort(table(bins$combination[index]), decreasing = TRUE))
-    for (combination in combinations) {
+    if (is.null(combinations)) {
+        # # Sort by abundance
+        # comb.levels <- names(sort(table(bins$combination[index]), decreasing = TRUE))
+        comb.levels <- levels(bins$combination)
+    } else {
+        comb.levels <- combinations
+    }
+    for (combination in comb.levels) {
         counts[[combination]] <- list()
-        index.combination <- which(bins$combination[index]==combination)
-        ext.index.combination <- ext.index[index.combination,]
-        if (is.null(dim(ext.index.combination))) {
-            ext.index.combination <- array(ext.index.combination, dim=c(1,dim(ext.index)[[2]]), dimnames=list(anno=rownames(ext.index)[index.combination], position=dimnames(ext.index)[[2]]))
-        }
+        ext.index.combination <- annotation$ext.index[annotation$combination == combination,, drop=FALSE]
         for (nID in colnames(bins$counts.rpkm)) {
             counts[[combination]][[nID]] <- array(bins$counts.rpkm[ext.index.combination,nID], dim=dim(ext.index.combination), dimnames=dimnames(ext.index.combination))
         }
     }
     stopTimedMessage(ptm)
+    
+    ## Prepare data.frame
+    ptm <- startTimedMessage("Making the plot ...")
+    # # Exclude rare combinations for plotting
+    # if (is.null(combinations)) {
+    #     num.comb <- sapply(counts, function(x) { nrow(x[[1]]) })
+    #     comb2keep <- names(num.comb)[num.comb/sum(num.comb) > 0.005]
+    #     counts <- counts[comb2keep]
+    # }
+    df <- reshape2::melt(counts)
+    names(df) <- c('id','position','RPKM','ID','combination')
+    # Unsorted rows
+    df$id <- factor(df$id, levels=rev(dimnames(annotation$ext.index)[['anno']]))
+    if (sortByCombinations) {
+        df$id <- factor(df$id, levels=rev(unique(df$id)))
+    }
+    if (!is.null(sortByColumns)) {
+        counts2order <- bins$counts.rpkm[annotation$index, sortByColumns, drop=FALSE]
+        l <- as.data.frame(counts2order)
+        names(l) <- NULL # remove names to make the do.call(order, ...) safe (see ?order)
+        l$decreasing <- FALSE
+        ordr <- do.call(order, l)
+        df$id <- factor(df$id, levels=dimnames(annotation$ext.index)[['anno']][ordr])
+    }
+    df$combination <- factor(df$combination, levels=comb.levels)
+    df$ID <- factor(df$ID, levels=hmm$info$ID)
     
     ## Theme
     custom_theme <- theme(
@@ -342,30 +377,30 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
         axis.ticks.y = element_blank(),
         axis.line.y = element_blank()
     )
-    
-    ## Prepare data.frame
-    ptm <- startTimedMessage("Making the plot ...")
-    # Exclude rare combinations for plotting
-    num.comb <- sapply(counts, function(x) { nrow(x[[1]]) })
-    comb2keep <- names(num.comb)[num.comb/sum(num.comb) > 0.005]
-    counts <- counts[comb2keep]
-    df <- reshape2::melt(counts)
-    names(df) <- c('id','position','RPKM','ID','combination')
-    df$id <- factor(df$id, levels=rev(unique(df$id)))
-    df$combination <- factor(df$combination, levels=unique(df$combination))
-    df$ID <- factor(df$ID, levels=hmm$info$ID)
-    
     ## Plot as heatmap
-    ggplt <- ggplot(df) + geom_tile(aes_string(x='position', y='id', color='combination'))
-    ggplt <- ggplt + scale_color_manual(values = getDistinctColors(length(unique(df$combination))))
+    ggplt <- ggplot(df, mapping=aes_string(x='position', y='id'))
+    if (colorByCombinations) {
+        ggplt <- ggplt + geom_tile(aes_string(color='combination'))
+        ggplt <- ggplt + scale_color_manual(values = getDistinctColors(levels(df$combination)))
+    } else {
+        ggplt <- ggplt + geom_tile()
+    }
     ggplt <- ggplt + geom_tile(aes_string(x='position', y='id', fill='RPKM'), alpha=0.6)
     ggplt <- ggplt + facet_wrap( ~ ID, nrow=1) + custom_theme
     ggplt <- ggplt + xlab('distance from annotation in [bp]') + ylab('')
     ggplt <- ggplt + scale_fill_continuous(trans='log1p', low='white', high='black')
-    # Insert horizontal lines
-    y.lines <- sapply(split(df$id, df$combination), function(x) { max(as.integer(x)) })
-    df.lines <- data.frame(y=sort(y.lines[-1]) + 0.5)
-    ggplt <- ggplt + geom_hline(data=df.lines, mapping=aes_string(yintercept='y'), linetype=2)
+    if (sortByCombinations) {
+        # Insert horizontal lines
+        y.lines <- sapply(split(df$id, df$combination), function(x) { 
+          y <- -Inf
+          if (length(x)>0) {
+            y <- max(as.integer(x))
+          }
+          return(y)
+        })
+        df.lines <- data.frame(y=sort(y.lines[-1]) + 0.5)
+        ggplt <- ggplt + geom_hline(data=df.lines, mapping=aes_string(yintercept='y'), linetype=2)
+    }
     # Increase color size in legend
     ggplt <- ggplt + guides(color=guide_legend(override.aes = list(size=2)))
     stopTimedMessage(ptm)
@@ -562,7 +597,7 @@ enrichmentAtAnnotation <- function(bins, info, annotation, bp.around.annotation=
     seqlevels.only.in.bins <- setdiff(seqlevels(bins), seqlevels(annotation))
     seqlevels.only.in.annotation <- setdiff(seqlevels(annotation), seqlevels(bins))
     if (length(seqlevels.only.in.bins) > 0 | length(seqlevels.only.in.annotation) > 0) {
-        warning("Sequence levels in 'bins' but not in 'annotation': ", paste0(seqlevels.only.in.bins, collapse = ', '), "\n  Sequence levels in 'annotation' but not in 'bins': ", paste0(seqlevels.only.in.annotation, collapse = ''))
+        warning("Sequence levels in 'bins' but not in 'annotation': ", paste0(seqlevels.only.in.bins, collapse = ', '), "\n  Sequence levels in 'annotation' but not in 'bins': ", paste0(seqlevels.only.in.annotation, collapse = ', '))
     }
   
     ## Variables

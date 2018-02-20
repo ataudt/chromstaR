@@ -19,7 +19,7 @@
 #' @param variable.width.reference A BAM file that is used as reference to produce variable width bins. See \code{\link{variableWidthBins}} for details.
 #' @param chromosomes If only a subset of the chromosomes should be binned, specify them here.
 #' @param use.bamsignals If \code{TRUE} the \pkg{\link[bamsignals]{bamsignals}} package is used for parsing of BAM files. This gives tremendous speed advantage for only one binsize but linearly increases for multiple binsizes, while \code{use.bamsignals=FALSE} has a binsize dependent runtime and might be faster if many binsizes are calculated.
-#' @param format One of \code{c('bed','bam','GRanges')} or \code{NULL} if the format is to be determined automatically.
+#' @param format One of \code{c('bed','bam','GRanges',NULL)}. With \code{NULL} the format is determined automatically from the file ending.
 #' @return If only one bin size was specified for option \code{binsizes}, the function returns a single \code{\link{GRanges}} object with meta data column 'counts' that contains the read count. If multiple \code{binsizes} were specified , the function returns a named \code{list()} of \link{GRanges} objects.
 #' @importFrom Rsamtools BamFile indexBam
 #' @importFrom bamsignals bamCount
@@ -78,7 +78,7 @@ binReads <- function(file, experiment.table=NULL, ID=NULL, assembly, bamindex=fi
     ## Create INFO object as row from the experiment.table
     if (!is.null(experiment.table)) {
         check.experiment.table(experiment.table)
-        info <- experiment.table[basename(as.character(experiment.table$file))==basename(file),]
+        info <- experiment.table[grepl(basename(file),basename(as.character(experiment.table$file))),]
         if (nrow(info) > 1) {
             if (is.null(ID)) {
                 stop("Please specify argument 'ID' if multiple files in 'experiment.table' are identical.")

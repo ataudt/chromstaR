@@ -11,6 +11,7 @@
 #' @param stepsize An integer specifying the step size for analysis.
 #' @param assembly A \code{data.frame} or tab-separated file with columns 'chromosome' and 'length'. Alternatively a character specifying the assembly, see \code{\link[GenomeInfoDb]{fetchExtendedChromInfoFromUCSC}} for available assemblies. Specifying an assembly is only necessary when importing BED files. BAM files are handled automatically.
 #' @inheritParams readBedFileAsGRanges
+#' @param format One of \code{c('bed','bam',NULL)}. With \code{NULL} the format is determined automatically from the file ending.
 #' @inheritParams callPeaksUnivariate
 #' @param mode One of \code{c('differential','combinatorial','full')}. The modes determine how the multivariate part is run. Here is some advice which mode to use:
 #' \describe{
@@ -28,6 +29,7 @@
 #' @import foreach
 #' @import doParallel
 #' @importFrom utils read.table write.table
+#' @importFrom reshape2 melt
 #' @export
 #' 
 #' @examples 
@@ -46,7 +48,7 @@
 #'          prefit.on.chr='chr12', chromosomes='chr12', mode='combinatorial', eps.univariate=1,
 #'          eps.multivariate=1)
 #'
-Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, stepsize=binsize/2, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, prefit.on.chr=NULL, eps.univariate=0.1, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=TRUE, mode='differential', max.states=128, per.chrom=TRUE, eps.multivariate=0.01, exclusive.table=NULL) {
+Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NULL, numCPU=1, binsize=1000, stepsize=binsize/2, assembly=NULL, chromosomes=NULL, remove.duplicate.reads=TRUE, min.mapq=10, format=NULL, prefit.on.chr=NULL, eps.univariate=0.1, max.time=NULL, max.iter=5000, read.cutoff.absolute=500, keep.posteriors=TRUE, mode='differential', max.states=128, per.chrom=TRUE, eps.multivariate=0.01, exclusive.table=NULL) {
   
     #========================
     ### General variables ###
@@ -67,7 +69,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     total.time <- proc.time()
   
     ## Put options into list and merge with conf
-    params <- list(numCPU=numCPU, binsize=binsize, stepsize=stepsize, assembly=assembly, chromosomes=chromosomes, remove.duplicate.reads=remove.duplicate.reads, min.mapq=min.mapq, prefit.on.chr=prefit.on.chr, eps.univariate=eps.univariate, max.time=max.time, max.iter=max.iter, read.cutoff.absolute=read.cutoff.absolute, keep.posteriors=keep.posteriors, mode=mode, max.states=max.states, per.chrom=per.chrom, eps.multivariate=eps.multivariate, exclusive.table=exclusive.table)
+    params <- list(numCPU=numCPU, binsize=binsize, stepsize=stepsize, assembly=assembly, chromosomes=chromosomes, remove.duplicate.reads=remove.duplicate.reads, min.mapq=min.mapq, format=format, prefit.on.chr=prefit.on.chr, eps.univariate=eps.univariate, max.time=max.time, max.iter=max.iter, read.cutoff.absolute=read.cutoff.absolute, keep.posteriors=keep.posteriors, mode=mode, max.states=max.states, per.chrom=per.chrom, eps.multivariate=eps.multivariate, exclusive.table=exclusive.table)
     conf <- c(conf, params[setdiff(names(params),names(conf))])
     
     ## Helpers
@@ -88,27 +90,33 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     
     ## Prepare IDs and filenames
     IDs <- paste0(exp.table$mark, '-', exp.table$condition, '-rep', exp.table$replicate)
-    datafiles <- file.path(inputfolder, basename(as.character(exp.table$file)))
-    names(datafiles) <- IDs
-    rownames(exp.table) <- IDs
-    filenames <- paste0(IDs, '_', as.character(exp.table$file), '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData')
-    names(filenames) <- IDs
-    filenames.stepsize <- paste0(IDs, '_', as.character(exp.table$file), '_binsize', stepsize.string, '_stepsize', stepsize.string, '.RData') # filenames for saving counts at stepsize
-    names(filenames.stepsize) <- IDs
-    ## Inputfiles
-    inputfiles <- unique(unlist(strsplit(as.character(exp.table$controlFiles), '\\|')))
-    inputfiles <- inputfiles[!is.na(inputfiles)]
-    inputfiles <- file.path(inputfolder, basename(as.character(inputfiles)))
-    inputfilenames <- paste0(basename(inputfiles), '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData')
-    names(inputfilenames) <- basename(inputfiles)
-    inputfilenames.stepsize <- paste0(basename(inputfiles), '_binsize', stepsize.string, '_stepsize', stepsize.string, '.RData')
-    names(inputfilenames.stepsize) <- basename(inputfiles)
+    
+    ## File structure
+    filestructure <- list()
+    datafiles.splt <- strsplit(as.character(exp.table$file), '\\|')
+    controlFiles.splt <- strsplit(as.character(exp.table$controlFiles), '\\|')
+    for (i1 in 1:length(IDs)) {
+        ID <- IDs[i1]
+        filestructure[[ID]] <- list()
+        filestructure[[ID]][['datafiles']] <- datafiles.splt[[i1]] ## Names of data files
+        filestructure[[ID]][['datasavenames']] <- paste0(ID, '_', basename(datafiles.splt[[i1]]), '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData') ## Names for binned data
+        filestructure[[ID]][['datasavenames.stepsize']] <- paste0(ID, '_', basename(datafiles.splt[[i1]]), '_binsize', stepsize.string, '_stepsize', stepsize.string, '.RData') ## Names for binned data with binsize=stepsize
+        if (!is.na(controlFiles.splt[[i1]][1])) {
+            filestructure[[ID]][['controlFiles']] <- controlFiles.splt[[i1]] ## Names of control data files
+            filestructure[[ID]][['controlsavenames']] <- paste0('control_', basename(controlFiles.splt[[i1]]), '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData') ## Names for control binned data
+            filestructure[[ID]][['controlsavenames.stepsize']] <- paste0('control_', basename(controlFiles.splt[[i1]]), '_binsize', stepsize.string, '_stepsize', stepsize.string, '.RData') ## Names for control binned data with binsize=stepsize
+        }
+        filestructure[[ID]][['unifilenames']] <- paste0(ID, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData') ## Names for univariate model files
+    }
+    filestructure.df <- reshape2::melt(filestructure)
+    names(filestructure.df) <- c('file', 'what', 'ID')
+    filestructure.df$file <- as.character(filestructure.df$file)
     
     ## Check usage of modes
     if (!mode %in% c('separate','combinatorial','differential','full')) {
         stop("Unknown mode '", mode, "'.")
     }
-    marks <- setdiff(unique(as.character(exp.table[,'mark'])), 'input')
+    marks <- unique(as.character(exp.table[,'mark']))
     conditions <- unique(as.character(exp.table[,'condition']))
     if (length(conditions) < 2 & conf[['mode']] == 'differential') {
         stop("Mode 'differential' can only be used if two or more conditions are present.")
@@ -118,8 +126,12 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     }
     
     ## Check if assembly must be present
-    datafiles.clean <- sub('\\.gz$','', datafiles)
-    format <- sapply(strsplit(datafiles.clean, '\\.'), function(x) { rev(x)[1] })
+    if (is.null(conf[['format']])) {
+        datafiles.clean <- sub('\\.gz$','', filestructure.df$file[filestructure.df$what %in% c('datafiles', 'controlFiles')])
+        format <- sapply(strsplit(datafiles.clean, '\\.'), function(x) { rev(x)[1] })
+    } else {
+        format <- conf[['format']]
+    }
     if (any(format=='bed') & is.null(conf[['assembly']])) {
         stop("Please specify an 'assembly' for the BED files.")
     }
@@ -196,7 +208,14 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     messageU("Binning the data")
     ### Get chromosome lengths ###
     ## Get first bam file
-    bamfile <- grep('bam$', datafiles, value=TRUE)[1]
+    datafiles <- file.path(inputfolder, filestructure.df[filestructure.df$what == 'datafiles', 'file'])
+    if (is.null(conf[['format']])) {
+        bamfile <- grep('bam$', datafiles, value=TRUE)[1]
+    } else if (conf[['format']] == 'bam') {
+        bamfile <- datafiles[1]
+    } else if (conf[['format']] == 'bed') {
+        bamfile <- NA
+    }
     if (!is.na(bamfile)) {
         ptm <- startTimedMessage("Obtaining chromosome length information from file ", bamfile, " ...")
         chrom.lengths <- GenomeInfoDb::seqlengths(Rsamtools::BamFile(bamfile))
@@ -238,35 +257,38 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     utils::write.table(chrom.lengths.df, file=file.path(outputfolder, 'chrominfo.tsv'), sep='\t', row.names=FALSE, col.names=TRUE, quote=FALSE)
     
     ### Make bins ###
-    pre.bins.list <- fixedWidthBins(chrom.lengths=chrom.lengths, chromosomes=conf[['chromosomes']], binsizes=c(binsize, stepsize))
-    pre.bins <- pre.bins.list[[binsize.string]]
-    pre.bins.stepsize <- pre.bins.list[[stepsize.string]]
+    if (binsize != stepsize) {
+        pre.bins.list <- fixedWidthBins(chrom.lengths=chrom.lengths, chromosomes=conf[['chromosomes']], binsizes=c(binsize, stepsize))
+        pre.bins <- pre.bins.list[[binsize.string]]
+        pre.bins.stepsize <- pre.bins.list[[stepsize.string]]
+    } else {
+        pre.bins.list <- fixedWidthBins(chrom.lengths=chrom.lengths, chromosomes=conf[['chromosomes']], binsizes=c(binsize))
+        pre.bins <- pre.bins.list[[binsize.string]]
+        pre.bins.stepsize <- pre.bins.list[[binsize.string]]
+    }
     
     ### Count reads in bins ###
     if (!file.exists(binpath)) { dir.create(binpath) }
-    parallel.helper <- function(ID, input, inputfile=NULL) {
-        if (!input) {
-            savename <- file.path(binpath, filenames[ID])
-            savename.stepsize <- file.path(binpath, filenames.stepsize[ID])
-            pairedEndReads <- exp.table[ID,'pairedEndReads']
-            file <- datafiles[ID]
+    parallel.helper <- function(ID, control, file, savename, savename.stepsize) {
+        file <- file.path(inputfolder, file)
+        savename <- file.path(binpath, savename)
+        savename.stepsize <- file.path(binpath, savename.stepsize)
+        if (!control) {
+            pairedEndReads <- exp.table[grep(basename(file), exp.table$file),'pairedEndReads']
         } else {
-            savename <- file.path(binpath, inputfilenames[basename(inputfile)])
-            savename.stepsize <- file.path(binpath, inputfilenames.stepsize[basename(inputfile)])
-            pairedEndReads <- exp.table[grep(basename(inputfile), exp.table$controlFiles),'pairedEndReads']
-            if (any(pairedEndReads != pairedEndReads[1])) {
-                stop("Multiple definitions of 'pairedEndReads' for file ", file, ".")
-            }
-            pairedEndReads <- pairedEndReads[1]
-            file <- inputfile
+            pairedEndReads <- exp.table[grep(basename(controlfile), exp.table$controlFiles),'pairedEndReads']
         }
+        if (any(pairedEndReads != pairedEndReads[1])) {
+            stop("Multiple definitions of 'pairedEndReads' for file ", file, ".")
+        }
+        pairedEndReads <- pairedEndReads[1]
         if (!file.exists(savename)) {
             tC <- tryCatch({
-                exp.table.input <- NULL
-                if (!input) {
-                    exp.table.input <- exp.table
+                exp.table.control <- NULL
+                if (!control) {
+                    exp.table.control <- exp.table
                 }
-                binlist <- binReads(file=file, experiment.table=exp.table.input, ID=ID, assembly=chrom.lengths.df, pairedEndReads=pairedEndReads, binsizes=NULL, reads.per.bin=NULL, bins=list(pre.bins, pre.bins.stepsize), stepsizes=c(stepsize, stepsize), chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']])
+                binlist <- binReads(file=file, experiment.table=exp.table.control, ID=ID, assembly=chrom.lengths.df, pairedEndReads=pairedEndReads, binsizes=NULL, reads.per.bin=NULL, bins=list(pre.bins, pre.bins.stepsize), stepsizes=c(stepsize, stepsize), chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']], format=conf[['format']])
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 bins <- binlist[[1]]
                 save(bins, file=savename)
@@ -280,34 +302,55 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
             })
         }
     }
-    ## Unparallelized
-#     for (ID in IDs) {
-#         parallel.helper(ID, input=FALSE)
-#     }
-#     for (file in inputfiles) {
-#         parallel.helper(ID=NULL, input=TRUE, inputfile=file)
-#     }
     ## Parallelized
+    datafiles <- filestructure.df[filestructure.df$what == 'datafiles', , drop=FALSE]
+    datasavenames <- filestructure.df[filestructure.df$what == 'datasavenames', , drop=FALSE]
+    datasavenames.stepsize <- filestructure.df[filestructure.df$what == 'datasavenames.stepsize', , drop=FALSE]
     if (numcpu > 1) {
         ptm <- startTimedMessage("Binning data ...")
-        temp <- foreach (ID = IDs, .packages=c("chromstaR")) %dopar% {
-            parallel.helper(ID, input=FALSE)
+        temp <- foreach (i1 = 1:nrow(datafiles), .packages=c("chromstaR")) %dopar% {
+            ID <- datafiles[i1, 'ID']
+            datafile <- datafiles[i1, 'file']
+            datasavename <- datasavenames[i1, 'file']
+            datasavename.stepsize <- datasavenames.stepsize[i1, 'file']
+            parallel.helper(ID, control=FALSE, file=datafile, savename=datasavename, savename.stepsize=datasavename.stepsize)
         }
         stopTimedMessage(ptm)
     } else {
-        for (ID in IDs) {
-            parallel.helper(ID, input=FALSE)
+        for (i1 in 1:nrow(datafiles)) {
+            ID <- datafiles[i1, 'ID']
+            datafile <- datafiles[i1, 'file']
+            datasavename <- datasavenames[i1, 'file']
+            datasavename.stepsize <- datasavenames.stepsize[i1, 'file']
+            parallel.helper(ID, control=FALSE, file=datafile, savename=datasavename, savename.stepsize=datasavename.stepsize)
         }
     }
-    if (numcpu > 1) {
-        ptm <- startTimedMessage("Binning input ...")
-        temp <- foreach (file = inputfiles, .packages=c("chromstaR")) %dopar% {
-            parallel.helper(ID=NULL, input=TRUE, inputfile=file)
-        }
-        stopTimedMessage(ptm)
-    } else {
-        for (file in inputfiles) {
-            parallel.helper(ID=NULL, input=TRUE, inputfile=file)
+    controlFiles <- filestructure.df[filestructure.df$what == 'controlFiles', , drop=FALSE]
+    controlsavenames <- filestructure.df[filestructure.df$what == 'controlsavenames', , drop=FALSE]
+    controlsavenames.stepsize <- filestructure.df[filestructure.df$what == 'controlsavenames.stepsize', , drop=FALSE]
+    if (nrow(controlFiles) > 0) {
+        if (numcpu > 1) {
+            ptm <- startTimedMessage("Binning control ...")
+            temp <- foreach (i1 = 1:nrow(controlFiles), .packages=c("chromstaR")) %dopar% {
+                ID <- controlFiles[i1, 'ID']
+                controlfile <- controlFiles[i1, 'file']
+                if (!is.na(controlfile)) {
+                    controlsavename <- controlsavenames[i1, 'file']
+                    controlsavename.stepsize <- controlsavenames.stepsize[i1, 'file']
+                    parallel.helper(ID, control=TRUE, file=controlfile, savename=controlsavename, savename.stepsize=controlsavename.stepsize)
+                }
+            }
+            stopTimedMessage(ptm)
+        } else {
+            for (i1 in 1:nrow(controlFiles)) {
+                ID <- controlFiles[i1, 'ID']
+                controlfile <- controlFiles[i1, 'file']
+                if (!is.na(controlfile)) {
+                    controlsavename <- controlsavenames[i1, 'file']
+                    controlsavename.stepsize <- controlsavenames.stepsize[i1, 'file']
+                    parallel.helper(ID, control=TRUE, file=controlfile, savename=controlsavename, savename.stepsize=controlsavename.stepsize)
+                }
+            }
         }
     }
     
@@ -317,26 +360,25 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     messageU("Calling univariate peaks")
     if (!file.exists(unipath)) { dir.create(unipath) }
     if (!file.exists(uniplotpath)) { dir.create(uniplotpath) }
-    files <- file.path(binpath, filenames)
-    names(files) <- names(filenames)
-    files.stepsize <- file.path(binpath, filenames.stepsize)
-    names(files.stepsize) <- names(filenames.stepsize)
-    inputfiles.list <- lapply(strsplit(as.character(exp.table$controlFiles), '\\|'), function(x) { file.path(binpath, inputfilenames[x[!is.na(x)]]) })
-    names(inputfiles.list) <- names(filenames)
     
-    parallel.helper <- function(file, inputfiles) {
+    parallel.helper <- function(ID, datafiles, controlFiles, datafiles.stepsize, unifile) {
         ## Peak calling
-        savename <- file.path(unipath, basename(file))
+        savename <- unifile
         if (!file.exists(savename)) {
             tC <- tryCatch({
-                input.files <- NULL
-                if (length(inputfiles)>0) {
-                    input.files <- inputfiles
+                control.files <- NULL
+                if (length(controlFiles)>0) {
+                    control.files <- controlFiles
                 }
-                model <- callPeaksUnivariate(binned.data=file, input.data=input.files, eps=conf[['eps.univariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], read.cutoff.absolute=conf[['read.cutoff.absolute']], prefit.on.chr=conf[['prefit.on.chr']], keep.posteriors=FALSE, verbosity=0)
+                model <- callPeaksUnivariate(binned.data=datafiles, control.data=control.files, eps=conf[['eps.univariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], read.cutoff.absolute=conf[['read.cutoff.absolute']], prefit.on.chr=conf[['prefit.on.chr']], keep.posteriors=FALSE, verbosity=0)
                 # Replace counts.rpkm column with the binsize=stepsize counts, instead of the averaged ones
-                binned.data.stepsize <- loadHmmsFromFiles(files = files.stepsize[names(file)], check.class = 'GRanges')[[1]]
-                model$bins$counts.rpkm <- rpkm.vector(binned.data.stepsize$counts, binsize=stepsize)
+                binned.data.stepsize <- loadHmmsFromFiles(files = datafiles.stepsize, check.class = 'GRanges')
+                model$bins$counts.rpkm <- 0
+                for (i1 in 1:length(binned.data.stepsize)) {
+                    binned.data.stepsize[[i1]]$counts.rpkm <- rpkm.vector(binned.data.stepsize[[i1]]$counts, binsize=stepsize)
+                    ind <- findOverlaps(model$bins, binned.data.stepsize[[i1]])
+                    model$bins$counts.rpkm[queryHits(ind)] <- model$bins$counts.rpkm[queryHits(ind)] + binned.data.stepsize[[i1]]$counts.rpkm[subjectHits(ind)]
+                }
                 ptm <- startTimedMessage("Saving to file ", savename, " ...")
                 save(model, file=savename)
                 stopTimedMessage(ptm)
@@ -345,29 +387,36 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
             })
         }
         ## Plot distributions
-        savename.pdf <- file.path(uniplotpath, paste0(basename(file),'.pdf'))
+        savename.pdf <- file.path(uniplotpath, sub('.RData','.pdf', basename(unifile)))
+        savename.png <- file.path(uniplotpath, sub('.RData','.png', basename(unifile)))
         if (!file.exists(savename.pdf)) {
             ptm <- startTimedMessage("Plotting to file ", savename.pdf, " ...")
             ggplt <- plotHistogram(savename)
             ggsave(filename=savename.pdf, plot=ggplt, width=7, height=5)
+            ggsave(filename=savename.png, plot=ggplt, width=7, height=5)
             stopTimedMessage(ptm)
         }
     }
     if (numcpu > 1) {
         ptm <- startTimedMessage("Univariate peak calling ...")
-        temp <- foreach (ID = names(files), .packages=c("chromstaR")) %dopar% {
-            file <- files[ID]
-            inputfiles <- inputfiles.list[[ID]]
-            parallel.helper(file, inputfiles)
+        temp <- foreach (ID = IDs, .packages=c("chromstaR")) %dopar% {
+            controlFiles <- file.path(binpath, filestructure[[ID]][['controlsavenames']])
+            datafiles <- file.path(binpath, filestructure[[ID]][['datasavenames']])
+            datafiles.stepsize <- file.path(binpath, filestructure[[ID]][['datasavenames.stepsize']])
+            unifile <- file.path(unipath, filestructure[[ID]][['unifilenames']])
+            parallel.helper(ID, datafiles, controlFiles, datafiles.stepsize, unifile)
         }
         stopTimedMessage(ptm)
     } else {
-        for (ID in names(files)) {
-            file <- files[ID]
-            inputfiles <- inputfiles.list[[ID]]
-            parallel.helper(file, inputfiles)
+        for (ID in IDs) {
+            controlFiles <- file.path(binpath, filestructure[[ID]][['controlsavenames']])
+            datafiles <- file.path(binpath, filestructure[[ID]][['datasavenames']])
+            datafiles.stepsize <- file.path(binpath, filestructure[[ID]][['datasavenames.stepsize']])
+            unifile <- file.path(unipath, filestructure[[ID]][['unifilenames']])
+            parallel.helper(ID, datafiles, controlFiles, datafiles.stepsize, unifile)
         }
     }
+    unifilenames <- filestructure.df$file[filestructure.df$what == 'unifilenames']
   
   
     #================================
@@ -378,7 +427,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         messageU("Analyzing replicates")
         if (!file.exists(reppath)) { dir.create(reppath) }
         
-        files <- file.path(unipath, filenames)
+        files <- file.path(unipath, unifilenames)
         names(files) <- paste0(exp.table$mark, '-', exp.table$condition)
         markconditions <- unique(names(files))
         for (markcond in markconditions) {
@@ -404,7 +453,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         ordering <- unique(gsub('-rep.*', '', IDs))
         repfiles <- repfiles[ordering]
         if (!file.exists(combipath)) { dir.create(combipath) }
-        savename <- file.path(combipath, paste0('combined_mode-', modename, '.RData'))
+        savename <- file.path(combipath, paste0('combined_mode-', modename, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData'))
         if (!file.exists(savename)) {
             combined.model <- combineMultivariates(repfiles, mode='replicate')
             ptm <- startTimedMessage("Saving to file ", savename, " ...")
@@ -421,10 +470,10 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         min.tiles <- 5
         width <- max(min.tiles, length(combined.model$info$ID)) / tiles.per.cm + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
         height <- max(min.tiles, length(combined.model$info$ID)) / tiles.per.cm + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
-        savename <- file.path(plotpath, 'read-count-correlation.pdf')
+        savename <- file.path(plotpath, paste0('read-count-correlation', '_binsize', binsize.string, '_stepsize', stepsize.string, '.pdf'))
         ggplt <- heatmapCountCorrelation(combined.model, cluster=FALSE)
         ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
-        savename <- file.path(plotpath, 'read-count-correlation-clustered.pdf')
+        savename <- file.path(plotpath, paste0('read-count-correlation-clustered', '_binsize', binsize.string, '_stepsize', stepsize.string, '.pdf'))
         ggplt <- heatmapCountCorrelation(combined.model, cluster=TRUE)
         ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
         stopTimedMessage(ptm)
@@ -434,8 +483,8 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         #-------------------------
         messageU("Exporting browser files")
         if (!file.exists(browserpath)) { dir.create(browserpath) }
-        savename <- file.path(browserpath, paste0('combined_mode-', modename))
-        trackname <- paste0('mode-', modename)
+        savename <- file.path(browserpath, paste0('combined_mode-', modename, '_binsize', binsize.string, '_stepsize', stepsize.string))
+        trackname <- paste0('mode-', modename, '_binsize', binsize.string, '_stepsize', stepsize.string)
         if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
             exportCombinedMultivariate(combined.model, filename=savename, trackname=trackname, what='combinations', separate.files=TRUE)
         }
@@ -472,10 +521,10 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     ## Run multivariate depending on mode
     #--------------------
     if (mode == 'full') {
-        multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '.RData'))
-        savename <- file.path(plotpath, paste0('multivariate_mode-', mode))
+        multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData'))
+        savename <- file.path(plotpath, paste0('multivariate_mode-', '_binsize', binsize.string, '_stepsize', stepsize.string, mode))
         if (!file.exists(multifile)) {
-            files <- file.path(unipath, filenames)
+            files <- file.path(unipath, unifilenames)
             states <- stateBrewer(exp.table, mode=mode, exclusive.table=conf[['exclusive.table']])
             multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']], temp.savedir=file.path(multipath, paste0('multivariate_mode-', mode, '_tempfiles')))
             ptm <- startTimedMessage("Saving to file ", multifile, " ...")
@@ -492,11 +541,11 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     } else if (mode == 'combinatorial') {
         for (condition in conditions) {
             messageU("condition = ", condition, underline='-', overline='-')
-            multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '_condition-', condition, '.RData'))
-            savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_condition-', condition))
+            multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '_condition-', condition, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData'))
+            savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_condition-', condition, '_binsize', binsize.string, '_stepsize', stepsize.string))
             if (!file.exists(multifile)) {
                 mask <- exp.table[,'condition'] == condition
-                files <- file.path(unipath, filenames)[mask]
+                files <- file.path(unipath, unifilenames)[mask]
                 states <- stateBrewer(exp.table[mask,], mode=mode, exclusive.table=conf[['exclusive.table']])
                 multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']], temp.savedir=file.path(multipath, paste0('multivariate_mode-', mode, '_condition-', condition, '_tempfiles')))
                 ptm <- startTimedMessage("Saving to file ", multifile, " ...")
@@ -514,11 +563,11 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     } else if (mode == 'differential') {
         for (mark in marks) {
             messageU("mark = ", mark, underline='-', overline='-')
-            multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '_mark-', mark, '.RData'))
-            savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_mark-', mark))
+            multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '_mark-', mark, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData'))
+            savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_mark-', mark, '_binsize', binsize.string, '_stepsize', stepsize.string))
             if (!file.exists(multifile)) {
                 mask <- exp.table[,'mark'] == mark
-                files <- file.path(unipath, filenames)[mask]
+                files <- file.path(unipath, unifilenames)[mask]
                 states <- stateBrewer(exp.table[mask,], mode=mode, exclusive.table=conf[['exclusive.table']])
                 multimodel <- callPeaksMultivariate(files, use.states=states, max.states=conf[['max.states']], eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']], temp.savedir=file.path(multipath, paste0('multivariate_mode-', mode, '_mark-', mark, '_tempfiles')))
                 ptm <- startTimedMessage("Saving to file ", multifile, " ...")
@@ -541,7 +590,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     multifiles <- list.files(multipath, full.names=TRUE, pattern=paste0('mode-',mode))
 
     if (!file.exists(combipath)) { dir.create(combipath) }
-    savename <- file.path(combipath, paste0('combined_mode-', mode, '.RData'))
+    savename <- file.path(combipath, paste0('combined_mode-', mode, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData'))
     if (!file.exists(savename)) {
         combined.model <- combineMultivariates(multifiles, mode=mode)
         ptm <- startTimedMessage("Saving to file ", savename, " ...")
@@ -558,10 +607,10 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     min.tiles <- 5
     width <- max(min.tiles, length(combined.model$info$ID)) / tiles.per.cm + max(sapply(combined.model$info$ID, nchar)) / char.per.cm + legend.cm
     height <- max(min.tiles, length(combined.model$info$ID)) / tiles.per.cm + max(sapply(combined.model$info$ID, nchar)) / char.per.cm
-    savename <- file.path(plotpath, 'read-count-correlation.pdf')
+    savename <- file.path(plotpath, paste0('read-count-correlation', '_binsize', binsize.string, '_stepsize', stepsize.string, '.pdf'))
     ggplt <- heatmapCountCorrelation(combined.model, cluster=FALSE)
     ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
-    savename <- file.path(plotpath, 'read-count-correlation-clustered.pdf')
+    savename <- file.path(plotpath, paste0('read-count-correlation-clustered', '_binsize', binsize.string, '_stepsize', stepsize.string, '.pdf'))
     ggplt <- heatmapCountCorrelation(combined.model, cluster=TRUE)
     ggsave(savename, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
     stopTimedMessage(ptm)
@@ -571,8 +620,8 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #-------------------------
     messageU("Exporting browser files")
     if (!file.exists(browserpath)) { dir.create(browserpath) }
-    savename <- file.path(browserpath, paste0('combined_mode-', mode))
-    trackname <- paste0('mode-', mode)
+    savename <- file.path(browserpath, paste0('combined_mode-', mode, '_binsize', binsize.string, '_stepsize', stepsize.string))
+    trackname <- paste0('mode-', mode, '_binsize', binsize.string, '_stepsize', stepsize.string)
     if (!file.exists(paste0(savename, '_combinations.bed.gz'))) {
         exportCombinedMultivariate(combined.model, filename=savename, trackname=trackname, what='combinations', separate.files=TRUE)
     }

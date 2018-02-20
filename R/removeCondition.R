@@ -76,21 +76,21 @@ removeCondition <- function(model, conditions) {
         }
         model$bins$posteriors <- posteriors
     }
-    if (!is.null(model$bins$peakScores)) {
-        peakScores <- model$bins$peakScores
+    if (!is.null(model$bins$maxPostInPeak)) {
+        maxPostInPeak <- model$bins$maxPostInPeak
         removeconds <- paste0(paste0('-', conditions, '-'), collapse='|')
-        keepconds <- grep(removeconds, colnames(peakScores), invert=TRUE, value=TRUE)
-        peakScores <- peakScores[,keepconds]
-        if (class(peakScores) != "matrix") {
-            peakScores <- matrix(peakScores, ncol=1, dimnames=list(NULL, keepconds))
+        keepconds <- grep(removeconds, colnames(maxPostInPeak), invert=TRUE, value=TRUE)
+        maxPostInPeak <- maxPostInPeak[,keepconds]
+        if (class(maxPostInPeak) != "matrix") {
+            maxPostInPeak <- matrix(maxPostInPeak, ncol=1, dimnames=list(NULL, keepconds))
         }
-        model$bins$peakScores <- peakScores
+        model$bins$maxPostInPeak <- maxPostInPeak
     }
     stopTimedMessage(ptm)
     # Redo differential score
     if (!is.null(model$bins$differential.score)) {
         ptm <- startTimedMessage("Differential score ...")
-        model$bins$differential.score <- differentialScoreSum(model$bins$peakScores, model$info)
+        model$bins$differential.score <- differentialScoreSum(model$bins$maxPostInPeak, model$info)
         stopTimedMessage(ptm)
     }
     # Redo transition frequencies and groups
@@ -103,12 +103,24 @@ removeCondition <- function(model, conditions) {
     bins <- model$bins
     combs <- getCombinations(model$bins)
     names(combs) <- sub('combination.', '', names(combs))
-    ### Redo the segmentation for all conditions combined ###
+    
+    ### Redo the segmentation for all conditions combined
     ptm <- startTimedMessage("Redoing segmentation for all conditions combined ...")
     segments <- suppressMessages( multivariateSegmentation(bins, column2collapseBy='state') )
-    names(mcols(segments)) <- setdiff(names(mcols(bins)), c('posteriors','counts.rpkm'))
-    model$segments <- segments
+    names(mcols(segments))[grep("combination", names(mcols(segments)))] <- names(mcols(bins))[grep("combination", names(mcols(bins)))]
     stopTimedMessage(ptm)
+    ## Add differential score ##
+    ptm <- startTimedMessage("Adding differential score ...")
+    segments$differential.score <- differentialScoreSum(segments$maxPostInPeak, model$info)
+    stopTimedMessage(ptm)
+    ## Maximum posterior in peaks ##
+    ptm <- startTimedMessage("Getting maximum posterior in peaks ...")
+    ind <- findOverlaps(bins, segments)
+    bins$maxPostInPeak <- segments$maxPostInPeak[subjectHits(ind), , drop=FALSE]
+    bins$differential.score <- segments$differential.score[subjectHits(ind)]
+    stopTimedMessage(ptm)
+    model$segments <- segments
+    model$bins <- bins
     
     ### Redo the segmentation for each condition separately ###
     ptm <- startTimedMessage("Redoing segmentation for each condition separately ...")

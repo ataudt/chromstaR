@@ -79,7 +79,7 @@ class ScaleHMM  {
 		// Methods
 		void forward();
 		void backward();
-		void calc_sumgamma();
+		void calc_gamma();
 		void calc_sumxi();
 		void calc_loglikelihood();
 		void calc_densities();
