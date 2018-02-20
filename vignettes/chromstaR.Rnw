@@ -20,7 +20,17 @@ options(width=110)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
 
-ChIP-seq has become the standard technique for assessing the genome-wide chromatin state of DNA. \Rpackage{chromstaR} provides functions for the joint analysis of multiple ChIP-seq samples. It allows peak calling for transcription factor binding and histone modifications with a narrow (e.g. H3K4me3, H3K27ac,~...) or broad (e.g. H3K36me3, H3K27me3,~...) profile. All analysis can be performed on each sample individually (=univariate), or in a joint analysis considering all samples simultaneously (=multivariate).
+ChIP-seq has become the standard technique for assessing the genome-wide chromatin state of DNA. \Rpackage{chromstaR} provides functions for the joint analysis of multiple ChIP-seq samples. It allows peak calling for transcription factor binding and histone modifications with a narrow (e.g. H3K4me3, H3K27ac,~...) or broad (e.g. H3K36me3, H3K27me3,~...) profile. All analysis can be performed on each sample individually (=univariate), or in a joint analysis considering all samples simultaneously (=multivariate).  The joint analysis is generally recommended because it is more powerful for detecting differences.
+
+\section{Citation}
+
+If you use \Rpackage{chromstaR} for chromatin state analysis, please cite \cite{Taudt2016}:
+
+Taudt, A., Nguyen, M. A., Heinig, M., Johannes, F. and Colome-Tatche, M. \textbf{chromstaR: Tracking combinatorial chromatin state dynamics in space and time.} bioRxiv (Cold Spring Harbor Labs Journals, 2016). doi:10.1101/038612
+
+If you use \Rpackage{chromstaR} for differential ChIP-seq analysis, please cite \cite{Taudt2016} and \cite{Hanna2018}:
+
+Hanna, C. W., Taudt, A., Huang, J., Gahurova, L., Kranz, A., Andrews, S., Dean, W., Stewart, A. F., Colome-Tatche, M. and Kelsey, G. \textbf{MLL2 conveys transcription-independent H3K4 trimethylation in oocytes.} Nat. Struct. Mol. Biol. 1 (2018). doi:10.1038/s41594-017-0013-5
 
 \section{Outline of workflow}
 
@@ -576,10 +586,10 @@ plots[['BN']] + coord_flip() +
 \item \textbf{BROWSERFILES}: \\ Bed files for upload to the UCSC genome browser. It contains files with combinatorial states (``\_combinations.bed.gz'') and underlying peak calls (``\_peaks.bed.gz''). !!Always check the ``\_peaks.bed.gz'' files if you are satisfied with the peak calls. If not, there are ways to make the calls stricter (see section~\ref{sec:FAQ_peaks}).
 \item $\rightarrow$\textbf{combined}$\leftarrow$: \\ RData files with the combined results of the uni- and multivariate peak calling steps. This is what you want to use for downstream analyses. Contains \Rclass{combinedMultiHMM} objects.
 \begin{itemize}
-\item \emph{combined\_mode-separate.RData} Simple combination of peak calls (replicates considered) without multivariate analysis.
-\item \emph{combined\_mode-combinatorial.RData} Combination of multivariate results for mode='combinatorial'.
-\item \emph{combined\_mode-differential.RData} Combination of multivariate results for mode='differential'.
-\item \emph{combined\_mode-full.RData} Combination of multivariate results for mode='full'.
+\item \emph{combined\_mode-separate.RData}: Simple combination of peak calls (replicates considered) without multivariate analysis.
+\item \emph{combined\_mode-combinatorial.RData}: Combination of multivariate results for mode='combinatorial'.
+\item \emph{combined\_mode-differential.RData}: Combination of multivariate results for mode='differential'.
+\item \emph{combined\_mode-full.RData}: Combination of multivariate results for mode='full'.
 \end{itemize}
 \item \textbf{multivariate}: \\ RData files with the results of the multivariate peak calling step. Contains \Rclass{multiHMM} objects.
 \item \textbf{PLOTS}: \\ Several plots that are produced by default. Please check the plots in subfolder \textbf{univariate-distributions} for irregularities (see section~\ref{sec:univariate}).
@@ -664,6 +674,8 @@ The plot shows data for H3K27me3 at binsize 150bp. (a) Incorrectly converged fit
 toLatex(sessionInfo())
 @
 \end{scriptsize}
+
+\bibliography{references.bib}
 
 \end{document}
 
