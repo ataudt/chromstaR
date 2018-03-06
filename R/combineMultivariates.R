@@ -187,7 +187,7 @@ combineMultivariates <- function(hmms, mode) {
         combs.df <- methods::as(combs.df, 'DataFrame')
         stopTimedMessage(ptm)
         
-    } else if (mode == 'full') {
+    } else if (mode == 'full' | mode == 'influence') {
         if (length(hmms) > 1) {
             stop("'hmms' must contain only one 'multiHMM' object when mode='full'.")
         }

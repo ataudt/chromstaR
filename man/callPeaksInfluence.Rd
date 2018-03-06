@@ -72,10 +72,9 @@ heatmapCountCorrelation(multimodel)
 heatmapTiestrengths(multimodel)
 
 }
-\author{
-Aaron Taudt, Maria Colome Tatche
-}
 \seealso{
 \code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksReplicates}}
 }
-
+\author{
+Aaron Taudt, Luisa Santus
+}

@@ -49,12 +49,13 @@ Chromstar(inputfolder, experiment.table, outputfolder, configfile = NULL,
 
 \item{keep.posteriors}{If set to \code{TRUE} (default=\code{FALSE}), posteriors will be available in the output. This is useful to change the post.cutoff later, but increases the necessary disk space to store the result.}
 
-\item{mode}{One of \code{c('differential','combinatorial','full')}. The modes determine how the multivariate part is run. Here is some advice which mode to use:
+\item{mode}{One of \code{c('differential','combinatorial','full','separate','influence')}. The modes determine how the multivariate part is run. Here is some advice which mode to use:
 \describe{
   \item{\code{combinatorial}}{Each condition is analyzed separately with all marks combined. Choose this mode if you have more than ~7 conditions or you want to have a high sensitivity for detecting combinatorial states. Differences between conditions will be more noisy (more false positives) than in mode \code{'differential'} but combinatorial states are more precise.}
   \item{\code{differential}}{Each mark is analyzed separately with all conditions combined. Choose this mode if you are interested in accurate differences. Combinatorial states will be more noisy (more false positives) than in mode \code{'combinatorial'} but differences are more precise.}
   \item{\code{full}}{Full analysis of all marks and conditions combined. Best of both, but: Choose this mode only if (number of conditions * number of marks \eqn{\le} 8), otherwise it might be too slow or crash due to memory limitations.}
   \item{\code{separate}}{Only replicates are analyzed multivariately. Combinatorial states are constructed by a simple post-hoc combination of peak calls.}
+  \item{\code{influence}}{TODO: An influence model is used for multivariate peak calling of all samples. Replicates can have differing peak calls.}
 }}
 
 \item{max.states}{The maximum number of states to use in the multivariate part. If set to \code{NULL}, the maximum number of theoretically possible states is used. CAUTION: This can be very slow or crash if you have too many states. \pkg{\link{chromstaR}} has a built in mechanism to select the best states in case that less states than theoretically possible are specified.}

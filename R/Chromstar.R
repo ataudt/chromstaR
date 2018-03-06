@@ -13,12 +13,13 @@
 #' @inheritParams readBedFileAsGRanges
 #' @param format One of \code{c('bed','bam',NULL)}. With \code{NULL} the format is determined automatically from the file ending.
 #' @inheritParams callPeaksUnivariate
-#' @param mode One of \code{c('differential','combinatorial','full')}. The modes determine how the multivariate part is run. Here is some advice which mode to use:
+#' @param mode One of \code{c('differential','combinatorial','full','separate','influence')}. The modes determine how the multivariate part is run. Here is some advice which mode to use:
 #' \describe{
 #'   \item{\code{combinatorial}}{Each condition is analyzed separately with all marks combined. Choose this mode if you have more than ~7 conditions or you want to have a high sensitivity for detecting combinatorial states. Differences between conditions will be more noisy (more false positives) than in mode \code{'differential'} but combinatorial states are more precise.}
 #'   \item{\code{differential}}{Each mark is analyzed separately with all conditions combined. Choose this mode if you are interested in accurate differences. Combinatorial states will be more noisy (more false positives) than in mode \code{'combinatorial'} but differences are more precise.}
 #'   \item{\code{full}}{Full analysis of all marks and conditions combined. Best of both, but: Choose this mode only if (number of conditions * number of marks \eqn{\le} 8), otherwise it might be too slow or crash due to memory limitations.}
 #'   \item{\code{separate}}{Only replicates are analyzed multivariately. Combinatorial states are constructed by a simple post-hoc combination of peak calls.}
+#'   \item{\code{influence}}{TODO: An influence model is used for multivariate peak calling of all samples. Replicates can have differing peak calls.}
 #' }
 #' @param max.states The maximum number of states to use in the multivariate part. If set to \code{NULL}, the maximum number of theoretically possible states is used. CAUTION: This can be very slow or crash if you have too many states. \pkg{\link{chromstaR}} has a built in mechanism to select the best states in case that less states than theoretically possible are specified.
 #' @param per.chrom If set to \code{TRUE} chromosomes will be treated separately in the multivariate part. This tremendously speeds up the calculation but results might be noisier as compared to \code{per.chrom=FALSE}, where all chromosomes are concatenated for the HMM.
@@ -113,7 +114,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     filestructure.df$file <- as.character(filestructure.df$file)
     
     ## Check usage of modes
-    if (!mode %in% c('separate','combinatorial','differential','full')) {
+    if (!mode %in% c('combinatorial','differential','full','separate','influence')) {
         stop("Unknown mode '", mode, "'.")
     }
     marks <- unique(as.character(exp.table[,'mark']))
@@ -164,10 +165,11 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     cat("- binned: RData files with the results of the binnig step. Contains GRanges objects with binned genomic coordinates and read counts.\n", file=savename, append=TRUE)
     cat("- BROWSERFILES: Bed files for upload to the UCSC genome browser. It contains files with combinatorial states (*_combinations.bed.gz) and underlying peak calls (*_peaks.bed.gz). !!Always check the *_peaks.bed.gz files if you are satisfied with the peak calls. If not, there are ways to make the calls stricter (see section FAQ of the vignette).\n", file=savename, append=TRUE)
     cat("- -->combined<--: RData files with the combined results of the uni- and multivariate peak calling steps. This is what you want to use for downstream analyses. Contains combinedMultiHMM objects.\n", file=savename, append=TRUE)
-    cat("    - combined_mode-separate.RData: Simple combination of peak calls (replicates considered) without multivariate analysis.\n", file=savename, append=TRUE)
     cat("    - combined_mode-combinatorial.RData: Combination of multivariate results for mode='combinatorial'.\n", file=savename, append=TRUE)
     cat("    - combined_mode-differential.RData: Combination of multivariate results for mode='differential'.\n", file=savename, append=TRUE)
     cat("    - combined_mode-full.RData: Combination of multivariate results for mode='full'.\n", file=savename, append=TRUE)
+    cat("    - combined_mode-separate.RData: Simple combination of peak calls (replicates considered) without multivariate analysis.\n", file=savename, append=TRUE)
+    cat("    - combined_mode-influence.RData: Multivariate results for mode='influence'.\n", file=savename, append=TRUE)
     cat("- multivariate: RData files with the results of the multivariate peak calling step. Contains multiHMM objects.\n", file=savename, append=TRUE)
     cat("- PLOTS: Several plots that are produced by default. Please check the plots in subfolder \"univariate-distributions\" for irregularities (see section \"Univariate Analysis\" of the vignette).\n", file=savename, append=TRUE)
     cat("- replicates: RData files with the result of the replicate peak calling step. Contains multiHMM objects.\n", file=savename, append=TRUE)
@@ -522,7 +524,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #--------------------
     if (mode == 'full') {
         multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData'))
-        savename <- file.path(plotpath, paste0('multivariate_mode-', '_binsize', binsize.string, '_stepsize', stepsize.string, mode))
+        savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_binsize', binsize.string, '_stepsize', stepsize.string))
         if (!file.exists(multifile)) {
             files <- file.path(unipath, unifilenames)
             states <- stateBrewer(exp.table, mode=mode, exclusive.table=conf[['exclusive.table']])
@@ -580,6 +582,24 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 plothelper(savename, multifile)
             }
         }
+      
+    #--------------------------------
+    } else if (mode == 'influence') {
+        multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData'))
+        savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_binsize', binsize.string, '_stepsize', stepsize.string))
+        if (!file.exists(multifile)) {
+            files <- file.path(unipath, unifilenames)
+            multimodel <- callPeaksInfluence(files, eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']], temp.savedir=file.path(multipath, paste0('multivariate_mode-', mode, '_tempfiles')))
+            ptm <- startTimedMessage("Saving to file ", multifile, " ...")
+            save(multimodel, file=multifile)
+            stopTimedMessage(ptm)
+            ## Plot transitions
+            plothelper(savename, multimodel)
+        } else {
+            ## Plot transitions
+            plothelper(savename, multifile)
+        }
+    
     }
 
   
