@@ -248,6 +248,7 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
     nummod <- dim(binned.data$counts)[2]
     offsets <- dimnames(binned.data$counts)[[3]]
     binstates <- dec2bin(comb.states, ndigits=nummod)
+    numbins <- length(binned.data)
     
     # Prepare input for C function
     rs <- unlist(lapply(distributions,"[",2:3,'size'))
@@ -257,8 +258,8 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
     ws3 <- unlist(lapply(weights,"[",3))
     ws <- ws1 / (ws2+ws1)
     get.posteriors <- TRUE
-    if (get.posteriors) { lenPosteriors <- length(binned.data) * length(comb.states) } else { lenPosteriors <- 1 }
-    if (keep.densities) { lenDensities <- length(binned.data) * length(comb.states) } else { lenDensities <- 1 }
+    if (get.posteriors) { lenPosteriors <- numbins * length(comb.states) } else { lenPosteriors <- 1 }
+    if (keep.densities) { lenDensities <- numbins * length(comb.states) } else { lenDensities <- 1 }
 
     if (is.null(transitionProbs.initial)) {
         transitionProbs.initial <- matrix((1-0.9)/(length(comb.states)-1), ncol=length(comb.states), nrow=length(comb.states))
@@ -315,7 +316,7 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
         on.exit(.C("C_multivariate_cleanup", as.integer(nummod)))
         hmm <- .C("C_multivariate_hmm",
             counts = as.integer(as.vector(binned.data$counts[,, offset])), # int* multiO
-            num.bins = as.integer(length(binned.data)), # int* T
+            num.bins = as.integer(numbins), # int* T
             max.states = as.integer(length(comb.states)), # int* N
             num.modifications = as.integer(nummod), # int* Nmod
             comb.states = as.numeric(comb.states), # double* comb_states
@@ -331,8 +332,8 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
             get.posteriors = as.logical(get.posteriors), # bool* keep_posteriors
             densities = double(length=lenDensities), # double* densities
             keep.densities = as.logical(keep.densities), # bool* keep_densities
-            states = double(length=length(binned.data)), # double* states
-            maxPosterior = double(length=length(binned.data)), # double* maxPosterior
+            states = double(length=numbins), # double* states
+            maxPosterior = double(length=numbins), # double* maxPosterior
             A = double(length=length(comb.states)*length(comb.states)), # double* A
             proba = double(length=length(comb.states)), # double* proba
             loglik = double(length=1), # double* loglik
@@ -355,6 +356,12 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
             ### Make return object ###
                 result <- list()
                 result$info <- info
+            ## Densities
+                if (keep.densities) {
+                    densities <- hmm$densities
+                    dim(densities) <- c(numbins, length(comb.states))
+                    dimnames(densities) <- list(bin=NULL, state=comb.states)
+                }
             ## Parameters
                 if (!is.null(use.states)) {
                     mapping <- use.states$combination
@@ -401,16 +408,11 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
         
         ## Store counts and posteriors in list
         if (get.posteriors) {
-            dim(hmm$posteriors) <- c(length(binned.data), length(comb.states))
+            dim(hmm$posteriors) <- c(numbins, length(comb.states))
             dimnames(hmm$posteriors) <- list(bin=NULL, state=comb.states)
         }
-        dim(hmm$counts) <- c(length(binned.data), nummod)
+        dim(hmm$counts) <- c(numbins, nummod)
         dimnames(hmm$counts) <- list(bin=NULL, track=info$ID)
-        if (keep.densities) {
-            densities <- hmm$densities
-            dim(densities) <- c(length(binned.data), length(comb.states))
-            dimnames(densities) <- list(bin=NULL, state=comb.states)
-        }
         hmm.A <- hmm$A
         hmm.proba <- hmm$proba
         
