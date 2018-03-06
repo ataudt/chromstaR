@@ -3,9 +3,7 @@ stateorderByTransition <- function(multi.hmm) {
     multi.hmm <- loadHmmsFromFiles(multi.hmm, check.class=class.multivariate.hmm)[[1]]
 
     ## Calculate distance matrix
-    distances <- matrix(NA, ncol=ncol(multi.hmm$transitionProbs), nrow=nrow(multi.hmm$transitionProbs))
-    colnames(distances) <- colnames(multi.hmm$transitionProbs)
-    rownames(distances) <- rownames(multi.hmm$transitionProbs)
+    distances <- array(NA, dim = dim(multi.hmm$transitionProbs), dimnames = dimnames(multi.hmm$transitionProbs))
     for (irow in 1:nrow(distances)) {
         for (icol in 1:ncol(distances)) {
             distances[irow,icol] <- 2 - (multi.hmm$transitionProbs[irow,icol] + multi.hmm$transitionProbs[icol,irow])

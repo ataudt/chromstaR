@@ -16,6 +16,11 @@ multivariateSegmentation <- function(bins, column2collapseBy='state') {
         }
     }
     df <- as.data.frame(bins)
+    if (dim(bins$counts.rpkm)[2] == 1) { # only one experiment
+        names2change <- setdiff(names(df)[6:ncol(df)], c('state', 'differential.score', 'combination'))
+        names(df)[names(df) %in% names2change] <- gsub('-', '.', paste(setdiff(names(mcols(bins)), c('state', 'differential.score', 'combination')), dimnames(bins$counts.rpkm)[[2]], sep='.'))
+      
+    }
     ind.readcols <- grep('^counts', names(df))
     ind.postcols <- grep('^posteriors', names(df))
     ind.maxpostcols <- grep('^maxPostInPeak', names(df))
