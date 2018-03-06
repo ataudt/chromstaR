@@ -26,10 +26,10 @@
 #' @examples
 #'# Get example BAM files for 2 different marks in hypertensive rat
 #'file.path <- system.file("extdata","euratrans", package='chromstaRData')
-#'files <- list.files(file.path, full.names=TRUE, pattern='SHR.*bam$')[c(1:2,6)]
+#'files <- list.files(file.path, full.names=TRUE, pattern='SHR.*bam$')[c(1:5)]
 #'# Construct experiment structure
-#'exp <- data.frame(file=files, mark=c("H3K27me3","H3K27me3","H3K4me3"),
-#'                  condition=rep("SHR",3), replicate=c(1:2,1), pairedEndReads=FALSE,
+#'exp <- data.frame(file=files, mark=c(rep("H3K27me3",3), rep("H3K4me3", 2)),
+#'                  condition=rep("SHR",5), replicate=c(1:3,1:2), pairedEndReads=FALSE,
 #'                  controlFiles=NA)
 #'states <- stateBrewer(exp, mode='combinatorial')
 #'# Bin the data
