@@ -522,7 +522,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     #--------------------
     if (mode == 'full') {
         multifile <- file.path(multipath, paste0('multivariate_mode-', mode, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData'))
-        savename <- file.path(plotpath, paste0('multivariate_mode-', '_binsize', binsize.string, '_stepsize', stepsize.string, mode))
+        savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_binsize', binsize.string, '_stepsize', stepsize.string))
         if (!file.exists(multifile)) {
             files <- file.path(unipath, unifilenames)
             states <- stateBrewer(exp.table, mode=mode, exclusive.table=conf[['exclusive.table']])
