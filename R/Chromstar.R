@@ -95,17 +95,20 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     ## File structure
     filestructure <- list()
     datafiles.splt <- strsplit(as.character(exp.table$file), '\\|')
+    names(datafiles.splt) <- IDs
     controlFiles.splt <- strsplit(as.character(exp.table$controlFiles), '\\|')
     for (i1 in 1:length(IDs)) {
         ID <- IDs[i1]
-        filestructure[[ID]] <- list()
-        filestructure[[ID]][['datafiles']] <- datafiles.splt[[i1]] ## Names of data files
-        filestructure[[ID]][['datasavenames']] <- paste0(ID, '_', basename(datafiles.splt[[i1]]), '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData') ## Names for binned data
-        filestructure[[ID]][['datasavenames.stepsize']] <- paste0(ID, '_', basename(datafiles.splt[[i1]]), '_binsize', stepsize.string, '_stepsize', stepsize.string, '.RData') ## Names for binned data with binsize=stepsize
+        if (is.null(filestructure[[ID]])) {
+            filestructure[[ID]] <- list()
+        }
+        filestructure[[ID]][['datafiles']] <- unique(c(filestructure[[ID]][['datafiles']], datafiles.splt[[i1]])) ## Names of data files
+        filestructure[[ID]][['datasavenames']] <- unique(c(filestructure[[ID]][['datasavenames']], paste0(ID, '_', basename(datafiles.splt[[i1]]), '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData'))) ## Names for binned data
+        filestructure[[ID]][['datasavenames.stepsize']] <- unique(c(filestructure[[ID]][['datasavenames.stepsize']], paste0(ID, '_', basename(datafiles.splt[[i1]]), '_binsize', stepsize.string, '_stepsize', stepsize.string, '.RData'))) ## Names for binned data with binsize=stepsize
         if (!is.na(controlFiles.splt[[i1]][1])) {
-            filestructure[[ID]][['controlFiles']] <- controlFiles.splt[[i1]] ## Names of control data files
-            filestructure[[ID]][['controlsavenames']] <- paste0('control_', basename(controlFiles.splt[[i1]]), '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData') ## Names for control binned data
-            filestructure[[ID]][['controlsavenames.stepsize']] <- paste0('control_', basename(controlFiles.splt[[i1]]), '_binsize', stepsize.string, '_stepsize', stepsize.string, '.RData') ## Names for control binned data with binsize=stepsize
+            filestructure[[ID]][['controlFiles']] <- unique(c(filestructure[[ID]][['controlFiles']], controlFiles.splt[[i1]])) ## Names of control data files
+            filestructure[[ID]][['controlsavenames']] <- unique(c(filestructure[[ID]][['controlsavenames']], paste0('control_', basename(controlFiles.splt[[i1]]), '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData'))) ## Names for control binned data
+            filestructure[[ID]][['controlsavenames.stepsize']] <- unique(c(filestructure[[ID]][['controlsavenames.stepsize']], paste0('control_', basename(controlFiles.splt[[i1]]), '_binsize', stepsize.string, '_stepsize', stepsize.string, '.RData'))) ## Names for control binned data with binsize=stepsize
         }
         filestructure[[ID]][['unifilenames']] <- paste0(ID, '_binsize', binsize.string, '_stepsize', stepsize.string, '.RData') ## Names for univariate model files
     }
