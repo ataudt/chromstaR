@@ -284,21 +284,25 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
             stop("Multiple definitions of 'pairedEndReads' for file ", file, ".")
         }
         pairedEndReads <- pairedEndReads[1]
-        if (!file.exists(savename)) {
+        if (!file.exists(savename) | !file.exists(savename.stepsize)) {
             tC <- tryCatch({
                 exp.table.control <- NULL
                 if (!control) {
                     exp.table.control <- exp.table
                 }
                 binlist <- binReads(file=file, experiment.table=exp.table.control, ID=ID, assembly=chrom.lengths.df, pairedEndReads=pairedEndReads, binsizes=NULL, reads.per.bin=NULL, bins=list(pre.bins, pre.bins.stepsize), stepsizes=c(stepsize, stepsize), chromosomes=conf[['chromosomes']], remove.duplicate.reads=conf[['remove.duplicate.reads']], min.mapq=conf[['min.mapq']], format=conf[['format']])
-                ptm <- startTimedMessage("Saving to file ", savename, " ...")
-                bins <- binlist[[1]]
-                save(bins, file=savename)
-                stopTimedMessage(ptm)
-                ptm <- startTimedMessage("Saving to file ", savename.stepsize, " ...")
-                bins <- binlist[[2]]
-                save(bins, file=savename.stepsize)
-                stopTimedMessage(ptm)
+                if (!file.exists(savename)) {
+                    ptm <- startTimedMessage("Saving to file ", savename, " ...")
+                    bins <- binlist[[1]]
+                    save(bins, file=savename)
+                    stopTimedMessage(ptm)
+                }
+                if (!file.exists(savename.stepsize)) {
+                    ptm <- startTimedMessage("Saving to file ", savename.stepsize, " ...")
+                    bins <- binlist[[2]]
+                    save(bins, file=savename.stepsize)
+                    stopTimedMessage(ptm)
+                }
             }, error = function(err) {
                 stop(file,'\n',err)
             })
