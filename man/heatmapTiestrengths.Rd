@@ -21,7 +21,7 @@ file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData"
                     package="chromstaR")
 model <- get(load(file))
 ## Plot transition probabilites as heatmap
-heatmapTransitionProbs(model)
+heatmapTiestrengths(model)
 
 }
 \seealso{

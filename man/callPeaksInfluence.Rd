@@ -73,7 +73,7 @@ heatmapCountCorrelation(multimodel)
 
 }
 \seealso{
-\code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksReplicates}}
+\code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksReplicates}}, \code{\link{callPeaksMultivariate}}
 }
 \author{
 Aaron Taudt, Luisa Santus

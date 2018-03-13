@@ -19,7 +19,7 @@
 #' @param verbosity Verbosity level for the fitting procedure. 0 - No output, 1 - Iterations are printed.
 #' @param temp.savedir A directory where to store intermediate results if \code{per.chrom=TRUE}.
 #' @return A \code{\link{multiHMM}} object.
-#' @seealso \code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksReplicates}}
+#' @seealso \code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksReplicates}}, \code{\link{callPeaksInfluence}}
 #' @import doParallel
 #' @import foreach
 #' @export
@@ -384,6 +384,8 @@ runMultivariate <- function(binned.data, stepbins, info, comb.states, use.states
                 result$transitionProbs.initial <- matrix(hmm$A.initial, ncol=length(comb.states), byrow=TRUE)
                 colnames(result$transitionProbs.initial) <- combinations
                 rownames(result$transitionProbs.initial) <- combinations
+                names(dimnames(result$transitionProbs)) <- c('from', 'to')
+                names(dimnames(result$transitionProbs.initial)) <- c('from', 'to')
                 # Initial probs
                 result$startProbs <- hmm$proba
                 names(result$startProbs) <- combinations

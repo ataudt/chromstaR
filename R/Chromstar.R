@@ -512,18 +512,39 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     if (!file.exists(browserpath)) { dir.create(browserpath) }
 
     ## Plot helper ##
-    plothelper <- function(savename, multimodel) {
+    plothelper <- function(savename, multimodel, mode) {
         char.per.cm <- 10
         legend.cm <- 3
-        savename2 <- paste0(savename, '_transitionMatrix.pdf')
-        if (!file.exists(savename2)) {
-            ptm <- startTimedMessage("Making plots ...")
-            multimodel <- suppressMessages( loadHmmsFromFiles(multimodel, check.class=class.multivariate.hmm)[[1]] )
-            ggplt <- suppressMessages( heatmapTransitionProbs(multimodel) )
-            width <- length(levels(multimodel$bins$combination)) + max(sapply(levels(multimodel$bins$combination), nchar)) / char.per.cm + legend.cm
-            height <- length(levels(multimodel$bins$combination)) + max(sapply(levels(multimodel$bins$combination), nchar)) / char.per.cm + 1
-            ggsave(savename2, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
-            stopTimedMessage(ptm)
+        if (mode == 'influence') {
+            savename2 <- paste0(savename, '_transitionMatrix.pdf')
+            savename3 <- paste0(savename, '_tieStrengths.pdf')
+            if (!file.exists(savename2) | !file.exists(savename3)) {
+                ptm <- startTimedMessage("Making plots ...")
+                multimodel <- suppressMessages( loadHmmsFromFiles(multimodel, check.class=class.multivariate.hmm)[[1]] )
+                # Transition probs
+                ggplt <- suppressMessages( heatmapTransitionProbs(multimodel) )
+                width <- (dim(multimodel$transitionProbs)[4]*dim(multimodel$transitionProbs)[2])*1.5 + max(sapply(dimnames(multimodel$transitionProbs)[[2]], nchar)) / char.per.cm + legend.cm
+                height <- (dim(multimodel$transitionProbs)[3]*dim(multimodel$transitionProbs)[1])*1.5 + max(sapply(dimnames(multimodel$transitionProbs)[[1]], nchar)) / char.per.cm + 1
+                ggsave(savename2, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
+                # Tie strengths
+                ggplt <- suppressMessages( heatmapTiestrengths(multimodel) )
+                width <- dim(multimodel$tiestrengths)[2] + max(sapply(dimnames(multimodel$tiestrengths)[[2]], nchar)) / char.per.cm + legend.cm
+                height <- dim(multimodel$tiestrengths)[1] + max(sapply(dimnames(multimodel$tiestrengths)[[1]], nchar)) / char.per.cm + 1
+                ggsave(savename3, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
+                stopTimedMessage(ptm)
+            }
+        } else {
+            savename2 <- paste0(savename, '_transitionMatrix.pdf')
+            if (!file.exists(savename2)) {
+                ptm <- startTimedMessage("Making plots ...")
+                multimodel <- suppressMessages( loadHmmsFromFiles(multimodel, check.class=class.multivariate.hmm)[[1]] )
+                # Transition probs
+                ggplt <- suppressMessages( heatmapTransitionProbs(multimodel) )
+                width <- dim(multimodel$transitionProbs)[2] + max(sapply(dimnames(multimodel$transitionProbs)[[2]], nchar)) / char.per.cm + legend.cm
+                height <- dim(multimodel$transitionProbs)[1] + max(sapply(dimnames(multimodel$transitionProbs)[[1]], nchar)) / char.per.cm + 1
+                ggsave(savename2, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
+                stopTimedMessage(ptm)
+            }
         }
     }
   
@@ -540,10 +561,10 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
             save(multimodel, file=multifile)
             stopTimedMessage(ptm)
             ## Plot transitions
-            plothelper(savename, multimodel)
+            plothelper(savename, multimodel, mode)
         } else {
             ## Plot transitions
-            plothelper(savename, multifile)
+            plothelper(savename, multifile, mode)
         }
     
     #---------------------------
@@ -561,10 +582,10 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 save(multimodel, file=multifile)
                 stopTimedMessage(ptm)
                 ## Plot transitions
-                plothelper(savename, multimodel)
+                plothelper(savename, multimodel, mode)
             } else {
                 ## Plot transitions
-                plothelper(savename, multifile)
+                plothelper(savename, multifile, mode)
             }
         }
     
@@ -583,10 +604,10 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 save(multimodel, file=multifile)
                 stopTimedMessage(ptm)
                 ## Plot transitions
-                plothelper(savename, multimodel)
+                plothelper(savename, multimodel, mode)
             } else {
                 ## Plot transitions
-                plothelper(savename, multifile)
+                plothelper(savename, multifile, mode)
             }
         }
       
@@ -601,10 +622,10 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
             save(multimodel, file=multifile)
             stopTimedMessage(ptm)
             ## Plot transitions
-            plothelper(savename, multimodel)
+            plothelper(savename, multimodel, mode)
         } else {
             ## Plot transitions
-            plothelper(savename, multifile)
+            plothelper(savename, multifile, mode)
         }
     
     }

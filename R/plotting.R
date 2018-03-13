@@ -131,16 +131,17 @@ heatmapTransitionProbs <- function(model) {
 
     model <- suppressMessages( loadHmmsFromFiles(model, check.class=class.multivariate.hmm)[[1]] )
     if (length(dim(model$transitionProbs)) == 2) {
-        A <- reshape2::melt(model$transitionProbs, varnames=c('from','to'), value.name='prob')
+        A <- reshape2::melt(model$transitionProbs, value.name='prob')
         A$from <- factor(A$from, levels=stateorderByTransition(model))
         A$to <- factor(A$to, levels=stateorderByTransition(model))
         ggplt <- ggplot(data=A) + geom_tile(aes_string(x='to', y='from', fill='prob')) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5)) + scale_fill_gradient(low="white", high="blue", limits=c(0,1))
     } else if (length(dim(model$transitionProbs)) == 4) {
         A <- reshape2::melt(model$transitionProbs, value.name='prob')
-        levels <- paste(rep(dimnames(model$transitionProbs)[[3]], each=dim(model$transitionProbs)[2]), dimnames(model$transitionProbs)[[2]])
-        A$from <- factor(paste(A$fromTrack, A$fromState), levels = levels)
-        A$to <- factor(paste(A$toTrack, A$toState), levels = levels)
-        ggplt <- ggplot(data=A) + geom_tile(aes_string(x='to', y='from', fill='prob')) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5)) + scale_fill_gradient(low="white", high="blue", limits=c(0,1))
+        Tie <- reshape2::melt(model$tiestrengths, value.name='tiestrength')
+        df <- merge(A, Tie)
+        df$fromTrack <- factor(df$fromTrack, levels=rev(levels(df$fromTrack)))
+        ggplt <- ggplot(data=df) + geom_tile(aes_string(x='toState', y='fromState', fill='prob', alpha='tiestrength'))
+        ggplt <- ggplt + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5), strip.text = element_text(size=5)) + scale_fill_gradient(low="white", high="blue", limits=c(0,1)) + facet_grid(fromTrack ~ toTrack) + scale_alpha_continuous(limits=c(0,1)) + xlab('to') + ylab('from')
     }
 
     return(ggplt)
@@ -162,7 +163,7 @@ heatmapTransitionProbs <- function(model) {
 #'                     package="chromstaR")
 #'model <- get(load(file))
 #'## Plot transition probabilites as heatmap
-#'heatmapTransitionProbs(model)
+#'heatmapTiestrengths(model)
 #'
 heatmapTiestrengths <- function(model) {
 

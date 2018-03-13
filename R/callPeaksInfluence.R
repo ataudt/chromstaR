@@ -18,7 +18,7 @@
 #' @param temp.savedir A directory where to store intermediate results if \code{per.chrom=TRUE}.
 #' @param update.tiestrengths Set to \code{FALSE} if you don't want to update the tiestrengths during Baum-Welch training.
 #' @return A \code{\link{multiHMM}} object.
-#' @seealso \code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksReplicates}}
+#' @seealso \code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksReplicates}}, \code{\link{callPeaksMultivariate}}
 #' @import doParallel
 #' @import foreach
 #' @export
