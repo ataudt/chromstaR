@@ -132,9 +132,6 @@ changeMaxPostCutoff.multivariate <- function(model, maxPost.cutoff, invert=FALSE
         
     } else if (is(model, class.combined.multivariate.hmm)) {
         ptm <- startTimedMessage("Calculating states from maximum-posterior in each peak ...")
-        mapping.df <- stateBrewer(model$info[,setdiff(names(model$info), 'ID')], mode='full')
-        mapping <- mapping.df$combination
-        names(mapping) <- mapping.df$state
         if (is.null(model$bins$maxPostInPeak)) {
             p <- getMaxPostInPeaks(model$bins$state, model$bins$posteriors)
         } else {
@@ -148,7 +145,12 @@ changeMaxPostCutoff.multivariate <- function(model, maxPost.cutoff, invert=FALSE
                 p.thresholded[,icol] <- p[,icol] < threshold[icol] & p[,icol] > 0
             }
         }
-        states <- factor(bin2dec(p.thresholded), levels=mapping.df$state)
+        decstates <- bin2dec(p.thresholded)
+        binary.matrix <- p.thresholded[!duplicated(decstates),]
+        mapping.df <- stateBrewer(model$info[,setdiff(names(model$info), 'ID')], mode='full')
+        mapping <- mapping.df$combination
+        names(mapping) <- mapping.df$state
+        states <- factor(decstates, levels=mapping.df$state)
         stopTimedMessage(ptm)
         ## Make fake multiHMM to do the segmentation with "combineMultivariates"
         multiHMM <- list()
@@ -379,15 +381,17 @@ changePostCutoff.multivariate <- function(model, post.cutoff) {
         stopTimedMessage(ptm)
     } else if (is(model, class.combined.multivariate.hmm)) {
         ptm <- startTimedMessage("Calculating states from posteriors ...")
-        mapping.df <- stateBrewer(model$info[,setdiff(names(model$info), 'ID')], mode='full')
-        mapping <- mapping.df$combination
-        names(mapping) <- mapping.df$state
         post <- model$bins$posteriors
         post.thresholded <- matrix(FALSE, ncol=ncol(post), nrow=nrow(post))
         for (icol in 1:ncol(post)) {
             post.thresholded[,icol] <- post[,icol] >= threshold[icol]
         }
-        states <- factor(bin2dec(post.thresholded), levels=mapping.df$state)
+        decstates <- bin2dec(post.thresholded)
+        binary.matrix <- post.thresholded[!duplicated(decstates),]
+        mapping.df <- stateBrewer(model$info[,setdiff(names(model$info), 'ID')], mode='full', binary.matrix = binary.matrix)
+        mapping <- mapping.df$combination
+        names(mapping) <- mapping.df$state
+        states <- factor(decstates, levels=mapping.df$state)
         stopTimedMessage(ptm)
         ## Make fake multiHMM
         multiHMM <- list()
