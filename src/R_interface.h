@@ -3,6 +3,7 @@
 
 #include "utility.h"
 #include "scalehmm.h"
+#include "influencescalehmm.h"
 #include <vector> // storing density functions in multivariate
 #include <string> // strcmp
 #include <Rmath.h> //runif
@@ -23,10 +24,20 @@ extern "C"
 void multivariate_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, double* size, double* prob, double* w, double* cor_matrix_inv, double* det, int* maxiter, int* maxtime, double* eps, double* posteriors, bool* keep_posteriors, double* densities, bool* keep_densities, double* states, double* maxPosterior, double* A, double* proba, double* loglik, double* initial_A, double* initial_proba, bool* use_initial_params, int* num_threads, int* error, int* verbosity);
 
 extern "C"
+//void influence_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, double* size, double* prob, double* w, int* maxiter, int* maxtime, double* eps, double* posteriors, bool* keep_posteriors, double* densities, bool* keep_densities, double* states, double* maxPosterior, double* A, double* proba, double* tiestrength, double* loglik, double* initial_A, double* initial_proba, double* initialize_tiestrength, bool* use_initial_params, int* num_threads, int* error, int* verbosity);
+
+
+void influence_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, double* size, double* prob, double* w, int* maxiter, int* maxtime, double* eps, double* posteriors, bool* keep_posteriors, double* densities, bool* keep_densities, double* states, double* maxPosterior, double* A, double* proba, double* tiestrength, bool* update_tiestrengths, double* loglik, double* initial_A, double* initial_proba, double* initialize_tiestrength, bool* use_initial_params, int* num_threads, int* error, int* verbosity);
+
+
+extern "C"
 void univariate_cleanup();
 
 extern "C"
 void multivariate_cleanup(int* Nmod);
+
+extern "C"
+void influence_cleanup(int* Nmod);
 
 extern "C"
 void array3D_which_max(double* array3D, int* dim, int* ind_max);

@@ -152,6 +152,43 @@ void free3Ddouble(double*** array, int dim1, int dim2)
 	free(array);
 }
 
+
+
+//----------------ADD methods for creating a 4 dimensional Matrix
+
+double**** alloc4Ddouble(int dim1, int dim2, int dim3, int dim4)
+{
+  int i,j,z;
+  double **** array = (double ****)malloc(dim1*sizeof(double***));
+  
+  for (i = 0; i< dim1; i++)
+  {
+    array[i] = (double ***) malloc(dim2*sizeof(double **));
+    for (j = 0; j < dim2; j++)
+    {
+      array[i][j] = (double **)malloc(dim3*sizeof(double*));
+      for (z=0; z < dim3 ; z++)
+      {
+        array[i][j][z] = (double *)malloc(dim4*sizeof(double));
+      }
+    }
+  }
+  return array;
+}
+
+void free4Ddouble(double**** array, int dim1, int dim2, int dim3)
+{
+  for (int i=0; i < dim1; i++)
+  {
+    free3Ddouble(array[i], dim2, dim3);
+  }
+  free(array);
+}
+
+//---------------------------------------------------------------
+
+
+
 int argMax(double *a, const int N)
 {
 	double maximum=a[0];

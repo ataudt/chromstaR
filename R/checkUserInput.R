@@ -107,7 +107,8 @@ check.experiment.table <- function(experiment.table) {
     IDs <- paste0(experiment.table$mark, '-', experiment.table$condition, '-rep', experiment.table$replicate)
     tab <- table(IDs)
     if (any(duplicated(IDs))) {
-        stop("Duplicated IDs detected. Check your experiment.table: ", paste(paste0(names(tab), ' (', tab, ')'), collapse = ', '))
+        # As of 1.5.2, duplicated IDs will be merged in Chromstar()
+        # stop("Duplicated IDs detected. Check your experiment.table: ", paste(paste0(names(tab), ' (', tab, ')'), collapse = ', '))
     }
     
     return(err)

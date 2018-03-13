@@ -1,6 +1,7 @@
 #include "R_interface.h"
 
 static ScaleHMM* hmm; // declare as static outside the function because we only need one and this enables memory-cleanup on R_CheckUserInterrupt()
+static InfluenceScaleHMM* hmm_influence;
 static int** multiO;
 
 // ===================================================================================================================================================
@@ -60,7 +61,7 @@ void univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* max
 	// Initialize the transition probabilities and proba
 	hmm->initialize_transition_probs(initial_A, *use_initial_params);
 	hmm->initialize_proba(initial_proba, *use_initial_params);
-    
+
 	// Calculate mean and variance of data
 	double Tadjust = 0, mean = 0, variance = 0;
 	for(int t=0; t<*T; t++)
@@ -80,9 +81,9 @@ void univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* max
 		}
 	}
 	variance = variance / Tadjust;
-	//FILE_LOG(logINFO) << "data mean = " << mean << ", data variance = " << variance;		
-	if (*verbosity>=1) Rprintf("HMM: data mean = %g, data variance = %g\n", mean, variance);		
-	
+	//FILE_LOG(logINFO) << "data mean = " << mean << ", data variance = " << variance;
+	if (*verbosity>=1) Rprintf("HMM: data mean = %g, data variance = %g\n", mean, variance);
+
 	// Go through all states of the hmm and assign the density functions
 	double imean=0, ivariance=0;
 	for (int i_state=0; i_state<*N; i_state++)
@@ -110,7 +111,7 @@ void univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* max
 					//FILE_LOG(logDEBUG) << "Initializing size and prob for state 2";
 					imean = mean*1.5;
 					ivariance = variance*2;
-				} 
+				}
 				// Make sure variance is greater than mean
 				if (imean >= ivariance)
 				{
@@ -143,7 +144,7 @@ void univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* max
 					if (*verbosity>=1) Rprintf("HMM: Initializing r and p empirically for state 2\n");
 					imean = mean*2;
 					ivariance = imean*2;
-				} 
+				}
 			}
 
 			// Calculate r and p from mean and variance
@@ -188,7 +189,7 @@ void univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* max
 		if (strcmp(e.what(),"nan detected")==0) { *error = 1; }
 		else { *error = 2; }
 	}
-		
+
 	//FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
 
 	// Get the posteriors and save results directly to the R pointer
@@ -234,7 +235,7 @@ void univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* max
 		states[t] = ind_max + 1;
 		maxPosterior[t] = posterior_per_t[ind_max];
 	}
-		
+
 	//FILE_LOG(logDEBUG1) << "Return parameters";
 	// also return the estimated transition matrix and the initial probs
 	for (int i=0; i<*N; i++)
@@ -249,7 +250,7 @@ void univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* max
 	// copy the estimated distribution params
 	for (int i=0; i<*N; i++)
 	{
-		if (hmm->densityFunctions[i]->get_name() == NEGATIVE_BINOMIAL) 
+		if (hmm->densityFunctions[i]->get_name() == NEGATIVE_BINOMIAL)
 		{
 			NegativeBinomial* d = (NegativeBinomial*)(hmm->densityFunctions[i]);
 			size[i] = d->get_size();
@@ -264,7 +265,7 @@ void univariate_hmm(int* O, int* T, int* N, double* size, double* prob, int* max
 	}
 	*loglik = hmm->get_logP();
 	hmm->calc_weights(weights);
-	
+
 	//FILE_LOG(logDEBUG1) << "Deleting the hmm";
 	delete hmm;
 	hmm = NULL; // assign NULL to defuse the additional delete in on.exit() call
@@ -336,7 +337,7 @@ void multivariate_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, do
 	// Initialize the transition probabilities and proba
 	hmm->initialize_transition_probs(initial_A, *use_initial_params);
 	hmm->initialize_proba(initial_proba, *use_initial_params);
-	
+
 	// Print logproba and A
 // 	for (int iN=0; iN<*N; iN++)
 // 	{
@@ -365,7 +366,7 @@ void multivariate_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, do
 	//FILE_LOG(logDEBUG1) << "Initializing the distributions";
 	for (int iN=0; iN<*N; iN++) //for each combinatorial state
 	{
-		std::vector <Density*> tempMarginals;            
+		std::vector <Density*> tempMarginals;
 		for (int imod=0; imod < *Nmod; imod++) //for each modification
 		{
 			Density *d;
@@ -385,7 +386,7 @@ void multivariate_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, do
 		hmm->densityFunctions.push_back(tempMVdens);
 	}
 	FreeBoolMatrix(binary_states, *N);
-	
+
 	// Estimate the parameters
 	//FILE_LOG(logDEBUG1) << "Starting Baum-Welch estimation";
 	try
@@ -400,7 +401,7 @@ void multivariate_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, do
 		else { *error = 2; }
 	}
 	//FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
-	
+
 	// Get the posteriors and save results directly to the R pointer
 	if (*keep_posteriors == true)
 	{
@@ -464,7 +465,7 @@ void multivariate_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, do
 // 			}
 // 		}
 // 	}
-	
+
 	//FILE_LOG(logDEBUG1) << "Return parameters";
 	// also return the estimated transition matrix and the initial probs
 	for (int i=0; i<*N; i++)
@@ -483,6 +484,268 @@ void multivariate_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, do
 // 	FreeIntMatrix(multiO, *Nmod); // free on.exit() in R code
 }
 
+// =====================================================================================================================================================
+// This function takes parameters from R, creates a multivariate HMM object, creates the distributions, runs the Baum-Welch and returns the result to R.
+// =====================================================================================================================================================
+
+void influence_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, double* size, double* prob, double* w,  int* maxiter, int* maxtime, double* eps, double* posteriors, bool* keep_posteriors, double* densities, bool* keep_densities, double* states, double* maxPosterior, double* A, double* proba, double* tiestrength, bool* update_tiestrengths, double* loglik, double* initial_A, double* initial_proba, double* initial_tiestrength, bool* use_initial_params, int* num_threads, int* error, int* verbosity)
+{
+
+	// Define logging level {"ERROR", "WARNING", "INFO", "ITERATION", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3", "DEBUG4"}
+ 	//FILE* pFile = fopen("chromStar.log", "w");
+	//Output2FILE::Stream() = pFile;
+ 	//FILELog::ReportingLevel() = FILELog::FromString("ERROR");
+ 	//FILELog::ReportingLevel() = FILELog::FromString("DEBUG3");
+
+	//FILE_LOG(logDEBUG2) << __PRETTY_FUNCTION__;
+	// Parallelization settings
+	#ifdef _OPENMP
+	omp_set_num_threads(*num_threads);
+	#endif
+
+	// Print some information
+	//FILE_LOG(logINFO) << "number of states = " << *N;
+	if (*verbosity>=1) Rprintf("HMM: number of states = %d\n", *N);
+	//FILE_LOG(logINFO) << "number of bins = " << *T;
+	if (*verbosity>=1) Rprintf("HMM: number of bins = %d\n", *T);
+	if (*maxiter < 0)
+	{
+		//FILE_LOG(logINFO) << "maximum number of iterations = none";
+		if (*verbosity>=1) Rprintf("HMM: maximum number of iterations = none\n");
+	} else {
+		//FILE_LOG(logINFO) << "maximum number of iterations = " << *maxiter;
+		if (*verbosity>=1) Rprintf("HMM: maximum number of iterations = %d\n", *maxiter);
+	}
+	if (*maxtime < 0)
+	{
+		//FILE_LOG(logINFO) << "maximum running time = none";
+		if (*verbosity>=1) Rprintf("HMM: maximum running time = none\n");
+	} else {
+		//FILE_LOG(logINFO) << "maximum running time = " << *maxtime << " sec";
+		if (*verbosity>=1) Rprintf("HMM: maximum running time = %d sec\n", *maxtime);
+	}
+	//FILE_LOG(logINFO) << "epsilon = " << *eps;
+	if (*verbosity>=1) Rprintf("HMM: epsilon = %g\n", *eps);
+	//FILE_LOG(logINFO) << "number of experiments = " << *Nmod;
+	if (*verbosity>=1) Rprintf("HMM: number of experiments = %d\n", *Nmod);
+
+	// Flush Rprintf statements to console
+	R_FlushConsole();
+
+	// Recode the observation vector to matrix representation
+// 	clock_t clocktime = clock(), dtime;
+	multiO = CallocIntMatrix(*Nmod, *T);
+	for (int imod=0; imod<*Nmod; imod++)
+	{
+		for (int t=0; t<*T; t++)
+		{
+			multiO[imod][t] = O[imod*(*T)+t];
+		}
+	}
+// 	dtime = clock() - clocktime;
+	//FILE_LOG(logDEBUG1) << "recoding observation vector to matrix representation: " << dtime << " clicks";
+
+	// Create the HMM
+	//FILE_LOG(logDEBUG1) << "Creating the multivariate HMM";
+	hmm_influence = new InfluenceScaleHMM(*T, *N, *Nmod, *verbosity);
+ 	// Initialize the transition probabilities and proba
+ 	hmm_influence->initialize_transition_probs(initial_A, *use_initial_params);
+ 	hmm_influence->initialize_proba(initial_proba, *use_initial_params);
+  hmm_influence->initialize_tiestrength(initial_tiestrength, *use_initial_params);
+	hmm_influence->initialize_influence();
+ 	// Print logproba and A
+// 	for (int iN=0; iN<*N; iN++)
+// 	{
+// 		//FILE_LOG(logDEBUG) << "proba["<<iN<<"] = " <<exp(hmm->logproba[iN]);
+// 		for (int jN=0; jN<*N; jN++)
+// 		{
+// 			//FILE_LOG(logDEBUG) << "A["<<iN<<"]["<<jN<<"] = " << hmm->A[iN][jN];
+// 		}
+// 	}
+
+	// Prepare the binary_states (univariate) vector: binary_states[N][Nmod], e.g., binary_states[iN][imod] tells me at state comb_states[iN], modification imod is non-enriched (0) or enriched (1)
+	//FILE_LOG(logDEBUG1) << "Preparing the binary_states vector";
+	double res;
+	bool **binary_states = CallocBoolMatrix(*N, *Nmod);
+	for (int iN=0; iN < *N; iN++) //for each comb state considered
+	{
+		res = comb_states[iN];
+		for (int imod=(*Nmod-1); imod >= 0; imod--) //for each modification of this comb state
+		{
+			binary_states[iN][imod] = (bool)fmod(res,2);
+			res = (res - (double)binary_states[iN][imod]) / 2.0;
+		}
+	}
+
+	/* initialize the distributions */
+	//FILE_LOG(logDEBUG1) << "Initializing the distributions";
+
+	for (int imod=0; imod < *Nmod; imod++) //for each modification
+	{
+		std::vector <Density*> tempMarginals;
+		for (int iN=0; iN<*N; iN++) //for each combinatorial state
+		{
+			Density *d;
+			if (iN == 1) //construct the marginal density function for modification imod being enriched
+			{
+				d = new NegativeBinomial(multiO[imod], *T, size[2*imod+1], prob[2*imod+1]); // delete is done at the end
+			}
+			else //construct the density function for modification imod being non-enriched
+			{
+				d = new ZiNB(multiO[imod], *T, size[2*imod], prob[2*imod], w[imod]); // delete is done at the end
+			}
+			tempMarginals.push_back(d);
+		}
+		//FILE_LOG(logDEBUG1) << "Calling MVCopulaApproximation for state " << iN;
+
+		//MVCopulaApproximation *tempMVdens = new MVCopulaApproximation(multiO, *T, tempMarginals, &(cor_matrix_inv[iN**Nmod**Nmod]), det[iN]); // delete is done inside ~ScaleHMM()
+		hmm_influence->densityFunctions.push_back(tempMarginals);
+	}
+ 	FreeBoolMatrix(binary_states, *N);
+
+	// Estimate the parameters
+	//FILE_LOG(logDEBUG1) << "Starting Baum-Welch estimation";
+	try
+	{
+		hmm_influence->baumWelch(maxiter, maxtime, eps, update_tiestrengths);
+	}
+	catch (std::exception& e)
+	{
+		//FILE_LOG(logERROR) << "Error in Baum-Welch: " << e.what();
+		if (*verbosity>=1) Rprintf("HMM: Error in Baum-Welch: %s\n", e.what());
+		if (strcmp(e.what(),"nan detected")==0) { *error = 1; }
+		else { *error = 2; }
+	}
+	//FILE_LOG(logDEBUG1) << "Finished with Baum-Welch estimation";
+
+	// Get the posteriors (gammas) and save results directly to the R pointer
+	if (*keep_posteriors == true)
+	{
+		//FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
+		if (*verbosity>=1) Rprintf("HMM: Recoding posteriors ...\n");
+		R_FlushConsole();
+		#pragma omp parallel for
+		for(int c1=0; c1<*Nmod; c1++)
+		{
+			for (int t=0; t<*T; t++)
+			{
+					double sumOverStates=0;
+					for (int iN=0; iN<*N; iN++)
+					{
+						sumOverStates+= hmm_influence->get_posterior(c1,iN, t);
+						//Rprintf("POSTERIOR1= %g \n",hmm_influence->get_posterior(c1,iN, t) );
+					}
+					//Rprintf("sumOverStates= %g\n", sumOverStates);
+
+					//double SumOverPost = 0 ;
+					for (int iN=0; iN<*N; iN++)
+					{
+					posteriors[t + iN * (*T) + c1 * (*T)*(*N)] = ((hmm_influence->get_posterior(c1,iN, t))/sumOverStates);
+					//SumOverPost+= posteriors[t + iN * (*T) + c1 * (*T)*(*N)];
+					//Rprintf("Normalized posterior= %g , sumOverStates= %g\n",posteriors[t + iN * (*T) + c1 * (*T)*(*N)], sumOverStates );
+					//Rprintf("%g\n",);
+					}
+					//Rprintf("SumOverPost= %g\n", SumOverPost);
+			}
+		}
+	}
+
+	// Get the densities and save results directly to the R pointer
+	if (*keep_densities == true)
+	{
+		//FILE_LOG(logDEBUG1) << "Recode posteriors into column representation";
+		if (*verbosity>=1) Rprintf("HMM: Recoding densities ...\n");
+		R_FlushConsole();
+		#pragma omp parallel for
+		for(int c1=0; c1<*Nmod; c1++)
+		{
+			for (int iN=0; iN<*N; iN++)
+			{
+				for (int t=0; t<*T; t++)
+				{
+					densities[t + iN * (*T) + c1 * (*T)*(*N)] = hmm_influence->get_density(c1,iN, t);
+				}
+			}
+		}
+	}
+
+	// Compute the states from posteriors
+	//FILE_LOG(logDEBUG1) << "Computing states from posteriors";
+// 	if (*fdr == -1)
+// 	{
+		int ind_max;
+		std::vector<double> posterior_per_t(*N);
+		for(int c1=0; c1<*Nmod; c1++)
+		{
+				for (int t=0; t<*T; t++)
+				{
+					for (int iN=0; iN<*N; iN++)
+					{
+						posterior_per_t[iN] = hmm_influence->get_posterior(c1,iN, t);
+					}
+					ind_max = std::distance(posterior_per_t.begin(), std::max_element(posterior_per_t.begin(), posterior_per_t.end()));
+					states[t + c1 * (*T)] = comb_states[ind_max];
+					maxPosterior[t + c1 * (*T)] = posterior_per_t[ind_max];
+					// Rprintf("maxPosterior[c1=%d, t=%d] = %g\n", c1, t, maxPosterior[t+c1*(*T)]);
+				}
+		}
+
+// 	}
+// 	else
+// 	{
+// 		double** transformed_posteriors = CallocDoubleMatrix(*T, *Nmod);
+// 		for (int t=0; t<*T; t++)
+// 		{
+// 			for (int iN=0; iN<*N; iN++)
+// 			{
+// 				for (int iNmod=0; iNmod<*Nmod; iNmod++)
+// 				{
+// 					transformed_posteriors[t][iNmod] += (double)binary_states[iN][iNmod] * hmm->get_posterior(iN, t);
+// 				}
+// 			}
+// 		}
+// 	}
+
+	//FILE_LOG(logDEBUG1) << "Return parameters";
+	// also return the estimated transition matrix (A) and the proba (gamma(0))
+	for (int i=0; i<*N; i++)
+	{
+		for(int c1=0; c1<*Nmod; c1++)
+		{
+			proba[c1 + i*(*Nmod)] = hmm_influence->get_proba(c1,i);
+			for (int j=0; j<*N; j++)
+			{
+				for(int c2=0; c2<*Nmod; c2++)
+				{
+					// A[c1 + c2 * (*Nmod) + i * (*Nmod) * (*Nmod) + j * (*Nmod) * (*Nmod) * (*N)] = hmm_influence->get_A(c1,c2,i,j);
+					A[i + j * (*N) + c1 * (*N) * (*N) + c2 * (*N) * (*N) * (*Nmod)] = hmm_influence->get_A(c1,c2,i,j);
+				}
+			}
+		}
+	}
+
+	// return tie strengths
+	for(int c1=0; c1<*Nmod; c1++)
+	{
+		for(int c2=0; c2<*Nmod; c2++)
+		{
+			tiestrength[c1+ c2*(*Nmod)] = hmm_influence->get_tiestrength(c1,c2);
+		}
+	}
+
+	*loglik = hmm_influence->get_logP();
+
+	//FILE_LOG(logDEBUG1) << "Deleting the hmm";
+	delete hmm_influence;
+	hmm_influence = NULL; // assign NULL to defuse the additional delete in on.exit() call
+// 	FreeIntMatrix(multiO, *Nmod); // free on.exit() in R code
+}
+
+
+
+
+
+
 
 // =======================================================
 // This function make a cleanup if anything was left over
@@ -498,6 +761,15 @@ void multivariate_cleanup(int* Nmod)
 	delete hmm;
 	FreeIntMatrix(multiO, *Nmod);
 }
+
+void influence_cleanup(int* Nmod)
+{
+	delete hmm_influence;
+	FreeIntMatrix(multiO, *Nmod);
+}
+
+
+
 
 
 // =======================================================
@@ -519,7 +791,7 @@ void array3D_which_max(double* array3D, int* dim, int* ind_max)
     }
 		ind_max[i0] = 1 + std::distance(value_per_i0.begin(), std::max_element(value_per_i0.begin(), value_per_i0.end()));
   }
-	
+
 }
 
 // ====================================================================
@@ -539,5 +811,5 @@ void array2D_which_max(double* array2D, int* dim, int* ind_max, double* value_ma
 		ind_max[i0] = 1 + std::distance(value_per_i0.begin(), std::max_element(value_per_i0.begin(), value_per_i0.end()));
     value_max[i0] = *std::max_element(value_per_i0.begin(), value_per_i0.end());
   }
-	
+
 }

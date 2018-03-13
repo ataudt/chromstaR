@@ -32,6 +32,8 @@ bool** CallocBoolMatrix(int rows, int cols);
 void FreeBoolMatrix(bool** matrix, int rows);
 double*** alloc3Ddouble(int dim1, int dim2, int dim3);
 void free3Ddouble(double*** array, int dim1, int dim2);
+double**** alloc4Ddouble(int dim1, int dim2, int dim3, int dim4);
+void free4Ddouble(double**** array, int dim1, int dim2, int dim3);
 double Max(double *a, int N);
 int argMax(double *a, const int N); //return an index of the maximum (the first one if tight happens)
 int intMax(int *a, int N);
