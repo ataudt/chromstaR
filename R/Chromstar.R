@@ -515,6 +515,8 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
     plothelper <- function(savename, multimodel, mode) {
         char.per.cm <- 10
         legend.cm <- 3
+        tiles.per.cm <- 0.66
+        min.tiles <- 5
         if (mode == 'influence') {
             savename2 <- paste0(savename, '_transitionMatrix.pdf')
             savename3 <- paste0(savename, '_tieStrengths.pdf')
@@ -523,13 +525,13 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 multimodel <- suppressMessages( loadHmmsFromFiles(multimodel, check.class=class.multivariate.hmm)[[1]] )
                 # Transition probs
                 ggplt <- suppressMessages( heatmapTransitionProbs(multimodel) )
-                width <- (dim(multimodel$transitionProbs)[4]*dim(multimodel$transitionProbs)[2])*1.5 + max(sapply(dimnames(multimodel$transitionProbs)[[2]], nchar)) / char.per.cm + legend.cm
-                height <- (dim(multimodel$transitionProbs)[3]*dim(multimodel$transitionProbs)[1])*1.5 + max(sapply(dimnames(multimodel$transitionProbs)[[1]], nchar)) / char.per.cm + 1
+                width <- max(min.tiles, (dim(multimodel$transitionProbs)[4]*dim(multimodel$transitionProbs)[2])) / tiles.per.cm + max(sapply(dimnames(multimodel$transitionProbs)[[2]], nchar)) / char.per.cm + legend.cm
+                height <- max(min.tiles, (dim(multimodel$transitionProbs)[3]*dim(multimodel$transitionProbs)[1])) / tiles.per.cm + max(sapply(dimnames(multimodel$transitionProbs)[[1]], nchar)) / char.per.cm
                 ggsave(savename2, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
                 # Tie strengths
                 ggplt <- suppressMessages( heatmapTiestrengths(multimodel) )
-                width <- dim(multimodel$tiestrengths)[2] + max(sapply(dimnames(multimodel$tiestrengths)[[2]], nchar)) / char.per.cm + legend.cm
-                height <- dim(multimodel$tiestrengths)[1] + max(sapply(dimnames(multimodel$tiestrengths)[[1]], nchar)) / char.per.cm + 1
+                width <- max(min.tiles, dim(multimodel$tiestrengths)[2]) / tiles.per.cm + max(sapply(dimnames(multimodel$tiestrengths)[[2]], nchar)) / char.per.cm + legend.cm
+                height <- max(min.tiles, dim(multimodel$tiestrengths)[1]) / tiles.per.cm + max(sapply(dimnames(multimodel$tiestrengths)[[1]], nchar)) / char.per.cm
                 ggsave(savename3, plot=ggplt, width=width, height=height, limitsize=FALSE, units='cm')
                 stopTimedMessage(ptm)
             }
@@ -617,7 +619,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         savename <- file.path(plotpath, paste0('multivariate_mode-', mode, '_binsize', binsize.string, '_stepsize', stepsize.string))
         if (!file.exists(multifile)) {
             files <- file.path(unipath, unifilenames)
-            multimodel <- callPeaksInfluence(files, eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']], temp.savedir=file.path(multipath, paste0('multivariate_mode-', mode, '_tempfiles')))
+            multimodel <- callPeaksInfluence(files, eps=conf[['eps.multivariate']], max.iter=conf[['max.iter']], max.time=conf[['max.time']], num.threads=conf[['numCPU']], per.chrom=conf[['per.chrom']], keep.posteriors=conf[['keep.posteriors']], temp.savedir=file.path(multipath, paste0('multivariate_mode-', mode, '_tempfiles')), update.tiestrengths=FALSE)
             ptm <- startTimedMessage("Saving to file ", multifile, " ...")
             save(multimodel, file=multifile)
             stopTimedMessage(ptm)
