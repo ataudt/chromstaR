@@ -62,7 +62,7 @@ multi.model <- callPeaksReplicates(models, force.equal=TRUE, max.time=60, eps=1)
 
 }
 \seealso{
-\code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksMultivariate}}
+\code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksMultivariate}}, \code{\link{callPeaksInfluence}}
 }
 \author{
 Aaron Taudt

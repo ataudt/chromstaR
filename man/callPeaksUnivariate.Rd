@@ -85,7 +85,7 @@ plotHistogram(hmm)
 
 }
 \seealso{
-\code{\link{uniHMM}}, \code{\link{callPeaksMultivariate}}
+\code{\link{uniHMM}}, \code{\link{callPeaksReplicates}}, \code{\link{callPeaksMultivariate}}, \code{\link{callPeaksInfluence}}
 }
 \author{
 Aaron Taudt, Maria Colome Tatche

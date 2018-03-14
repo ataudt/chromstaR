@@ -115,6 +115,7 @@ heatmapCountCorrelation <- function(model, cluster=TRUE) {
 #' Plot a heatmap of transition probabilities for a \code{\link{multiHMM}} model.
 #'
 #' @param model A \code{\link{multiHMM}} object or file that contains such an object.
+#' @param normalize.tiestrengths Set to \code{TRUE} to normalize tiestrengths per column instead of per row. This is useful to see which tracks are influenced by which other tracks.
 #' @return A \code{\link[ggplot2]{ggplot}} object.
 #' @importFrom reshape2 melt
 #' @seealso \code{\link{plotting}}
@@ -127,20 +128,27 @@ heatmapCountCorrelation <- function(model, cluster=TRUE) {
 #'## Plot transition probabilites as heatmap
 #'heatmapTransitionProbs(model)
 #'
-heatmapTransitionProbs <- function(model) {
+heatmapTransitionProbs <- function(model, normalize.tiestrengths=FALSE) {
 
     model <- suppressMessages( loadHmmsFromFiles(model, check.class=class.multivariate.hmm)[[1]] )
     if (length(dim(model$transitionProbs)) == 2) {
-        A <- reshape2::melt(model$transitionProbs, varnames=c('from','to'), value.name='prob')
+        A <- reshape2::melt(model$transitionProbs, value.name='prob')
         A$from <- factor(A$from, levels=stateorderByTransition(model))
         A$to <- factor(A$to, levels=stateorderByTransition(model))
         ggplt <- ggplot(data=A) + geom_tile(aes_string(x='to', y='from', fill='prob')) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5)) + scale_fill_gradient(low="white", high="blue", limits=c(0,1))
     } else if (length(dim(model$transitionProbs)) == 4) {
         A <- reshape2::melt(model$transitionProbs, value.name='prob')
-        levels <- paste(rep(dimnames(model$transitionProbs)[[3]], each=dim(model$transitionProbs)[2]), dimnames(model$transitionProbs)[[2]])
-        A$from <- factor(paste(A$fromTrack, A$fromState), levels = levels)
-        A$to <- factor(paste(A$toTrack, A$toState), levels = levels)
-        ggplt <- ggplot(data=A) + geom_tile(aes_string(x='to', y='from', fill='prob')) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5)) + scale_fill_gradient(low="white", high="blue", limits=c(0,1))
+        if (normalize.tiestrengths) {
+            Tie <- reshape2::melt(sweep(model$tiestrengths, MARGIN = 2, STATS = colSums(model$tiestrengths), FUN = '/'), value.name='tiestrength')
+        } else {
+            Tie <- reshape2::melt(model$tiestrengths, value.name='tiestrength')
+        }
+        df <- merge(A, Tie)
+        df$fromTrack <- factor(df$fromTrack, levels=rev(levels(df$fromTrack)))
+        ggplt <- ggplot(data=df) + geom_tile(aes_string(x='toState', y='fromState', fill='prob', alpha='tiestrength'))
+        ggplt <- ggplt + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5), strip.text = element_text(size=5)) + xlab('to') + ylab('from') + facet_grid(fromTrack ~ toTrack)
+        ggplt <- ggplt + scale_fill_gradient(low="white", high="blue", limits=c(0,1))
+        ggplt <- ggplt + scale_alpha_continuous(limits=c(0,1))
     }
 
     return(ggplt)
@@ -152,6 +160,7 @@ heatmapTransitionProbs <- function(model) {
 #' Plot a heatmap of tie strengths for a \code{\link{multiHMM}} model.
 #'
 #' @param model A \code{\link{multiHMM}} object or file that contains such an object.
+#' @param normalize.tiestrengths Set to \code{TRUE} to normalize tiestrengths per column instead of per row. This is useful to see which tracks are influenced by which other tracks.
 #' @return A \code{\link[ggplot2]{ggplot}} object.
 #' @importFrom reshape2 melt
 #' @seealso \code{\link{plotting}}
@@ -162,19 +171,24 @@ heatmapTransitionProbs <- function(model) {
 #'                     package="chromstaR")
 #'model <- get(load(file))
 #'## Plot transition probabilites as heatmap
-#'heatmapTransitionProbs(model)
+#'heatmapTiestrengths(model)
 #'
-heatmapTiestrengths <- function(model) {
+heatmapTiestrengths <- function(model, normalize.tiestrengths=FALSE) {
 
     model <- suppressMessages( loadHmmsFromFiles(model, check.class=class.multivariate.hmm)[[1]] )
     if (is.null(model$tiestrengths)) {
         warning("No tie strengths found. Returning NULL.")
         return(NULL)
     } else {
-        tie <- reshape2::melt(model$tiestrengths, value.name='prob')
+        if (normalize.tiestrengths) {
+            tie <- reshape2::melt(sweep(model$tiestrengths, MARGIN = 2, STATS = colSums(model$tiestrengths), FUN = '/'), value.name='tiestrength')
+        } else {
+            tie <- reshape2::melt(model$tiestrengths, value.name='tiestrength')
+        }
         tie$from <- factor(tie$fromTrack, levels = dimnames(model$tiestrengths)[[1]])
         tie$to <- factor(tie$toTrack, levels = dimnames(model$tiestrengths)[[1]])
-        ggplt <- ggplot(data=tie) + geom_tile(aes_string(x='toTrack', y='fromTrack', fill='prob')) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5)) + scale_fill_gradient(low="red", high="yellow", limits=c(0,1))
+        ggplt <- ggplot(data=tie) + geom_tile(aes_string(x='toTrack', y='fromTrack', fill='tiestrength')) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+        ggplt <- ggplt + scale_fill_gradient(low="red", high="yellow", limits=c(0,1))
     }
 
     return(ggplt)

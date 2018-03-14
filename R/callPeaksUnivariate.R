@@ -31,7 +31,7 @@
 #' @param verbosity Verbosity level for the fitting procedure. 0 - No output, 1 - Iterations are printed.
 #' @return A \code{\link{uniHMM}} object.
 #' @author Aaron Taudt, Maria Colome Tatche
-#' @seealso \code{\link{uniHMM}}, \code{\link{callPeaksMultivariate}}
+#' @seealso \code{\link{uniHMM}}, \code{\link{callPeaksReplicates}}, \code{\link{callPeaksMultivariate}}, \code{\link{callPeaksInfluence}}
 #' @export
 #' @examples
 #'## Get an example BAM file with ChIP-seq reads

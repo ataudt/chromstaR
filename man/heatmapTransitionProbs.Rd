@@ -4,10 +4,12 @@
 \alias{heatmapTransitionProbs}
 \title{Heatmap of transition probabilities}
 \usage{
-heatmapTransitionProbs(model)
+heatmapTransitionProbs(model, normalize.tiestrengths = FALSE)
 }
 \arguments{
 \item{model}{A \code{\link{multiHMM}} object or file that contains such an object.}
+
+\item{normalize.tiestrengths}{Set to \code{TRUE} to normalize tiestrengths per column instead of per row. This is useful to see which tracks are influenced by which other tracks.}
 }
 \value{
 A \code{\link[ggplot2]{ggplot}} object.

@@ -14,7 +14,7 @@
 #' @param max.distance This number is used as a cutoff to group replicates based on their distance matrix. The lower this number, the more similar replicates have to be to be grouped together.
 #' @param per.chrom If \code{per.chrom=TRUE} chromosomes will be treated separately. This tremendously speeds up the calculation but results might be noisier as compared to \code{per.chrom=FALSE}, where all chromosomes are concatenated for the HMM.
 #' @return Output is a \code{\link{multiHMM}} object with additional entry \code{replicateInfo}. If only one \code{\link{uniHMM}} was given as input, a simple list() with the \code{replicateInfo} is returned.
-#' @seealso \code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksMultivariate}}
+#' @seealso \code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksMultivariate}}, \code{\link{callPeaksInfluence}}
 #' @importFrom stats hclust cutree dist
 #' @export
 #' @examples 

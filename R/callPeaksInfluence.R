@@ -18,7 +18,7 @@
 #' @param temp.savedir A directory where to store intermediate results if \code{per.chrom=TRUE}.
 #' @param update.tiestrengths Set to \code{FALSE} if you don't want to update the tiestrengths during Baum-Welch training.
 #' @return A \code{\link{multiHMM}} object.
-#' @seealso \code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksReplicates}}
+#' @seealso \code{\link{multiHMM}}, \code{\link{callPeaksUnivariate}}, \code{\link{callPeaksReplicates}}, \code{\link{callPeaksMultivariate}}
 #' @import doParallel
 #' @import foreach
 #' @export
@@ -94,7 +94,7 @@
 #        
 #---------------------------------------------------------------------------------------------------------- 
 
-callPeaksInfluence <- function(hmms, per.chrom=TRUE, chromosomes=NULL, eps=0.01, keep.posteriors=FALSE, num.threads=1, max.time=NULL, max.iter=NULL, keep.densities=FALSE, verbosity=1, temp.savedir=NULL, update.tiestrengths=TRUE) {
+callPeaksInfluence <- function(hmms, per.chrom=TRUE, chromosomes=NULL, eps=0.01, keep.posteriors=FALSE, num.threads=1, max.time=NULL, max.iter=NULL, keep.densities=FALSE, verbosity=1, temp.savedir=NULL, update.tiestrengths=FALSE) {
 
     ## Intercept user input
     if (check.positive(eps)!=0) stop("argument 'eps' expects a positive numeric")
@@ -273,7 +273,7 @@ callPeaksInfluence <- function(hmms, per.chrom=TRUE, chromosomes=NULL, eps=0.01,
 }
 
 #' @importFrom stats ecdf
-runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$state, use.states, distributions, weights, max.iter, max.time, eps, num.threads, keep.posteriors, keep.densities, transitionProbs.initial=NULL, tiestrength.initial=NULL, startProbs.initial=NULL, verbosity=1, update.tiestrengths=TRUE) {
+runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$state, use.states, distributions, weights, max.iter, max.time, eps, num.threads, keep.posteriors, keep.densities, transitionProbs.initial=NULL, tiestrength.initial=NULL, startProbs.initial=NULL, verbosity=1, update.tiestrengths=FALSE) {
 
     ptm.start <- startTimedMessage("Starting influence HMM with ", length(info$ID), " experiments")
     message("")
@@ -300,10 +300,10 @@ runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$sta
 
     if (is.null(transitionProbs.initial)) {
        
-        transitionProbs.initial <- array((1-0.9)/(numstates-1), dim=c(numstates, numstates, nummod, nummod), dimnames= list(fromState=statenames, toState=statenames, fromTrack=tracknames, toTrack=tracknames))
+        transitionProbs.initial <- array((1-0.99)/(numstates-1), dim=c(numstates, numstates, nummod, nummod), dimnames= list(fromState=statenames, toState=statenames, fromTrack=tracknames, toTrack=tracknames))
         for (ic in 1:nummod) {
             for (jc in 1:nummod) {
-                diag(transitionProbs.initial[,,ic,jc]) <- 0.9
+                diag(transitionProbs.initial[,,ic,jc]) <- 0.99
             }
         }
 
@@ -314,10 +314,15 @@ runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$sta
       if (nummod == 1) {
           tiestrength.initial <- array(1, dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
       } else {
-          # tiestrength.initial <- array((1-0.9)/(nummod-1), dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
-          # diag(tiestrength.initial) <- 0.9
+          ## Initialize with correlation (problematic because it sometimes leads to non-sensical transitionProbs for some tracks)
           cor <- abs(cor(binned.data$counts[,,'0']))
           tiestrength.initial <- sweep(x = cor, MARGIN = 1, STATS = rowSums(cor), FUN = '/')
+          ## Initialize with 1s on the diagonal
+          # const <- 1
+          # tiestrength.initial <- array((1-const)/(nummod-1), dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
+          # diag(tiestrength.initial) <- const
+          ## Initialize with uniform
+          # tiestrength.initial <- array(1/nummod, dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
       }
       
     }
