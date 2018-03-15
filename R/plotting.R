@@ -146,7 +146,7 @@ heatmapTransitionProbs <- function(model, normalize.tiestrengths=FALSE) {
         df <- merge(A, Tie)
         df$fromTrack <- factor(df$fromTrack, levels=rev(levels(df$fromTrack)))
         ggplt <- ggplot(data=df) + geom_tile(aes_string(x='toState', y='fromState', fill='prob', alpha='tiestrength'))
-        ggplt <- ggplt + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5), strip.text = element_text(size=5)) + xlab('to') + ylab('from') + facet_grid(fromTrack ~ toTrack)
+        ggplt <- ggplt + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5), strip.text = element_text(size=6)) + xlab('to') + ylab('from') + facet_grid(fromTrack ~ toTrack, switch='both')
         ggplt <- ggplt + scale_fill_gradient(low="white", high="blue", limits=c(0,1))
         ggplt <- ggplt + scale_alpha_continuous(limits=c(0,1))
     }

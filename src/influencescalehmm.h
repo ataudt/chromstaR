@@ -43,7 +43,7 @@ class InfluenceScaleHMM  {
 		// Getters and Setters
 		int get_N();
 		int get_T();
-		void get_posteriors(double**** post);
+		void get_posteriors(double*** post);
 		double get_posterior(int c1, int iN, int t);
 		double get_density(int c1, int iN, int t);
 		double get_proba(int c1, int i);
@@ -57,28 +57,28 @@ class InfluenceScaleHMM  {
 		int verbosity; ///< verbosity level
 		int T; ///< length of observed sequence
 		int N; ///< number of states
-		int C;
 		int cutoff; ///< a cutoff for observations
-		int Nmod; ///< number of modifications / marks
-		double**** A; ///< matrix [N x N] of transition probabilities
-		double** proba; ///< initial probabilities (length N)
+		int Nmod; ///< number of modifications / marks / chains
+		double**** A; ///< matrix [Nmod x Nmod x N x N] of transition probabilities
+		double** proba; ///< initial probabilities [Nmod x N]
 		double** weights;
 		double logP; ///< loglikelihood
 		int* O; ///< vector [T] of observations
 		int** multiO; ///< matrix [Nmod x T] of observations
-		double* scalefactoralpha; ///< vector[T] of scaling factors
-		double*** scalealpha; ///< matrix [T x N] of forward probabilities
-		double*** scalebeta; ///<  matrix [T x N] of backward probabilities
-		double*** densities; ///< matrix [N x T] of density values
-//	double** tdensities; ///< matrix [T x N] of density values, for use in multivariate !increases speed, but on cost of RAM usage and that seems to be limiting
-		double** sumgamma; ///< vector[N] of sum of posteriors (gamma values)
-		double**** influence;
-		double** tiestrength;
-		double**** sumxi; ///< matrix[N x N] of xi values
-		double** tiesumxi;
-		double* tiesumxitotal;
-		double*** onestatus_sumxi;
-		double*** gamma; ///< matrix[N x T] of posteriors
+// 		double* scalefactoralpha; ///< vector[T] of scaling factors
+		double** scalefactoralpha; ///< vector[Nmod][T] of scaling factors
+		double*** scalealpha; ///< matrix [Nmod x T x N] of forward probabilities
+		double*** scalebeta; ///<  matrix [Nmod x T x N] of backward probabilities
+		double*** densities; ///< matrix [Nmod x N x T] of density values
+// 		double** sumgamma; ///< vector[N] of sum of posteriors (gamma values)
+		double**** influence; ///< influence matrix, A * tiestrength, [Nmod x Nmod x N x N]
+		double** tiestrength; ///< matrix [Nmod x Nmod] of tiestrengths
+		double**** sumxi; ///< matrix[Nmod x Nmod x N x N] of xi values
+		double** tiesumxi; ///< [Nmod x Nmod], sum over states of sumxi
+		double* tiesumxitotal; ///< [Nmod], row-wise sum over tiesumxi
+		double* loglikelihoods; ///< [Nmod], per-chain loglikelihoods
+		double*** onestatus_sumxi; ///< [Nmod x Nmod x N], row-wise sum of status over sumxi
+		double*** gamma; ///< matrix[Nmod x N x T] of posteriors
 		bool* states_prev; ///< vector[T] with modification state of last state ('modified') of previous iteration
 		double dlogP; ///< difference in loglikelihood from one iteration to the next
 		time_t baumWelchStartTime_sec; ///< start time of the Baum-Welch in sec

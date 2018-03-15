@@ -317,18 +317,18 @@ runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$sta
           ## Initialize with correlation (problematic because it sometimes leads to non-sensical transitionProbs for some tracks)
           cor <- abs(cor(binned.data$counts[,,'0']))
           tiestrength.initial <- sweep(x = cor, MARGIN = 1, STATS = rowSums(cor), FUN = '/')
-          ## Initialize with 1s on the diagonal
-          # const <- 1
+          ## Initialize with values on the diagonal
+          # const <- 0.99
           # tiestrength.initial <- array((1-const)/(nummod-1), dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
           # diag(tiestrength.initial) <- const
           ## Initialize with uniform
-          # tiestrength.initial <- array(1/nummod, dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
+          tiestrength.initial <- array(1/nummod, dim=c(nummod, nummod), dimnames= list(fromTrack=tracknames, toTrack=tracknames))
       }
       
     }
     
     if (is.null(startProbs.initial)) {
-        startProbs.initial <- array((1/numstates/nummod), dim=c(nummod, numstates), dimnames=list(track=tracknames, state=statenames))
+        startProbs.initial <- array((1/numstates), dim=c(nummod, numstates), dimnames=list(track=tracknames, state=statenames))
     }
  
 
