@@ -629,23 +629,28 @@ void influence_hmm(int* O, int* T, int* N, int *Nmod, double* comb_states, doubl
 		{
 			for (int t=0; t<*T; t++)
 			{
-					double sumOverStates=0;
-					for (int iN=0; iN<*N; iN++)
-					{
-						sumOverStates+= hmm_influence->get_posterior(c1,iN, t);
-						//Rprintf("POSTERIOR1= %g \n",hmm_influence->get_posterior(c1,iN, t) );
-					}
-					//Rprintf("sumOverStates= %g\n", sumOverStates);
+// 				double sumOverStates=0;
+// 				for (int iN=0; iN<*N; iN++)
+// 				{
+// 					sumOverStates+= hmm_influence->get_posterior(c1,iN, t);
+// 					//Rprintf("POSTERIOR1= %g \n",hmm_influence->get_posterior(c1,iN, t) );
+// 				}
+// 				//Rprintf("sumOverStates= %g\n", sumOverStates);
+// 
+// 				//double SumOverPost = 0 ;
+// 				for (int iN=0; iN<*N; iN++)
+// 				{
+// 					posteriors[t + iN * (*T) + c1 * (*T)*(*N)] = ((hmm_influence->get_posterior(c1,iN, t))/sumOverStates);
+// 					//SumOverPost+= posteriors[t + iN * (*T) + c1 * (*T)*(*N)];
+// 					//Rprintf("Normalized posterior= %g , sumOverStates= %g\n",posteriors[t + iN * (*T) + c1 * (*T)*(*N)], sumOverStates );
+// 					//Rprintf("%g\n",);
+// 				}
+// 				//Rprintf("SumOverPost= %g\n", SumOverPost);
 
-					//double SumOverPost = 0 ;
-					for (int iN=0; iN<*N; iN++)
-					{
-					posteriors[t + iN * (*T) + c1 * (*T)*(*N)] = ((hmm_influence->get_posterior(c1,iN, t))/sumOverStates);
-					//SumOverPost+= posteriors[t + iN * (*T) + c1 * (*T)*(*N)];
-					//Rprintf("Normalized posterior= %g , sumOverStates= %g\n",posteriors[t + iN * (*T) + c1 * (*T)*(*N)], sumOverStates );
-					//Rprintf("%g\n",);
-					}
-					//Rprintf("SumOverPost= %g\n", SumOverPost);
+				for (int iN=0; iN<*N; iN++)
+				{
+					posteriors[t + iN * (*T) + c1 * (*T)*(*N)] = hmm_influence->get_posterior(c1,iN, t);
+				}
 			}
 		}
 	}

@@ -65,10 +65,12 @@ class InfluenceScaleHMM  {
 		double logP; ///< loglikelihood
 		int* O; ///< vector [T] of observations
 		int** multiO; ///< matrix [Nmod x T] of observations
-// 		double* scalefactoralpha; ///< vector[T] of scaling factors
+		double* scalefactoralpha_all; ///< vector[T] of scaling factors
 		double** scalefactoralpha; ///< vector[Nmod][T] of scaling factors
 		double*** scalealpha; ///< matrix [Nmod x T x N] of forward probabilities
 		double*** scalebeta; ///<  matrix [Nmod x T x N] of backward probabilities
+		double*** scalealpha_all; ///< matrix [Nmod x T x N] of forward probabilities
+		double*** scalebeta_all; ///<  matrix [Nmod x T x N] of backward probabilities
 		double*** densities; ///< matrix [Nmod x N x T] of density values
 // 		double** sumgamma; ///< vector[N] of sum of posteriors (gamma values)
 		double**** influence; ///< influence matrix, A * tiestrength, [Nmod x Nmod x N x N]

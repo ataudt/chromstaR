@@ -23,7 +23,7 @@
 // 	this->scalebeta = alloc3Ddouble(Nmod,T, N);
 // 	this->densities = alloc3Ddouble(Nmod,N, T);
 // 	this->proba = CallocDoubleMatrix(Nmod,N);
-// 	this->gamma = alloc4Ddouble(Nmod,Nmod,N, T);
+// 	this->alloc4Ddouble(Nmod,Nmod,N, T);
 // 	this->states_prev = (bool*) Calloc(T, bool);
 // 	this->sumgamma = alloc3Ddouble(Nmod,Nmod,N);
 // 	//this->sumxi = CallocDoubleMatrix(N, N);
@@ -48,8 +48,11 @@ InfluenceScaleHMM::InfluenceScaleHMM(int T, int N, int Nmod, int verbosity)
 	this->N = N;
 	this->A = alloc4Ddouble(Nmod,Nmod,N, N);
 	this->scalefactoralpha = CallocDoubleMatrix(Nmod,T);
+	this->scalefactoralpha_all = (double*) Calloc(T, double);
 	this->scalealpha = alloc3Ddouble(Nmod,T, N);
+	this->scalealpha_all = alloc3Ddouble(Nmod,T, N);
 	this->scalebeta = alloc3Ddouble(Nmod,T, N);
+	this->scalebeta_all = alloc3Ddouble(Nmod,T, N);
 	this->densities = alloc3Ddouble(Nmod,N, T);
 	//this->tdensities = CallocDoubleMatrix(T, N);
 	this->proba = CallocDoubleMatrix(Nmod,N);
@@ -81,8 +84,11 @@ InfluenceScaleHMM::~InfluenceScaleHMM()
 	if(this->verbosity>=2){ Rprintf("%s\n", __PRETTY_FUNCTION__);}
 	free4Ddouble(this->A,this->Nmod, this->Nmod, this->N);
 	FreeDoubleMatrix(this->scalefactoralpha, this->Nmod);
+	Free(this->scalefactoralpha_all);
 	free3Ddouble(this->scalealpha,this->Nmod, this->T);
+	free3Ddouble(this->scalealpha_all,this->Nmod, this->T);
 	free3Ddouble(this->scalebeta, this->Nmod,this->T);
+	free3Ddouble(this->scalebeta_all, this->Nmod,this->T);
 	free3Ddouble(this->densities, this->Nmod,this->N);
 	// 	if (this->xvariate==MULTIVARIATE)
 	// 	{
@@ -868,32 +874,28 @@ void InfluenceScaleHMM::forward()
 {
 	if(this->verbosity>=2){ Rprintf("%s\n", __PRETTY_FUNCTION__);}// 	clock_t time = clock(), dtime;
 
-// 	if (this->xvariate==UNIVARIATE)
-// 	{
-
-
-	//std::vector<double> alpha(this->N);
 	std::vector< std::vector< double > > alpha( this->Nmod, std::vector< double >( this->N ) );
+	std::vector< std::vector< double > > alpha_all( this->Nmod, std::vector< double >( this->N ) );
 	// Initialization
+	this->scalefactoralpha_all[0] = 0.0;
 	for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
 	{
 		this->scalefactoralpha[c1Nmod][0] = 0.0;
 		for (int iN=0; iN<this->N; iN++)
 		{
 			alpha[c1Nmod][iN] = this->proba[c1Nmod][iN] * this->densities[c1Nmod][iN][0];
-			//FILE_LOG(logDEBUG4) << "alpha["<<iN<<"] = " << alpha[iN];
 			this->scalefactoralpha[c1Nmod][0] += alpha[c1Nmod][iN];
+			this->scalefactoralpha_all[0] += alpha[c1Nmod][iN];
 			//Rprintf("%d %g\n", c1Nmod,this->scalefactoralpha[c1Nmod][0]);
 			//Rprintf("alpha[c1Nmod=%d][iN=%d](%g) = this->proba[c1Nmod][iN](%g) * this->densities[c1Nmod][iN][0](%g);\n", c1Nmod, iN,alpha[c1Nmod][iN] ,this->proba[c1Nmod][iN] , this->densities[c1Nmod][iN][0] );
 		}
 	}
-	//FILE_LOG(logDEBUG4) << "scalefactoralpha["<<0<<"] = " << scalefactoralpha[0];
 	for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
 	{
 		for (int iN=0; iN<this->N; iN++)
 		{
 			this->scalealpha[c1Nmod][0][iN] = alpha[c1Nmod][iN] / this->scalefactoralpha[c1Nmod][0];
-			//FILE_LOG(logDEBUG4) << "scalealpha["<<0<<"]["<<iN<<"] = " << scalealpha[0][iN];
+			this->scalealpha_all[c1Nmod][0][iN] = alpha[c1Nmod][iN] / this->scalefactoralpha_all[0];
 			//Rprintf("this->scalealpha[c1Nmod=%d][0][iN=%d](%g) = alpha[c1Nmod=%d][iN=%d](%g) / this->scalefactoralpha[c1Nmod=%d][0](%g)\n", c1Nmod, iN,scalealpha[c1Nmod][0][iN],c1Nmod, iN ,alpha[c1Nmod][iN], c1Nmod, scalefactoralpha[c1Nmod][0] );
 		}
 	}
@@ -904,27 +906,30 @@ void InfluenceScaleHMM::forward()
 // 		{
 // 			Rprintf("t = %d\n", t);
 // 		}
+		this->scalefactoralpha_all[t] = 0.0;
 		for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
 		{
 			this->scalefactoralpha[c1Nmod][t] = 0.0;
 			for (int iN=0; iN<this->N; iN++)
 			{
 				double helpsum = 0.0;
+				double helpsum_all = 0.0;
 				for(int c2Nmod=0; c2Nmod<this->Nmod; c2Nmod++)
 				{
 					for (int jN=0; jN<this->N; jN++)
 					{
 						helpsum += this->scalealpha[c2Nmod][t-1][jN] * this->influence[c2Nmod][c1Nmod][jN][iN];
+						helpsum_all += this->scalealpha_all[c2Nmod][t-1][jN] * this->influence[c2Nmod][c1Nmod][jN][iN];
 					}
 				}
 				alpha[c1Nmod][iN] = helpsum * this->densities[c1Nmod][iN][t];
+				alpha_all[c1Nmod][iN] = helpsum_all * this->densities[c1Nmod][iN][t];
 // 				if (t <= 300)
 // 				{
 // 					Rprintf("[c1Nmod=%d][iN=%d], helpsum = %g, alpha = %g\n", c1Nmod, iN, helpsum, alpha[c1Nmod][iN]);
 // 				}
-				//FILE_LOG(logDEBUG4) << "alpha["<<iN<<"] = " << alpha[iN];
 				this->scalefactoralpha[c1Nmod][t] += alpha[c1Nmod][iN];
-				//FILE_LOG(logDEBUG4) << "scalefactoralpha["<<t<<"] = " << scalefactoralpha[t];
+				this->scalefactoralpha_all[t] += alpha_all[c1Nmod][iN];
 			}
 		}
 // 		if (t <= 300)
@@ -937,84 +942,18 @@ void InfluenceScaleHMM::forward()
 			for (int iN=0; iN<this->N; iN++)
 			{
 					this->scalealpha[c1Nmod][t][iN] = alpha[c1Nmod][iN] / this->scalefactoralpha[c1Nmod][t];
-					//FILE_LOG(logDEBUG4) << "scalealpha["<<t<<"]["<<iN<<"] = " << scalealpha[t][iN];
+					this->scalealpha_all[c1Nmod][t][iN] = alpha_all[c1Nmod][iN] / this->scalefactoralpha_all[t];
 // 					if (t <= 300)
 // 					{
 // 						Rprintf("scalealpha[c1Nmod=%d][t=%d][iN=%d] = %g\n", c1Nmod, t, iN, scalealpha[c1Nmod][t][iN]);
 // 					}
 					if(std::isnan(this->scalealpha[c1Nmod][t][iN]))
 					{
-						//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
-						for (int jN=0; jN<this->N; jN++)
-						{
-							//FILE_LOG(logERROR) << "scalealpha["<<t-1<<"]["<<jN<<"] = " << scalealpha[t-1][jN];
-							//FILE_LOG(logERROR) << "A["<<iN<<"]["<<jN<<"] = " << A[iN][jN];
-						}
-						//FILE_LOG(logERROR) << "scalefactoralpha["<<t<<"] = "<<scalefactoralpha[t] << ", densities = "<<densities[iN][t];
-						//FILE_LOG(logERROR) << "scalealpha["<<t<<"]["<<iN<<"] = " << scalealpha[t][iN];
 						throw nan_detected;
 					}
 				}
 		}
 	}
-
-
-
-// 	}
-// 	else if (this->xvariate==MULTIVARIATE)
-// 	{
-//
-// 		std::vector<double> alpha(this->N);
-// 		// Initialization
-// 		this->scalefactoralpha[0] = 0.0;
-// 		for (int iN=0; iN<this->N; iN++)
-// 		{
-// 			alpha[iN] = this->proba[iN] * this->tdensities[0][iN];
-// 			//FILE_LOG(logDEBUG4) << "alpha["<<iN<<"] = " << alpha[iN];
-// 			this->scalefactoralpha[0] += alpha[iN];
-// 		}
-// 		//FILE_LOG(logDEBUG4) << "scalefactoralpha["<<0<<"] = " << scalefactoralpha[0];
-// 		for (int iN=0; iN<this->N; iN++)
-// 		{
-// 			this->scalealpha[0][iN] = alpha[iN] / this->scalefactoralpha[0];
-// 			//FILE_LOG(logDEBUG4) << "scalealpha["<<0<<"]["<<iN<<"] = " << scalealpha[0][iN];
-// 		}
-// 		// Induction
-// 		for (int t=1; t<this->T; t++)
-// 		{
-// 			this->scalefactoralpha[t] = 0.0;
-// 			for (int iN=0; iN<this->N; iN++)
-// 			{
-// 				double helpsum = 0.0;
-// 				for (int jN=0; jN<this->N; jN++)
-// 				{
-// 					helpsum += this->scalealpha[t-1][jN] * this->A[jN][iN];
-// 				}
-// 				alpha[iN] = helpsum * this->tdensities[t][iN];
-// 				//FILE_LOG(logDEBUG4) << "alpha["<<iN<<"] = " << alpha[iN];
-// 				this->scalefactoralpha[t] += alpha[iN];
-// 			}
-// 			//FILE_LOG(logDEBUG4) << "scalefactoralpha["<<t<<"] = " << scalefactoralpha[t];
-// 			for (int iN=0; iN<this->N; iN++)
-// 			{
-// 				this->scalealpha[t][iN] = alpha[iN] / this->scalefactoralpha[t];
-// 				//FILE_LOG(logDEBUG4) << "scalealpha["<<t<<"]["<<iN<<"] = " << scalealpha[t][iN];
-// 				if(std::isnan(this->scalealpha[t][iN]))
-// 				{
-// 					//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
-// 					for (int jN=0; jN<this->N; jN++)
-// 					{
-// 						//FILE_LOG(logERROR) << "scalealpha["<<t-1<<"]["<<jN<<"] = " << scalealpha[t-1][jN];
-// 						//FILE_LOG(logERROR) << "A["<<iN<<"]["<<jN<<"] = " << A[iN][jN];
-// 					}
-// 					//FILE_LOG(logERROR) << "scalefactoralpha["<<t<<"] = "<<scalefactoralpha[t] << ", tdensities = "<<tdensities[t][iN];
-// 					//FILE_LOG(logERROR) << "scalealpha["<<t<<"]["<<iN<<"] = " << scalealpha[t][iN];
-// 					throw nan_detected;
-// 				}
-// 			}
-// 		}
-//
-// 	}
 
 // 	dtime = clock() - time;
 // 	//FILE_LOG(logDEBUG) << "forward(): " << dtime << " clicks";
@@ -1024,126 +963,63 @@ void InfluenceScaleHMM::backward()
 {
 	if(this->verbosity>=2){ Rprintf("%s\n", __PRETTY_FUNCTION__);}// 	clock_t time = clock(), dtime;
 
-// 	if (this->xvariate==UNIVARIATE)
-// 	{
-
 	std::vector< std::vector< double > > beta( this->Nmod, std::vector< double >( this->N ) );
+	std::vector< std::vector< double > > beta_all( this->Nmod, std::vector< double >( this->N ) );
 
+	for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
+	{
+		for (int iN=0; iN<this->N; iN++)
+		{
+			beta[c1Nmod][iN] = 1.0;
+			beta_all[c1Nmod][iN] = 1.0;
+			//FILE_LOG(logDEBUG4) << "beta["<<iN<<"] = " << beta[iN];
+		}
+	}
+	//FILE_LOG(logDEBUG4) << "scalefactoralpha["<<T-1<<"] = " << scalefactoralpha[T-1];
+	for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
+	{
+		for (int iN=0; iN<this->N; iN++)
+		{
+			this->scalebeta[c1Nmod][T-1][iN] = beta[c1Nmod][iN] / this->scalefactoralpha[c1Nmod][T-1];
+			this->scalebeta_all[c1Nmod][T-1][iN] = beta_all[c1Nmod][iN] / this->scalefactoralpha_all[T-1];
+			//FILE_LOG(logDEBUG4) << "scalebeta["<<T-1<<"]["<<iN<<"] = " << scalebeta[T-1][iN];
+		}
+	}
+	// Induction
+	for (int t=this->T-2; t>=0; t--)
+	{
 		for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
 		{
 			for (int iN=0; iN<this->N; iN++)
 			{
-				beta[c1Nmod][iN] = 1.0;
-				//FILE_LOG(logDEBUG4) << "beta["<<iN<<"] = " << beta[iN];
-			}
-	  }
-		//FILE_LOG(logDEBUG4) << "scalefactoralpha["<<T-1<<"] = " << scalefactoralpha[T-1];
-		for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
-		{
-			for (int iN=0; iN<this->N; iN++)
-			{
-				this->scalebeta[c1Nmod][T-1][iN] = beta[c1Nmod][iN] / this->scalefactoralpha[c1Nmod][T-1];
-				//FILE_LOG(logDEBUG4) << "scalebeta["<<T-1<<"]["<<iN<<"] = " << scalebeta[T-1][iN];
-			}
-	  }
-		// Induction
-		for (int t=this->T-2; t>=0; t--)
-		{
-
-
-			for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
-			{
-				for (int iN=0; iN<this->N; iN++)
+				beta[c1Nmod][iN] = 0.0;
+				beta_all[c1Nmod][iN] = 0.0;
+				for(int c2Nmod=0; c2Nmod<this->Nmod; c2Nmod++)
 				{
-					beta[c1Nmod][iN] = 0.0;
-					for(int c2Nmod=0; c2Nmod<this->Nmod; c2Nmod++)
+					for(int jN=0; jN<this->N; jN++)
 					{
-						for(int jN=0; jN<this->N; jN++)
-						{
-							beta[c1Nmod][iN] += this->influence[c1Nmod][c2Nmod][iN][jN]* this->densities[c2Nmod][jN][t+1]*scalebeta[c2Nmod][t+1][jN];
-						}
-						//FILE_LOG(logDEBUG4) << "beta["<<iN<<"] = " << beta[iN];
+						beta[c1Nmod][iN] += this->influence[c1Nmod][c2Nmod][iN][jN]* this->densities[c2Nmod][jN][t+1]*scalebeta[c2Nmod][t+1][jN];
+						beta_all[c1Nmod][iN] += this->influence[c1Nmod][c2Nmod][iN][jN]* this->densities[c2Nmod][jN][t+1]*scalebeta_all[c2Nmod][t+1][jN];
 					}
 				}
 			}
-
-
-
-					//FILE_LOG(logDEBUG4) << "scalefactoralpha["<<t<<"] = " << scalefactoralpha[t];
-			for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
-				{
-					for (int iN=0; iN<this->N; iN++)
-					{
-						this->scalebeta[c1Nmod][t][iN] = beta[c1Nmod][iN] / this->scalefactoralpha[c1Nmod][t];
-						//FILE_LOG(logDEBUG4) << "scalebeta["<<t<<"]["<<iN<<"] = " << scalebeta[t][iN];
-						if (std::isnan(this->scalebeta[c1Nmod][t][iN]))
-						{
-							//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
-							for (int jN=0; jN<this->N; jN++)
-							{
-								//FILE_LOG(logERROR) << "scalebeta["<<jN<<"]["<<t+1<<"] = " << scalebeta[t+1][jN];
-								//FILE_LOG(logERROR) << "A["<<iN<<"]["<<jN<<"] = " << A[iN][jN];
-								//FILE_LOG(logERROR) << "densities["<<jN<<"]["<<t+1<<"] = " << densities[jN][t+1];
-							}
-							//FILE_LOG(logERROR) << "this->scalefactoralpha[t]["<<t<<"] = "<<this->scalefactoralpha[t] << ", densities = "<<densities[iN][t];
-							//FILE_LOG(logERROR) << "scalebeta["<<iN<<"]["<<t<<"] = " << scalebeta[t][iN];
-							throw nan_detected;
-						}
-					}
-				}
 		}
 
-// 	}
-// 	else if (this->xvariate==MULTIVARIATE)
-// 	{
-//
-// 		std::vector<double> beta(this->N);
-// 		// Initialization
-// 		for (int iN=0; iN<this->N; iN++)
-// 		{
-// 			beta[iN] = 1.0;
-// 			//FILE_LOG(logDEBUG4) << "beta["<<iN<<"] = " << beta[iN];
-// 		}
-// 		//FILE_LOG(logDEBUG4) << "scalefactoralpha["<<T-1<<"] = " << scalefactoralpha[T-1];
-// 		for (int iN=0; iN<this->N; iN++)
-// 		{
-// 			this->scalebeta[T-1][iN] = beta[iN] / this->scalefactoralpha[T-1];
-// 			//FILE_LOG(logDEBUG4) << "scalebeta["<<T-1<<"]["<<iN<<"] = " << scalebeta[T-1][iN];
-// 		}
-// 		// Induction
-// 		for (int t=this->T-2; t>=0; t--)
-// 		{
-// 			for (int iN=0; iN<this->N; iN++)
-// 			{
-// 				//FILE_LOG(logDEBUG4) << "Calculating backward variable for state " << iN;
-// 				beta[iN] = 0.0;
-// 				for(int jN=0; jN<this->N; jN++)
-// 				{
-// 					beta[iN] += this->A[iN][jN] * this->tdensities[t+1][jN] * this->scalebeta[t+1][jN];
-// 				}
-// 			}
-// 			//FILE_LOG(logDEBUG4) << "scalefactoralpha["<<t<<"] = " << scalefactoralpha[t];
-// 			for (int iN=0; iN<this->N; iN++)
-// 			{
-// 				this->scalebeta[t][iN] = beta[iN] / this->scalefactoralpha[t];
-// 				//FILE_LOG(logDEBUG4) << "scalebeta["<<t<<"]["<<iN<<"] = " << scalebeta[t][iN];
-// 				if (std::isnan(this->scalebeta[t][iN]))
-// 				{
-// 					//FILE_LOG(logERROR) << __PRETTY_FUNCTION__;
-// 					for (int jN=0; jN<this->N; jN++)
-// 					{
-// 						//FILE_LOG(logERROR) << "scalebeta["<<jN<<"]["<<t+1<<"] = " << scalebeta[t+1][jN];
-// 						//FILE_LOG(logERROR) << "A["<<iN<<"]["<<jN<<"] = " << A[iN][jN];
-// 						//FILE_LOG(logERROR) << "tdensities["<<t+1<<"]["<<jN<<"] = " << tdensities[t+1][jN];
-// 					}
-// 					//FILE_LOG(logERROR) << "this->scalefactoralpha[t]["<<t<<"] = "<<this->scalefactoralpha[t] << ", tdensities = "<<densities[t][iN];
-// 					//FILE_LOG(logERROR) << "scalebeta["<<iN<<"]["<<t<<"] = " << scalebeta[t][iN];
-// 					throw nan_detected;
-// 				}
-// 			}
-// 		}
-//
-// 	}
+
+
+		for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
+		{
+			for (int iN=0; iN<this->N; iN++)
+			{
+				this->scalebeta[c1Nmod][t][iN] = beta[c1Nmod][iN] / this->scalefactoralpha[c1Nmod][t];
+				this->scalebeta_all[c1Nmod][t][iN] = beta_all[c1Nmod][iN] / this->scalefactoralpha_all[t];
+				if (std::isnan(this->scalebeta[c1Nmod][t][iN]))
+				{
+					throw nan_detected;
+				}
+			}
+		}
+	}
 
 // 	dtime = clock() - time;
 // 	//FILE_LOG(logDEBUG) << "backward(): " << dtime << " clicks";
@@ -1153,16 +1029,6 @@ void InfluenceScaleHMM::calc_sumgamma()
 {
 	if(this->verbosity>=2){ Rprintf("%s\n", __PRETTY_FUNCTION__);}// 	clock_t time = clock(), dtime;
 
-	// // Initialize the sumgamma
-	// for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
-	// {
-	// 		for (int iN=0; iN<this->N; iN++)
-	// 		{
-	// 			this->sumgamma[c1Nmod][iN] = 0.0;
-	// 		}
-	// }
-
-
 	// Compute the gammas (posteriors) and sumgamma
 	#pragma omp parallel for
 	for(int c1Nmod=0; c1Nmod<this->Nmod; c1Nmod++)
@@ -1170,27 +1036,26 @@ void InfluenceScaleHMM::calc_sumgamma()
 		for (int t=0; t<this->T; t++)
 		{
 
-// 				double sum = 0 ;
-			for (int iN=0; iN<this->N; iN++)
-			{
-				this->gamma[c1Nmod][iN][t] = this->scalealpha[c1Nmod][t][iN] * this->scalebeta[c1Nmod][t][iN] * this->scalefactoralpha[c1Nmod][t];
-// 					sum += this->gamma[c1Nmod][iN][t];
-			//this->sumgamma[c1Nmod][iN] += this->gamma[c1Nmod][iN][t];
-			//Rprintf("%g %g %g %g\n", this->scalealpha[c1Nmod][t][iN],this->scalebeta[c1Nmod][t][iN] , this->scalefactoralpha[c1Nmod][t], this->gamma[c1Nmod][iN][t] );
-
-			}
 // 			for (int iN=0; iN<this->N; iN++)
 // 			{
-// 				double sum=0.0;
-// 				for (int jN=0; jN<this->N; jN++)
-// 				{
-// 					sum += this->gamma[c1Nmod][jN][t];
-// 				}
-// 				this->gamma[c1Nmod][iN][t] = this->gamma[c1Nmod][iN][t] / sum;
+// 				this->gamma[c1Nmod][iN][t] = this->scalealpha[c1Nmod][t][iN] * this->scalebeta[c1Nmod][t][iN] * this->scalefactoralpha[c1Nmod][t];
+// // 				this->gamma[c1Nmod][iN][t] = this->scalealpha_all[c1Nmod][t][iN] * this->scalebeta_all[c1Nmod][t][iN] * this->scalefactoralpha_all[t];
+// 			//this->sumgamma[c1Nmod][iN] += this->gamma[c1Nmod][iN][t];
+// 			//Rprintf("%g %g %g %g\n", this->scalealpha[c1Nmod][t][iN],this->scalebeta[c1Nmod][t][iN] , this->scalefactoralpha[c1Nmod][t], this->gamma[c1Nmod][iN][t] );
+// 
 // 			}
-
 			//Rprintf("t=%d, c1=%d, Sum over states in gamma = %g\n", t,c1Nmod,sum );
 
+			double sum=0.0;
+			for (int iN=0; iN<this->N; iN++)
+			{
+				this->gamma[c1Nmod][iN][t] = this->scalealpha[c1Nmod][t][iN] * this->scalebeta[c1Nmod][t][iN];
+				sum += this->gamma[c1Nmod][iN][t];
+			}
+			for (int iN=0; iN<this->N; iN++)
+			{
+				this->gamma[c1Nmod][iN][t] /= sum;
+			}
 		}
 
 
@@ -1220,7 +1085,6 @@ void InfluenceScaleHMM::calc_sumxi()
 {
 	if(this->verbosity>=2){ Rprintf("%s\n", __PRETTY_FUNCTION__);}// 	clock_t time = clock(), dtime;
 
-	double xi;
 	// Initialize the sumxi
 	for(int c1Nmod=0; c1Nmod< this->Nmod; c1Nmod++)
 	  {
@@ -1238,8 +1102,61 @@ void InfluenceScaleHMM::calc_sumxi()
 	}
 
 
-// 	if (this->xvariate==UNIVARIATE)
+// 	double xi;
+// 	#pragma omp parallel for
+// 	for(int c1Nmod=0; c1Nmod< this->Nmod; c1Nmod++)
 // 	{
+// 		for(int c2Nmod=0; c2Nmod <this->Nmod; c2Nmod++)
+// 		{
+// 			for (int iN=0; iN<this->N; iN++)
+// 			{
+// 				//FILE_LOG(logDEBUG3) << "Calculating sumxi["<<iN<<"][jN]";
+// 				for (int jN=0; jN<this->N; jN++)
+// 				{
+// // 					Rprintf("influence[c1Nmod=%d][c2Nmod=%d][iN=%d][jN=%d] = %g\n", c1Nmod, c2Nmod, iN, jN, influence[c1Nmod][c2Nmod][iN][jN]);
+// 
+// 					for (int t=0; t<this->T-1; t++)
+// 					{
+// 						xi = this->scalealpha[c1Nmod][t][iN] * this->influence[c1Nmod][c2Nmod][iN][jN] * this->densities[c2Nmod][jN][t+1] * this->scalebeta[c2Nmod][t+1][jN];
+// // 						xi = this->scalealpha_all[c1Nmod][t][iN] * this->influence[c1Nmod][c2Nmod][iN][jN] * this->densities[c2Nmod][jN][t+1] * this->scalebeta_all[c2Nmod][t+1][jN];
+// 						this->sumxi[c1Nmod][c2Nmod][iN][jN] += xi;
+// // 						if (c1Nmod == c2Nmod)
+// // 						{
+// // 							Rprintf("xi[c1Nmod=%d][c2Nmod=%d][iN=%d][jN=%d][t=%d] = %g\n", c1Nmod, c2Nmod, iN, jN, t, xi);
+// // 							Rprintf("[c1Nmod=%d][c2Nmod=%d][iN=%d][jN=%d][t=%d]; scalealpha = %g, scalebeta = %g, densities = %g, influence = %g\n", c1Nmod, c2Nmod, iN, jN, t, scalealpha[c1Nmod][t][iN], scalebeta[c2Nmod][t+1][jN], densities[c2Nmod][jN][t+1], influence[c1Nmod][c2Nmod][iN][jN]);
+// // 						}
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
+
+// 	std::vector< std::vector< double > > xis( this->Nmod, std::vector< double >( this->N ) );
+	std::vector<double> xis(this->N);
+	#pragma omp parallel for
+	for(int c1Nmod=0; c1Nmod< this->Nmod; c1Nmod++)
+	{
+		for(int c2Nmod=0; c2Nmod <this->Nmod; c2Nmod++)
+		{
+			for (int jN=0; jN<this->N; jN++)
+			{
+				for (int t=0; t<this->T-1; t++)
+				{
+// 					double sum=0.0;
+					for (int iN=0; iN<this->N; iN++)
+					{
+						xis[iN] = this->scalealpha[c1Nmod][t][iN] * this->influence[c1Nmod][c2Nmod][iN][jN] * this->densities[c2Nmod][jN][t+1] * this->scalebeta[c2Nmod][t+1][jN];
+// 						sum += xis[iN];
+					}
+					for (int iN=0; iN<this->N; iN++)
+					{
+// 						this->sumxi[c1Nmod][c2Nmod][iN][jN] += xis[iN] / sum;
+						this->sumxi[c1Nmod][c2Nmod][iN][jN] += xis[iN];
+					}
+				}
+			}
+		}
+	}
 
 	#pragma omp parallel for
 	for(int c1Nmod=0; c1Nmod< this->Nmod; c1Nmod++)
@@ -1248,25 +1165,9 @@ void InfluenceScaleHMM::calc_sumxi()
 		{
 			for (int iN=0; iN<this->N; iN++)
 			{
-				//FILE_LOG(logDEBUG3) << "Calculating sumxi["<<iN<<"][jN]";
 				for (int jN=0; jN<this->N; jN++)
 				{
-// 					Rprintf("influence[c1Nmod=%d][c2Nmod=%d][iN=%d][jN=%d] = %g\n", c1Nmod, c2Nmod, iN, jN, influence[c1Nmod][c2Nmod][iN][jN]);
-
-					for (int t=0; t<this->T-1; t++)
-					{
-						xi = this->scalealpha[c1Nmod][t][iN] * this->influence[c1Nmod][c2Nmod][iN][jN] * this->densities[c2Nmod][jN][t+1] * this->scalebeta[c2Nmod][t+1][jN];
-						this->sumxi[c1Nmod][c2Nmod][iN][jN] += xi;
-// 						if (c1Nmod == c2Nmod)
-// 						{
-// 							Rprintf("xi[c1Nmod=%d][c2Nmod=%d][iN=%d][jN=%d][t=%d] = %g\n", c1Nmod, c2Nmod, iN, jN, t, xi);
-// 							Rprintf("[c1Nmod=%d][c2Nmod=%d][iN=%d][jN=%d][t=%d]; scalealpha = %g, scalebeta = %g, densities = %g, influence = %g\n", c1Nmod, c2Nmod, iN, jN, t, scalealpha[c1Nmod][t][iN], scalebeta[c2Nmod][t+1][jN], densities[c2Nmod][jN][t+1], influence[c1Nmod][c2Nmod][iN][jN]);
-// 						}
-
-
-					}
 					this->onestatus_sumxi[c1Nmod][c2Nmod][iN] += this->sumxi[c1Nmod][c2Nmod][iN][jN];
-
 				}
 			}
 		}
@@ -1276,26 +1177,6 @@ void InfluenceScaleHMM::calc_sumxi()
 
 
 
-
-// 	}
-// 	else if (this->xvariate==MULTIVARIATE)
-// 	{
-//
-// 		#pragma omp parallel for
-// 		for (int iN=0; iN<this->N; iN++)
-// 		{
-// 			//FILE_LOG(logDEBUG3) << "Calculating sumxi["<<iN<<"][jN]";
-// 			for (int t=0; t<this->T-1; t++)
-// 			{
-// 				for (int jN=0; jN<this->N; jN++)
-// 				{
-// 					xi = this->scalealpha[t][iN] * this->A[iN][jN] * this->tdensities[t+1][jN] * this->scalebeta[t+1][jN];
-// 					this->sumxi[iN][jN] += xi;
-// 				}
-// 			}
-// 		}
-//
-// 	}
 
 // 	dtime = clock() - time;
 // 	//FILE_LOG(logDEBUG) << "calc_sumxi(): " << dtime << " clicks";
@@ -1348,20 +1229,24 @@ void InfluenceScaleHMM::calc_loglikelihood()
 {
 	if(this->verbosity>=2){ Rprintf("%s\n", __PRETTY_FUNCTION__);}// 	clock_t time = clock(), dtime;
 
+	double logscalefactoralpha;
+	double logscalefactoralpha_all;
+	this->logP = 0.0;
 	#pragma omp parallel for
 	for(int c1Nmod=0; c1Nmod< this->Nmod; c1Nmod++)
 	{
 		this->loglikelihoods[c1Nmod] = 0.0;
 		for (int t=0; t<this->T; t++)
 		{
-			this->loglikelihoods[c1Nmod] += log(this->scalefactoralpha[c1Nmod][t]);
+			logscalefactoralpha = log(this->scalefactoralpha[c1Nmod][t]);
+			logscalefactoralpha_all = log(this->scalefactoralpha_all[t]);
+			this->loglikelihoods[c1Nmod] += logscalefactoralpha;
+// 			this->logP += logscalefactoralpha_all;
+			this->logP += logscalefactoralpha;
 		}
+// 		Rprintf("loglikelihoods[c1Nmod=%d] = %g\n", c1Nmod, loglikelihoods[c1Nmod]);
 	}
-	this->logP = 0.0;
-	for(int c1Nmod=0; c1Nmod< this->Nmod; c1Nmod++)
-	{
-			this->logP += this->loglikelihoods[c1Nmod];
-	}
+// 	Rprintf("logP = %g\n", logP);
 
 // 	dtime = clock() - time;
 // 	//FILE_LOG(logDEBUG) << "calc_loglikelihood(): " << dtime << " clicks";

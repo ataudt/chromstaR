@@ -459,7 +459,6 @@ runInfluence <- function(binned.data, stepbins, info, comb.states=use.states$sta
         if (get.posteriors) {
             dim(hmm$posteriors) <- c(numbins, numstates, nummod)
             dimnames(hmm$posteriors) <- list(bin=NULL, state=statenames, track=tracknames)
-            #hmm$posteriors <- sweep(x = hmm$posteriors, MARGIN = c(1,3), STATS = apply(hmm$posteriors, c(1,3), sum), FUN = '/') # normalize posteriors
         }
         dim(hmm$counts) <- c(numbins, nummod)
         dimnames(hmm$counts) <- list(bin=NULL, track=info$ID)
