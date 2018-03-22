@@ -383,7 +383,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 save(model, file=savename)
                 stopTimedMessage(ptm)
             }, error = function(err) {
-                stop(file,'\n',err)
+                stop(ID,'\n',err)
             })
         }
         ## Plot distributions

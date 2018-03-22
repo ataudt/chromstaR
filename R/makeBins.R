@@ -93,7 +93,7 @@ fixedWidthBins <- function(bamfile=NULL, assembly=NULL, chrom.lengths=NULL, chro
         if (any(width(bins)!=binsize)) {
             stop("tileGenome failed")
         }
-        seqlevels(bins) <- names(chrom.lengths)
+        seqlevels(bins) <- chroms2use
         seqlengths(bins) <- chrom.lengths[seqlevels(bins)]
         bins.list[[as.character(binsize)]] <- bins
 

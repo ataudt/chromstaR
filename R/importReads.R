@@ -89,7 +89,7 @@ readBamFileAsGRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pa
         }
         stop(paste0('No reads imported! Check your BAM-file ', bamfile))
     }
-
+    
     ## Filter by mapping quality
     if (pairedEndReads) {
         ptm <- startTimedMessage("Converting to GRanges ...")
@@ -151,6 +151,25 @@ readBamFileAsGRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pa
         data <- data[idx]
         stopTimedMessage(ptm)
     }
+    
+    ## Select only desired chromosomes
+    ptm <- startTimedMessage("Subsetting chromosomes ...")
+    data <- data[seqnames(data) %in% chroms2use]
+    data <- keepSeqlevels(data, as.character(unique(seqnames(data))))
+    ## Drop seqlevels where seqlength is NA
+    na.seqlevels <- seqlevels(data)[is.na(seqlengths(data))]
+    data <- data[seqnames(data) %in% seqlevels(data)[!is.na(seqlengths(data))]]
+    data <- keepSeqlevels(data, as.character(unique(seqnames(data))))
+    if (length(na.seqlevels) > 0) {
+        warning("Dropped seqlevels because no length information was available: ", paste0(na.seqlevels, collapse=', '))
+    }
+    stopTimedMessage(ptm)
+
+    if (length(data) == 0) {
+        stop(paste0('No reads imported!'))
+    }
+
+    
 
     return(data)
 

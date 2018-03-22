@@ -275,7 +275,7 @@ callPeaksUnivariateAllChr <- function(binned.data, control.data=NULL, eps=0.01, 
         }
     
         ### Check if there are counts in the data, otherwise HMM will blow up ###
-        if (!any(counts!=0)) {
+        if (all(counts==0)) {
             stop("All counts in data are zero. No univariate HMM done.")
         }
     
