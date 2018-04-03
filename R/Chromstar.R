@@ -276,7 +276,7 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
         if (!control) {
             pairedEndReads <- exp.table[grep(basename(file), exp.table$file),'pairedEndReads']
         } else {
-            pairedEndReads <- exp.table[grep(basename(controlfile), exp.table$controlFiles),'pairedEndReads']
+            pairedEndReads <- exp.table[grep(basename(file), exp.table$controlFiles),'pairedEndReads']
         }
         if (any(pairedEndReads != pairedEndReads[1])) {
             stop("Multiple definitions of 'pairedEndReads' for file ", file, ".")
