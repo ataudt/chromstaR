@@ -675,7 +675,7 @@ toLatex(sessionInfo())
 @
 \end{scriptsize}
 
-\bibliography{references.bib}
+\bibliography{references}
 
 \end{document}
 
