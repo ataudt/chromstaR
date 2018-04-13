@@ -23,7 +23,7 @@ plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
 \arguments{
 \item{hmm}{A \code{\link{combinedMultiHMM}} or \code{\link{multiHMM}} object or a file that contains such an object.}
 
-\item{annotations}{A \code{list()} with \code{\link{GRanges}} objects containing coordinates of multiple annotations The names of the list entries will be used to name the return values.}
+\item{annotations}{A \code{list()} with \code{\link{GRanges-class}} objects containing coordinates of multiple annotations The names of the list entries will be used to name the return values.}
 
 \item{what}{One of \code{c('combinations','peaks','counts','transitions')} specifying on which feature the statistic is calculated.}
 
@@ -35,7 +35,7 @@ plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
 
 \item{logscale}{Set to \code{TRUE} to plot fold enrichment on log-scale. Ignored if \code{statistic = 'fraction'}.}
 
-\item{annotation}{A \code{\link{GRanges}} object with the annotation of interest.}
+\item{annotation}{A \code{\link{GRanges-class}} object with the annotation of interest.}
 
 \item{bp.around.annotation}{An integer specifying the number of basepairs up- and downstream of the annotation for which the enrichment will be calculated.}
 
@@ -57,7 +57,7 @@ plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
 A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot or a list() with \code{\link[ggplot2:ggplot]{ggplot}} objects if several plots are returned. For \code{plotFoldEnrichHeatmap} a named array with fold enrichments if \code{plot=FALSE}.
 }
 \description{
-Plotting functions for enrichment analysis of \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} objects with any annotation of interest, specified as a \code{\link[GenomicRanges]{GRanges}} object.
+Plotting functions for enrichment analysis of \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} objects with any annotation of interest, specified as a \code{\link[GenomicRanges]{GRanges-class}} object.
 }
 \section{Functions}{
 \itemize{

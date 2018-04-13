@@ -3,7 +3,7 @@
 #' Get the expression values that overlap with each combinatorial state.
 #'
 #' @param hmm A \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object or file that contains such an object.
-#' @param expression A \code{\link{GRanges}} object with metadata column 'expression', containing the expression value for each range.
+#' @param expression A \code{\link{GRanges-class}} object with metadata column 'expression', containing the expression value for each range.
 #' @param combinations A vector with combinations for which the expression overlap will be calculated. If \code{NULL} all combinations will be considered.
 #' @param return.marks Set to \code{TRUE} if expression values for marks instead of combinations should be returned.
 #' @return A \code{\link{ggplot2}} object if a \code{\link{multiHMM}} was given or a named list with \code{\link{ggplot2}} objects if a \code{\link{combinedMultiHMM}} was given.
@@ -109,7 +109,7 @@ plotExpression <- function(hmm, expression, combinations=NULL, return.marks=FALS
 # #' Get the average expression for each percentage of overlap of combinatorial state with feature.
 # #'
 # #' @param multi.hmm A \code{\link{multiHMM}} or a file that contains such an object.
-# #' @param expression A \code{\link{GRanges}} object with metadata column 'expression', containing the expression value for each range of the feature.
+# #' @param expression A \code{\link{GRanges-class}} object with metadata column 'expression', containing the expression value for each range of the feature.
 # #' @param combinations A vector with combinations for which the expression overlap will be calculated. If \code{NULL} all combinations will be considered.
 # #' @return A list with vectors of mean expression values per percentile for each combinatorial state. 
 # #' @author Aaron Taudt

@@ -8,7 +8,7 @@
 #' @param chromosome.format A character specifying the format of the chromosomes if \code{assembly} is specified. Either 'NCBI' for (1,2,3 ...) or 'UCSC' for (chr1,chr2,chr3 ...). If a \code{bamfile} or \code{chrom.lengths} is supplied, the format will be chosen automatically.
 #' @param binsizes A vector of bin sizes in base pairs.
 #' @param chromosomes A subset of chromosomes for which the bins are generated.
-#' @return A \code{list()} of \code{\link{GRanges}} objects with fixed-width bins.
+#' @return A \code{list()} of \code{\link{GRanges-class}} objects with fixed-width bins.
 #' @author Aaron Taudt
 #' @importFrom Rsamtools BamFile
 #' @export
@@ -116,10 +116,10 @@ fixedWidthBins <- function(bamfile=NULL, assembly=NULL, chrom.lengths=NULL, chro
 #' 
 #' Variable-width bins are produced by first binning the reference BAM file with fixed-width bins and selecting the desired number of reads per bin as the (non-zero) maximum of the histogram. A new set of bins is then generated such that every bin contains the desired number of reads.
 #' 
-#' @param reads A \code{\link{GRanges}} with reads. See \code{\link{readBamFileAsGRanges}} and \code{\link{readBedFileAsGRanges}}.
+#' @param reads A \code{\link{GRanges-class}} with reads. See \code{\link{readBamFileAsGRanges}} and \code{\link{readBedFileAsGRanges}}.
 #' @param binsizes A vector with binsizes. Resulting bins will be close to the specified binsizes.
 #' @param chromosomes A subset of chromosomes for which the bins are generated.
-#' @return A \code{list()} of \code{\link{GRanges}} objects with variable-width bins.
+#' @return A \code{list()} of \code{\link{GRanges-class}} objects with variable-width bins.
 #' @author Aaron Taudt
 #' @export
 #'

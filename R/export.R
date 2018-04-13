@@ -841,10 +841,10 @@ exportCombinedMultivariateCounts <- function(hmm, filename, header=TRUE, separat
 #'
 #' Export GRanges as genome browser viewable file
 #'
-#' Export regions from \code{\link{GRanges}} as a file which can be uploaded into a genome browser. Regions are exported in BED format (.bed.gz).
+#' Export regions from \code{\link{GRanges-class}} as a file which can be uploaded into a genome browser. Regions are exported in BED format (.bed.gz).
 #'
 #' @author Aaron Taudt
-#' @param gr A \code{\link{GRanges}} object.
+#' @param gr A \code{\link{GRanges-class}} object.
 #' @param trackname The name that will be used as track name and description in the header.
 #' @param filename The name of the file that will be written. The ending ".bed.gz". Any existing file will be overwritten.
 #' @param namecol A character specifying the column that is used as name-column.

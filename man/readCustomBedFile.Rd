@@ -22,10 +22,10 @@ readCustomBedFile(bedfile, col.names = c("chromosome", "start", "end", "name",
 \item{sep}{Field separator from \code{\link{read.table}}.}
 }
 \value{
-A \code{\link{GRanges}} object with the contents of the bed-file.
+A \code{\link{GRanges-class}} object with the contents of the bed-file.
 }
 \description{
-This is a simple convenience function to read a bed(.gz)-file into a \code{\link{GRanges}} object. The bed-file is expected to have the following fields: \code{chromosome, start, end, name, score, strand}.
+This is a simple convenience function to read a bed(.gz)-file into a \code{\link{GRanges-class}} object. The bed-file is expected to have the following fields: \code{chromosome, start, end, name, score, strand}.
 }
 \examples{
 ## Get an example BED file

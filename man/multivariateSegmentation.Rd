@@ -7,12 +7,12 @@
 multivariateSegmentation(bins, column2collapseBy = "state")
 }
 \arguments{
-\item{bins}{A \code{\link[GenomicRanges]{GRanges}} with binned read counts.}
+\item{bins}{A \code{\link[GenomicRanges]{GRanges-class}} with binned read counts.}
 
 \item{column2collapseBy}{The number of the column which will be used to collapse all other inputs. If a set of consecutive bins has the same value in this column, they will be aggregated into one bin with adjusted genomic coordinates.}
 }
 \value{
-A \code{\link[GenomicRanges]{GRanges}} with segmented regions.
+A \code{\link[GenomicRanges]{GRanges-class}} with segmented regions.
 }
 \description{
 Make segmentation from bins for a \code{\link{multiHMM}} object.

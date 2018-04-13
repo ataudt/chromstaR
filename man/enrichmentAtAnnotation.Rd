@@ -13,7 +13,7 @@ enrichmentAtAnnotation(bins, info, annotation, bp.around.annotation = 10000,
 
 \item{info}{The \code{$info} entry from a \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object.}
 
-\item{annotation}{A \code{\link{GRanges}} object with the annotation of interest.}
+\item{annotation}{A \code{\link{GRanges-class}} object with the annotation of interest.}
 
 \item{bp.around.annotation}{An integer specifying the number of basepairs up- and downstream of the annotation for which the enrichment will be calculated.}
 
@@ -29,7 +29,7 @@ enrichmentAtAnnotation(bins, info, annotation, bp.around.annotation = 10000,
 A \code{list()} containing \code{data.frame()}s for enrichment of combinatorial states and binary states at the start, end and inside of the annotation.
 }
 \description{
-The function calculates the enrichment of a genomic feature with peaks or combinatorial states. Input is a \code{\link{multiHMM}} object (containing the peak calls and combinatorial states) and a \code{\link{GRanges}} object containing the annotation of interest (e.g. transcription start sites or genes).
+The function calculates the enrichment of a genomic feature with peaks or combinatorial states. Input is a \code{\link{multiHMM}} object (containing the peak calls and combinatorial states) and a \code{\link{GRanges-class}} object containing the annotation of interest (e.g. transcription start sites or genes).
 }
 \author{
 Aaron Taudt

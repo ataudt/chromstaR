@@ -7,9 +7,9 @@
 \value{
 A \code{list()} with the following entries:
 \item{info}{Experiment table for this object.}
-\item{bincounts}{A \code{\link[GenomicRanges]{GRanges}} object containing the genomic bin coordinates and original binned read count values for different offsets.}
-\item{bins}{A \code{\link[GenomicRanges]{GRanges}} object containing the genomic bin coordinates, their read count, (optional) posteriors and state classification.}
-\item{peaks}{A \code{list()} with \code{\link[GenomicRanges]{GRanges}} containing peak coordinates for each ID in \code{info}.}
+\item{bincounts}{A \code{\link[GenomicRanges]{GRanges-class}} object containing the genomic bin coordinates and original binned read count values for different offsets.}
+\item{bins}{A \code{\link[GenomicRanges]{GRanges-class}} object containing the genomic bin coordinates, their read count, (optional) posteriors and state classification.}
+\item{peaks}{A \code{list()} with \code{\link[GenomicRanges]{GRanges-class}} containing peak coordinates for each ID in \code{info}.}
 \item{weights}{Weight for each component. Same as \code{apply(hmm$posteriors,2,mean)}.}
 \item{transitionProbs}{Matrix of transition probabilities from each state (row) into each state (column).}
 \item{transitionProbs.initial}{Initial \code{transitionProbs} at the beginning of the Baum-Welch.}

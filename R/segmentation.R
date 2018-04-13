@@ -2,9 +2,9 @@
 #'
 #' Make segmentation from bins for a \code{\link{multiHMM}} object.
 #'
-#' @param bins A \code{\link[GenomicRanges]{GRanges}} with binned read counts.
+#' @param bins A \code{\link[GenomicRanges]{GRanges-class}} with binned read counts.
 #' @inheritParams collapseBins
-#' @return A \code{\link[GenomicRanges]{GRanges}} with segmented regions.
+#' @return A \code{\link[GenomicRanges]{GRanges-class}} with segmented regions.
 #'
 multivariateSegmentation <- function(bins, column2collapseBy='state') {
 

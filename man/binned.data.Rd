@@ -4,5 +4,5 @@
 \alias{binned.data}
 \title{Binned read counts}
 \description{
-A \code{\link[GenomicRanges]{GRanges}} object which contains binned read counts as meta data column \code{counts}. It is output of the \code{\link{binReads}} function.
+A \code{\link[GenomicRanges]{GRanges-class}} object which contains binned read counts as meta data column \code{counts}. It is output of the \code{\link{binReads}} function.
 }

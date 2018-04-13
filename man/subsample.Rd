@@ -7,12 +7,12 @@
 subsample(binned.data, sample.reads)
 }
 \arguments{
-\item{binned.data}{A \code{\link{GRanges}} object with meta data column 'reads' that contains the read count.}
+\item{binned.data}{A \code{\link{GRanges-class}} object with meta data column 'reads' that contains the read count.}
 
 \item{sample.reads}{The number of reads that will be retained.}
 }
 \value{
-A \code{\link{GRanges}} object with downsampled read counts.
+A \code{\link{GRanges-class}} object with downsampled read counts.
 }
 \description{
 Normalize read counts to a given read depth. Reads counts are randomly removed from the input to match the specified read depth.

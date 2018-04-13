@@ -7,12 +7,12 @@
 simulateReadsFromCounts(bins, fragLen = 50)
 }
 \arguments{
-\item{bins}{A \code{\link[GenomicRanges]{GRanges}} with read counts.}
+\item{bins}{A \code{\link[GenomicRanges]{GRanges-class}} with read counts.}
 
 \item{fragLen}{Length of the simulated read fragments.}
 }
 \value{
-A \code{\link[GenomicRanges]{GRanges}} with read coordinates.
+A \code{\link[GenomicRanges]{GRanges-class}} with read coordinates.
 }
 \description{
 Simulate read coordinates using read counts as input.

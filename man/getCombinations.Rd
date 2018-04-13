@@ -7,13 +7,13 @@
 getCombinations(gr)
 }
 \arguments{
-\item{gr}{A \code{\link[GenomicRanges]{GRanges}} object from which the meta-data columns containing combinations will be extracted.}
+\item{gr}{A \code{\link[GenomicRanges]{GRanges-class}} object from which the meta-data columns containing combinations will be extracted.}
 }
 \value{
 A DataFrame.
 }
 \description{
-Get a DataFrame with combinations from a \code{\link[GenomicRanges]{GRanges}} object.
+Get a DataFrame with combinations from a \code{\link[GenomicRanges]{GRanges-class}} object.
 }
 \examples{
 ### Get an example multiHMM ###

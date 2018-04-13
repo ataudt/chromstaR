@@ -7,10 +7,10 @@
 \value{
 A \code{list()} with the following entries:
 \item{info}{Experiment table for this object.}
-\item{bincounts}{A \code{\link[GenomicRanges]{GRanges}} object containing the genomic bin coordinates and original binned read count values for different offsets.}
-\item{bins}{A \code{\link[GenomicRanges]{GRanges}} object containing the genomic bin coordinates, their read count, (optional) posteriors and state classification.}
+\item{bincounts}{A \code{\link[GenomicRanges]{GRanges-class}} object containing the genomic bin coordinates and original binned read count values for different offsets.}
+\item{bins}{A \code{\link[GenomicRanges]{GRanges-class}} object containing the genomic bin coordinates, their read count, (optional) posteriors and state classification.}
 \item{segments}{Same as \code{bins}, but consecutive bins with the same state are collapsed into segments.}
-\item{peaks}{A \code{list()} with \code{\link[GenomicRanges]{GRanges}} containing peak coordinates for each ID in \code{info}.}
+\item{peaks}{A \code{list()} with \code{\link[GenomicRanges]{GRanges-class}} containing peak coordinates for each ID in \code{info}.}
 \item{mapping}{A named vector giving the mapping from decimal combinatorial states to human readable combinations.}
 \item{weights}{Weight for each component. Same as \code{apply(hmm$posteriors,2,mean)}.}
 \item{weights.univariate}{Weights of the univariate HMMs.}

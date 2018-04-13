@@ -9,7 +9,7 @@ plotExpression(hmm, expression, combinations = NULL, return.marks = FALSE)
 \arguments{
 \item{hmm}{A \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object or file that contains such an object.}
 
-\item{expression}{A \code{\link{GRanges}} object with metadata column 'expression', containing the expression value for each range.}
+\item{expression}{A \code{\link{GRanges-class}} object with metadata column 'expression', containing the expression value for each range.}
 
 \item{combinations}{A vector with combinations for which the expression overlap will be calculated. If \code{NULL} all combinations will be considered.}
 

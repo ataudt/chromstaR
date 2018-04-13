@@ -6,8 +6,8 @@
 #' 
 #' Plot a simple genome browser view. This is useful for scripted genome browser snapshots.
 #' 
-#' @param counts A \code{\link[GenomicRanges]{GRanges}} object with meta-data column 'counts'.
-#' @param peaklist A named list() of \code{\link[GenomicRanges]{GRanges}} objects containing peak coordinates.
+#' @param counts A \code{\link[GenomicRanges]{GRanges-class}} object with meta-data column 'counts'.
+#' @param peaklist A named list() of \code{\link[GenomicRanges]{GRanges-class}} objects containing peak coordinates.
 #' @param chr,start,end Chromosome, start and end coordinates for the plot.
 #' @param countcol A character giving the color for the counts.
 #' @param peakcols A character vector with colors for the peaks in \code{peaklist}.

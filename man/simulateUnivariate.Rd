@@ -7,7 +7,7 @@
 simulateUnivariate(bins, transition, emission, fragLen = 50)
 }
 \arguments{
-\item{bins}{A \code{\link[GenomicRanges]{GRanges}} object for which reads will be simulated.}
+\item{bins}{A \code{\link[GenomicRanges]{GRanges-class}} object for which reads will be simulated.}
 
 \item{transition}{A matrix with transition probabilities.}
 

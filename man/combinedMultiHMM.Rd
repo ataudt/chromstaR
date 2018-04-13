@@ -7,10 +7,10 @@
 \value{
 A \code{list()} with the following entries:
 \item{info}{Experiment table for this object.}
-\item{bins}{A \code{\link[GenomicRanges]{GRanges}} object containing genomic bin coordinates and human readable combinations for the combined \code{\link{multiHMM}} objects.}
+\item{bins}{A \code{\link[GenomicRanges]{GRanges-class}} object containing genomic bin coordinates and human readable combinations for the combined \code{\link{multiHMM}} objects.}
 \item{segments}{Same as \code{bins}, but consecutive bins with the same state are collapsed into segments.}
 \item{segments.per.condition}{A \code{list()} with segments for each condition separately.}
-\item{peaks}{A \code{list()} with \code{\link[GenomicRanges]{GRanges}} containing peak coordinates for each ID in \code{info}.}
+\item{peaks}{A \code{list()} with \code{\link[GenomicRanges]{GRanges-class}} containing peak coordinates for each ID in \code{info}.}
 \item{frequencies}{Genomic frequencies of combinations.}
 \item{mode}{Mode of analysis.}
 }

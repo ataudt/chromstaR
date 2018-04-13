@@ -13,9 +13,9 @@ callPeaksUnivariate(binned.data, control.data = NULL, prefit.on.chr = NULL,
   verbosity = 1)
 }
 \arguments{
-\item{binned.data}{A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.}
+\item{binned.data}{A \code{\link{GRanges-class}} object with binned read counts or a file that contains such an object.}
 
-\item{control.data}{Input control for the experiment. A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.}
+\item{control.data}{Input control for the experiment. A \code{\link{GRanges-class}} object with binned read counts or a file that contains such an object.}
 
 \item{prefit.on.chr}{A chromosome that is used to pre-fit the Hidden Markov Model. Set to \code{NULL} if you don't want to prefit but use the whole genome instead.}
 

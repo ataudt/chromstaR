@@ -1,8 +1,8 @@
 #' Get combinations
 #' 
-#' Get a DataFrame with combinations from a \code{\link[GenomicRanges]{GRanges}} object.
+#' Get a DataFrame with combinations from a \code{\link[GenomicRanges]{GRanges-class}} object.
 #' 
-#' @param gr A \code{\link[GenomicRanges]{GRanges}} object from which the meta-data columns containing combinations will be extracted.
+#' @param gr A \code{\link[GenomicRanges]{GRanges-class}} object from which the meta-data columns containing combinations will be extracted.
 #' @return A DataFrame.
 #' 
 #' @export

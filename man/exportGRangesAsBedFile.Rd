@@ -9,7 +9,7 @@ exportGRangesAsBedFile(gr, trackname, filename, namecol = "combination",
   append = FALSE)
 }
 \arguments{
-\item{gr}{A \code{\link{GRanges}} object.}
+\item{gr}{A \code{\link{GRanges-class}} object.}
 
 \item{trackname}{The name that will be used as track name and description in the header.}
 
@@ -34,7 +34,7 @@ exportGRangesAsBedFile(gr, trackname, filename, namecol = "combination",
 Export GRanges as genome browser viewable file
 }
 \details{
-Export regions from \code{\link{GRanges}} as a file which can be uploaded into a genome browser. Regions are exported in BED format (.bed.gz).
+Export regions from \code{\link{GRanges-class}} as a file which can be uploaded into a genome browser. Regions are exported in BED format (.bed.gz).
 }
 \examples{
 ### Export regions with read counts above 20 ###

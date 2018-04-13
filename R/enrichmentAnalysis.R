@@ -1,6 +1,6 @@
 #' Enrichment analysis
 #' 
-#' Plotting functions for enrichment analysis of \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} objects with any annotation of interest, specified as a \code{\link[GenomicRanges]{GRanges}} object.
+#' Plotting functions for enrichment analysis of \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} objects with any annotation of interest, specified as a \code{\link[GenomicRanges]{GRanges-class}} object.
 #' 
 #' @name enrichment_analysis
 #' @param combinations A vector with combinations for which the enrichment will be calculated. If \code{NULL} all combinations will be considered.
@@ -64,7 +64,7 @@ NULL
 
 #' @describeIn enrichment_analysis Compute the fold enrichment of combinatorial states for multiple annotations.
 #' @param hmm A \code{\link{combinedMultiHMM}} or \code{\link{multiHMM}} object or a file that contains such an object.
-#' @param annotations A \code{list()} with \code{\link{GRanges}} objects containing coordinates of multiple annotations The names of the list entries will be used to name the return values.
+#' @param annotations A \code{list()} with \code{\link{GRanges-class}} objects containing coordinates of multiple annotations The names of the list entries will be used to name the return values.
 #' @param plot A logical indicating whether the plot or an array with the fold enrichment values is returned.
 #' @param what One of \code{c('combinations','peaks','counts','transitions')} specifying on which feature the statistic is calculated.
 #' @importFrom S4Vectors subjectHits queryHits
@@ -575,12 +575,12 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
 
 #' Enrichment of (combinatorial) states for genomic annotations
 #'
-#' The function calculates the enrichment of a genomic feature with peaks or combinatorial states. Input is a \code{\link{multiHMM}} object (containing the peak calls and combinatorial states) and a \code{\link{GRanges}} object containing the annotation of interest (e.g. transcription start sites or genes).
+#' The function calculates the enrichment of a genomic feature with peaks or combinatorial states. Input is a \code{\link{multiHMM}} object (containing the peak calls and combinatorial states) and a \code{\link{GRanges-class}} object containing the annotation of interest (e.g. transcription start sites or genes).
 #'
 #' @author Aaron Taudt
 #' @param bins The \code{$bins} entry from a \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object.
 #' @param info The \code{$info} entry from a \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object.
-#' @param annotation A \code{\link{GRanges}} object with the annotation of interest.
+#' @param annotation A \code{\link{GRanges-class}} object with the annotation of interest.
 #' @param bp.around.annotation An integer specifying the number of basepairs up- and downstream of the annotation for which the enrichment will be calculated.
 #' @param region A combination of \code{c('start','inside','end')} specifying the region of the annotation for which the enrichment will be calculated. Select \code{'start'} if you have a point-sized annotation like transcription start sites. Select \code{c('start','inside','end')} if you have long annotations like genes.
 #' @param what One of \code{c('combinations','peaks','counts')} specifying on which feature the statistic is calculated.

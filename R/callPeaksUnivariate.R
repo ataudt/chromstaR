@@ -4,8 +4,8 @@
 #'
 #' This function is similar to \code{\link{callPeaksUnivariateAllChr}} but allows to pre-fit on a single chromosome instead of the whole genome. This gives a significant performance increase and can help to converge into a better fit in case of unsteady quality for some chromosomes.
 #'
-#' @param binned.data A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.
-#' @param control.data Input control for the experiment. A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.
+#' @param binned.data A \code{\link{GRanges-class}} object with binned read counts or a file that contains such an object.
+#' @param control.data Input control for the experiment. A \code{\link{GRanges-class}} object with binned read counts or a file that contains such an object.
 #' @param prefit.on.chr A chromosome that is used to pre-fit the Hidden Markov Model. Set to \code{NULL} if you don't want to prefit but use the whole genome instead.
 #' @param short If \code{TRUE}, the second fitting step is only done with one iteration.
 #' @param eps Convergence threshold for the Baum-Welch algorithm.
@@ -121,8 +121,8 @@ callPeaksUnivariate <- function(binned.data, control.data=NULL, prefit.on.chr=NU
 #'
 #' The Hidden Markov Model which is used to classify the bins uses 3 states: state 'zero-inflation' with a delta function as emission densitiy (only zero read counts), 'unmodified' and 'modified' with Negative Binomials as emission densities. A Baum-Welch algorithm is employed to estimate the parameters of the distributions. Please refer to our manuscript at \url{http://dx.doi.org/10.1101/038612} for a detailed description of the method.
 #'
-#' @param binned.data A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.
-#' @param control.data Input control for the experiment. A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.
+#' @param binned.data A \code{\link{GRanges-class}} object with binned read counts or a file that contains such an object.
+#' @param control.data Input control for the experiment. A \code{\link{GRanges-class}} object with binned read counts or a file that contains such an object.
 #' @param eps Convergence threshold for the Baum-Welch algorithm.
 #' @param init One of the following initialization procedures:
 #' \describe{

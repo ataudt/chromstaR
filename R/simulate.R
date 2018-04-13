@@ -2,7 +2,7 @@
 #' 
 #' Simulate known states, read counts and read coordinates using a univariate Hidden Markov Model with three states ("zero-inflation", "unmodified" and "modified").
 #' 
-#' @param bins A \code{\link[GenomicRanges]{GRanges}} object for which reads will be simulated.
+#' @param bins A \code{\link[GenomicRanges]{GRanges-class}} object for which reads will be simulated.
 #' @param transition A matrix with transition probabilities.
 #' @param emission A data.frame with emission distributions (see \code{\link{uniHMM}} entry 'distributions').
 #' @inheritParams simulateReadsFromCounts
@@ -70,9 +70,9 @@ simulateUnivariate <- function(bins, transition, emission, fragLen=50) {
 #' 
 #' Simulate read coordinates using read counts as input.
 #' 
-#' @param bins A \code{\link[GenomicRanges]{GRanges}} with read counts.
+#' @param bins A \code{\link[GenomicRanges]{GRanges-class}} with read counts.
 #' @param fragLen Length of the simulated read fragments.
-#' @return A \code{\link[GenomicRanges]{GRanges}} with read coordinates.
+#' @return A \code{\link[GenomicRanges]{GRanges-class}} with read coordinates.
 simulateReadsFromCounts <- function(bins, fragLen=50) {
     
     ptm <- startTimedMessage("Generating read coordinates ...")
@@ -115,7 +115,7 @@ simulateReadsFromCounts <- function(bins, fragLen=50) {
 #' 
 #' Simulate known states, read counts and read coordinates using a multivariate Hidden Markov Model.
 #' 
-#' @param bins A \code{\link[GenomicRanges]{GRanges}} object for which reads will be simulated.
+#' @param bins A \code{\link[GenomicRanges]{GRanges-class}} object for which reads will be simulated.
 #' @param transition A matrix with transition probabilities.
 #' @param emissions A list() with data.frames with emission distributions (see \code{\link{uniHMM}} entry 'distributions').
 #' @param weights A list() with weights for the three univariate states.

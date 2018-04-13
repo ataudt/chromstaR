@@ -3,9 +3,9 @@
 #' Normalize read counts to a given read depth. Reads counts are randomly removed from the input to match the specified read depth.
 #'
 #' @author Aaron Taudt
-#' @param binned.data A \code{\link{GRanges}} object with meta data column 'reads' that contains the read count.
+#' @param binned.data A \code{\link{GRanges-class}} object with meta data column 'reads' that contains the read count.
 #' @param sample.reads The number of reads that will be retained.
-#' @return A \code{\link{GRanges}} object with downsampled read counts.
+#' @return A \code{\link{GRanges-class}} object with downsampled read counts.
 #' @importFrom stats rbinom
 subsample <- function(binned.data, sample.reads) {
 

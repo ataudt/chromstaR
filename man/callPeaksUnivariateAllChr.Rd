@@ -12,9 +12,9 @@ callPeaksUnivariateAllChr(binned.data, control.data = NULL, eps = 0.01,
   keep.densities = FALSE, verbosity = 1)
 }
 \arguments{
-\item{binned.data}{A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.}
+\item{binned.data}{A \code{\link{GRanges-class}} object with binned read counts or a file that contains such an object.}
 
-\item{control.data}{Input control for the experiment. A \code{\link{GRanges}} object with binned read counts or a file that contains such an object.}
+\item{control.data}{Input control for the experiment. A \code{\link{GRanges-class}} object with binned read counts or a file that contains such an object.}
 
 \item{eps}{Convergence threshold for the Baum-Welch algorithm.}
 

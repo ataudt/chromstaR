@@ -84,7 +84,7 @@ NULL
 
 #' Binned read counts
 #'
-#' A \code{\link[GenomicRanges]{GRanges}} object which contains binned read counts as meta data column \code{counts}. It is output of the \code{\link{binReads}} function.
+#' A \code{\link[GenomicRanges]{GRanges-class}} object which contains binned read counts as meta data column \code{counts}. It is output of the \code{\link{binReads}} function.
 #' @name binned.data
 NULL
 
@@ -96,9 +96,9 @@ NULL
 #' @return
 #' A \code{list()} with the following entries:
 #' \item{info}{Experiment table for this object.}
-#' \item{bincounts}{A \code{\link[GenomicRanges]{GRanges}} object containing the genomic bin coordinates and original binned read count values for different offsets.}
-#' \item{bins}{A \code{\link[GenomicRanges]{GRanges}} object containing the genomic bin coordinates, their read count, (optional) posteriors and state classification.}
-#' \item{peaks}{A \code{list()} with \code{\link[GenomicRanges]{GRanges}} containing peak coordinates for each ID in \code{info}.}
+#' \item{bincounts}{A \code{\link[GenomicRanges]{GRanges-class}} object containing the genomic bin coordinates and original binned read count values for different offsets.}
+#' \item{bins}{A \code{\link[GenomicRanges]{GRanges-class}} object containing the genomic bin coordinates, their read count, (optional) posteriors and state classification.}
+#' \item{peaks}{A \code{list()} with \code{\link[GenomicRanges]{GRanges-class}} containing peak coordinates for each ID in \code{info}.}
 #' \item{weights}{Weight for each component. Same as \code{apply(hmm$posteriors,2,mean)}.}
 #' \item{transitionProbs}{Matrix of transition probabilities from each state (row) into each state (column).}
 #' \item{transitionProbs.initial}{Initial \code{transitionProbs} at the beginning of the Baum-Welch.}
@@ -127,10 +127,10 @@ NULL
 #' @return
 #' A \code{list()} with the following entries:
 #' \item{info}{Experiment table for this object.}
-#' \item{bincounts}{A \code{\link[GenomicRanges]{GRanges}} object containing the genomic bin coordinates and original binned read count values for different offsets.}
-#' \item{bins}{A \code{\link[GenomicRanges]{GRanges}} object containing the genomic bin coordinates, their read count, (optional) posteriors and state classification.}
+#' \item{bincounts}{A \code{\link[GenomicRanges]{GRanges-class}} object containing the genomic bin coordinates and original binned read count values for different offsets.}
+#' \item{bins}{A \code{\link[GenomicRanges]{GRanges-class}} object containing the genomic bin coordinates, their read count, (optional) posteriors and state classification.}
 #' \item{segments}{Same as \code{bins}, but consecutive bins with the same state are collapsed into segments.}
-#' \item{peaks}{A \code{list()} with \code{\link[GenomicRanges]{GRanges}} containing peak coordinates for each ID in \code{info}.}
+#' \item{peaks}{A \code{list()} with \code{\link[GenomicRanges]{GRanges-class}} containing peak coordinates for each ID in \code{info}.}
 #' \item{mapping}{A named vector giving the mapping from decimal combinatorial states to human readable combinations.}
 #' \item{weights}{Weight for each component. Same as \code{apply(hmm$posteriors,2,mean)}.}
 #' \item{weights.univariate}{Weights of the univariate HMMs.}
@@ -164,10 +164,10 @@ NULL
 #' @return
 #' A \code{list()} with the following entries:
 #' \item{info}{Experiment table for this object.}
-#' \item{bins}{A \code{\link[GenomicRanges]{GRanges}} object containing genomic bin coordinates and human readable combinations for the combined \code{\link{multiHMM}} objects.}
+#' \item{bins}{A \code{\link[GenomicRanges]{GRanges-class}} object containing genomic bin coordinates and human readable combinations for the combined \code{\link{multiHMM}} objects.}
 #' \item{segments}{Same as \code{bins}, but consecutive bins with the same state are collapsed into segments.}
 #' \item{segments.per.condition}{A \code{list()} with segments for each condition separately.}
-#' \item{peaks}{A \code{list()} with \code{\link[GenomicRanges]{GRanges}} containing peak coordinates for each ID in \code{info}.}
+#' \item{peaks}{A \code{list()} with \code{\link[GenomicRanges]{GRanges-class}} containing peak coordinates for each ID in \code{info}.}
 #' \item{frequencies}{Genomic frequencies of combinations.}
 #' \item{mode}{Mode of analysis.}
 #' @seealso \code{\link{combineMultivariates}}, \code{\link{uniHMM}}, \code{\link{multiHMM}}
