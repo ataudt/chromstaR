@@ -448,13 +448,20 @@ changePostCutoff.univariate <- function(model, post.cutoff) {
     threshold <- post.cutoff
     model$post.cutoff <- post.cutoff
 
-    if (is.null(model$bins$posteriors)) stop("Cannot recalculate states because posteriors are missing. Run 'callPeaksUnivariate' again with option 'keep.posteriors' set to TRUE.")
+    if (is.null(model$bins$posteriors) & is.null(model$bins$posterior.modified)) stop("Cannot recalculate states because posteriors are missing. Run 'callPeaksUnivariate' again with option 'keep.posteriors' set to TRUE.")
+    
     ## Calculate states
     ptm <- startTimedMessage("Calculating states from posteriors ...")
-    states <- rep(NA,length(model$bins))
-    states[ model$bins$posteriors[,3]<threshold & model$bins$posteriors[,2]<=model$bins$posteriors[,1] ] <- 1
-    states[ model$bins$posteriors[,3]<threshold & model$bins$posteriors[,2]>model$bins$posteriors[,1] ] <- 2
-    states[ model$bins$posteriors[,3]>=threshold ] <- 3
+    if (is.null(model$bins$posteriors)) {
+        warning("Using column 'posterior.modified' to recalculate states, there will be no state 'zero-inflation' in the output. Run 'callPeaksUnivariate' again with option 'keep.posteriors' set to TRUE to also obtain 'zero-inflation' states.")
+        states <- rep(2,length(model$bins))
+        states[ model$bins$posterior.modified>=threshold ] <- 3
+    } else {
+        states <- rep(NA,length(model$bins))
+        states[ model$bins$posteriors[,3]<threshold & model$bins$posteriors[,2]<=model$bins$posteriors[,1] ] <- 1
+        states[ model$bins$posteriors[,3]<threshold & model$bins$posteriors[,2]>model$bins$posteriors[,1] ] <- 2
+        states[ model$bins$posteriors[,3]>=threshold ] <- 3
+    }
     states <- state.labels[states]
     model$bins$state <- states
     stopTimedMessage(ptm)
