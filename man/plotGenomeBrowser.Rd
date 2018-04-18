@@ -68,7 +68,8 @@ plotGenomeBrowser2 <- function(counts, peaklist=NULL, chr, start, end, countcol=
 }
 Plot a genome browser view}
 \usage{
-plotGenomeBrowser(model, chr, start, end, style = "peaks", peakHeight = 0.2)
+plotGenomeBrowser(model, chr, start, end, style = "peaks", peakHeight = 0.2,
+  peakColor = "blue", same.yaxis = TRUE)
 }
 \arguments{
 \item{model}{A \code{\link{uniHMM}}, \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object or file that contains such an object.}
@@ -78,9 +79,13 @@ plotGenomeBrowser(model, chr, start, end, style = "peaks", peakHeight = 0.2)
 \item{style}{One of \code{c('peaks', 'density')}.}
 
 \item{peakHeight}{Height of the peak track relative to the count track.}
+
+\item{peakColor}{Color for the peak track.}
+
+\item{same.yaxis}{Whether or not the plots for the same mark have the same y-axis.}
 }
 \value{
-A \code{\link[ggplot2:ggplot]{ggplot}} object.
+A \code{list()} of \code{\link[ggplot2:ggplot]{ggplot}} objects.
 }
 \description{
 Plot a simple genome browser view of \code{\link{chromstaR-objects}}. This is useful for scripted genome browser snapshots.

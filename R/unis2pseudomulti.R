@@ -99,6 +99,7 @@ unis2pseudomulti <- function(hmms) {
     rownames(result$info) <- NULL
     result$bins <- bins
     ## Segmentation
+        ptm <- startTimedMessage("Segmentation ...")
         df <- as.data.frame(result$bins)
         ind.readcols <- grep('^counts', names(df))
         ind.widthcol <- grep('width', names(df))
@@ -107,6 +108,7 @@ unis2pseudomulti <- function(hmms) {
         red.gr <- GRanges(seqnames=red.df[,1], ranges=IRanges(start=red.df[,2], end=red.df[,3]), strand=red.df[,4], state=red.df[,'state'], combination=red.df[,'combination'])
         result$segments <- red.gr
         seqlengths(result$segments) <- seqlengths(result$bins)[seqlevels(result$segments)]
+        stopTimedMessage(ptm)
     ## Parameters
         result$mapping <- mapping
         # Weights
@@ -125,6 +127,10 @@ unis2pseudomulti <- function(hmms) {
     ## Add class
         class(result) <- class.multivariate.hmm
 
+    ## Get the peaks ##
+        result$peaks <- lapply(hmms, '[[', 'peaks')
+        names(result$peaks) <- result$info$ID
+        
     return(result)
 
 }

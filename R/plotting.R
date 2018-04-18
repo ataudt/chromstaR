@@ -425,7 +425,9 @@ plotBoxplot <- function(model) {
 #' @param chr,start,end Chromosome, start and end coordinates for the plot.
 #' @param style One of \code{c('peaks', 'density')}.
 #' @param peakHeight Height of the peak track relative to the count track.
-#' @return A \code{\link[ggplot2:ggplot]{ggplot}} object.
+#' @param peakColor Color for the peak track.
+#' @param same.yaxis Whether or not the plots for the same mark have the same y-axis.
+#' @return A \code{list()} of \code{\link[ggplot2:ggplot]{ggplot}} objects.
 #' @export
 #' @examples
 #'## Get an example uniHMM ##
@@ -448,7 +450,7 @@ plotBoxplot <- function(model) {
 #'plotlist <- plotGenomeBrowser(model, chr='chr12', start=1, end=1e6, style='peaks',
 #'                  peakHeight=0.1)
 #'
-plotGenomeBrowser <- function(model, chr, start, end, style='peaks', peakHeight=0.2) {
+plotGenomeBrowser <- function(model, chr, start, end, style='peaks', peakHeight=0.2, peakColor='blue', same.yaxis=TRUE) {
   
     model <- loadHmmsFromFiles(model, check.class = c('uniHMM', 'multiHMM', 'combinedMultiHMM'))[[1]]
     
@@ -478,15 +480,20 @@ plotGenomeBrowser <- function(model, chr, start, end, style='peaks', peakHeight=
     ggplts <- list()
     for (i1 in 1:nrow(model$info)) {
       
-        ymax.counts <- round(maxcounts.permark[[as.character(model$info$mark[i1])]])
         ID <- model$info$ID[i1]
+        
+        if (same.yaxis) {
+            ymax.counts <- round(maxcounts.permark[[as.character(model$info$mark[i1])]])
+        } else {
+            ymax.counts <- round(maxcounts[[as.character(ID)]])
+        }
       
         if (style == 'peaks') {
             df <- data.frame(position=(start(bins)+end(bins))/2, RPKM=bins$counts.rpkm[,ID]) # plot triangles centered at middle of the bin
             ggplt <- ggplot(df) + geom_area(aes_string(x='position', y='RPKM')) + theme(panel.grid = element_blank(), panel.background = element_blank(), axis.line = element_blank())
         } else if (style == 'density') {
             df <- data.frame(xmin=start(bins), xmax=end(bins), RPKM=bins$counts.rpkm[,ID])
-            ggplt <- ggplot(df) + geom_rect(aes_string(xmin='xmin', xmax='xmax', ymin=0, ymax.counts=4, alpha='RPKM')) + theme(panel.grid = element_blank(), panel.background = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(), axis.line = element_blank(), axis.title.y = element_blank())
+            ggplt <- ggplot(df) + geom_rect(aes_string(xmin='xmin', xmax='xmax', ymin=0, ymax=4, alpha='RPKM')) + theme(panel.grid = element_blank(), panel.background = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(), axis.line = element_blank(), axis.title.y = element_blank())
             ggplt <- ggplt + xlab('position')
         } else {
             stop("Unknown value '", style, "' for parameter 'style'. Must be one of c('peaks', 'density').")
@@ -496,10 +503,11 @@ plotGenomeBrowser <- function(model, chr, start, end, style='peaks', peakHeight=
         peaks <- subsetByOverlaps(peaklist[[ID]], ranges2plot)
         if (length(peaks) > 0) {
             df <- data.frame(start=start(peaks), end=end(peaks), ymin=-peakHeight*ymax.counts, ymax=0.1*(-peakHeight*ymax.counts))
-            ggplt <- ggplt + geom_rect(data=df, mapping=aes_string(xmin='start', xmax='end', ymin='ymin', ymax='ymax'), col='blue', fill='blue')
+            ggplt <- ggplt + geom_rect(data=df, mapping=aes_string(xmin='start', xmax='end', ymin='ymin', ymax='ymax'), col=peakColor, fill=peakColor)
         }
       
-        ggplt <- ggplt + scale_y_continuous(breaks=c(0, ymax.counts)) + coord_cartesian(xlim=c(start, end), ylim=c(-peakHeight*ymax.counts,ymax.counts))
+        ggplt <- ggplt + scale_y_continuous(breaks=c(0, ymax.counts))
+        ggplt <- ggplt + coord_cartesian(xlim=c(start, end), ylim=c(-peakHeight*ymax.counts,ymax.counts))
         ggplt <- ggplt + ggtitle(ID)
         ggplts[[ID]] <- ggplt
     }
