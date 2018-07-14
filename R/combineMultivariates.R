@@ -6,6 +6,7 @@
 #' @param mode Mode of combination. See \code{\link{Chromstar}} for a description of the \code{mode} parameter.
 #' @return A \code{\link{combinedMultiHMM}} objects with combinatorial states for each condition.
 #' @author Aaron Taudt
+#' @importFrom S4Vectors endoapply
 #' @export
 #' @examples
 #'### Multivariate peak calling for spontaneous hypertensive rat (SHR) ###
@@ -277,7 +278,7 @@ combineMultivariates <- function(hmms, mode) {
     # Reassign levels such that all conditions have the same levels
     ptm <- startTimedMessage("Reassigning levels ...")
     comblevels <- sort(unique(unlist(lapply(combs.df, levels))))
-    combs.df <- endoapply(combs.df, function(x) { x <- factor(x, levels=comblevels) })
+    combs.df <- S4Vectors::endoapply(combs.df, function(x) { x <- factor(x, levels=comblevels) })
     names(combs.df) <- paste0('combination.', names(combs.df))
     stopTimedMessage(ptm)
 

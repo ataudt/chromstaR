@@ -389,7 +389,10 @@ genes <- GRanges(seqnames=paste0('chr',genes$chromosome_name),
                  ranges=IRanges(start=genes$start, end=genes$end),
                  strand=genes$strand,
                  name=genes$external_gene_id, biotype=genes$gene_biotype)
+# Rename chrMT to chrM to avoid warnings
 seqlevels(genes)[seqlevels(genes)=='chrMT'] <- 'chrM'
+# Select only chr12 to avoid warnings
+genes <- keepSeqlevels(genes, 'chr12', pruning.mode = 'coarse')
 print(genes)
 @
 
@@ -447,6 +450,7 @@ expression.SHR <- GRanges(seqnames=paste0('chr',expr$chromosome_name),
                           strand=expr$strand, name=expr$external_gene_id,
                           biotype=expr$gene_biotype,
                           expression=expr$expression_SHR)
+# Rename chrMT to chrM to avoid warnings
 seqlevels(expression.SHR)[seqlevels(expression.SHR)=='chrMT'] <- 'chrM'
 # We apply an asinh transformation to reduce the effect of outliers
 expression.SHR$expression <- asinh(expression.SHR$expression)
@@ -546,7 +550,10 @@ genes <- GRanges(seqnames=paste0('chr',genes$chromosome_name),
                  ranges=IRanges(start=genes$start, end=genes$end),
                  strand=genes$strand,
                  name=genes$external_gene_id, biotype=genes$gene_biotype)
+# Rename chrMT to chrM to avoid warnings
 seqlevels(genes)[seqlevels(genes)=='chrMT'] <- 'chrM'
+# Select only chr12 to avoid warnings
+genes <- keepSeqlevels(genes, 'chr12', pruning.mode = 'coarse')
 print(genes)
 @
 

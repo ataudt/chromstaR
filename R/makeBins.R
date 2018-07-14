@@ -95,11 +95,12 @@ fixedWidthBins <- function(bamfile=NULL, assembly=NULL, chrom.lengths=NULL, chro
         }
         seqlevels(bins) <- chroms2use
         seqlengths(bins) <- chrom.lengths[seqlevels(bins)]
+        skipped.chroms <- setdiff(chromosomes, as.character(unique(seqnames(bins))))
+        bins <- dropSeqlevels(bins, skipped.chroms, pruning.mode = 'coarse')
         bins.list[[as.character(binsize)]] <- bins
 
-        skipped.chroms <- setdiff(chromosomes, as.character(unique(seqnames(bins))))
         if (length(skipped.chroms)>0) {
-            warning("The following chromosomes were skipped because they are smaller than binsize ", binsize, ": ", paste0(skipped.chroms, collapse=', '))
+            warning("The following chromosomes were dropped because they are smaller than binsize ", binsize, ": ", paste0(skipped.chroms, collapse=', '))
         }
         stopTimedMessage(ptm)
         
@@ -121,6 +122,7 @@ fixedWidthBins <- function(bamfile=NULL, assembly=NULL, chrom.lengths=NULL, chro
 #' @param chromosomes A subset of chromosomes for which the bins are generated.
 #' @return A \code{list()} of \code{\link{GRanges-class}} objects with variable-width bins.
 #' @author Aaron Taudt
+#' @importFrom S4Vectors endoapply
 #' @export
 #'
 #'@examples
@@ -194,7 +196,7 @@ variableWidthBins <- function(reads, binsizes, chromosomes=NULL) {
             }
         }
         if (length(skipped.chroms)>0) {
-            warning("The following chromosomes were skipped because they are smaller than binsize ", binsize, ": ", paste0(skipped.chroms, collapse=', '))
+            warning("The following chromosomes were dropped because they are smaller than binsize ", binsize, ": ", paste0(skipped.chroms, collapse=', '))
         }
         subreads <- unlist(subreads, use.names=FALSE)
         ## Adjust length of reads to get consecutive bins
@@ -205,11 +207,11 @@ variableWidthBins <- function(reads, binsizes, chromosomes=NULL) {
         end(bins) <- end(bins) + 1
         ## We don't want incomplete bins at the end
         bins.split <- split(bins, seqnames(bins))
-        bins.split <- endoapply(bins.split, function(x) { x[-length(x)] })
+        bins.split <- S4Vectors::endoapply(bins.split, function(x) { x[-length(x)] })
         bins <- unlist(bins.split, use.names=FALSE)
         ## Remove skipped chromosomes
         bins <- bins[!seqnames(bins) %in% skipped.chroms]
-        bins <- keepSeqlevels(bins, setdiff(seqlevels(bins), skipped.chroms))
+        bins <- dropSeqlevels(bins, skipped.chroms, pruning.mode = 'coarse')
 
         bins.list[[as.character(binsize)]] <- bins
         stopTimedMessage(ptm)

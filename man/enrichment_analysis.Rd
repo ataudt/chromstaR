@@ -87,6 +87,8 @@ genes <- GRanges(seqnames=paste0('chr',genes$chromosome_name),
                 ranges=IRanges(start=genes$start, end=genes$end),
                 strand=genes$strand,
                 name=genes$external_gene_id, biotype=genes$gene_biotype)
+# Rename chrMT to chrM
+seqlevels(genes)[seqlevels(genes)=='chrMT'] <- 'chrM'
 print(genes)
 
 ### Make the enrichment plots ###

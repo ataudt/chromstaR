@@ -1,3 +1,13 @@
+CHANGES IN VERSION 1.7.2
+------------------------
+
+BUGFIXES
+
+    o Compatibility fixes for the new release of ggplot2 (3.0.0).
+    
+    o seqlevels() that are smaller than binsize are dropped properly in fixedWidthBins() and variableWidthBins().
+    
+    
 CHANGES IN VERSION 1.5.3
 ------------------------
 

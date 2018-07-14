@@ -28,6 +28,8 @@
 #'                 ranges=IRanges(start=genes$start, end=genes$end),
 #'                 strand=genes$strand,
 #'                 name=genes$external_gene_id, biotype=genes$gene_biotype)
+#'# Rename chrMT to chrM
+#'seqlevels(genes)[seqlevels(genes)=='chrMT'] <- 'chrM'
 #'print(genes)
 #'
 #'### Make the enrichment plots ###
@@ -227,10 +229,12 @@ plotFoldEnrichHeatmap <- function(hmm, annotations, what="combinations", combina
         minfold <- min(unlist(minfolds), na.rm=TRUE)
         limits <- max(abs(maxfold), abs(minfold))
         if (logscale) {
-            ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_fill_gradientn(name='log(observed/expected)', colors=grDevices::colorRampPalette(c("blue","white","red"))(20), values=c(seq(-limits,0,length.out=10), seq(0,limits,length.out=10)), rescaler=function(x,...) {x}, oob=identity, limits=c(-limits, limits)) })
+            # ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_fill_gradientn(name='log(observed/expected)', colors=grDevices::colorRampPalette(c("blue","white","red"))(20), values=c(seq(-limits,0,length.out=10), seq(0,limits,length.out=10)), rescaler=function(x,...) {x}, oob=identity, limits=c(-limits, limits)) }) # broke in ggplot2 3.0.0
+            ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_fill_gradientn(name='log(observed/expected)', colors=grDevices::colorRampPalette(c("blue","white","red"))(20), values=c(seq(-limits,0,length.out=10), seq(0,limits,length.out=10)), rescaler=function(x,...) {x}, limits=c(-limits, limits)) })
             ggplts <- lapply(ggplts, function(ggplt) { ggplt$data$foldEnrichment[ggplt$data$foldEnrichment == -Inf] <- -limits; ggplt })
         } else {
-            ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_fill_gradientn(name='observed/expected', colors=grDevices::colorRampPalette(c("blue","white","red"))(20), values=c(seq(0,1,length.out=10), seq(1,maxfold,length.out=10)), rescaler=function(x,...) {x}, oob=identity, limits=c(0,maxfold)) })
+            # ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_fill_gradientn(name='observed/expected', colors=grDevices::colorRampPalette(c("blue","white","red"))(20), values=c(seq(0,1,length.out=10), seq(1,maxfold,length.out=10)), rescaler=function(x,...) {x}, oob=identity, limits=c(0,maxfold)) }) # broke in ggplot2 3.0.0
+            ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_fill_gradientn(name='observed/expected', colors=grDevices::colorRampPalette(c("blue","white","red"))(20), values=c(seq(0,1,length.out=10), seq(1,maxfold,length.out=10)), rescaler=function(x,...) {x}, limits=c(0,maxfold)) })
         }
     }
 

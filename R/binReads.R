@@ -241,11 +241,13 @@ binReads <- function(file, experiment.table=NULL, ID=NULL, assembly, bamindex=fi
         
             if (format == 'bam' & use.bamsignals) {
                 ptm <- startTimedMessage("Counting overlaps for binsize ", binsize, " with offset ", offset, " ...")
+                suppressWarnings( # suppress warning due to offset over seqlength
                 bins.offset$counts <- tryCatch({
                     bins.offset$counts <- bamsignals::bamCount(file, bins.offset, mapqual=min.mapq, paired.end=paired.end, tlenFilter=c(0, max.fragment.width), verbose=FALSE)
                 }, error = function(err) {
                     bins.offset$counts <<- bamsignals::bamCount(file, bins.offset, mapqual=min.mapq, paired.end=paired.end, paired.end.max.frag.length=max.fragment.width, verbose=FALSE)
                 })
+                )
                 stopTimedMessage(ptm)
                 
             } else {
