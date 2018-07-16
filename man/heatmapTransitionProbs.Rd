@@ -4,10 +4,15 @@
 \alias{heatmapTransitionProbs}
 \title{Heatmap of transition probabilities}
 \usage{
-heatmapTransitionProbs(model)
+heatmapTransitionProbs(model = NULL, reorder.states = TRUE,
+  transitionProbs = NULL)
 }
 \arguments{
 \item{model}{A \code{\link{multiHMM}} object or file that contains such an object.}
+
+\item{reorder.states}{Whether or not to reorder the states.}
+
+\item{transitionProbs}{A matrix with transition probabilities where \code{dimnames(emissionProbs)} gives the state labels. This option is helpful to plot transition probabilities directly without needing a \code{\link{chromstaR-objects}}. If specified, \code{model} will be ignored.}
 }
 \value{
 A \code{\link[ggplot2]{ggplot}} object.
@@ -21,7 +26,7 @@ file <- system.file("data","multivariate_mode-combinatorial_condition-SHR.RData"
                     package="chromstaR")
 model <- get(load(file))
 ## Plot transition probabilites as heatmap
-heatmapTransitionProbs(model)
+heatmapTransitionProbs(model, reorder.states=TRUE)
 
 }
 \seealso{

@@ -1,20 +1,18 @@
-stateorderByTransition <- function(multi.hmm) {
-
-    multi.hmm <- loadHmmsFromFiles(multi.hmm, check.class=class.multivariate.hmm)[[1]]
+stateorderByTransition <- function(transitionProbs) {
 
     ## Calculate distance matrix
-    distances <- matrix(NA, ncol=ncol(multi.hmm$transitionProbs), nrow=nrow(multi.hmm$transitionProbs))
-    colnames(distances) <- colnames(multi.hmm$transitionProbs)
-    rownames(distances) <- rownames(multi.hmm$transitionProbs)
+    distances <- matrix(NA, ncol=ncol(transitionProbs), nrow=nrow(transitionProbs))
+    colnames(distances) <- colnames(transitionProbs)
+    rownames(distances) <- rownames(transitionProbs)
     for (irow in 1:nrow(distances)) {
         for (icol in 1:ncol(distances)) {
-            distances[irow,icol] <- 2 - (multi.hmm$transitionProbs[irow,icol] + multi.hmm$transitionProbs[icol,irow])
-#             distances[irow,icol] <- abs(multi.hmm$transitionProbs[irow,icol] - multi.hmm$transitionProbs[icol,irow])
+            distances[irow,icol] <- 2 - (transitionProbs[irow,icol] + transitionProbs[icol,irow])
+#             distances[irow,icol] <- abs(transitionProbs[irow,icol] - transitionProbs[icol,irow])
         }
     }
 
     ## Select ordering
-    comb.states <- colnames(multi.hmm$transitionProbs)
+    comb.states <- colnames(transitionProbs)
     stateorders <- matrix(NA, ncol=length(comb.states), nrow=length(comb.states))
     total.distance <- rep(0, length(comb.states))
     for (i1 in 1:length(comb.states)) {
@@ -30,8 +28,6 @@ stateorderByTransition <- function(multi.hmm) {
         }
     }
     stateorder <- stateorders[which.min(total.distance),]
-
-    ## Reorder the multi.hmm
     return(stateorder)
 
 }

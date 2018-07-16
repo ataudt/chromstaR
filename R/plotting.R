@@ -115,6 +115,8 @@ heatmapCountCorrelation <- function(model, cluster=TRUE) {
 #' Plot a heatmap of transition probabilities for a \code{\link{multiHMM}} model.
 #'
 #' @param model A \code{\link{multiHMM}} object or file that contains such an object.
+#' @param reorder.states Whether or not to reorder the states.
+#' @param transitionProbs A matrix with transition probabilities where \code{dimnames(emissionProbs)} gives the state labels. This option is helpful to plot transition probabilities directly without needing a \code{\link{chromstaR-objects}}. If specified, \code{model} will be ignored.
 #' @return A \code{\link[ggplot2]{ggplot}} object.
 #' @importFrom reshape2 melt
 #' @seealso \code{\link{plotting}}
@@ -125,14 +127,31 @@ heatmapCountCorrelation <- function(model, cluster=TRUE) {
 #'                     package="chromstaR")
 #'model <- get(load(file))
 #'## Plot transition probabilites as heatmap
-#'heatmapTransitionProbs(model)
+#'heatmapTransitionProbs(model, reorder.states=TRUE)
 #'
-heatmapTransitionProbs <- function(model) {
+heatmapTransitionProbs <- function(model=NULL, reorder.states=TRUE, transitionProbs=NULL) {
 
-    model <- suppressMessages( loadHmmsFromFiles(model, check.class=class.multivariate.hmm)[[1]] )
-    A <- reshape2::melt(model$transitionProbs, varnames=c('from','to'), value.name='prob')
-    A$from <- factor(A$from, levels=stateorderByTransition(model))
-    A$to <- factor(A$to, levels=stateorderByTransition(model))
+    if (is.null(transitionProbs)) {
+        model <- suppressMessages( loadHmmsFromFiles(model, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]] )
+        transitionProbs <- model$transitionProbs
+        A <- reshape2::melt(transitionProbs, varnames=c('from','to'), value.name='prob')
+        if (reorder.states) {
+            A$from <- factor(A$from, levels=stateorderByTransition(transitionProbs))
+            A$to <- factor(A$to, levels=stateorderByTransition(transitionProbs))
+        } else {
+            A$from <- factor(A$from, levels=levels(model$bins$combination))
+            A$to <- factor(A$to, levels=levels(model$bins$combination))
+        }
+    } else {
+        A <- reshape2::melt(transitionProbs, varnames=c('from','to'), value.name='prob')
+        if (reorder.states) {
+            A$from <- factor(A$from, levels=stateorderByTransition(transitionProbs))
+            A$to <- factor(A$to, levels=stateorderByTransition(transitionProbs))
+        } else {
+            A$from <- factor(A$from, levels=colnames(transitionProbs))
+            A$to <- factor(A$to, levels=colnames(transitionProbs))
+        }
+    }
     ggplt <- ggplot(data=A) + geom_tile(aes_string(x='to', y='from', fill='prob')) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5)) + scale_fill_gradient(low="white", high="blue")
 
     return(ggplt)
