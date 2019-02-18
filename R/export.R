@@ -631,7 +631,11 @@ exportCombinedMultivariatePeaks <- function(hmm, filename, trackname=NULL, heade
         }
         
         peaks.df <- as.data.frame(peaks)
-        peaks.df$peakNumber <- paste0('peak_', 1:nrow(peaks.df))
+        if (nrow(peaks.df) > 0) {
+          peaks.df$peakNumber <- paste0('peak_', 1:nrow(peaks.df))
+        } else {
+          peaks.df$peakNumber <- integer()
+        }
         
         # Data.frame for write.table
         df <- peaks.df[,c('chromosome','start','end','peakNumber','peakScores','strand')]
