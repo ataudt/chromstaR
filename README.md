@@ -31,8 +31,9 @@ To install the *development* version from Github, follow the steps given below. 
 3. Open R and install all dependencies. Please ensure that you have writing permissions to install packages. Execute the following lines one by one:
 
    install.packages("devtools")  
-	 source("http://bioconductor.org/biocLite.R")  
-	 biocLite(c("GenomicRanges","GenomicAlignments","bamsignals"))  
+	 if (!requireNamespace("BiocManager", quietly=TRUE))
+    	 install.packages("BiocManager")
+	 BiocManager::install(c("GenomicRanges","GenomicAlignments","bamsignals"))  
 	 library(devtools)  
 	 install_github("ataudt/chromstaRData")  
 	 install_github("ataudt/chromstaR")  
