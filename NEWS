@@ -1,3 +1,11 @@
+CHANGES IN VERSION 1.9.2
+------------------------
+
+BUGFIXES
+
+    o Bugfix for error when exporting empty peak lists.
+
+
 CHANGES IN VERSION 1.7.2
 ------------------------
 
