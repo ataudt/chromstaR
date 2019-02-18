@@ -749,7 +749,11 @@ exportCombinedMultivariateCombinations <- function(hmm, filename, exclude.states
         # Write to file
         numsegments <- nrow(segments.df)
         if (is.null(segments.df$differential.score)) {
-            segments.df$differential.score <- 0
+            if (nrow(segments.df) > 0) {
+              segments.df$differential.score <- 0
+            } else {
+              segments.df$differential.score <- integer()
+            }
         }
         names(segments.df)[names(segments.df)=='differential.score'] <- 'score'
         df <- cbind(segments.df[,c('chromosome','start','end','combination','score')], strand=rep(".",numsegments), thickStart=segments.df$start, thickEnd=segments.df$end, itemRgb=itemRgb)
