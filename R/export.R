@@ -193,30 +193,32 @@ exportUnivariatePeaks <- function(hmm.list, filename, header=TRUE, separate.file
             }
             cat(paste0("track name=\"",trackname.string,"\" description=\"",trackname.string,"\" visibility=1 itemRgb=Off priority=",priority,"\n"), file=filename.gz, append=TRUE)
         }
-        if (is.null(peaks$maxPostInPeak)) {
-            peaks$peakScores <- 0
-        } else {
-            peaks$peakScores <- suppressWarnings( -10*log10(1-peaks$maxPostInPeak) )
-            peaks$peakScores[is.nan(peaks$peakScores) | peaks$peakScores > 1000] <- 1000
-        }
-        df <- as.data.frame(peaks)
-        df$peakNumber <- paste0('peak_', 1:nrow(df))
-        df$strand <- sub('\\*', '.', df$strand)
-        df <- df[,c('chromosome','start','end','peakNumber','peakScores','strand')]
-        # Make score integer
-        df$peakScores <- round(df$peakScores)
-        numsegments <- nrow(df)
-        # Convert from 1-based closed to 0-based half open
-        df$start <- df$start - 1
-        # df$thickStart <- df$start
-        # df$thickEnd <- df$end
-        # # Colors
-        # RGB <- t(grDevices::col2rgb(getStateColors('modified')))
-        # df$itemRgb <- apply(RGB,1,paste,collapse=",")
-        if (nrow(df) == 0) {
-            warning('hmm ',imod,' does not contain any \'modified\' calls')
-        } else {
-            utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
+        if (length(peaks) > 0) {
+            if (is.null(peaks$maxPostInPeak)) {
+                peaks$peakScores <- 0
+            } else {
+                peaks$peakScores <- suppressWarnings( -10*log10(1-peaks$maxPostInPeak) )
+                peaks$peakScores[is.nan(peaks$peakScores) | peaks$peakScores > 1000] <- 1000
+            }
+            df <- as.data.frame(peaks)
+            df$peakNumber <- paste0('peak_', 1:nrow(df))
+            df$strand <- sub('\\*', '.', df$strand)
+            df <- df[,c('chromosome','start','end','peakNumber','peakScores','strand')]
+            # Make score integer
+            df$peakScores <- round(df$peakScores)
+            numsegments <- nrow(df)
+            # Convert from 1-based closed to 0-based half open
+            df$start <- df$start - 1
+            # df$thickStart <- df$start
+            # df$thickEnd <- df$end
+            # # Colors
+            # RGB <- t(grDevices::col2rgb(getStateColors('modified')))
+            # df$itemRgb <- apply(RGB,1,paste,collapse=",")
+            if (nrow(df) == 0) {
+                warning('hmm ',imod,' does not contain any \'modified\' calls')
+            } else {
+                utils::write.table(format(df, scientific=FALSE, trim=TRUE), file=filename.gz, append=TRUE, row.names=FALSE, col.names=FALSE, quote=FALSE, sep='\t')
+            }
         }
         if (separate.files) {
             close(filename.gz)
