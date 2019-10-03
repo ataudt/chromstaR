@@ -1,4 +1,5 @@
 #' @useDynLib chromstaR, .registration = TRUE, .fixes = ""
+#' @importFrom BiocGenerics "%in%"
 #' @import GenomeInfoDb
 #' @import IRanges
 #' @import GenomicRanges
