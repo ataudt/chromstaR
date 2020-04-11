@@ -9,7 +9,7 @@
 #' @param numCPU Number of threads to use for the analysis. Beware that more CPUs also means more memory is needed. If you experience crashes of R with higher numbers of this parameter, leave it at \code{numCPU=1}.
 #' @param binsize An integer specifying the bin size that is used for the analysis.
 #' @param stepsize An integer specifying the step size for analysis.
-#' @param assembly A \code{data.frame} or tab-separated file with columns 'chromosome' and 'length'. Alternatively a character specifying the assembly, see \code{\link[GenomeInfoDb]{fetchExtendedChromInfoFromUCSC}} for available assemblies. Specifying an assembly is only necessary when importing BED files. BAM files are handled automatically.
+#' @param assembly A \code{data.frame} or tab-separated file with columns 'chromosome' and 'length'. Alternatively a character specifying the assembly, see \code{\link[GenomeInfoDb]{getChromInfoFromUCSC}} for available assemblies. Specifying an assembly is only necessary when importing BED files. BAM files are handled automatically.
 #' @inheritParams readBedFileAsGRanges
 #' @param format One of \code{c('bed','bam',NULL)}. With \code{NULL} the format is determined automatically from the file ending.
 #' @inheritParams callPeaksUnivariate
@@ -229,15 +229,15 @@ Chromstar <- function(inputfolder, experiment.table, outputfolder, configfile=NU
                 stopTimedMessage(ptm)
             } else {
                 ptm <- startTimedMessage("Obtaining chromosome length information from UCSC ...")
-                df.chroms <- GenomeInfoDb::fetchExtendedChromInfoFromUCSC(conf[['assembly']])
+                df.chroms <- GenomeInfoDb::getChromInfoFromUCSC(conf[['assembly']])
                 ## Get first bed file
                 bedfile <- grep('bed$|bed.gz$', datafiles, value=TRUE)[1]
                 if (!is.na(bedfile)) {
                     firstlines <- read.table(bedfile, nrows=10, skip=1) # skip 1 line in case of trackname
+                    df <- df.chroms[,c('chrom','size')]
                     if (grepl('^chr',firstlines[1,1])) {
-                        df <- df.chroms[,c('UCSC_seqlevel','UCSC_seqlength')]
                     } else {
-                        df <- df.chroms[,c('NCBI_seqlevel','UCSC_seqlength')]
+                        df$chrom = sub('^chr', '', df$chrom)
                     }
                 }
                 stopTimedMessage(ptm)
