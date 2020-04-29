@@ -1,3 +1,11 @@
+CHANGES IN VERSION 1.14.1
+-------------------------
+
+BUG FIXES
+
+    o Compatibility update: Replaced class() checks with is().
+
+
 CHANGES IN VERSION 1.13.1
 -------------------------
 
