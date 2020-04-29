@@ -61,7 +61,7 @@ removeCondition <- function(model, conditions) {
         removeconds <- paste0(paste0('-', conditions, '-'), collapse='|')
         keepconds <- grep(removeconds, colnames(counts), invert=TRUE, value=TRUE)
         counts <- counts[,keepconds]
-        if (class(counts) != "matrix") {
+        if (!is(counts,'matrix')) {
             counts <- matrix(counts, ncol=1, dimnames=list(NULL, keepconds))
         }
         model$bins$counts.rpkm <- counts
@@ -71,7 +71,7 @@ removeCondition <- function(model, conditions) {
         removeconds <- paste0(paste0('-', conditions, '-'), collapse='|')
         keepconds <- grep(removeconds, colnames(posteriors), invert=TRUE, value=TRUE)
         posteriors <- posteriors[,keepconds]
-        if (class(posteriors) != "matrix") {
+        if (!is(posteriors,'matrix')) {
             posteriors <- matrix(posteriors, ncol=1, dimnames=list(NULL, keepconds))
         }
         model$bins$posteriors <- posteriors
@@ -81,7 +81,7 @@ removeCondition <- function(model, conditions) {
         removeconds <- paste0(paste0('-', conditions, '-'), collapse='|')
         keepconds <- grep(removeconds, colnames(maxPostInPeak), invert=TRUE, value=TRUE)
         maxPostInPeak <- maxPostInPeak[,keepconds]
-        if (class(maxPostInPeak) != "matrix") {
+        if (is(maxPostInPeak,'matrix')) {
             maxPostInPeak <- matrix(maxPostInPeak, ncol=1, dimnames=list(NULL, keepconds))
         }
         model$bins$maxPostInPeak <- maxPostInPeak

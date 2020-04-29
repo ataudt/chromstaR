@@ -4,8 +4,11 @@
 \alias{heatmapTransitionProbs}
 \title{Heatmap of transition probabilities}
 \usage{
-heatmapTransitionProbs(model = NULL, reorder.states = TRUE,
-  transitionProbs = NULL)
+heatmapTransitionProbs(
+  model = NULL,
+  reorder.states = TRUE,
+  transitionProbs = NULL
+)
 }
 \arguments{
 \item{model}{A \code{\link{multiHMM}} object or file that contains such an object.}

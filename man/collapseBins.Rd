@@ -4,8 +4,14 @@
 \alias{collapseBins}
 \title{Collapse consecutive bins}
 \usage{
-collapseBins(data, column2collapseBy = NULL, columns2sumUp = NULL,
-  columns2average = NULL, columns2getMax = NULL, columns2drop = NULL)
+collapseBins(
+  data,
+  column2collapseBy = NULL,
+  columns2sumUp = NULL,
+  columns2average = NULL,
+  columns2getMax = NULL,
+  columns2drop = NULL
+)
 }
 \arguments{
 \item{data}{A data.frame containing the genomic coordinates in the first three columns.}

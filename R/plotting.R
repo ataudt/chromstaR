@@ -477,7 +477,7 @@ plotGenomeBrowser <- function(model, chr, start, end, style='peaks', peakHeight=
     bins <- model$bins
     ranges2plot <- reduce(bins[bins@seqnames == chr & start(bins) >= start & start(bins) <= end, , drop=FALSE])
     bins <- subsetByOverlaps(bins, ranges2plot)
-    if (class(model)=='uniHMM') {
+    if (is(model,'uniHMM')) {
         peaklist <- list(model$peaks)
         bins$counts.rpkm <- matrix(bins$counts.rpkm, ncol=1)
         if (is.null(model$info)) {

@@ -4,10 +4,19 @@
 \alias{state.brewer}
 \title{Obtain combinatorial states from specification}
 \usage{
-state.brewer(replicates = NULL, differential.states = FALSE, min.diff = 1,
-  common.states = FALSE, conditions = NULL, tracks2compare = NULL,
-  sep = "+", statespec = NULL, diffstatespec = NULL,
-  exclusive.table = NULL, binary.matrix = NULL)
+state.brewer(
+  replicates = NULL,
+  differential.states = FALSE,
+  min.diff = 1,
+  common.states = FALSE,
+  conditions = NULL,
+  tracks2compare = NULL,
+  sep = "+",
+  statespec = NULL,
+  diffstatespec = NULL,
+  exclusive.table = NULL,
+  binary.matrix = NULL
+)
 }
 \arguments{
 \item{replicates}{A vector specifying the replicate structure. Similar entries will be treated as replicates.}

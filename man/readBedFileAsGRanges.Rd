@@ -4,14 +4,20 @@
 \alias{readBedFileAsGRanges}
 \title{Import BED file into GRanges}
 \usage{
-readBedFileAsGRanges(bedfile, assembly, chromosomes = NULL,
-  remove.duplicate.reads = FALSE, min.mapq = 10,
-  max.fragment.width = 1000, blacklist = NULL)
+readBedFileAsGRanges(
+  bedfile,
+  assembly,
+  chromosomes = NULL,
+  remove.duplicate.reads = FALSE,
+  min.mapq = 10,
+  max.fragment.width = 1000,
+  blacklist = NULL
+)
 }
 \arguments{
 \item{bedfile}{A file with aligned reads in BED-6 format. The columns have to be c('chromosome','start','end','description','mapq','strand').}
 
-\item{assembly}{Please see \code{\link[GenomeInfoDb]{fetchExtendedChromInfoFromUCSC}} for available assemblies. Only necessary when importing BED files. BAM files are handled automatically. Alternatively a data.frame with columns 'chromosome' and 'length'.}
+\item{assembly}{Please see \code{\link[GenomeInfoDb]{getChromInfoFromUCSC}} for available assemblies. Only necessary when importing BED files. BAM files are handled automatically. Alternatively a data.frame with columns 'chromosome' and 'length'.}
 
 \item{chromosomes}{If only a subset of the chromosomes should be imported, specify them here.}
 

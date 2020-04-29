@@ -175,7 +175,7 @@ variableWidthBins <- function(reads, binsizes, chromosomes=NULL) {
     for (i1 in 1:length(binsizes)) {
         binsize <- binsizes[i1]
         ptm <- startTimedMessage("Making variable-width windows for bin size ", binsize, " ...")
-        if (class(binned.list)=='GRanges') {
+        if (is(binned.list,'GRanges')) {
             binned <- binned.list
         } else {
             binned <- binned.list[[i1]]

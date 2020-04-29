@@ -4,13 +4,28 @@
 \alias{callPeaksUnivariate}
 \title{Fit a Hidden Markov Model to a ChIP-seq sample.}
 \usage{
-callPeaksUnivariate(binned.data, control.data = NULL, prefit.on.chr = NULL,
-  short = TRUE, eps = 0.1, init = "standard", max.time = NULL,
-  max.iter = 5000, num.trials = 1, eps.try = NULL, num.threads = 1,
-  read.cutoff = TRUE, read.cutoff.quantile = 1,
-  read.cutoff.absolute = 500, max.mean = Inf, post.cutoff = 0.5,
-  control = FALSE, keep.posteriors = FALSE, keep.densities = FALSE,
-  verbosity = 1)
+callPeaksUnivariate(
+  binned.data,
+  control.data = NULL,
+  prefit.on.chr = NULL,
+  short = TRUE,
+  eps = 0.1,
+  init = "standard",
+  max.time = NULL,
+  max.iter = 5000,
+  num.trials = 1,
+  eps.try = NULL,
+  num.threads = 1,
+  read.cutoff = TRUE,
+  read.cutoff.quantile = 1,
+  read.cutoff.absolute = 500,
+  max.mean = Inf,
+  post.cutoff = 0.5,
+  control = FALSE,
+  keep.posteriors = FALSE,
+  keep.densities = FALSE,
+  verbosity = 1
+)
 }
 \arguments{
 \item{binned.data}{A \code{\link{GRanges-class}} object with binned read counts or a file that contains such an object.}

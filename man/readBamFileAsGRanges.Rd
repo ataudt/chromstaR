@@ -4,9 +4,17 @@
 \alias{readBamFileAsGRanges}
 \title{Import BAM file into GRanges}
 \usage{
-readBamFileAsGRanges(bamfile, bamindex = bamfile, chromosomes = NULL,
-  pairedEndReads = FALSE, remove.duplicate.reads = FALSE, min.mapq = 10,
-  max.fragment.width = 1000, blacklist = NULL, what = "mapq")
+readBamFileAsGRanges(
+  bamfile,
+  bamindex = bamfile,
+  chromosomes = NULL,
+  pairedEndReads = FALSE,
+  remove.duplicate.reads = FALSE,
+  min.mapq = 10,
+  max.fragment.width = 1000,
+  blacklist = NULL,
+  what = "mapq"
+)
 }
 \arguments{
 \item{bamfile}{A sorted BAM file.}

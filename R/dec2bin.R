@@ -48,7 +48,7 @@ dec2bin = function(dec, colnames=NULL, ndigits=NULL) {
             binary.states[ ,ncol(binary.states)+1-i1] <- modulos[[i1]]
         }
     }
-    if (class(binary.states)!='matrix') {
+    if (!is(binary.states, 'matrix')) {
         binary.states <- matrix(binary.states, nrow=length(dec))
     }
 

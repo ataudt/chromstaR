@@ -148,7 +148,7 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
         }
     }
     if (!is.null(binary.matrix)) {
-        if (class(binary.matrix) != 'matrix' | mode(binary.matrix) != 'logical') {
+        if (!is(binary.matrix,'matrix') | mode(binary.matrix) != 'logical') {
             stop("argument 'binary.matrix' expects a logical matrix")
         }
     }
@@ -197,11 +197,11 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
         statenames.sep <- apply(as.matrix(binstates[,mask]), 1, function(x) { tracknames.mask[x] })
         if (length(statenames.sep)==0) {
             stop("Something went wrong in constructing state names.")
-        } else if (class(statenames.sep)=='list') {
+        } else if (is(statenames.sep,'list')) {
             statenames <- sapply(statenames.sep, paste, collapse=sep)
-        } else if (class(statenames.sep)=='matrix') {
+        } else if (is(statenames.sep,'matrix')) {
             statenames <- apply(statenames.sep, 2, paste, collapse=sep)
-        } else if (class(statenames.sep)=='character') {
+        } else if (is(statenames.sep,'character')) {
             statenames <- statenames.sep
         }
     } else {
@@ -245,7 +245,7 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
                     mask <- rowSums(as.matrix(binstates[,names[track.index]]), na.rm = TRUE) < 2
                     binstates <- binstates[mask,]
                     
-                    if (class(binstates)!='matrix') {
+                    if (!is(binstates,'matrix')) {
                         binstates <- matrix(binstates, ncol=numtracks)
                         colnames(binstates) <- tracknames
                     }
@@ -267,7 +267,7 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
                 mask <- rep(TRUE, nrow(binstates))
             }
             binstates <- binstates[mask,]
-            if (class(binstates)!='matrix') {
+            if (!is(binstates,'matrix')) {
                 binstates <- matrix(binstates, ncol=length(binstates))
                 colnames(binstates) <- tracknames
             }
@@ -288,7 +288,7 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
         bindiffmatrix <- dec2bin(0:(2^length(intersect.tracks)-1)) # all possible binary combinations (rows) between tracks (cols)
         controlsum <- apply(bindiffmatrix, 1, sum)
         bindiffmatrix <- bindiffmatrix[controlsum >= min.diff,]
-        if (class(bindiffmatrix)!='matrix') { # R-behaviour differs with only one column
+        if (!is(bindiffmatrix,'matrix')) { # R-behaviour differs with only one column
             bindiffmatrix <- matrix(bindiffmatrix, nrow=1)
         }
         colnames(bindiffmatrix) <- intersect.tracks
@@ -338,7 +338,7 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
                     mask <- rep(TRUE, nrow(binstates.irow))
                 }
                 binstates.irow <- binstates.irow[mask,]
-                if (class(binstates.irow)!='matrix') {
+                if (!is(binstates.irow,'matrix')) {
                     binstates.irow <- matrix(binstates.irow, ncol=length(binstates.irow))
                     colnames(binstates.irow) <- tracknames.conditions
                 }
@@ -363,7 +363,7 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
         tracks2compare.split <- split(tracks2compare, conditions)
         intersect.tracks <- Reduce(intersect, lapply(tracks2compare.split, unique))
         bincommonmatrix <- dec2bin(0:(2^length(intersect.tracks)-1)) # all possible binary combinations (rows) between tracks (cols)
-        if (class(bincommonmatrix)!='matrix') { # R-behaviour differs with only one column
+        if (!is(bincommonmatrix,'matrix')) { # R-behaviour differs with only one column
             bincommonmatrix <- matrix(bincommonmatrix, nrow=1)
         }
         colnames(bincommonmatrix) <- intersect.tracks
@@ -411,7 +411,7 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
                     mask <- apply(as.matrix(binstates.irow[,track.index]), 1, function(x) { Reduce('&', x) })
                 }
                 binstates.irow <- binstates.irow[mask,]
-                if (class(binstates.irow)!='matrix') {
+                if (!is(binstates.irow,'matrix')) {
                     binstates.irow <- matrix(binstates.irow, ncol=length(binstates.irow))
                     colnames(binstates.irow) <- tracknames.conditions
                 }
@@ -435,11 +435,11 @@ state.brewer <- function(replicates=NULL, differential.states=FALSE, min.diff=1,
         statenames.sep <- apply(as.matrix(binstates[,mask]), 1, function(x) { tracknames.mask[x] })
         if (length(statenames.sep)==0) {
             stop("Something went wrong in constructing state names.")
-        } else if (class(statenames.sep)=='list') {
+        } else if (is(statenames.sep,'list')) {
             statenames <- sapply(statenames.sep, paste, collapse=sep)
-        } else if (class(statenames.sep)=='matrix') {
+        } else if (is(statenames.sep,'matrix')) {
             statenames <- apply(statenames.sep, 2, paste, collapse=sep)
-        } else if (class(statenames.sep)=='character') {
+        } else if (is(statenames.sep,'character')) {
             statenames <- statenames.sep
         }
     } else {

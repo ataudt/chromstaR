@@ -45,7 +45,7 @@ binReads <- function(file, experiment.table=NULL, ID=NULL, assembly, bamindex=fi
         if (is.character(file)) {
             file.clean <- sub('\\.gz$','', file)
             format <- rev(strsplit(file.clean, '\\.')[[1]])[1]
-        } else if (class(file)=='GRanges') {
+        } else if (is(file,'GRanges')) {
             format <- 'GRanges'
         } else {
             stop("Could not determine format automatically. Please specify it via the 'format' parameter.")
@@ -59,11 +59,11 @@ binReads <- function(file, experiment.table=NULL, ID=NULL, assembly, bamindex=fi
     if (format=='bed') {
         temp <- assembly # trigger error if not defined
     }
-    if (class(bins) == 'GRanges') {
+    if (is(bins,'GRanges')) {
         bins <- list(bins)
         names(bins) <- width(bins[[1]])[1]
     }
-    if (class(bins) == 'list') {
+    if (is(bins,'list')) {
         if (is.null(names(bins))) {
             names(bins) <- sapply(bins, function(x) { width(x)[1] })
         }
@@ -177,7 +177,7 @@ binReads <- function(file, experiment.table=NULL, ID=NULL, assembly, bamindex=fi
         if (is.character(variable.width.reference)) {
             variable.width.reference.clean <- sub('\\.gz$','', variable.width.reference)
             vformat <- rev(strsplit(variable.width.reference.clean, '\\.')[[1]])[1]
-        } else if (class(variable.width.reference)=='GRanges') {
+        } else if (is(variable.width.reference,'GRanges')) {
             vformat <- 'GRanges'
         }
         if (vformat == 'bam') {

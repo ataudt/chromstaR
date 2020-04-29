@@ -10,7 +10,7 @@ getMaxPostInPeaks <- function(states, posteriors) {
         r$values[r$values == FALSE] <- NA
         peakNumbers <- inverse.rle(r)
         df <- aggregate(posteriors[,icol], by=list(peakNumber=peakNumbers), FUN=max)
-        if (class(df$x) == 'list') {
+        if (is(df$x,'list')) {
             class(df$x) <- 'numeric'
         }
         r <- r.bin

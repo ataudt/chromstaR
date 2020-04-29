@@ -4,7 +4,9 @@
 \name{model.combined}
 \alias{model.combined}
 \title{Combined multivariate HMM for demonstration purposes}
-\format{A \code{\link{combinedMultiHMM}} object.}
+\format{
+A \code{\link{combinedMultiHMM}} object.
+}
 \description{
 A \code{\link{combinedMultiHMM}} object for demonstration purposes in examples of package \pkg{\link{chromstaR}}.
 }

@@ -4,9 +4,14 @@
 \alias{readCustomBedFile}
 \title{Read bed-file into GRanges}
 \usage{
-readCustomBedFile(bedfile, col.names = c("chromosome", "start", "end", "name",
-  "score", "strand"), col.classes = NULL, skip = 0,
-  chromosome.format = "NCBI", sep = "")
+readCustomBedFile(
+  bedfile,
+  col.names = c("chromosome", "start", "end", "name", "score", "strand"),
+  col.classes = NULL,
+  skip = 0,
+  chromosome.format = "NCBI",
+  sep = ""
+)
 }
 \arguments{
 \item{bedfile}{Filename of the bed or bed.gz file.}

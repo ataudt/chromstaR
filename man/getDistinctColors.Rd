@@ -4,9 +4,14 @@
 \alias{getDistinctColors}
 \title{Get distinct colors}
 \usage{
-getDistinctColors(n, start.color = "blue4", exclude.colors = c("white",
-  "black", "gray", "grey", "\\\\<yellow\\\\>", "yellow1", "lemonchiffon"),
-  exclude.brightness.above = 1, exclude.rgb.above = 210)
+getDistinctColors(
+  n,
+  start.color = "blue4",
+  exclude.colors = c("white", "black", "gray", "grey", "\\\\<yellow\\\\>", "yellow1",
+    "lemonchiffon"),
+  exclude.brightness.above = 1,
+  exclude.rgb.above = 210
+)
 }
 \arguments{
 \item{n}{Number of colors to select. If \code{n} is a character vector, \code{length(n)} will be taken as the number of colors and the colors will be named by \code{n}.}
