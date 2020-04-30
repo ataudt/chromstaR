@@ -7,18 +7,39 @@
 \alias{plotEnrichment}
 \title{Enrichment analysis}
 \usage{
-plotFoldEnrichHeatmap(hmm, annotations, what = "combinations",
-  combinations = NULL, marks = NULL, plot = TRUE, logscale = TRUE)
+plotFoldEnrichHeatmap(
+  hmm,
+  annotations,
+  what = "combinations",
+  combinations = NULL,
+  marks = NULL,
+  plot = TRUE,
+  logscale = TRUE
+)
 
-plotEnrichCountHeatmap(hmm, annotation, bp.around.annotation = 10000,
-  max.rows = 1000, combinations = NULL,
+plotEnrichCountHeatmap(
+  hmm,
+  annotation,
+  bp.around.annotation = 10000,
+  max.rows = 1000,
+  combinations = NULL,
   colorByCombinations = sortByCombinations,
-  sortByCombinations = is.null(sortByColumns), sortByColumns = NULL)
+  sortByCombinations = is.null(sortByColumns),
+  sortByColumns = NULL
+)
 
-plotEnrichment(hmm, annotation, bp.around.annotation = 10000,
-  region = c("start", "inside", "end"), num.intervals = 20,
-  what = "combinations", combinations = NULL, marks = NULL,
-  statistic = "fold", logscale = TRUE)
+plotEnrichment(
+  hmm,
+  annotation,
+  bp.around.annotation = 10000,
+  region = c("start", "inside", "end"),
+  num.intervals = 20,
+  what = "combinations",
+  combinations = NULL,
+  marks = NULL,
+  statistic = "fold",
+  logscale = TRUE
+)
 }
 \arguments{
 \item{hmm}{A \code{\link{combinedMultiHMM}} or \code{\link{multiHMM}} object or a file that contains such an object.}

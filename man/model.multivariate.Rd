@@ -4,7 +4,9 @@
 \name{model.multivariate}
 \alias{model.multivariate}
 \title{Multivariate HMM for demonstration purposes}
-\format{A \code{\link{multiHMM}} object.}
+\format{
+A \code{\link{multiHMM}} object.
+}
 \description{
 A \code{\link{multiHMM}} object for demonstration purposes in examples of package \pkg{\link{chromstaR}}.
 }

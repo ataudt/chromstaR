@@ -52,8 +52,8 @@ plotExpression <- function(hmm, expression, combinations=NULL, return.marks=FALS
     hmm <- loadHmmsFromFiles(hmm, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     ## Variables
     bins <- hmm$bins
-    if (class(hmm) == class.combined.multivariate.hmm) {
-    } else if (class(hmm) == class.multivariate.hmm) {
+    if (is(hmm,class.combined.multivariate.hmm)) {
+    } else if (is(hmm,class.multivariate.hmm)) {
         # Rename 'combination' to 'combination.' for coherence with combinedMultiHMM
         names(mcols(bins))[grep('combination', names(mcols(bins)))] <- paste0('combination.', unique(hmm$info$condition))
     }
@@ -95,9 +95,9 @@ plotExpression <- function(hmm, expression, combinations=NULL, return.marks=FALS
         ggplts[[condition]] <- ggplt
     }
     
-    if (class(hmm) == class.multivariate.hmm) {
+    if (is(hmm,class.multivariate.hmm)) {
         return(ggplts[[1]])
-    } else if (class(hmm) == class.combined.multivariate.hmm) {
+    } else if (is(hmm,class.combined.multivariate.hmm)) {
         return(ggplts)
     }
 

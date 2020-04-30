@@ -5,12 +5,26 @@
 \alias{binning}
 \title{Convert aligned reads from various file formats into read counts in equidistant bins}
 \usage{
-binReads(file, experiment.table = NULL, ID = NULL, assembly,
-  bamindex = file, chromosomes = NULL, pairedEndReads = FALSE,
-  min.mapq = 10, remove.duplicate.reads = TRUE, max.fragment.width = 1000,
-  blacklist = NULL, binsizes = 1000, stepsizes = binsizes/2,
-  reads.per.bin = NULL, bins = NULL, variable.width.reference = NULL,
-  use.bamsignals = TRUE, format = NULL)
+binReads(
+  file,
+  experiment.table = NULL,
+  ID = NULL,
+  assembly,
+  bamindex = file,
+  chromosomes = NULL,
+  pairedEndReads = FALSE,
+  min.mapq = 10,
+  remove.duplicate.reads = TRUE,
+  max.fragment.width = 1000,
+  blacklist = NULL,
+  binsizes = 1000,
+  stepsizes = binsizes/2,
+  reads.per.bin = NULL,
+  bins = NULL,
+  variable.width.reference = NULL,
+  use.bamsignals = TRUE,
+  format = NULL
+)
 }
 \arguments{
 \item{file}{A file with aligned reads. Alternatively a \code{\link{GRanges-class}} with aligned reads.}
@@ -19,7 +33,7 @@ binReads(file, experiment.table = NULL, ID = NULL, assembly,
 
 \item{ID}{Optional ID to select a row from the \code{experiment.table}. Only necessary if the experiment table contains the same file in multiple positions in column 'file'.}
 
-\item{assembly}{Please see \code{\link[GenomeInfoDb]{fetchExtendedChromInfoFromUCSC}} for available assemblies. Only necessary when importing BED files. BAM files are handled automatically. Alternatively a data.frame with columns 'chromosome' and 'length'.}
+\item{assembly}{Please see \code{\link[GenomeInfoDb]{getChromInfoFromUCSC}} for available assemblies. Only necessary when importing BED files. BAM files are handled automatically. Alternatively a data.frame with columns 'chromosome' and 'length'.}
 
 \item{bamindex}{BAM index file. Can be specified without the .bai ending. If the index file does not exist it will be created and a warning is issued.}
 

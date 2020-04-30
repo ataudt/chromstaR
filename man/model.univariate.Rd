@@ -4,7 +4,9 @@
 \name{model.univariate}
 \alias{model.univariate}
 \title{Univariate HMM for demonstration purposes}
-\format{A \code{\link{uniHMM}} object.}
+\format{
+A \code{\link{uniHMM}} object.
+}
 \description{
 A \code{\link{uniHMM}} object for demonstration purposes in examples of package \pkg{\link{chromstaR}}.
 }

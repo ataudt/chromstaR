@@ -4,8 +4,12 @@
 \alias{transitionFrequencies}
 \title{Transition frequencies of combinatorial states}
 \usage{
-transitionFrequencies(multi.hmms = NULL, combined.hmm = NULL,
-  zero.states = "[]", combstates = NULL)
+transitionFrequencies(
+  multi.hmms = NULL,
+  combined.hmm = NULL,
+  zero.states = "[]",
+  combstates = NULL
+)
 }
 \arguments{
 \item{multi.hmms}{A named list with \code{\link{multiHMM}} objects or a vector with filenames that contain such objects.}

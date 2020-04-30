@@ -78,8 +78,8 @@ plotFoldEnrichHeatmap <- function(hmm, annotations, what="combinations", combina
     hmm <- loadHmmsFromFiles(hmm, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     ## Variables
     bins <- hmm$bins
-    if (class(hmm) == class.combined.multivariate.hmm) {
-    } else if (class(hmm) == class.multivariate.hmm) {
+    if (is(hmm,class.combined.multivariate.hmm)) {
+    } else if (is(hmm,class.multivariate.hmm)) {
         # Rename 'combination' to 'combination.' for coherence with combinedMultiHMM
         names(mcols(bins))[grep('combination', names(mcols(bins)))] <- paste0('combination.', unique(hmm$info$condition))
     }
@@ -238,13 +238,13 @@ plotFoldEnrichHeatmap <- function(hmm, annotations, what="combinations", combina
         }
     }
 
-    if (class(hmm) == class.multivariate.hmm | what == 'transitions') {
+    if (is(hmm,class.multivariate.hmm) | what == 'transitions') {
         if (plot) {
             return(ggplts[[1]])
         } else {
             return(folds[[1]])
         }
-    } else if (class(hmm) == class.combined.multivariate.hmm) {
+    } else if (is(hmm,class.combined.multivariate.hmm)) {
         if (plot) {
             return(ggplts)
         } else {
@@ -273,7 +273,7 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
     hmm <- loadHmmsFromFiles(hmm, check.class=c(class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     ## Variables
     bins <- hmm$bins
-    if (class(hmm) == class.combined.multivariate.hmm) {
+    if (is(hmm,class.combined.multivariate.hmm)) {
         conditions <- sub('combination.', '', grep('combination', names(mcols(bins)), value=TRUE))
         comb.levels <- levels(mcols(bins)[,paste0('combination.', conditions[1])])
         ## Create new column combination with all conditions combined
@@ -283,7 +283,7 @@ plotEnrichCountHeatmap <- function(hmm, annotation, bp.around.annotation=10000, 
         }
         combs$sep <- ', '
         bins$combination <- factor(do.call(paste, combs))
-    } else if (class(hmm) == class.multivariate.hmm) {
+    } else if (is(hmm,class.multivariate.hmm)) {
         comb.levels <- levels(bins$combination)
     }
     binsize <- width(bins)[1]
@@ -430,14 +430,14 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
     ## Variables
     hmm <- loadHmmsFromFiles(hmm, check.class=c(class.univariate.hmm, class.multivariate.hmm, class.combined.multivariate.hmm))[[1]]
     bins <- hmm$bins
-    if (class(hmm) == class.univariate.hmm) {
+    if (is(hmm,class.univariate.hmm)) {
         # bins$counts <- rpkm.vector(hmm$bins$counts, binsize=mean(width(hmm$bins)))
         mcols(bins)['combination.'] <- bins$state
         bins$state <- c('zero-inflation' = 0, 'unmodified' = 0, 'modified' = 1)[bins$state]
         hmm$info <- data.frame(file=NA, mark=1, condition=1, replicate=1, pairedEndReads=NA, controlFiles=NA, ID='1-1-rep1')
-    } else if (class(hmm) == class.combined.multivariate.hmm) {
+    } else if (is(hmm,class.combined.multivariate.hmm)) {
         # bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
-    } else if (class(hmm) == class.multivariate.hmm) {
+    } else if (is(hmm,class.multivariate.hmm)) {
         # bins$counts <- rpkm.matrix(hmm$bins$counts, binsize=mean(width(hmm$bins)))
         # Rename 'combination' to 'combination.' for coherence with combinedMultiHMM
         names(mcols(bins))[grep('combination', names(mcols(bins)))] <- 'combination.'
@@ -566,11 +566,11 @@ plotEnrichment <- function(hmm, annotation, bp.around.annotation=10000, region=c
         ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_y_continuous(limits=c(minfold*(1-sign(minfold)*0.1),maxfold*(1+sign(maxfold)*0.1))) })
     }
     ggplts <- lapply(ggplts, function(ggplt) { ggplt + scale_color_manual(values=getDistinctColors(maxcol)) }) # Add color here like this because of weird bug
-    if (class(hmm) == class.univariate.hmm) {
+    if (is(hmm,class.univariate.hmm)) {
         return(ggplts[[1]])
-    } else if (class(hmm) == class.multivariate.hmm) {
+    } else if (is(hmm,class.multivariate.hmm)) {
         return(ggplts[[1]])
-    } else if (class(hmm) == class.combined.multivariate.hmm) {
+    } else if (is(hmm,class.combined.multivariate.hmm)) {
         return(ggplts)
     }
     

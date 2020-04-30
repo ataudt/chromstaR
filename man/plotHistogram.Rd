@@ -4,8 +4,14 @@
 \alias{plotHistogram}
 \title{Histogram of binned read counts with fitted mixture distribution}
 \usage{
-plotHistogram(model, state = NULL, chromosomes = NULL, start = NULL,
-  end = NULL, linewidth = 1)
+plotHistogram(
+  model,
+  state = NULL,
+  chromosomes = NULL,
+  start = NULL,
+  end = NULL,
+  linewidth = 1
+)
 }
 \arguments{
 \item{model}{A \code{\link{uniHMM}} object or file that contains such an object.}

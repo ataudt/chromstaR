@@ -68,8 +68,16 @@ plotGenomeBrowser2 <- function(counts, peaklist=NULL, chr, start, end, countcol=
 }
 Plot a genome browser view}
 \usage{
-plotGenomeBrowser(model, chr, start, end, style = "peaks", peakHeight = 0.2,
-  peakColor = "blue", same.yaxis = TRUE)
+plotGenomeBrowser(
+  model,
+  chr,
+  start,
+  end,
+  style = "peaks",
+  peakHeight = 0.2,
+  peakColor = "blue",
+  same.yaxis = TRUE
+)
 }
 \arguments{
 \item{model}{A \code{\link{uniHMM}}, \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object or file that contains such an object.}

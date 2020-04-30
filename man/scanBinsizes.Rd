@@ -4,9 +4,16 @@
 \alias{scanBinsizes}
 \title{Find the best bin size for a given dataset}
 \usage{
-scanBinsizes(files.binned, outputfolder, chromosomes = "chr10", eps = 0.01,
-  max.iter = 100, max.time = 300, repetitions = 3,
-  plot.progress = FALSE)
+scanBinsizes(
+  files.binned,
+  outputfolder,
+  chromosomes = "chr10",
+  eps = 0.01,
+  max.iter = 100,
+  max.time = 300,
+  repetitions = 3,
+  plot.progress = FALSE
+)
 }
 \arguments{
 \item{files.binned}{A vector with files that contain \code{\link{binned.data}} in different bin sizes.}

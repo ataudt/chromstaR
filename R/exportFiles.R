@@ -26,13 +26,13 @@ NULL
 exportPeaks <- function(model, filename, header=TRUE, separate.files=TRUE, trackname=NULL) {
   
     model <- loadHmmsFromFiles(model)[[1]]
-    if (class(model) == class.univariate.hmm) {
+    if (is(model,class.univariate.hmm)) {
         exportUnivariatePeaks(list(model), filename=paste0(filename, '_peaks'), header=header, separate.files=separate.files, trackname=trackname)
     }
-    if (class(model) == class.multivariate.hmm) {
+    if (is(model,class.multivariate.hmm)) {
         exportMultivariatePeaks(model, filename=paste0(filename, '_peaks'), header=header, separate.files=separate.files, trackname=trackname)
     }
-    if (class(model) == class.combined.multivariate.hmm) {
+    if (is(model,class.combined.multivariate.hmm)) {
         exportCombinedMultivariatePeaks(model, filename=paste0(filename, '_peaks'), header=header, separate.files=separate.files, trackname=trackname)
     }
   
@@ -44,16 +44,16 @@ exportPeaks <- function(model, filename, header=TRUE, separate.files=TRUE, track
 exportCounts <- function(model, filename, header=TRUE, separate.files=TRUE, trackname=NULL) {
   
     model <- loadHmmsFromFiles(model)[[1]]
-    if (class(model) == 'GRanges') {
+    if (is(model,'GRanges')) {
         exportBinnedData(list(model), filename=paste0(filename, '_counts'), header=header, separate.files=separate.files, trackname=trackname)
     }
-    if (class(model) == class.univariate.hmm) {
+    if (is(model,class.univariate.hmm)) {
         exportUnivariateCounts(list(model), filename=paste0(filename, '_counts'), header=header, separate.files=separate.files, trackname=trackname)
     }
-    if (class(model) == class.multivariate.hmm) {
+    if (is(model,class.multivariate.hmm)) {
         exportMultivariateCounts(model, filename=paste0(filename, '_counts'), header=header, separate.files=separate.files, trackname=trackname)
     }
-    if (class(model) == class.combined.multivariate.hmm) {
+    if (is(model,class.combined.multivariate.hmm)) {
         exportCombinedMultivariateCounts(model, filename=paste0(filename, '_counts'), header=header, separate.files=separate.files, trackname=trackname)
     }
   
@@ -67,10 +67,10 @@ exportCounts <- function(model, filename, header=TRUE, separate.files=TRUE, trac
 exportCombinations <- function(model, filename, header=TRUE, separate.files=TRUE, trackname=NULL, exclude.states='[]', include.states=NULL) {
   
     model <- loadHmmsFromFiles(model)[[1]]
-    if (class(model) == class.multivariate.hmm) {
+    if (is(model,class.multivariate.hmm)) {
         exportMultivariateCombinations(model, filename=paste0(filename, '_combinations'), header=header, trackname=trackname, exclude.states=exclude.states, include.states=include.states)
     }
-    if (class(model) == class.combined.multivariate.hmm) {
+    if (is(model,class.combined.multivariate.hmm)) {
         exportCombinedMultivariateCombinations(model, filename=paste0(filename, '_combinations'), header=header, separate.files=separate.files, trackname=trackname, exclude.states=exclude.states, include.states=include.states)
     }
   

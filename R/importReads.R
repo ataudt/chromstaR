@@ -32,7 +32,7 @@ readBamFileAsGRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pa
 
     ## Input checks
     if (!is.null(blacklist)) {
-        if ( !(is.character(blacklist) | class(blacklist)=='GRanges') ) {
+        if ( !(is.character(blacklist) | is(blacklist,'GRanges')) ) {
             stop("'blacklist' has to be either a bed(.gz) file or a GRanges object")
         }
     }
@@ -141,7 +141,7 @@ readBamFileAsGRanges <- function(bamfile, bamindex=bamfile, chromosomes=NULL, pa
                 chromosome.format <- 'NCBI'
             }
             black <- readCustomBedFile(blacklist, skip=0, chromosome.format=chromosome.format)
-        } else if (class(blacklist)=='GRanges') {
+        } else if (is(blacklist,'GRanges')) {
             black <- blacklist
         } else {
             stop("'blacklist' has to be either a bed(.gz) file or a GRanges object")
@@ -206,7 +206,7 @@ readBedFileAsGRanges <- function(bedfile, assembly, chromosomes=NULL, remove.dup
 
     ## Input checks
     if (!is.null(blacklist)) {
-        if ( !(is.character(blacklist) | class(blacklist)=='GRanges') ) {
+        if ( !(is.character(blacklist) | is(blacklist,'GRanges')) ) {
             stop("'blacklist' has to be either a bed(.gz) file or a GRanges object")
         }
     }
@@ -311,7 +311,7 @@ readBedFileAsGRanges <- function(bedfile, assembly, chromosomes=NULL, remove.dup
                 chromosome.format <- 'NCBI'
             }
             black <- readCustomBedFile(blacklist, skip=0, chromosome.format=chromosome.format)
-        } else if (class(blacklist)=='GRanges') {
+        } else if (is(blacklist,'GRanges')) {
             black <- blacklist
         } else {
             stop("'blacklist' has to be either a bed(.gz) file or a GRanges object")

@@ -4,8 +4,10 @@
 \alias{loadHmmsFromFiles}
 \title{Load \pkg{chromstaR} objects from file}
 \usage{
-loadHmmsFromFiles(files, check.class = c("GRanges", "uniHMM", "multiHMM",
-  "combinedMultiHMM"))
+loadHmmsFromFiles(
+  files,
+  check.class = c("GRanges", "uniHMM", "multiHMM", "combinedMultiHMM")
+)
 }
 \arguments{
 \item{files}{A list of \code{\link{chromstaR-objects}} or a vector of files that contain such objects.}

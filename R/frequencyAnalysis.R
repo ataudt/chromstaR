@@ -30,7 +30,7 @@ genomicFrequencies <- function(multi.hmm, combinations=NULL, per.mark=FALSE) {
         return(list(frequency=t, domains=s))
     }
       
-    if (class(multi.hmm)==class.multivariate.hmm) {
+    if (is(multi.hmm,class.multivariate.hmm)) {
 
         if (is.null(combinations)) {
             comb.levels <- levels(bins$combination)
@@ -43,7 +43,7 @@ genomicFrequencies <- function(multi.hmm, combinations=NULL, per.mark=FALSE) {
         s <- s[names(s) %in% comb.levels]
         return(list(frequency=t, domains=s))
       
-    } else if (class(multi.hmm)==class.combined.multivariate.hmm) {
+    } else if (is(multi.hmm,class.combined.multivariate.hmm)) {
       
         if (is.null(combinations)) {
             comb.levels <- unique(as.vector(sapply(getCombinations(bins), levels)))

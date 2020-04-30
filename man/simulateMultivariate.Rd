@@ -4,8 +4,16 @@
 \alias{simulateMultivariate}
 \title{Simulate multivariate data}
 \usage{
-simulateMultivariate(bins, transition, emissions, weights, correlationMatrices,
-  combstates, IDs, fragLen = 50)
+simulateMultivariate(
+  bins,
+  transition,
+  emissions,
+  weights,
+  correlationMatrices,
+  combstates,
+  IDs,
+  fragLen = 50
+)
 }
 \arguments{
 \item{bins}{A \code{\link[GenomicRanges]{GRanges-class}} object for which reads will be simulated.}

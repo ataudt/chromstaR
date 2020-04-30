@@ -7,14 +7,31 @@
 \alias{exportCombinations}
 \title{Export genome browser uploadable files}
 \usage{
-exportPeaks(model, filename, header = TRUE, separate.files = TRUE,
-  trackname = NULL)
+exportPeaks(
+  model,
+  filename,
+  header = TRUE,
+  separate.files = TRUE,
+  trackname = NULL
+)
 
-exportCounts(model, filename, header = TRUE, separate.files = TRUE,
-  trackname = NULL)
+exportCounts(
+  model,
+  filename,
+  header = TRUE,
+  separate.files = TRUE,
+  trackname = NULL
+)
 
-exportCombinations(model, filename, header = TRUE, separate.files = TRUE,
-  trackname = NULL, exclude.states = "[]", include.states = NULL)
+exportCombinations(
+  model,
+  filename,
+  header = TRUE,
+  separate.files = TRUE,
+  trackname = NULL,
+  exclude.states = "[]",
+  include.states = NULL
+)
 }
 \arguments{
 \item{model}{A \code{\link{chromstaR-objects}}.}

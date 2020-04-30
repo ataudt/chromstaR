@@ -38,4 +38,4 @@ License: Artistic-2.0
 LazyLoad: yes
 VignetteBuilder: knitr
 biocViews: ImmunoOncology, Software, DifferentialPeakCalling, HiddenMarkovModel, ChIPSeq, HistoneModification, MultipleComparison, Sequencing, PeakDetection, ATACSeq
-RoxygenNote: 6.0.1
+RoxygenNote: 7.1.0

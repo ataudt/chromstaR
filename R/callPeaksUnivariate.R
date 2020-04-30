@@ -51,7 +51,7 @@
 #'
 callPeaksUnivariate <- function(binned.data, control.data=NULL, prefit.on.chr=NULL, short=TRUE, eps=0.1, init="standard", max.time=NULL, max.iter=5000, num.trials=1, eps.try=NULL, num.threads=1, read.cutoff=TRUE, read.cutoff.quantile=1, read.cutoff.absolute=500, max.mean=Inf, post.cutoff=0.5, control=FALSE, keep.posteriors=FALSE, keep.densities=FALSE, verbosity=1) {
 
-    if (class(binned.data) == 'character') { 
+    if (is(binned.data,'character')) { 
         messageU("Loading file(s) ", paste0(binned.data, collapse=', '), overline="_", underline=NULL)
         binned.datas <- loadHmmsFromFiles(binned.data)
         binned.data <- binned.datas[[1]]
@@ -66,7 +66,7 @@ callPeaksUnivariate <- function(binned.data, control.data=NULL, prefit.on.chr=NU
         }
     }
     if (!is.null(control.data)) {
-        if (class(control.data) == 'character') { 
+        if (is(control.data,'character')) { 
             message("Loading control file(s) ", paste0(control.data, collapse=', '))
             control.datas <- loadHmmsFromFiles(control.data)
             control.data <- control.datas[[1]]
@@ -168,7 +168,7 @@ callPeaksUnivariateAllChr <- function(binned.data, control.data=NULL, eps=0.01, 
     war <- NULL
     if (is.null(eps.try)) eps.try <- eps
     ## Load binned.data and reuse values if present
-    if (class(binned.data) == 'character') { 
+    if (is(binned.data,'character')) { 
         binned.data <- loadHmmsFromFiles(binned.data)[[1]]
     }
 
@@ -182,7 +182,7 @@ callPeaksUnivariateAllChr <- function(binned.data, control.data=NULL, eps=0.01, 
     info <- attr(binned.data, 'info')
 
     ### Assign initial parameters ###
-    if (class(binned.data) == class.univariate.hmm) {
+    if (is(binned.data,class.univariate.hmm)) {
         message("Using parameters from univariate HMM")
         hmm <- binned.data
         binned.data <- hmm$bins
@@ -194,7 +194,7 @@ callPeaksUnivariateAllChr <- function(binned.data, control.data=NULL, eps=0.01, 
         size.initial <- hmm$distributions$size
         prob.initial <- hmm$distributions$prob
         continue.from.univariate.hmm <- TRUE
-    } else if (class(binned.data) == 'GRanges') {
+    } else if (is(binned.data,'GRanges')) {
         A.initial <- double(length=numstates*numstates)
         proba.initial <- double(length=numstates)
         size.initial <- double(length=numstates)

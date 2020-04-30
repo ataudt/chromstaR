@@ -45,7 +45,7 @@
 callPeaksReplicates <- function(hmm.list, max.states=32, force.equal=FALSE, eps=0.01, max.iter=NULL, max.time=NULL, keep.posteriors=TRUE, num.threads=1, max.distance=0.2, per.chrom=TRUE) {
 
     ## Enable reanalysis of multivariate HMM
-    if (class(hmm.list)==class.multivariate.hmm) {
+    if (is(hmm.list,class.multivariate.hmm)) {
 
         multimodel <- hmm.list
         if (is.null(multimodel$replicateInfo)) {

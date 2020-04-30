@@ -4,7 +4,9 @@
 \name{genes_rn4}
 \alias{genes_rn4}
 \title{Gene coordinates for rn4}
-\format{A data.frame.}
+\format{
+A data.frame.
+}
 \description{
 A data.frame containing gene coordinates and biotypes of the rn4 assembly.
 }

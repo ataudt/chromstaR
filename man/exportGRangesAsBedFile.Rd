@@ -4,9 +4,17 @@
 \alias{exportGRangesAsBedFile}
 \title{Export genome browser viewable files}
 \usage{
-exportGRangesAsBedFile(gr, trackname, filename, namecol = "combination",
-  scorecol = "score", colorcol = NULL, colors = NULL, header = TRUE,
-  append = FALSE)
+exportGRangesAsBedFile(
+  gr,
+  trackname,
+  filename,
+  namecol = "combination",
+  scorecol = "score",
+  colorcol = NULL,
+  colors = NULL,
+  header = TRUE,
+  append = FALSE
+)
 }
 \arguments{
 \item{gr}{A \code{\link{GRanges-class}} object.}

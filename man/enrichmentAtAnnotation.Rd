@@ -4,9 +4,16 @@
 \alias{enrichmentAtAnnotation}
 \title{Enrichment of (combinatorial) states for genomic annotations}
 \usage{
-enrichmentAtAnnotation(bins, info, annotation, bp.around.annotation = 10000,
-  region = c("start", "inside", "end"), what = "combinations",
-  num.intervals = 21, statistic = "fold")
+enrichmentAtAnnotation(
+  bins,
+  info,
+  annotation,
+  bp.around.annotation = 10000,
+  region = c("start", "inside", "end"),
+  what = "combinations",
+  num.intervals = 21,
+  statistic = "fold"
+)
 }
 \arguments{
 \item{bins}{The \code{$bins} entry from a \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} object.}
