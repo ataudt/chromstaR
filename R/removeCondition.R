@@ -81,7 +81,7 @@ removeCondition <- function(model, conditions) {
         removeconds <- paste0(paste0('-', conditions, '-'), collapse='|')
         keepconds <- grep(removeconds, colnames(maxPostInPeak), invert=TRUE, value=TRUE)
         maxPostInPeak <- maxPostInPeak[,keepconds]
-        if (is(maxPostInPeak,'matrix')) {
+        if (!is(maxPostInPeak,'matrix')) {
             maxPostInPeak <- matrix(maxPostInPeak, ncol=1, dimnames=list(NULL, keepconds))
         }
         model$bins$maxPostInPeak <- maxPostInPeak
