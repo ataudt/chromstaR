@@ -1,3 +1,11 @@
+CHANGES IN VERSION 1.14.2
+-------------------------
+
+BUG FIXES
+
+    o Corrected format check for experiment.table: Spaces are not excepted any longer, because they lead to downstream errors.
+
+
 CHANGES IN VERSION 1.14.1
 -------------------------
 
