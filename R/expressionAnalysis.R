@@ -24,17 +24,16 @@
 #'
 #'## We need to get coordinates for each of the genes
 #'library(biomaRt)
-#'ensembl <- useMart('ENSEMBL_MART_ENSEMBL', host='may2012.archive.ensembl.org',
-#'                   dataset='rnorvegicus_gene_ensembl')
+#'ensembl <- useMart('ensembl', dataset='rnorvegicus_gene_ensembl')
 #'genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
-#'                            'end_position', 'strand', 'external_gene_id',
+#'                            'end_position', 'strand', 'external_gene_name',
 #'                            'gene_biotype'),
 #'               mart=ensembl)
-#'expr <- merge(genes, expression_lv, by='ensembl_gene_id')
+#'expr <- merge(genes, expression_lv, by='ensembl_gene_name')
 #'# Transform to GRanges
 #'expression.SHR <- GRanges(seqnames=paste0('chr',expr$chromosome_name),
 #'                          ranges=IRanges(start=expr$start, end=expr$end),
-#'                          strand=expr$strand, name=expr$external_gene_id,
+#'                          strand=expr$strand, name=expr$external_gene_name,
 #'                          biotype=expr$gene_biotype,
 #'                          expression=expr$expression_SHR)
 #'# We apply an asinh transformation to reduce the effect of outliers

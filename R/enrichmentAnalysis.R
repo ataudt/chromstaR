@@ -17,17 +17,16 @@
 #'
 #'### Obtain gene coordinates for rat from biomaRt ###
 #'library(biomaRt)
-#'ensembl <- useMart('ENSEMBL_MART_ENSEMBL', host='may2012.archive.ensembl.org',
-#'                   dataset='rnorvegicus_gene_ensembl')
+#'ensembl <- useMart('ensembl', dataset='rnorvegicus_gene_ensembl')
 #'genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
-#'                            'end_position', 'strand', 'external_gene_id',
+#'                            'end_position', 'strand', 'external_gene_name',
 #'                            'gene_biotype'),
 #'               mart=ensembl)
 #'# Transform to GRanges for easier handling
 #'genes <- GRanges(seqnames=paste0('chr',genes$chromosome_name),
 #'                 ranges=IRanges(start=genes$start, end=genes$end),
 #'                 strand=genes$strand,
-#'                 name=genes$external_gene_id, biotype=genes$gene_biotype)
+#'                 name=genes$external_gene_name, biotype=genes$gene_biotype)
 #'# Rename chrMT to chrM
 #'seqlevels(genes)[seqlevels(genes)=='chrMT'] <- 'chrM'
 #'print(genes)

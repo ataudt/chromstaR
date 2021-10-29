@@ -378,17 +378,16 @@ heatmapCountCorrelation(model) + ggtitle('Read count correlation')
 # Annotations can easily be obtained with the biomaRt package. Of course, you can
 # also load them from file if you already have annotation files available.
 library(biomaRt)
-ensembl <- useMart('ENSEMBL_MART_ENSEMBL', host='may2012.archive.ensembl.org',
-                   dataset='rnorvegicus_gene_ensembl')
+ensembl <- useMart('ensembl', dataset='rnorvegicus_gene_ensembl')
 genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
-                            'end_position', 'strand', 'external_gene_id',
+                            'end_position', 'strand', 'external_gene_name',
                             'gene_biotype'),
                mart=ensembl)
 # Transform to GRanges for easier handling
 genes <- GRanges(seqnames=paste0('chr',genes$chromosome_name),
                  ranges=IRanges(start=genes$start, end=genes$end),
                  strand=genes$strand,
-                 name=genes$external_gene_id, biotype=genes$gene_biotype)
+                 name=genes$external_gene_name, biotype=genes$gene_biotype)
 # Rename chrMT to chrM to avoid warnings
 seqlevels(genes)[seqlevels(genes)=='chrMT'] <- 'chrM'
 # Select only chr12 to avoid warnings
@@ -437,17 +436,16 @@ head(expression_lv)
 
 # We need to get coordinates for each of the genes
 library(biomaRt)
-ensembl <- useMart('ENSEMBL_MART_ENSEMBL', host='may2012.archive.ensembl.org',
-                   dataset='rnorvegicus_gene_ensembl')
+ensembl <- useMart('ensembl', dataset='rnorvegicus_gene_ensembl')
 genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
-                            'end_position', 'strand', 'external_gene_id',
+                            'end_position', 'strand', 'external_gene_name',
                             'gene_biotype'),
                mart=ensembl)
-expr <- merge(genes, expression_lv, by='ensembl_gene_id')
+expr <- merge(genes, expression_lv, by='ensembl_gene_name')
 # Transform to GRanges
 expression.SHR <- GRanges(seqnames=paste0('chr',expr$chromosome_name),
                           ranges=IRanges(start=expr$start, end=expr$end),
-                          strand=expr$strand, name=expr$external_gene_id,
+                          strand=expr$strand, name=expr$external_gene_name,
                           biotype=expr$gene_biotype,
                           expression=expr$expression_SHR)
 # Rename chrMT to chrM to avoid warnings
@@ -539,17 +537,16 @@ print(model$frequencies)
 # Annotations can easily be obtained with the biomaRt package. Of course, you can
 # also load them from file if you already have annotation files available.
 library(biomaRt)
-ensembl <- useMart('ENSEMBL_MART_ENSEMBL', host='may2012.archive.ensembl.org',
-                   dataset='rnorvegicus_gene_ensembl')
+ensembl <- useMart('ensembl', dataset='rnorvegicus_gene_ensembl')
 genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
-                            'end_position', 'strand', 'external_gene_id',
+                            'end_position', 'strand', 'external_gene_name',
                             'gene_biotype'),
                mart=ensembl)
 # Transform to GRanges for easier handling
 genes <- GRanges(seqnames=paste0('chr',genes$chromosome_name),
                  ranges=IRanges(start=genes$start, end=genes$end),
                  strand=genes$strand,
-                 name=genes$external_gene_id, biotype=genes$gene_biotype)
+                 name=genes$external_gene_name, biotype=genes$gene_biotype)
 # Rename chrMT to chrM to avoid warnings
 seqlevels(genes)[seqlevels(genes)=='chrMT'] <- 'chrM'
 # Select only chr12 to avoid warnings
