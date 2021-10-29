@@ -1,3 +1,11 @@
+CHANGES IN VERSION 1.21.1
+-------------------------
+
+BUG FIXES
+
+    o Fixed ENSEMBL host for rnorvegicus_gene_ensembl. Using default host now instead of may2012.archive.ensembl.org.
+    
+    
 CHANGES IN VERSION 1.14.2
 -------------------------
 
