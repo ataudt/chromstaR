@@ -38,7 +38,7 @@ genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_positio
                            'end_position', 'strand', 'external_gene_name',
                            'gene_biotype'),
               mart=ensembl)
-expr <- merge(genes, expression_lv, by='ensembl_gene_name')
+expr <- merge(genes, expression_lv, by='ensembl_gene_id')
 # Transform to GRanges
 expression.SHR <- GRanges(seqnames=paste0('chr',expr$chromosome_name),
                          ranges=IRanges(start=expr$start, end=expr$end),
