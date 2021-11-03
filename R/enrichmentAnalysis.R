@@ -17,7 +17,7 @@
 #'
 #'### Obtain gene coordinates for rat from biomaRt ###
 #'library(biomaRt)
-#'ensembl <- useMart('ensembl', dataset='rnorvegicus_gene_ensembl')
+#'ensembl <- useEnsembl(biomart='ENSEMBL_MART_ENSEMBL', dataset='rnorvegicus_gene_ensembl')
 #'genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
 #'                            'end_position', 'strand', 'external_gene_name',
 #'                            'gene_biotype'),

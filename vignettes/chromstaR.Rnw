@@ -378,7 +378,7 @@ heatmapCountCorrelation(model) + ggtitle('Read count correlation')
 # Annotations can easily be obtained with the biomaRt package. Of course, you can
 # also load them from file if you already have annotation files available.
 library(biomaRt)
-ensembl <- useMart('ensembl', dataset='rnorvegicus_gene_ensembl')
+ensembl <- useEnsembl(biomart='ENSEMBL_MART_ENSEMBL', dataset='rnorvegicus_gene_ensembl')
 genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
                             'end_position', 'strand', 'external_gene_name',
                             'gene_biotype'),
@@ -436,7 +436,7 @@ head(expression_lv)
 
 # We need to get coordinates for each of the genes
 library(biomaRt)
-ensembl <- useMart('ensembl', dataset='rnorvegicus_gene_ensembl')
+ensembl <- useEnsembl(biomart='ENSEMBL_MART_ENSEMBL', dataset='rnorvegicus_gene_ensembl')
 genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
                             'end_position', 'strand', 'external_gene_name',
                             'gene_biotype'),
@@ -537,7 +537,7 @@ print(model$frequencies)
 # Annotations can easily be obtained with the biomaRt package. Of course, you can
 # also load them from file if you already have annotation files available.
 library(biomaRt)
-ensembl <- useMart('ensembl', dataset='rnorvegicus_gene_ensembl')
+ensembl <- useEnsembl(biomart='ENSEMBL_MART_ENSEMBL', dataset='rnorvegicus_gene_ensembl')
 genes <- getBM(attributes=c('ensembl_gene_id', 'chromosome_name', 'start_position',
                             'end_position', 'strand', 'external_gene_name',
                             'gene_biotype'),
