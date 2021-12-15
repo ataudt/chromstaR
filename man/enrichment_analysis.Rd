@@ -48,7 +48,7 @@ plotEnrichment(
 
 \item{what}{One of \code{c('combinations','peaks','counts','transitions')} specifying on which feature the statistic is calculated.}
 
-\item{combinations}{A vector with combinations for which the enrichment will be calculated. If \code{NULL} all combinations will be considered.}
+\item{combinations}{A vector with combinations for which the enrichment will be calculated, e.g. \code{combinations = c('[H3K4me3]','[H3K4me3+H3K27me3]')}. If \code{NULL} all combinations will be considered.}
 
 \item{marks}{A vector with marks for which the enrichment is plotted. If \code{NULL} all marks will be considered.}
 

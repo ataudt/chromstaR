@@ -3,7 +3,7 @@
 #' Plotting functions for enrichment analysis of \code{\link{multiHMM}} or \code{\link{combinedMultiHMM}} objects with any annotation of interest, specified as a \code{\link[GenomicRanges]{GRanges-class}} object.
 #' 
 #' @name enrichment_analysis
-#' @param combinations A vector with combinations for which the enrichment will be calculated. If \code{NULL} all combinations will be considered.
+#' @param combinations A vector with combinations for which the enrichment will be calculated, e.g. \code{combinations = c('[H3K4me3]','[H3K4me3+H3K27me3]')}. If \code{NULL} all combinations will be considered.
 #' @param marks A vector with marks for which the enrichment is plotted. If \code{NULL} all marks will be considered.
 #' @param logscale Set to \code{TRUE} to plot fold enrichment on log-scale. Ignored if \code{statistic = 'fraction'}.
 #' @return A \code{\link[ggplot2:ggplot]{ggplot}} object containing the plot or a list() with \code{\link[ggplot2:ggplot]{ggplot}} objects if several plots are returned. For \code{plotFoldEnrichHeatmap} a named array with fold enrichments if \code{plot=FALSE}.
